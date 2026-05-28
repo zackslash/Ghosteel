@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  validate:
+    name: Validate tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ -z "$TAG" ]; then
+            echo "Invalid tag: $GITHUB_REF_NAME"
+            exit 1
+          fi
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.arch }})
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [armv7hl, aarch64, i486]
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set version from tag
+        run: |
+          VER="${{ needs.validate.outputs.version }}"
+          RPM_VER=$(echo "$VER" | sed 's/-/~/g')
+          echo "Setting version to $VER (RPM: $RPM_VER)"
+
+          # RPM spec version
+          sed -i "s/^Version:.*/Version:    $RPM_VER/" rpm/ghosteel.spec
+
+          # .pro fallback for GIT_VERSION (CI tarball has no .git)
+          sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"$VER\"/" ghosteel.pro
+
+          # .pro fallback for GHOSTTY_VERSION (submodule commit hash)
+          GHOSTTY_VER=$(cd ghostty && git describe --tags --always 2>/dev/null || echo "unknown")
+          sed -i "s/isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = \"[^\"]*\"/isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = \"$GHOSTTY_VER\"/" ghosteel.pro
+
+      - name: Install Zig
+        run: |
+          ZIG_VERSION=0.15.2
+          curl -L "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" | tar -xJ -C /opt
+          echo "/opt/zig-x86_64-linux-${ZIG_VERSION}" >> "$GITHUB_PATH"
+
+      - name: Build libghostty-vt
+        run: bash scripts/build-libs.sh ${{ matrix.arch }}
+
+      - name: Build RPM
+        uses: coderus/github-sfos-build@sfos5
+        with:
+          release: 5.0.0.43
+          arch: ${{ matrix.arch }}
+
+      - name: Upload RPM
+        uses: actions/upload-artifact@v6
+        with:
+          name: ghosteel-${{ matrix.arch }}
+          path: RPMS/*.rpm
+          retention-days: 30
+
+  release:
+    name: Create GitHub Release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download RPMs
+        uses: actions/download-artifact@v6
+        with:
+          path: release-rpms
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: Ghosteel v${{ needs.validate.outputs.version }}
+          files: release-rpms/**/*.rpm
+          generate_release_notes: true

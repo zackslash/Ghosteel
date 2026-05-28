@@ -1,0 +1,62 @@
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qmlc
+*.jsc
+*.autosave
+.qmake.stash
+
+# Build output
+build/
+build-ghosteel-*/
+RPMS/
+SOURCES/
+SRPMS/
+BUILD/
+BUILDROOT/
+
+# Zig
+zig-cache/
+zig-out/
+.zig-cache/
+ghostty/zig-cache/
+ghostty/zig-out/
+ghostty/.zig-cache/
+
+# C++ build artifacts
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+
+# Pre-built libs: built locally via ./scripts/build-libs.sh
+lib/
+
+# Sailfish SDK
+deploy/
+*.rpm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ghostty submodule is tracked via .gitmodules, not ignored
+
+# Temp files
+/tmp/
+*.tmp
+*.bak

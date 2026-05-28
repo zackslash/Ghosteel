@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=ghosteel
+Exec=ghosteel
+Name=Ghosteel
+Name[de]=Ghosteel
+
+[X-Sailjail]
+OrganizationName=harbour.ghosteel
+ApplicationName=ghosteel
+Permissions=UserDirs;
+Sandboxing=Disabled
