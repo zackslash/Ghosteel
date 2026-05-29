@@ -1,7 +1,7 @@
 Name:       ghosteel
 
 Summary:    Ghosteel terminal emulator for Sailfish OS
-Version:    0.1
+Version:    0.0.0
 Release:    1
 License:    MIT
 URL:        https://github.com/zackslash/sfos-ghostty
