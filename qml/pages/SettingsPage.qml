@@ -102,7 +102,7 @@ Page {
                 maximumValue: 32
                 stepSize: 1
                 value: Settings.fontSize
-                valueText: value + " px"
+                valueText: qsTr("%1 px").arg(value)
 
                 onValueChanged: Settings.fontSize = value
             }
@@ -115,7 +115,7 @@ Page {
                 maximumValue: 1.0
                 stepSize: 0.05
                 value: Settings.backgroundOpacity
-                valueText: Math.round(value * 100) + "%"
+                valueText: qsTr("%1%").arg(Math.round(value * 100))
 
                 onValueChanged: Settings.backgroundOpacity = value
             }

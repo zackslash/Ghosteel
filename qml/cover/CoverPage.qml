@@ -12,7 +12,7 @@ CoverBackground {
         }
         font.pixelSize: Theme.fontSizeSmall
         color: Theme.highlightColor
-        text: appWindow.windowTitle || "Ghosteel"
+        text: appWindow.windowTitle || qsTr("Ghosteel")
         truncationMode: TruncationMode.Fade
     }
 
@@ -28,7 +28,7 @@ CoverBackground {
         }
         font.pixelSize: Theme.fontSizeExtraSmall
         color: Theme.secondaryColor
-        text: SessionManager.sessionCount + " session" + (SessionManager.sessionCount !== 1 ? "s" : "")
+        text: qsTr("%n session(s)", "", SessionManager.sessionCount)
         visible: SessionManager.sessionCount > 1
     }
 
@@ -47,7 +47,7 @@ CoverBackground {
         verticalAlignment: Text.AlignBottom
         wrapMode: Text.Wrap
         maximumLineCount: 8
-        text: "Ghosteel terminal\nfor SailfishOS"
+        text: qsTr("Ghosteel terminal\nfor SailfishOS")
     }
 
     CoverActionList {

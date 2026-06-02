@@ -56,6 +56,9 @@ Thumbs.db
 
 # Ghostty submodule is tracked via .gitmodules, not ignored
 
+# Compiled translations
+*.qm
+
 # Temp files
 /tmp/
 *.tmp

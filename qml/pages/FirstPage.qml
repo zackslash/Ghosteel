@@ -292,7 +292,7 @@ Page {
 
                     Label {
                         anchors.centerIn: parent
-                        text: "Tab"
+                        text: qsTr("Tab")
                         font.pixelSize: Theme.fontSizeSmall
                         color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
                     }
@@ -310,7 +310,7 @@ Page {
 
                     Label {
                         anchors.centerIn: parent
-                        text: "Ctrl"
+                        text: qsTr("Ctrl")
                         font.pixelSize: Theme.fontSizeSmall
                         color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
                     }
@@ -325,7 +325,7 @@ Page {
 
                     Label {
                         anchors.centerIn: parent
-                        text: "Alt"
+                        text: qsTr("Alt")
                         font.pixelSize: Theme.fontSizeSmall
                         color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
                     }

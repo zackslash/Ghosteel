@@ -66,7 +66,7 @@ TerminalView* SessionManager::createSession()
 
     SessionInfo info;
     info.id = m_nextSessionId++;
-    info.name = QStringLiteral("Session %1").arg(info.id);
+    info.name = tr("Session %1").arg(info.id);
     info.view = view;
 
     int index = m_sessions.size();

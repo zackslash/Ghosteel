@@ -76,6 +76,47 @@ DISTFILES += qml/ghosteel.qml \
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 
+TRANSLATIONS += \
+    translations/ghosteel_de.ts \
+    translations/ghosteel_fr.ts \
+    translations/ghosteel_es.ts \
+    translations/ghosteel_it.ts \
+    translations/ghosteel_pt.ts \
+    translations/ghosteel_nl.ts \
+    translations/ghosteel_sv.ts \
+    translations/ghosteel_nb.ts \
+    translations/ghosteel_da.ts \
+    translations/ghosteel_fi.ts \
+    translations/ghosteel_is.ts \
+    translations/ghosteel_pl.ts \
+    translations/ghosteel_cs.ts \
+    translations/ghosteel_sk.ts \
+    translations/ghosteel_hu.ts \
+    translations/ghosteel_ro.ts \
+    translations/ghosteel_hr.ts \
+    translations/ghosteel_sr.ts \
+    translations/ghosteel_sl.ts \
+    translations/ghosteel_bg.ts \
+    translations/ghosteel_el.ts \
+    translations/ghosteel_tr.ts \
+    translations/ghosteel_et.ts \
+    translations/ghosteel_lv.ts \
+    translations/ghosteel_lt.ts \
+    translations/ghosteel_sq.ts \
+    translations/ghosteel_mk.ts \
+    translations/ghosteel_bs.ts \
+    translations/ghosteel_mt.ts \
+    translations/ghosteel_ga.ts \
+    translations/ghosteel_cy.ts \
+    translations/ghosteel_eu.ts \
+    translations/ghosteel_ca.ts \
+    translations/ghosteel_gl.ts \
+    translations/ghosteel_uk.ts \
+    translations/ghosteel_ru.ts \
+    translations/ghosteel_be.ts \
+    translations/ghosteel_hy.ts \
+    translations/ghosteel_ka.ts
+
 # Shell integration scripts — copy from Ghostty submodule into app resources
 shell_integration.files = $$PWD/ghostty/src/shell-integration/bash \
                           $$PWD/ghostty/src/shell-integration/zsh \
