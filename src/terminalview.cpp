@@ -10,6 +10,7 @@
 #include <QFontMetrics>
 #include <QGuiApplication>
 #include <QInputMethod>
+#include <QTimer>
 #include <QTouchEvent>
 #include <QFileInfo>
 #include <QDir>
@@ -326,6 +327,11 @@ void TerminalView::setupTerminal()
         qWarning() << "Failed to start shell";
         m_vt->destroy();
         return;
+    }
+
+    // Run autorun command after shell initializes
+    if (!m_autorunCommand.isEmpty()) {
+        QTimer::singleShot(AutorunDelayMs, this, &TerminalView::runAutorunCommand);
     }
 }
 
@@ -1398,4 +1404,20 @@ void TerminalView::setWorkingDirectory(const QString &dir)
 {
     if (m_pty)
         m_pty->setWorkingDirectory(dir);
+}
+
+void TerminalView::setAutorunCommand(const QString &cmd)
+{
+    m_autorunCommand = cmd;
+}
+
+void TerminalView::runAutorunCommand()
+{
+    if (m_autorunCommand.isEmpty() || !m_pty
+        || m_pty->childPid() <= 0 || m_shellExited)
+        return;
+
+    QByteArray cmd = m_autorunCommand.toUtf8();
+    m_pty->writeData(cmd.constData(), cmd.size());
+    m_pty->writeData("\r", 1);
 }

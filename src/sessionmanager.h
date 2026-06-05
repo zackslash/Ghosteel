@@ -13,6 +13,7 @@ struct SessionInfo {
     int id;
     QString name;
     QString cachedWorkingDirectory; // Persisted CWD for inactive sessions
+    QString autorunCommand;  // Command to run when session starts
     TerminalView *view;
 };
 
@@ -47,6 +48,8 @@ public:
     Q_INVOKABLE void removeSessionById(int id);
     Q_INVOKABLE bool restoreSessions(); // Returns true if sessions were restored
     Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
+    Q_INVOKABLE QString sessionAutorunCommand(int index) const;
+    Q_INVOKABLE void setSessionAutorunCommand(int index, const QString &cmd);
 
 Q_SIGNALS:
     void activeSessionIndexChanged();
@@ -56,6 +59,7 @@ Q_SIGNALS:
     void sessionRemoved(int index);
     void sessionSwitched(int index);
     void sessionNameChanged(int idx);
+    void sessionAutorunCommandChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
 
 private:

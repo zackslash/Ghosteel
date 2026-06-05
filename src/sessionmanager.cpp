@@ -101,6 +101,7 @@ TerminalView* SessionManager::createSession()
     info.id = m_nextSessionId++;
     info.name = tr("Session %1").arg(info.id);
     info.cachedWorkingDirectory = QDir::homePath();
+    info.autorunCommand = QString();
     info.view = view;
 
     int index = m_sessions.size();
@@ -220,6 +221,27 @@ QString SessionManager::sessionWorkingDirectory(int index) const
     return info.cachedWorkingDirectory;
 }
 
+QString SessionManager::sessionAutorunCommand(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return QString();
+    return m_sessions.at(index).autorunCommand;
+}
+
+void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
+{
+    if (index < 0 || index >= m_sessions.size())
+        return;
+
+    if (m_sessions[index].autorunCommand == cmd)
+        return;
+
+    m_sessions[index].autorunCommand = cmd;
+    Q_EMIT sessionAutorunCommandChanged(index);
+
+    scheduleSave();
+}
+
 void SessionManager::removeSessionById(int id)
 {
     for (int i = 0; i < m_sessions.size(); i++) {
@@ -257,6 +279,7 @@ void SessionManager::saveSessions()
         if (cwd.isEmpty())
             cwd = QDir::homePath();
         m_settings.setValue(QStringLiteral("workingDirectory"), cwd);
+        m_settings.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
         m_settings.endGroup();
     }
 
@@ -295,6 +318,7 @@ bool SessionManager::restoreSessions()
                                         tr("Session %1").arg(i + 1)).toString();
         QString workingDir = m_settings.value(QStringLiteral("workingDirectory"),
                                               QDir::homePath()).toString();
+        QString autorun = m_settings.value(QStringLiteral("autorunCommand"), QString()).toString();
         m_settings.endGroup();
 
         // Validate working directory exists, fallback to home
@@ -304,11 +328,14 @@ bool SessionManager::restoreSessions()
         // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
+        if (!autorun.isEmpty())
+            view->setAutorunCommand(autorun);
 
         SessionInfo info;
         info.id = m_nextSessionId++;
         info.name = name;
         info.cachedWorkingDirectory = workingDir;
+        info.autorunCommand = autorun;
         info.view = view;
 
         m_sessions.append(info);
