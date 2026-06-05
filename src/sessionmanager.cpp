@@ -2,13 +2,44 @@
 #include "terminalview.h"
 #include "ptymanager.h"
 
+#include <QStandardPaths>
+#include <QCoreApplication>
+#include <QDir>
+
 SessionManager::SessionManager(QObject *parent)
+    : SessionManager(
+          QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+          + QStringLiteral("/" APP_ORG "/" APP_NAME ".conf"),
+          parent)
+{}
+
+SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
     : QObject(parent)
+    , m_settings(settingsPath, QSettings::IniFormat)
 {
+    m_saveTimer = new QTimer(this);
+    m_saveTimer->setSingleShot(true);
+    m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
+    connect(m_saveTimer, &QTimer::timeout, this, &SessionManager::saveSessions);
+
+    // Save sessions early on app quit — before QML engine destruction kills
+    // the terminal views (and their shells), which would make /proc/<pid>/cwd
+    // unreadable.
+    connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
+            this, [this]() {
+        saveSessions();
+        m_savedOnQuit = true;
+    });
 }
 
 SessionManager::~SessionManager()
 {
+    // Save final state if aboutToQuit hasn't already done it.
+    // In production, aboutToQuit fires first (shells alive, CWD readable).
+    // In tests or abnormal paths, this is the fallback (shells may be dead).
+    if (m_sessionsLoaded && !m_savedOnQuit)
+        saveSessions();
+
     // Cleanly stop each session's PTY before deleting the view.
     // TerminalView owns PtyManager which owns PtyReaderThread.
     // We must ensure threads are stopped before QObject tree destruction
@@ -34,6 +65,8 @@ void SessionManager::setActiveSessionIndex(int index)
     m_activeSessionIndex = index;
     Q_EMIT activeSessionIndexChanged();
     Q_EMIT sessionSwitched(index);
+
+    scheduleSave();
 }
 
 QQmlListProperty<TerminalView> SessionManager::sessions()
@@ -67,6 +100,7 @@ TerminalView* SessionManager::createSession()
     SessionInfo info;
     info.id = m_nextSessionId++;
     info.name = tr("Session %1").arg(info.id);
+    info.cachedWorkingDirectory = QDir::homePath();
     info.view = view;
 
     int index = m_sessions.size();
@@ -122,8 +156,13 @@ void SessionManager::removeSession(int index)
         info.view->cleanup();
         delete info.view;
     }
+
+    scheduleSave();
 }
 
+// QML convenience wrapper — setActiveSessionIndex is a Q_PROPERTY setter,
+// not Q_INVOKABLE, so QML cannot call it by name.  C++ code should call
+// setActiveSessionIndex() directly.
 void SessionManager::switchToSession(int index)
 {
     setActiveSessionIndex(index);
@@ -153,13 +192,32 @@ void SessionManager::setSessionName(int index, const QString &name)
 
     m_sessions[index].name = name;
     Q_EMIT sessionNameChanged(index);
+
+    scheduleSave();
 }
 
 int SessionManager::sessionId(int index) const
 {
     if (index < 0 || index >= m_sessions.size())
         return -1;
-    return m_sessions[index].id;
+    return m_sessions.at(index).id;
+}
+
+QString SessionManager::sessionWorkingDirectory(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return QString();
+
+    // Try live CWD from shell process first
+    const SessionInfo &info = m_sessions.at(index);
+    if (info.view) {
+        QString live = info.view->workingDirectory();
+        if (!live.isEmpty())
+            return live;
+    }
+
+    // Fall back to cached value from last save
+    return info.cachedWorkingDirectory;
 }
 
 void SessionManager::removeSessionById(int id)
@@ -170,4 +228,102 @@ void SessionManager::removeSessionById(int id)
             return;
         }
     }
+}
+
+void SessionManager::saveSessions()
+{
+    m_settings.beginGroup(QStringLiteral("sessions"));
+    m_settings.setValue(QStringLiteral("count"), m_sessions.size());
+    m_settings.setValue(QStringLiteral("nextId"), m_nextSessionId);
+    m_settings.setValue(QStringLiteral("activeIndex"), m_activeSessionIndex);
+    m_settings.endGroup();
+
+    // Clear old session entries
+    m_settings.remove(QStringLiteral("sessionData"));
+
+    // Save each session by index
+    for (int i = 0; i < m_sessions.size(); i++) {
+        SessionInfo &info = m_sessions[i];
+        QString group = QStringLiteral("sessionData/session_%1").arg(i);
+        m_settings.beginGroup(group);
+        m_settings.setValue(QStringLiteral("name"), info.name);
+        // Use live CWD from /proc if shell is running, otherwise use cached value
+        if (info.view) {
+            QString liveCwd = info.view->workingDirectory();
+            if (!liveCwd.isEmpty())
+                info.cachedWorkingDirectory = liveCwd;
+        }
+        QString cwd = info.cachedWorkingDirectory;
+        if (cwd.isEmpty())
+            cwd = QDir::homePath();
+        m_settings.setValue(QStringLiteral("workingDirectory"), cwd);
+        m_settings.endGroup();
+    }
+
+    m_settings.sync();
+}
+
+void SessionManager::scheduleSave()
+{
+    if (m_sessionsLoaded)
+        m_saveTimer->start(); // restarts timer on each call (debounce)
+}
+
+bool SessionManager::restoreSessions()
+{
+    m_settings.beginGroup(QStringLiteral("sessions"));
+    int count = m_settings.value(QStringLiteral("count"), 0).toInt();
+    int nextId = m_settings.value(QStringLiteral("nextId"), 1).toInt();
+    int activeIndex = m_settings.value(QStringLiteral("activeIndex"), 0).toInt();
+    m_settings.endGroup();
+
+    if (count <= 0) {
+        m_sessionsLoaded = true;
+        return false;
+    }
+
+    // Sanity cap to protect against corrupted settings
+    if (count > 50)
+        count = 50;
+
+    m_nextSessionId = nextId;
+
+    for (int i = 0; i < count; i++) {
+        QString group = QStringLiteral("sessionData/session_%1").arg(i);
+        m_settings.beginGroup(group);
+        QString name = m_settings.value(QStringLiteral("name"),
+                                        tr("Session %1").arg(i + 1)).toString();
+        QString workingDir = m_settings.value(QStringLiteral("workingDirectory"),
+                                              QDir::homePath()).toString();
+        m_settings.endGroup();
+
+        // Validate working directory exists, fallback to home
+        if (!QDir(workingDir).exists())
+            workingDir = QDir::homePath();
+
+        // Create session with restored settings
+        TerminalView *view = new TerminalView();
+        view->setWorkingDirectory(workingDir);
+
+        SessionInfo info;
+        info.id = m_nextSessionId++;
+        info.name = name;
+        info.cachedWorkingDirectory = workingDir;
+        info.view = view;
+
+        m_sessions.append(info);
+
+        Q_EMIT sessionCountChanged();
+        Q_EMIT sessionsChanged();
+    }
+
+    // Restore active session index
+    if (activeIndex >= 0 && activeIndex < m_sessions.size())
+        setActiveSessionIndex(activeIndex);
+    else if (!m_sessions.isEmpty())
+        setActiveSessionIndex(0);
+
+    m_sessionsLoaded = true;
+    Q_EMIT sessionsRestored();
+    return true;
 }

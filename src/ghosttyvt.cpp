@@ -1,19 +1,6 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 
-// OSC 777 desktop notification scanner states
-enum Osc777State {
-    OSC777_IDLE,       // Waiting for ESC
-    OSC777_ESC,        // Found ESC, expecting ']'
-    OSC777_BRACKET,    // Found ']', expecting '7'
-    OSC777_7A,         // Found first '7', expecting second '7'
-    OSC777_7B,         // Found second '7', expecting third '7'
-    OSC777_SEMI1,      // Found "777", expecting ';'
-    OSC777_NOTIFY,     // Matching "notify;"
-    OSC777_TITLE,      // Reading title until ';'
-    OSC777_BODY,       // Reading body until BEL (0x07)
-};
-
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
 {
@@ -52,8 +39,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     res = ghostty_render_state_new(nullptr, &m_renderState);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_render_state_new failed:" << res;
-        ghostty_terminal_free(m_terminal);
-        m_terminal = nullptr;
+        destroy();
         return false;
     }
 
@@ -61,10 +47,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     res = ghostty_key_encoder_new(nullptr, &m_keyEncoder);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_key_encoder_new failed:" << res;
-        ghostty_render_state_free(m_renderState);
-        ghostty_terminal_free(m_terminal);
-        m_renderState = nullptr;
-        m_terminal = nullptr;
+        destroy();
         return false;
     }
 
@@ -75,12 +58,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     res = ghostty_mouse_encoder_new(nullptr, &m_mouseEncoder);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_mouse_encoder_new failed:" << res;
-        ghostty_key_encoder_free(m_keyEncoder);
-        ghostty_render_state_free(m_renderState);
-        ghostty_terminal_free(m_terminal);
-        m_keyEncoder = nullptr;
-        m_renderState = nullptr;
-        m_terminal = nullptr;
+        destroy();
         return false;
     }
 
@@ -93,7 +71,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
 void GhosttyVt::destroy()
 {
     // Reset OSC 777 scanner to prevent cross-session data leakage
-    m_osc777State = 0;
+    m_osc777State = OSC777_IDLE;
     m_osc777NotifyIdx = 0;
     m_osc777Title.clear();
     m_osc777Body.clear();
@@ -165,7 +143,7 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             } else if (c == 0x07 || c == 0x1b) {
                 // Title only, no body — treat as notification with empty body
                 if (!m_osc777Title.isEmpty())
-                    emit desktopNotification(QString::fromUtf8(m_osc777Title), QString());
+                    Q_EMIT desktopNotification(QString::fromUtf8(m_osc777Title), QString());
                 m_osc777State = (c == 0x1b) ? OSC777_ESC : OSC777_IDLE;
             } else {
                 if (m_osc777Title.size() < 512)
@@ -175,8 +153,8 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
         case OSC777_BODY:
             if (c == 0x07 || c == 0x1b) {
                 if (!m_osc777Title.isEmpty())
-                    emit desktopNotification(QString::fromUtf8(m_osc777Title),
-                                             QString::fromUtf8(m_osc777Body));
+                    Q_EMIT desktopNotification(QString::fromUtf8(m_osc777Title),
+                                                QString::fromUtf8(m_osc777Body));
                 m_osc777State = (c == 0x1b) ? OSC777_ESC : OSC777_IDLE;
             } else {
                 if (m_osc777Body.size() < 2048)
@@ -188,7 +166,7 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
 
     if (m_terminal) {
         ghostty_terminal_vt_write(m_terminal, data, len);
-        m_needsEncoderSync = true; // M4: Terminal modes may have changed
+        m_needsEncoderSync = true; // Terminal modes may have changed
     }
 }
 
@@ -196,7 +174,7 @@ void GhosttyVt::updateRenderState()
 {
     if (m_renderState && m_terminal) {
         ghostty_render_state_update(m_renderState, m_terminal);
-        // M4: Only re-sync encoder options when terminal modes have changed
+        // Only re-sync encoder options when terminal modes have changed
         // (e.g., mouse tracking toggled, keypad mode changed).
         // This avoids redundant syscalls every frame.
         if (m_needsEncoderSync) {
@@ -329,7 +307,7 @@ void GhosttyVt::titleChangedCallback(GhosttyTerminal t, void *ud)
     auto *self = static_cast<GhosttyVt *>(ud);
     GhosttyString title;
     if (ghostty_terminal_get(t, GHOSTTY_TERMINAL_DATA_TITLE, &title) == GHOSTTY_SUCCESS) {
-        emit self->titleChanged(
+        Q_EMIT self->titleChanged(
             QString::fromUtf8(reinterpret_cast<const char *>(title.ptr), title.len));
     }
 }
@@ -337,5 +315,5 @@ void GhosttyVt::titleChangedCallback(GhosttyTerminal t, void *ud)
 void GhosttyVt::bellCallback(GhosttyTerminal, void *ud)
 {
     auto *self = static_cast<GhosttyVt *>(ud);
-    emit self->bell();
+    Q_EMIT self->bell();
 }

@@ -103,11 +103,10 @@ Page {
                     }
                 }
 
-                // Terminal title subtitle
+                // Working directory subtitle
                 Label {
-                    visible: SessionManager.sessionCount > index
-                             && SessionManager.sessionName(index).length > 0
-                    text: visible ? SessionManager.sessions[index].title : ""
+                    visible: text.length > 0
+                    text: SessionManager.sessionWorkingDirectory(index)
                     color: sessionDelegate.highlighted
                            ? Theme.secondaryHighlightColor
                            : Theme.secondaryColor

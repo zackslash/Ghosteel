@@ -19,10 +19,24 @@
 // (including writePtyCallback) run on the main GUI thread. The PtyReaderThread
 // only does blocking read() and delivers data to the main thread via
 // dataReady signal with an explicit Qt::QueuedConnection.
+
 class GhosttyVt : public QObject
 {
     Q_OBJECT
 public:
+    // OSC 777 desktop notification scanner states
+    enum Osc777State {
+        OSC777_IDLE,       // Waiting for ESC
+        OSC777_ESC,        // Found ESC, expecting ']'
+        OSC777_BRACKET,    // Found ']', expecting '7'
+        OSC777_7A,         // Found first '7', expecting second '7'
+        OSC777_7B,         // Found second '7', expecting third '7'
+        OSC777_SEMI1,      // Found "777", expecting ';'
+        OSC777_NOTIFY,     // Matching "notify;"
+        OSC777_TITLE,      // Reading title until ';'
+        OSC777_BODY,       // Reading body until BEL (0x07)
+    };
+
     using PtyWriteFn = std::function<void(const char *, size_t)>;
 
     explicit GhosttyVt(QObject *parent = nullptr);
@@ -66,10 +80,10 @@ private:
     GhosttyKeyEncoder m_keyEncoder = nullptr;
     GhosttyMouseEncoder m_mouseEncoder = nullptr;
     PtyWriteFn m_ptyWriteFn;
-    bool m_needsEncoderSync = true; // M4: Only sync encoders when terminal modes change
+    bool m_needsEncoderSync = true; // Only sync encoders when terminal modes change
 
     // OSC 777 desktop notification scanner
-    int m_osc777State = 0; // Osc777State
+    Osc777State m_osc777State = OSC777_IDLE;
     int m_osc777NotifyIdx = 0;
     QByteArray m_osc777Title;
     QByteArray m_osc777Body;

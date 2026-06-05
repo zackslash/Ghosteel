@@ -22,6 +22,9 @@ class Settings : public QObject
 public:
     static Settings *instance();
 
+    // Test constructor: allows injecting a custom settings path
+    explicit Settings(const QString &settingsPath, QObject *parent = nullptr);
+
     int fontSize() const { return m_fontSize; }
     void setFontSize(int size);
 

@@ -6,6 +6,8 @@ Page {
     id: settingsPage
     allowedOrientations: Orientation.All
 
+    property var colorSchemes: ["dark", "light", "solarized-dark", "solarized-light", "monokai"]
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height
@@ -75,8 +77,7 @@ Page {
                 width: parent.width
                 label: qsTr("Color scheme")
                 currentIndex: {
-                    var schemes = ["dark", "light", "solarized-dark", "solarized-light", "monokai"]
-                    var idx = schemes.indexOf(Settings.colorScheme)
+                    var idx = colorSchemes.indexOf(Settings.colorScheme)
                     return idx >= 0 ? idx : 0
                 }
 
@@ -89,8 +90,7 @@ Page {
                 }
 
                 onCurrentIndexChanged: {
-                    var schemes = ["dark", "light", "solarized-dark", "solarized-light", "monokai"]
-                    Settings.colorScheme = schemes[currentIndex]
+                    Settings.colorScheme = colorSchemes[currentIndex]
                 }
             }
 

@@ -1,3 +1,5 @@
+// NOTE: tests/stubs/terminalview.h shares this guard name for -include stubbing.
+// If you rename this guard, update the stub to match.
 #ifndef TERMINALVIEW_H
 #define TERMINALVIEW_H
 
@@ -31,6 +33,8 @@ public:
     Q_INVOKABLE void sendKey(int qtKey, int modifiers = 0);
     Q_INVOKABLE void restartShell();  // Restart shell after exit
     Q_INVOKABLE void setActive(bool active); // Start/stop blink timer
+    Q_INVOKABLE QString workingDirectory() const; // Get CWD from /proc/<pid>/cwd
+    Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     void cleanup();                   // Stop PTY/threads before destruction
 
 Q_SIGNALS:
@@ -67,14 +71,37 @@ private:
     void renderCells(QPainter *painter);
     void sendKeyEvent(GhosttyKey key, GhosttyKeyAction action,
                       GhosttyMods mods, const QString &text);
-    GhosttyKey mapQtKey(int qtKey) const;
-    GhosttyMods mapQtModifiers(Qt::KeyboardModifiers mods) const;
+    void sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
+                        const QPointF &pos, GhosttyMods mods);
+    void resetBlinkOnInput();
     const QFont &fontForStyle(const GhosttyStyle &style) const;
+
+    // Cell data extracted from the render state for a single grid position.
+    // Used by drawBlockCursorText() to avoid duplicating the cell-reading logic.
+    struct CellData {
+        uint32_t graphemes[128];
+        uint32_t graphemesLen = 0;
+        GhosttyStyle style;
+        QColor bgColor;
+        bool valid = false;
+    };
+    bool readCellAt(GhosttyRenderState state, int col, int row,
+                    const QColor &defaultBg, CellData &out) const;
+    void drawBlockCursorText(QPainter *painter, int px, int py,
+                             GhosttyRenderState state, const QColor &bgColor,
+                             const QColor &fgColor);
+    void drawCursor(QPainter *painter, GhosttyRenderState state,
+                    const GhosttyRenderStateColors &colors,
+                    const QColor &fgColor);
+    void renderCellGrid(QPainter *painter, GhosttyRenderState state,
+                        const QColor &bgColor, const QColor &fgColor);
+    void drawShellExitOverlay();
     void updateFontMetrics();
     QPointF cellFromPixel(const QPointF &pos) const;
     void clearSelection();
     void drawSelectionHighlight(QPainter *painter, qreal offsetX, qreal offsetY, qreal scale);
 
+    // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
     PtyManager *m_pty = nullptr;
     QImage m_image;
@@ -83,7 +110,7 @@ private:
     int m_cellWidth = 0;
     int m_cellHeight = 0;
 
-    // Pre-cached font variants to avoid per-cell QFont allocation
+    // --- Font (pre-cached variants to avoid per-cell QFont allocation) ---
     QFont m_font;
     QFont m_fontBold;
     QFont m_fontItalic;
@@ -93,7 +120,7 @@ private:
 
     QString m_title;
 
-    // Touch selection state
+    // --- Touch text selection (long-press → drag → copy) ---
     bool m_selecting = false;
     bool m_magnifierVisible = false;
     QPointF m_selStart;   // pixel coordinates
@@ -108,39 +135,33 @@ private:
     static const int MagnifierHeight = 100;   // px
     static const int MagnifierOffset = 20;    // px above finger
 
-    // Mouse tracking for TUI apps (tmux, neovim, htop)
+    // --- Mouse tracking for TUI apps (tmux, neovim, htop) ---
     bool m_mouseTrackingActive = false;
     bool m_mouseButtonPressed = false;  // tracks any-button state for encoder
     QPointF m_touchStartPos;
 
-    // Two-finger scroll for touch devices
+    // --- Scroll state (two-finger touch + mouse wheel) ---
     bool m_twoFingerScrolling = false;
     qreal m_twoFingerLastY = 0;
-
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
 
-    // Cached cursor cell for block cursor rendering (avoids O(rows) lookup)
-    struct CachedCursorCell {
-        uint32_t graphemes[128];
-        int graphemesLen = 0;
-        GhosttyStyle style;
-        QColor bgColor;
-        bool valid = false;
-    } m_cachedCursor;
+    // Cached cursor cell for block cursor rendering (avoids O(rows) fallback)
+    CellData m_cachedCursor;
 
+    // --- Render batching (~60fps coalescing for rapid PTY data) ---
     bool m_needsRender = true;
     int m_renderTimerId = 0;
-    static const int RenderInterval = 16; // ~60fps batch coalescing
+    static const int RenderInterval = 16; // ms
 
-    // Cursor blinking
+    // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;
     bool m_cursorBlinkVisible = true;
     static const int BlinkInterval = 500; // ms
-    static const int BlinkPauseMs = 1000; // ms — pause blinking after input
+    static const int BlinkPauseMs = 1000; // ms — pause after input
     QElapsedTimer m_lastInputTime;
 
-    // Shell exit state
+    // --- Shell exit state ---
     bool m_shellExited = false;
     int m_shellExitCode = 0;
 };

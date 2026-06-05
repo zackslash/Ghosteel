@@ -4,12 +4,15 @@
 #include <QObject>
 #include <QQmlListProperty>
 #include <QVector>
+#include <QSettings>
+#include <QTimer>
 
 class TerminalView;
 
 struct SessionInfo {
     int id;
     QString name;
+    QString cachedWorkingDirectory; // Persisted CWD for inactive sessions
     TerminalView *view;
 };
 
@@ -22,6 +25,7 @@ class SessionManager : public QObject
 
 public:
     explicit SessionManager(QObject *parent = nullptr);
+    explicit SessionManager(const QString &settingsPath, QObject *parent = nullptr);
     ~SessionManager();
 
     int activeSessionIndex() const { return m_activeSessionIndex; }
@@ -33,12 +37,16 @@ public:
 
     Q_INVOKABLE TerminalView* createSession();
     Q_INVOKABLE void removeSession(int index);
+    // QML convenience: setActiveSessionIndex is a Q_PROPERTY setter, not
+    // Q_INVOKABLE, so QML needs this to call it by name.
     Q_INVOKABLE void switchToSession(int index);
     Q_INVOKABLE TerminalView* activeSession() const;
     Q_INVOKABLE QString sessionName(int index) const;
     Q_INVOKABLE void setSessionName(int index, const QString &name);
     Q_INVOKABLE int sessionId(int index) const;
     Q_INVOKABLE void removeSessionById(int id);
+    Q_INVOKABLE bool restoreSessions(); // Returns true if sessions were restored
+    Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
 
 Q_SIGNALS:
     void activeSessionIndexChanged();
@@ -48,14 +56,24 @@ Q_SIGNALS:
     void sessionRemoved(int index);
     void sessionSwitched(int index);
     void sessionNameChanged(int idx);
+    void sessionsRestored(); // Emitted once after restoreSessions() completes
 
 private:
     static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
     static TerminalView* sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index);
 
+    void saveSessions();
+    void scheduleSave();
+
     QVector<SessionInfo> m_sessions;
     int m_activeSessionIndex = -1;
     int m_nextSessionId = 1;
+
+    // Session persistence
+    QSettings m_settings;
+    QTimer *m_saveTimer = nullptr;
+    bool m_sessionsLoaded = false;
+    bool m_savedOnQuit = false;
 };
 
 #endif // SESSIONMANAGER_H

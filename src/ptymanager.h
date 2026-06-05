@@ -14,7 +14,7 @@ class PtyReaderThread : public QThread
 public:
     explicit PtyReaderThread(int fd, QObject *parent = nullptr);
 
-signals:
+Q_SIGNALS:
     void dataReady(const QByteArray &data);
     void readFinished();
 
@@ -36,10 +36,11 @@ public:
     void stop();
     bool writeData(const char *data, size_t len);
     void setShellCommand(const QString &cmd) { m_shellCommand = cmd; }
+    void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
     int ptyFd() const { return m_ptyFd; }
     pid_t childPid() const { return m_childPid; }
 
-signals:
+Q_SIGNALS:
     void dataReady(const QByteArray &data);
     void shellExited(int exitCode);
 
@@ -51,8 +52,9 @@ private:
     pid_t m_childPid = -1;
     PtyReaderThread *m_readerThread = nullptr;
     QString m_shellCommand;
+    QString m_workingDirectory;
 
-    // C1: Timer-based waitpid reap with generation tracking
+    // Timer-based waitpid reap with generation tracking
     QTimer *m_waitPidTimer = nullptr;
     uint32_t m_sessionGeneration = 0;
     int m_execPipeReadFd = -1;

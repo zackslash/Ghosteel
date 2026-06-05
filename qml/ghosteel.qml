@@ -21,7 +21,9 @@ ApplicationWindow {
     allowedOrientations: defaultAllowedOrientations
 
     Component.onCompleted: {
-        // Create the initial terminal session
-        SessionManager.createSession()
+        // Restore saved sessions if available, otherwise create a fresh one
+        if (!SessionManager.restoreSessions()) {
+            SessionManager.createSession()
+        }
     }
 }

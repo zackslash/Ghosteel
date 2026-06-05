@@ -50,18 +50,22 @@ LIBS += -lpthread -lm -ldl -lutil -lrt
 
 HEADERS += \
     src/ghosttyvt.h \
+    src/keymapping.h \
     src/ptymanager.h \
     src/sessionmanager.h \
     src/settings.h \
-    src/terminalview.h
+    src/terminalview.h \
+    src/textutil.h
 
 SOURCES += \
     src/ghosteel.cpp \
     src/ghosttyvt.cpp \
+    src/keymapping.cpp \
     src/ptymanager.cpp \
     src/sessionmanager.cpp \
     src/settings.cpp \
-    src/terminalview.cpp
+    src/terminalview.cpp \
+    src/textutil.cpp
 
 DISTFILES += qml/ghosteel.qml \
     LICENSE \

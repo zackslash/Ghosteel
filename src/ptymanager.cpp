@@ -43,7 +43,7 @@ void PtyReaderThread::run()
         if (pfd.revents & (POLLIN | POLLHUP)) {
             ssize_t n = ::read(m_fd, buf, sizeof(buf));
             if (n > 0) {
-                emit dataReady(QByteArray(buf, n));
+                Q_EMIT dataReady(QByteArray(buf, n));
             } else if (n == 0) {
                 break; // EOF — shell exited
             } else {
@@ -53,7 +53,7 @@ void PtyReaderThread::run()
             }
         }
     }
-    emit readFinished();
+    Q_EMIT readFinished();
 }
 
 // PtyManager
@@ -69,7 +69,7 @@ PtyManager::~PtyManager()
 
 bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 {
-    // C1: Increment generation so stale timers from previous sessions bail out
+    // Increment generation so stale timers from previous sessions bail out
     m_sessionGeneration++;
 
     struct winsize ws = {};
@@ -89,7 +89,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
             shell = "/bin/sh";
     }
 
-    // W7: Create pipe for exec failure detection.
+    // Create pipe for exec failure detection.
     // The write end has FD_CLOEXEC, so it is closed automatically on successful exec.
     // If exec fails, the child writes errno to the pipe before _exit(127).
     int execPipe[2];
@@ -109,9 +109,20 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 
     if (pid == 0) {
         // Child process
-        ::close(execPipe[0]); // W7: Close read end of exec pipe
+        ::close(execPipe[0]); // Close read end of exec pipe
 
         setsid();
+
+        // Change to working directory if specified (for session restore)
+        if (!m_workingDirectory.isEmpty()) {
+            QByteArray dirBytes = m_workingDirectory.toUtf8();
+            if (chdir(dirBytes.constData()) != 0) {
+                // Fallback to home directory if saved path no longer exists
+                const char *home = getenv("HOME");
+                if (home)
+                    (void)chdir(home);
+            }
+        }
 
         // Set TERM
         setenv("TERM", "xterm-256color", 1);
@@ -127,14 +138,15 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         execlp(shell, shell, nullptr);
         // If exec fails, try sh
         execlp("sh", "sh", nullptr);
-        // W7: Both exec attempts failed — write errno to pipe so parent knows
+        // Both exec attempts failed — write errno to pipe so parent knows
         int execErr = errno;
-        (void)::write(execPipe[1], &execErr, sizeof(execErr));
+        ssize_t written = ::write(execPipe[1], &execErr, sizeof(execErr));
+        (void)written;
         _exit(127);
     }
 
     // Parent process
-    ::close(execPipe[1]); // W7: Close write end in parent
+    ::close(execPipe[1]); // Close write end in parent
     m_execPipeReadFd = execPipe[0];
     m_childPid = pid;
 
@@ -147,7 +159,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     connect(m_readerThread, &PtyReaderThread::dataReady,
             this, &PtyManager::dataReady, Qt::QueuedConnection);
     connect(m_readerThread, &PtyReaderThread::readFinished, this, [this]() {
-        // C1: Capture generation by value — if startShell() is called again,
+        // Capture generation by value — if startShell() is called again,
         // the old timer will see a stale generation and bail out.
         uint32_t gen = m_sessionGeneration;
 
@@ -164,9 +176,9 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         auto *timer = new QTimer(this);
         m_waitPidTimer = timer;
         connect(timer, &QTimer::timeout, this, [this, timer, gen]() {
-            // C2: Bail if child PID is invalid (stop() was called or already reaped)
+            // Bail if child PID is invalid (stop() was called or already reaped)
             if (m_childPid <= 0) return;
-            // C1: Bail if this timer belongs to a previous session
+            // Bail if this timer belongs to a previous session
             if (gen != m_sessionGeneration) {
                 timer->stop();
                 timer->deleteLater();
@@ -184,7 +196,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
                     m_waitPidTimer = nullptr;
                 int exitCode = (result > 0 && WIFEXITED(status))
                     ? WEXITSTATUS(status) : -1;
-                emit shellExited(exitCode);
+                Q_EMIT shellExited(exitCode);
             }
             // else: child still running, retry on next tick
         });
@@ -192,7 +204,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     }, Qt::QueuedConnection);
     m_readerThread->start();
 
-    // W7: Monitor exec pipe for failure detection.
+    // Monitor exec pipe for failure detection.
     // If exec succeeds, FD_CLOEXEC closes the write end and we get EOF.
     // If exec fails, the child writes errno before _exit(127).
     fcntl(m_execPipeReadFd, F_SETFL, O_NONBLOCK);
@@ -213,7 +225,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
             int status = 0;
             waitpid(m_childPid, &status, WNOHANG);
             m_childPid = -1;
-            emit shellExited(-127);
+            Q_EMIT shellExited(-127);
         }
         // else: n == 0 means EOF → exec succeeded (pipe closed by CLOEXEC)
     });
@@ -223,7 +235,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 
 void PtyManager::stop()
 {
-    // W7: Clean up exec pipe resources
+    // Clean up exec pipe resources
     if (m_execNotifier) {
         m_execNotifier->setEnabled(false);
         m_execNotifier->deleteLater();
@@ -234,7 +246,7 @@ void PtyManager::stop()
         m_execPipeReadFd = -1;
     }
 
-    // C1: Cancel any pending waitpid timer before changing state
+    // Cancel any pending waitpid timer before changing state
     if (m_waitPidTimer) {
         m_waitPidTimer->stop();
         m_waitPidTimer->deleteLater();

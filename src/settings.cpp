@@ -3,11 +3,15 @@
 #include <QStandardPaths>
 
 Settings::Settings(QObject *parent)
-    : QObject(parent)
-    , m_settings(
+    : Settings(
           QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
           + QStringLiteral("/" APP_ORG "/" APP_NAME ".conf"),
-          QSettings::IniFormat)
+          parent)
+{}
+
+Settings::Settings(const QString &settingsPath, QObject *parent)
+    : QObject(parent)
+    , m_settings(settingsPath, QSettings::IniFormat)
 {
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
@@ -30,7 +34,7 @@ void Settings::load()
     m_shellCommand = m_settings.value(QStringLiteral("terminal/shell"), QString()).toString();
     m_colorScheme = m_settings.value(QStringLiteral("terminal/colorScheme"),
                                      QStringLiteral("dark")).toString();
-    m_backgroundOpacity = m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat();
+    m_backgroundOpacity = qBound(0.0f, m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat(), 1.0f);
     m_bellMode = qBound(0, m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(), 3);
 }
 

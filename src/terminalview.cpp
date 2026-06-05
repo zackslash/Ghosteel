@@ -1,6 +1,8 @@
 #include "terminalview.h"
 #include "ptymanager.h"
 #include "settings.h"
+#include "keymapping.h"
+#include "textutil.h"
 
 #include <QPainter>
 #include <QDebug>
@@ -9,6 +11,8 @@
 #include <QGuiApplication>
 #include <QInputMethod>
 #include <QTouchEvent>
+#include <QFileInfo>
+#include <QDir>
 #include <cstring>
 #include <sys/ioctl.h>
 
@@ -101,13 +105,9 @@ void TerminalView::recalculateDimensions()
 
     // Calculate terminal dimensions from available size
     // TopPadding for visual comfort
-    uint16_t newCols = static_cast<uint16_t>(width() / m_cellWidth);
-    uint16_t newRows = static_cast<uint16_t>((height() - TopPadding) / m_cellHeight);
-
-    if (newCols < 2) newCols = 2;
-    if (newRows < 2) newRows = 2;
-    if (newCols > 512) newCols = 512;
-    if (newRows > 512) newRows = 512;
+    auto dim = TextUtil::calculateDimensions(width(), height(), m_cellWidth, m_cellHeight, TopPadding);
+    uint16_t newCols = dim.cols;
+    uint16_t newRows = dim.rows;
 
     if (newCols != m_cols || newRows != m_rows) {
         bool wasStarted = (m_cols > 0 && m_rows > 0);
@@ -167,10 +167,7 @@ void TerminalView::focusOutEvent(QFocusEvent *event)
 
 void TerminalView::inputMethodEvent(QInputMethodEvent *event)
 {
-    // Reset cursor blink on software keyboard input
-    m_cursorBlinkVisible = true;
-    m_lastInputTime.start();
-    clearSelection();
+    resetBlinkOnInput();
 
     // Commit text from the input method (what the user actually typed)
     if (!event->commitString().isEmpty()) {
@@ -181,29 +178,7 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
         if (m_stickyModifiers != 0) {
             // Map the first character to a GhosttyKey
             QChar ch = event->commitString().at(0).toLower();
-            GhosttyKey key = GHOSTTY_KEY_UNIDENTIFIED;
-            if (ch >= 'a' && ch <= 'z')
-                key = static_cast<GhosttyKey>(GHOSTTY_KEY_A + (ch.unicode() - 'a'));
-            else if (ch >= '0' && ch <= '9')
-                key = static_cast<GhosttyKey>(GHOSTTY_KEY_DIGIT_0 + (ch.unicode() - '0'));
-            else {
-                // L3: Map common punctuation characters for sticky modifiers
-                switch (ch.unicode()) {
-                case '-': key = GHOSTTY_KEY_MINUS; break;
-                case '=': key = GHOSTTY_KEY_EQUAL; break;
-                case '[': key = GHOSTTY_KEY_BRACKET_LEFT; break;
-                case ']': key = GHOSTTY_KEY_BRACKET_RIGHT; break;
-                case '\\': key = GHOSTTY_KEY_BACKSLASH; break;
-                case ';': key = GHOSTTY_KEY_SEMICOLON; break;
-                case '\'': key = GHOSTTY_KEY_QUOTE; break;
-                case ',': key = GHOSTTY_KEY_COMMA; break;
-                case '.': key = GHOSTTY_KEY_PERIOD; break;
-                case '/': key = GHOSTTY_KEY_SLASH; break;
-                case '`': key = GHOSTTY_KEY_BACKQUOTE; break;
-                case ' ': key = GHOSTTY_KEY_SPACE; break;
-                default: break;
-                }
-            }
+            GhosttyKey key = KeyMapping::mapCharToKey(ch);
 
             if (key != GHOSTTY_KEY_UNIDENTIFIED) {
                 sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS,
@@ -292,29 +267,26 @@ void TerminalView::applyColorScheme()
     if (!m_vt || !m_vt->terminal())
         return;
 
-    Settings *s = Settings::instance();
-    QString scheme = s->colorScheme();
-    GhosttyColorRgb fg, bg, cursor;
+    struct ColorDef { GhosttyColorRgb fg, bg, cursor; };
+    static const QMap<QString, ColorDef> schemes = {
+        {"light",          {{51,51,51},       {255,255,255},   {0,0,0}}},
+        {"solarized-dark", {{147,161,161},    {0,43,54},       {203,75,22}}},
+        {"solarized-light",{{101,123,131},    {253,246,227},   {203,75,22}}},
+        {"monokai",        {{248,248,242},    {39,40,34},      {248,248,242}}},
+        {"dark",           {{204,204,204},    {30,30,30},      {255,255,255}}},
+    };
 
-    if (scheme == QStringLiteral("light")) {
-        fg = {51, 51, 51}; bg = {255, 255, 255}; cursor = {0, 0, 0};
-    } else if (scheme == QStringLiteral("solarized-dark")) {
-        fg = {147, 161, 161}; bg = {0, 43, 54}; cursor = {203, 75, 22};
-    } else if (scheme == QStringLiteral("solarized-light")) {
-        fg = {101, 123, 131}; bg = {253, 246, 227}; cursor = {203, 75, 22};
-    } else if (scheme == QStringLiteral("monokai")) {
-        fg = {248, 248, 242}; bg = {39, 40, 34}; cursor = {248, 248, 242};
-    } else {
-        // "dark" (default)
-        fg = {204, 204, 204}; bg = {30, 30, 30}; cursor = {255, 255, 255};
-    }
+    QString scheme = Settings::instance()->colorScheme();
+    auto it = schemes.constFind(scheme);
+    if (it == schemes.constEnd())
+        it = schemes.constFind(QStringLiteral("dark"));
 
     ghostty_terminal_set(m_vt->terminal(),
-                         GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND, &fg);
+                         GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND, &it->fg);
     ghostty_terminal_set(m_vt->terminal(),
-                         GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND, &bg);
+                         GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND, &it->bg);
     ghostty_terminal_set(m_vt->terminal(),
-                         GHOSTTY_TERMINAL_OPT_COLOR_CURSOR, &cursor);
+                         GHOSTTY_TERMINAL_OPT_COLOR_CURSOR, &it->cursor);
 
     m_needsRender = true;
     update();
@@ -468,11 +440,169 @@ void TerminalView::renderCells(QPainter *painter)
     imgPainter.setOpacity(1.0);
     imgPainter.setFont(m_font);
 
+    renderCellGrid(&imgPainter, state, bgColor, fgColor);
+    drawCursor(&imgPainter, state, colors, fgColor);
+    imgPainter.end();
+
+    drawShellExitOverlay();
+
+    painter->drawImage(0, 0, m_image);
+}
+
+bool TerminalView::readCellAt(GhosttyRenderState state, int col, int row,
+                              const QColor &defaultBg, CellData &out) const
+{
+    GhosttyRenderStateRowIterator iterator;
+    ghostty_render_state_row_iterator_new(nullptr, &iterator);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
+
+    GhosttyRenderStateRowCells cells;
+    ghostty_render_state_row_cells_new(nullptr, &cells);
+
+    int rowIdx = 0;
+    bool found = false;
+    while (ghostty_render_state_row_iterator_next(iterator)) {
+        if (rowIdx == row) {
+            ghostty_render_state_row_get(iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &cells);
+            if (ghostty_render_state_row_cells_select(cells, col) == GHOSTTY_SUCCESS) {
+                // Background color
+                GhosttyColorRgb cellBg;
+                out.bgColor = defaultBg;
+                if (ghostty_render_state_row_cells_get(
+                        cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR,
+                        &cellBg) == GHOSTTY_SUCCESS) {
+                    out.bgColor = QColor(cellBg.r, cellBg.g, cellBg.b);
+                }
+
+                // Graphemes
+                out.graphemesLen = 0;
+                ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
+                    &out.graphemesLen);
+                if (out.graphemesLen > 0 && out.graphemesLen <= 128) {
+                    ghostty_render_state_row_cells_get(
+                        cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
+                        out.graphemes);
+                }
+
+                // Style
+                out.style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+                ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE, &out.style);
+
+                out.valid = true;
+                found = true;
+            }
+            break;
+        }
+        rowIdx++;
+    }
+
+    ghostty_render_state_row_cells_free(cells);
+    ghostty_render_state_row_iterator_free(iterator);
+    return found;
+}
+
+void TerminalView::drawBlockCursorText(QPainter *painter, int px, int py,
+                                       GhosttyRenderState state, const QColor &bgColor,
+                                       const QColor & /* fgColor */)
+{
+    // Try cached cursor cell first (populated during renderCellGrid)
+    if (m_cachedCursor.valid && m_cachedCursor.graphemesLen > 0) {
+        QString text = QString::fromUcs4(m_cachedCursor.graphemes, m_cachedCursor.graphemesLen);
+        painter->setFont(fontForStyle(m_cachedCursor.style));
+        painter->setPen(m_cachedCursor.bgColor); // use cell's actual bg as text color
+        painter->drawText(QPointF(px, py + painter->fontMetrics().ascent()), text);
+        return;
+    }
+
+    // Fallback: O(rows) lookup if cursor wasn't in the rendered viewport
+    uint16_t cx = 0, cy = 0;
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X, &cx);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &cy);
+
+    CellData cell;
+    if (readCellAt(state, cx, cy, bgColor, cell) && cell.graphemesLen > 0 && cell.graphemesLen <= 128) {
+        QString text = QString::fromUcs4(cell.graphemes, cell.graphemesLen);
+        painter->setFont(fontForStyle(cell.style));
+        painter->setPen(cell.bgColor);
+        painter->drawText(QPointF(px, py + painter->fontMetrics().ascent()), text);
+    } else if (cell.valid && cell.graphemesLen > 128) {
+        painter->setFont(fontForStyle(cell.style));
+        painter->setPen(cell.bgColor);
+        painter->drawText(QPointF(px, py + painter->fontMetrics().ascent()),
+                          QStringLiteral("\u2468"));
+    }
+}
+
+void TerminalView::drawCursor(QPainter *painter, GhosttyRenderState state,
+                              const GhosttyRenderStateColors &colors,
+                              const QColor &fgColor)
+{
+    bool cursorVisible = false;
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE,
+                             &cursorVisible);
+
+    bool cursorInViewport = false;
+    ghostty_render_state_get(state,
+                             GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
+                             &cursorInViewport);
+
+    if (!cursorVisible || !cursorInViewport || !m_cursorBlinkVisible)
+        return;
+
+    uint16_t cx = 0, cy = 0;
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X, &cx);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &cy);
+
+    GhosttyRenderStateCursorVisualStyle cursorStyle;
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE,
+                             &cursorStyle);
+
+    int px = cx * m_cellWidth;
+    int py = cy * m_cellHeight + TopPadding;
+
+    QColor cursorColor = QColor(colors.cursor.r, colors.cursor.g, colors.cursor.b);
+    if (!colors.cursor_has_value)
+        cursorColor = fgColor;
+
+    QColor bgColor(colors.background.r, colors.background.g, colors.background.b);
+
+    switch (cursorStyle) {
+    case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK:
+        // Draw cursor background, then redraw the cell text on top
+        // with inverted colors (background becomes foreground)
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(cursorColor);
+        painter->drawRect(px, py, m_cellWidth, m_cellHeight);
+        drawBlockCursorText(painter, px, py, state, bgColor, fgColor);
+        break;
+    case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BAR:
+        painter->setPen(QPen(cursorColor, 2));
+        painter->drawLine(px, py, px, py + m_cellHeight);
+        break;
+    case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_UNDERLINE:
+        painter->setPen(QPen(cursorColor, 2));
+        painter->drawLine(px, py + m_cellHeight - 1,
+                          px + m_cellWidth, py + m_cellHeight - 1);
+        break;
+    case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW:
+        painter->setPen(QPen(cursorColor, 1));
+        painter->setBrush(Qt::NoBrush);
+        painter->drawRect(px, py, m_cellWidth - 1, m_cellHeight - 1);
+        break;
+    default:
+        break;
+    }
+}
+
+void TerminalView::renderCellGrid(QPainter *painter, GhosttyRenderState state,
+                                  const QColor &bgColor, const QColor &fgColor)
+{
     // Iterate rows
     GhosttyRenderStateRowIterator iterator;
     ghostty_render_state_row_iterator_new(nullptr, &iterator);
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
-                             &iterator);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
 
     GhosttyRenderStateRowCells cells;
     ghostty_render_state_row_cells_new(nullptr, &cells);
@@ -515,8 +645,8 @@ void TerminalView::renderCells(QPainter *painter)
 
             // Draw cell background (only if different from default)
             if (cellBgColor != bgColor) {
-                imgPainter.fillRect(x, y, m_cellWidth, m_cellHeight,
-                                    cellBgColor);
+                painter->fillRect(x, y, m_cellWidth, m_cellHeight,
+                                  cellBgColor);
             }
 
             // Cell foreground color
@@ -544,7 +674,7 @@ void TerminalView::renderCells(QPainter *painter)
                     // Cache cursor cell data for block cursor rendering
                     if (wantCursorCache && rowIdx == cacheCy && colIdx == cacheCx) {
                         std::memcpy(m_cachedCursor.graphemes, buf, graphemesLen * sizeof(uint32_t));
-                        m_cachedCursor.graphemesLen = static_cast<int>(graphemesLen);
+                        m_cachedCursor.graphemesLen = graphemesLen;
                         m_cachedCursor.style = GHOSTTY_INIT_SIZED(GhosttyStyle);
                         ghostty_render_state_row_cells_get(
                             cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
@@ -560,21 +690,21 @@ void TerminalView::renderCells(QPainter *painter)
                         cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
                         &style);
 
-                    imgPainter.setFont(fontForStyle(style));
+                    painter->setFont(fontForStyle(style));
 
-                    imgPainter.setPen(cellFgColor);
-                    imgPainter.drawText(QPointF(x, y + imgPainter.fontMetrics().ascent()),
-                                        text);
+                    painter->setPen(cellFgColor);
+                    painter->drawText(QPointF(x, y + painter->fontMetrics().ascent()),
+                                      text);
 
-                    // L2: Draw underline
+                    // Draw underline
                     if (style.underline) {
                         int underlineY = y + m_cellHeight - 2;
-                        imgPainter.drawLine(x, underlineY, x + m_cellWidth, underlineY);
+                        painter->drawLine(x, underlineY, x + m_cellWidth, underlineY);
                     }
-                    // L2: Draw strikethrough
+                    // Draw strikethrough
                     if (style.strikethrough) {
                         int strikeY = y + m_cellHeight / 2;
-                        imgPainter.drawLine(x, strikeY, x + m_cellWidth, strikeY);
+                        painter->drawLine(x, strikeY, x + m_cellWidth, strikeY);
                     }
                 } else {
                     // Grapheme cluster too complex for buffer — render placeholder
@@ -582,10 +712,10 @@ void TerminalView::renderCells(QPainter *painter)
                     ghostty_render_state_row_cells_get(
                         cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
                         &style);
-                    imgPainter.setFont(fontForStyle(style));
-                    imgPainter.setPen(cellFgColor);
-                    imgPainter.drawText(QPointF(x, y + imgPainter.fontMetrics().ascent()),
-                                        QStringLiteral("\u2468"));
+                    painter->setFont(fontForStyle(style));
+                    painter->setPen(cellFgColor);
+                    painter->drawText(QPointF(x, y + painter->fontMetrics().ascent()),
+                                      QStringLiteral("\u2468"));
                 }
             }
 
@@ -599,142 +729,25 @@ void TerminalView::renderCells(QPainter *painter)
 
     ghostty_render_state_row_cells_free(cells);
     ghostty_render_state_row_iterator_free(iterator);
+}
 
-    // Draw cursor
-    bool cursorVisible = false;
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE,
-                             &cursorVisible);
+void TerminalView::drawShellExitOverlay()
+{
+    if (!m_shellExited)
+        return;
 
-    bool cursorInViewport = false;
-    ghostty_render_state_get(state,
-                             GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
-                             &cursorInViewport);
+    QPainter overlayPainter(&m_image);
+    overlayPainter.setPen(Qt::NoPen);
+    overlayPainter.setBrush(QColor(0, 0, 0, 180));
+    overlayPainter.drawRect(m_image.rect());
 
-    if (cursorVisible && cursorInViewport && m_cursorBlinkVisible) {
-        uint16_t cx = 0, cy = 0;
-        ghostty_render_state_get(state,
-                                 GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X,
-                                 &cx);
-        ghostty_render_state_get(state,
-                                 GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y,
-                                 &cy);
-
-        GhosttyRenderStateCursorVisualStyle cursorStyle;
-        ghostty_render_state_get(state,
-                                 GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE,
-                                 &cursorStyle);
-
-        int px = cx * m_cellWidth;
-        int py = cy * m_cellHeight + TopPadding;
-
-        QColor cursorColor = QColor(colors.cursor.r, colors.cursor.g,
-                                    colors.cursor.b);
-        if (!colors.cursor_has_value)
-            cursorColor = fgColor;
-
-        switch (cursorStyle) {
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK:
-            // Draw cursor background, then redraw the cell text on top
-            // with inverted colors (background becomes foreground)
-            imgPainter.setPen(Qt::NoPen);
-            imgPainter.setBrush(cursorColor);
-            imgPainter.drawRect(px, py, m_cellWidth, m_cellHeight);
-            // Redraw text on top of cursor with background color as pen
-            {
-                if (m_cachedCursor.valid) {
-                    if (m_cachedCursor.graphemesLen > 0) {
-                        QString ctext = QString::fromUcs4(m_cachedCursor.graphemes, m_cachedCursor.graphemesLen);
-                        imgPainter.setFont(fontForStyle(m_cachedCursor.style));
-                        imgPainter.setPen(m_cachedCursor.bgColor); // use cell's actual bg as text color
-                        imgPainter.drawText(QPointF(px, py + imgPainter.fontMetrics().ascent()), ctext);
-                    }
-                } else {
-                    // Fallback: O(rows) lookup if cursor wasn't in the rendered viewport
-                    GhosttyRenderStateRowIterator ci;
-                    ghostty_render_state_row_iterator_new(nullptr, &ci);
-                    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &ci);
-                    GhosttyRenderStateRowCells cc;
-                    ghostty_render_state_row_cells_new(nullptr, &cc);
-                    uint16_t rowIdx = 0;
-                    while (ghostty_render_state_row_iterator_next(ci)) {
-                        if (rowIdx == cy) {
-                            ghostty_render_state_row_get(ci, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &cc);
-                            if (ghostty_render_state_row_cells_select(cc, cx) == GHOSTTY_SUCCESS) {
-                                GhosttyColorRgb cursorCellBg;
-                                QColor cursorCellBgColor = bgColor;
-                                if (ghostty_render_state_row_cells_get(
-                                        cc, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR,
-                                        &cursorCellBg) == GHOSTTY_SUCCESS) {
-                                    cursorCellBgColor = QColor(cursorCellBg.r, cursorCellBg.g, cursorCellBg.b);
-                                }
-                                uint32_t clen = 0;
-                                ghostty_render_state_row_cells_get(cc, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &clen);
-                                if (clen > 0 && clen <= 128) {
-                                    uint32_t cbuf[128];
-                                    ghostty_render_state_row_cells_get(cc, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, cbuf);
-                                    QString ctext = QString::fromUcs4(cbuf, clen);
-                                    GhosttyStyle cstyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
-                                    ghostty_render_state_row_cells_get(cc, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE, &cstyle);
-                                    imgPainter.setFont(fontForStyle(cstyle));
-                                    imgPainter.setPen(cursorCellBgColor);
-                                    imgPainter.drawText(QPointF(px, py + imgPainter.fontMetrics().ascent()), ctext);
-                                } else if (clen > 128) {
-                                    GhosttyStyle cstyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
-                                    ghostty_render_state_row_cells_get(cc, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE, &cstyle);
-                                    imgPainter.setFont(fontForStyle(cstyle));
-                                    imgPainter.setPen(cursorCellBgColor);
-                                    imgPainter.drawText(QPointF(px, py + imgPainter.fontMetrics().ascent()),
-                                                        QStringLiteral("\u2468"));
-                                }
-                            }
-                            break;
-                        }
-                        rowIdx++;
-                    }
-                    ghostty_render_state_row_cells_free(cc);
-                    ghostty_render_state_row_iterator_free(ci);
-                }
-            }
-            break;
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BAR:
-            imgPainter.setPen(QPen(cursorColor, 2));
-            imgPainter.drawLine(px, py, px, py + m_cellHeight);
-            break;
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_UNDERLINE:
-            imgPainter.setPen(QPen(cursorColor, 2));
-            imgPainter.drawLine(px, py + m_cellHeight - 1,
-                                px + m_cellWidth, py + m_cellHeight - 1);
-            break;
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW:
-            imgPainter.setPen(QPen(cursorColor, 1));
-            imgPainter.setBrush(Qt::NoBrush);
-            imgPainter.drawRect(px, py, m_cellWidth - 1, m_cellHeight - 1);
-            break;
-        default:
-            break;
-        }
-    }
-
-    // End imgPainter before starting overlay on the same QImage
-    imgPainter.end();
-
-    // Draw shell exit overlay onto the image (persists across repaints)
-    if (m_shellExited) {
-        QPainter overlayPainter(&m_image);
-        overlayPainter.setPen(Qt::NoPen);
-        overlayPainter.setBrush(QColor(0, 0, 0, 180));
-        overlayPainter.drawRect(m_image.rect());
-
-        overlayPainter.setPen(Qt::white);
-        QFont overlayFont(QStringLiteral("DejaVu Sans Mono"), 14);
-        overlayPainter.setFont(overlayFont);
-        QString msg = tr("Shell exited with code %1\n\nTap to restart").arg(m_shellExitCode);
-        overlayPainter.drawText(QRectF(0, 0, width(), height()),
-                                Qt::AlignCenter | Qt::TextWordWrap, msg);
-        overlayPainter.end();
-    }
-
-    painter->drawImage(0, 0, m_image);
+    overlayPainter.setPen(Qt::white);
+    QFont overlayFont(QStringLiteral("DejaVu Sans Mono"), 14);
+    overlayPainter.setFont(overlayFont);
+    QString msg = tr("Shell exited with code %1\n\nTap to restart").arg(m_shellExitCode);
+    overlayPainter.drawText(QRectF(0, 0, width(), height()),
+                            Qt::AlignCenter | Qt::TextWordWrap, msg);
+    overlayPainter.end();
 }
 
 void TerminalView::renderMagnifier(QPainter *painter)
@@ -832,28 +845,28 @@ void TerminalView::paste()
 
     QByteArray utf8 = text.toUtf8();
 
-    // H2: ghostty_paste_encode modifies data in place. Use a copy for the
+    // ghostty_paste_encode modifies data in place. Use a copy for the
     // sizing call, then a fresh copy for the actual encode to avoid
     // double-processing of already-mutated data.
-    QByteArray input = utf8;
+    QByteArray sizingCopy = utf8;
 
     // First call: query required size (pass nullptr buffer)
     size_t written = 0;
-    GhosttyResult res = ghostty_paste_encode(input.data(), input.size(), true,
+    GhosttyResult res = ghostty_paste_encode(sizingCopy.data(), sizingCopy.size(), true,
                                              nullptr, 0, &written);
     if (res == GHOSTTY_OUT_OF_SPACE && written > 0) {
-        // Second call with correctly sized buffer — use FRESH copy
-        QByteArray safeInput = utf8;
+        // Second call with correctly sized buffer — use fresh copy
+        QByteArray encodeCopy = utf8;
         QByteArray buf(written, '\0');
-        res = ghostty_paste_encode(safeInput.data(), safeInput.size(), true,
+        res = ghostty_paste_encode(encodeCopy.data(), encodeCopy.size(), true,
                                    buf.data(), buf.size(), &written);
         if (res == GHOSTTY_SUCCESS && written > 0) {
             m_pty->writeData(buf.constData(), written);
             return;
         }
     } else if (res == GHOSTTY_SUCCESS && written > 0) {
-        // Data was small enough to encode in-place (input already mutated)
-        m_pty->writeData(input.constData(), written);
+        // Data was small enough to encode in-place (sizingCopy already mutated)
+        m_pty->writeData(sizingCopy.constData(), written);
         return;
     }
 
@@ -928,18 +941,7 @@ void TerminalView::copySelection()
 
     // Trim trailing whitespace from each line, remove trailing empty lines.
     // Preserve leading whitespace (indentation is significant).
-    QStringList lines = text.split(QLatin1Char('\n'));
-    for (int i = 0; i < lines.size(); i++) {
-        QString &line = lines[i];
-        int end = line.size();
-        while (end > 0 && line.at(end - 1).isSpace())
-            end--;
-        line.resize(end);
-    }
-    while (!lines.isEmpty() && lines.last().isEmpty())
-        lines.removeLast();
-
-    QString result = lines.join(QLatin1Char('\n'));
+    QString result = TextUtil::trimSelectionText(text);
     if (!result.isEmpty()) {
         QClipboard *clipboard = QGuiApplication::clipboard();
         clipboard->setText(result, QClipboard::Clipboard);
@@ -1000,12 +1002,9 @@ void TerminalView::updateFontMetrics()
 
 void TerminalView::sendKey(int qtKey, int modifiers)
 {
-    // Reset cursor blink on keybar button press
-    m_cursorBlinkVisible = true;
-    m_lastInputTime.start();
-    clearSelection();
+    resetBlinkOnInput();
 
-    GhosttyKey key = mapQtKey(qtKey);
+    GhosttyKey key = KeyMapping::mapQtKey(qtKey);
     // Accept GhosttyMods directly (not Qt modifier values)
     sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS, static_cast<GhosttyMods>(modifiers), QString());
     m_needsRender = true;
@@ -1014,13 +1013,7 @@ void TerminalView::sendKey(int qtKey, int modifiers)
 
 QPointF TerminalView::cellFromPixel(const QPointF &pos) const
 {
-    if (m_cellWidth <= 0 || m_cellHeight <= 0)
-        return QPointF(-1, -1);
-    int col = static_cast<int>(pos.x()) / m_cellWidth;
-    int row = static_cast<int>(pos.y() - TopPadding) / m_cellHeight;
-    if (col < 0 || col >= m_cols || row < 0 || row >= m_rows)
-        return QPointF(-1, -1);
-    return QPointF(col, row);
+    return TextUtil::cellFromPixel(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, TopPadding);
 }
 
 void TerminalView::clearSelection()
@@ -1087,14 +1080,8 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
 
         if (m_mouseTrackingActive) {
             // Forward mouse press to the terminal as an escape sequence
-            QByteArray encoded = m_vt->encodeMouseEvent(
-                GHOSTTY_MOUSE_ACTION_PRESS,
-                GHOSTTY_MOUSE_BUTTON_LEFT,
-                static_cast<float>(event->pos().x()),
-                static_cast<float>(event->pos().y()),
-                mapQtModifiers(event->modifiers()));
-            if (!encoded.isEmpty())
-                m_pty->writeData(encoded.constData(), encoded.size());
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, GHOSTTY_MOUSE_BUTTON_LEFT,
+                           event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
 
             // Tell encoder a button is pressed (enables motion events)
             m_mouseButtonPressed = true;
@@ -1133,14 +1120,8 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
         // Forward mouse motion to the terminal (including hover without button)
         GhosttyMouseButton btn = m_mouseButtonPressed
             ? GHOSTTY_MOUSE_BUTTON_LEFT : GHOSTTY_MOUSE_BUTTON_UNKNOWN;
-        QByteArray encoded = m_vt->encodeMouseEvent(
-            GHOSTTY_MOUSE_ACTION_MOTION,
-            btn,
-            static_cast<float>(event->pos().x()),
-            static_cast<float>(event->pos().y()),
-            mapQtModifiers(event->modifiers()));
-        if (!encoded.isEmpty())
-            m_pty->writeData(encoded.constData(), encoded.size());
+        sendMouseEvent(GHOSTTY_MOUSE_ACTION_MOTION, btn,
+                       event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
         event->accept();
         return;
     }
@@ -1157,14 +1138,8 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
 
     if (m_mouseTrackingActive) {
         // Forward mouse release to the terminal
-        QByteArray encoded = m_vt->encodeMouseEvent(
-            GHOSTTY_MOUSE_ACTION_RELEASE,
-            GHOSTTY_MOUSE_BUTTON_LEFT,
-            static_cast<float>(event->pos().x()),
-            static_cast<float>(event->pos().y()),
-            mapQtModifiers(event->modifiers()));
-        if (!encoded.isEmpty())
-            m_pty->writeData(encoded.constData(), encoded.size());
+        sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
+                       event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
 
         // No more buttons pressed
         m_mouseButtonPressed = false;
@@ -1199,23 +1174,11 @@ void TerminalView::wheelEvent(QWheelEvent *event)
     // When mouse tracking is active, forward scroll as mouse buttons 4/5
     if (m_vt->isMouseTracking()) {
         int delta = event->angleDelta().y();
+        GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
         GhosttyMouseButton button = (delta > 0) ? GHOSTTY_MOUSE_BUTTON_FOUR
                                                  : GHOSTTY_MOUSE_BUTTON_FIVE;
-        QByteArray encoded = m_vt->encodeMouseEvent(
-            GHOSTTY_MOUSE_ACTION_PRESS, button,
-            static_cast<float>(event->pos().x()),
-            static_cast<float>(event->pos().y()),
-            mapQtModifiers(event->modifiers()));
-        if (!encoded.isEmpty())
-            m_pty->writeData(encoded.constData(), encoded.size());
-        // Also send release
-        encoded = m_vt->encodeMouseEvent(
-            GHOSTTY_MOUSE_ACTION_RELEASE, button,
-            static_cast<float>(event->pos().x()),
-            static_cast<float>(event->pos().y()),
-            mapQtModifiers(event->modifiers()));
-        if (!encoded.isEmpty())
-            m_pty->writeData(encoded.constData(), encoded.size());
+        sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, button, event->pos(), mods);
+        sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, button, event->pos(), mods);
         event->accept();
         return;
     }
@@ -1226,14 +1189,9 @@ void TerminalView::wheelEvent(QWheelEvent *event)
 
     // Accumulate fractional scroll lines so sub-line deltas aren't lost
     qreal newDelta = -static_cast<qreal>(delta) / 40.0;
-    // Reset accumulator on direction change
-    if (m_scrollAccumulator != 0 &&
-        (m_scrollAccumulator > 0) != (newDelta > 0)) {
-        m_scrollAccumulator = 0;
-    }
-    m_scrollAccumulator += newDelta;
-    int lines = static_cast<int>(m_scrollAccumulator);
-    m_scrollAccumulator -= lines;
+    auto scrollResult = TextUtil::accumulateScroll(m_scrollAccumulator, newDelta);
+    m_scrollAccumulator = scrollResult.accumulator;
+    int lines = scrollResult.lines;
 
     if (lines != 0) {
         // Ghostty scroll: negative delta = scroll up (toward scrollback)
@@ -1278,14 +1236,9 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
             // Accumulate fractional scroll lines so sub-line deltas aren't lost
             qreal newDelta = -deltaY / m_cellHeight;
-            // Reset accumulator on direction change
-            if (m_touchScrollAccumulator != 0 &&
-                (m_touchScrollAccumulator > 0) != (newDelta > 0)) {
-                m_touchScrollAccumulator = 0;
-            }
-            m_touchScrollAccumulator += newDelta;
-            int lines = static_cast<int>(m_touchScrollAccumulator);
-            m_touchScrollAccumulator -= lines;
+            auto touchScrollResult = TextUtil::accumulateScroll(m_touchScrollAccumulator, newDelta);
+            m_touchScrollAccumulator = touchScrollResult.accumulator;
+            int lines = touchScrollResult.lines;
 
             if (lines != 0) {
                 GhosttyTerminalScrollViewport scroll = {};
@@ -1347,15 +1300,15 @@ void TerminalView::timerEvent(QTimerEvent *event)
         }
 
         // Blink cursor by default. Only stop when terminal explicitly requests
-        // a steady cursor (DECSCUSR mode 2 or 6).
+        // a steady cursor (DECSCUSR mode 2, 4, or 6).
         GhosttyRenderState state = m_vt ? m_vt->renderState() : nullptr;
-        bool steadyCursor = false;
+        bool cursorBlinking = true;
         if (state) {
             ghostty_render_state_get(state,
                                      GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING,
-                                     &steadyCursor);
+                                     &cursorBlinking);
         }
-        if (!steadyCursor) {
+        if (cursorBlinking) {
             m_cursorBlinkVisible = !m_cursorBlinkVisible;
             m_needsRender = true;
             update();
@@ -1377,15 +1330,29 @@ void TerminalView::sendKeyEvent(GhosttyKey key, GhosttyKeyAction action,
         m_pty->writeData(encoded.constData(), encoded.size());
 }
 
-void TerminalView::keyPressEvent(QKeyEvent *event)
+void TerminalView::sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
+                                  const QPointF &pos, GhosttyMods mods)
 {
-    // Reset cursor blink on key input — cursor stays visible while typing
+    QByteArray encoded = m_vt->encodeMouseEvent(
+        action, button,
+        static_cast<float>(pos.x()), static_cast<float>(pos.y()), mods);
+    if (!encoded.isEmpty())
+        m_pty->writeData(encoded.constData(), encoded.size());
+}
+
+void TerminalView::resetBlinkOnInput()
+{
     m_cursorBlinkVisible = true;
     m_lastInputTime.start();
     clearSelection();
+}
 
-    GhosttyKey key = mapQtKey(event->key());
-    GhosttyMods mods = mapQtModifiers(event->modifiers());
+void TerminalView::keyPressEvent(QKeyEvent *event)
+{
+    resetBlinkOnInput();
+
+    GhosttyKey key = KeyMapping::mapQtKey(event->key());
+    GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
 
     // Handle Ctrl+Shift+C = copy, Ctrl+Shift+V = paste
     if (mods & GHOSTTY_MODS_CTRL && mods & GHOSTTY_MODS_SHIFT) {
@@ -1411,112 +1378,24 @@ void TerminalView::keyReleaseEvent(QKeyEvent *event)
         return;
     }
 
-    GhosttyKey key = mapQtKey(event->key());
-    GhosttyMods mods = mapQtModifiers(event->modifiers());
+    GhosttyKey key = KeyMapping::mapQtKey(event->key());
+    GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
     sendKeyEvent(key, GHOSTTY_KEY_ACTION_RELEASE, mods, event->text());
     event->accept();
 }
 
-GhosttyKey TerminalView::mapQtKey(int qtKey) const
+QString TerminalView::workingDirectory() const
 {
-    switch (qtKey) {
-    // Letters
-    case Qt::Key_A: return GHOSTTY_KEY_A;
-    case Qt::Key_B: return GHOSTTY_KEY_B;
-    case Qt::Key_C: return GHOSTTY_KEY_C;
-    case Qt::Key_D: return GHOSTTY_KEY_D;
-    case Qt::Key_E: return GHOSTTY_KEY_E;
-    case Qt::Key_F: return GHOSTTY_KEY_F;
-    case Qt::Key_G: return GHOSTTY_KEY_G;
-    case Qt::Key_H: return GHOSTTY_KEY_H;
-    case Qt::Key_I: return GHOSTTY_KEY_I;
-    case Qt::Key_J: return GHOSTTY_KEY_J;
-    case Qt::Key_K: return GHOSTTY_KEY_K;
-    case Qt::Key_L: return GHOSTTY_KEY_L;
-    case Qt::Key_M: return GHOSTTY_KEY_M;
-    case Qt::Key_N: return GHOSTTY_KEY_N;
-    case Qt::Key_O: return GHOSTTY_KEY_O;
-    case Qt::Key_P: return GHOSTTY_KEY_P;
-    case Qt::Key_Q: return GHOSTTY_KEY_Q;
-    case Qt::Key_R: return GHOSTTY_KEY_R;
-    case Qt::Key_S: return GHOSTTY_KEY_S;
-    case Qt::Key_T: return GHOSTTY_KEY_T;
-    case Qt::Key_U: return GHOSTTY_KEY_U;
-    case Qt::Key_V: return GHOSTTY_KEY_V;
-    case Qt::Key_W: return GHOSTTY_KEY_W;
-    case Qt::Key_X: return GHOSTTY_KEY_X;
-    case Qt::Key_Y: return GHOSTTY_KEY_Y;
-    case Qt::Key_Z: return GHOSTTY_KEY_Z;
+    if (!m_pty || m_pty->childPid() <= 0)
+        return QString(); // Shell not running — return empty so caller can use cached value
 
-    // Digits
-    case Qt::Key_0: return GHOSTTY_KEY_DIGIT_0;
-    case Qt::Key_1: return GHOSTTY_KEY_DIGIT_1;
-    case Qt::Key_2: return GHOSTTY_KEY_DIGIT_2;
-    case Qt::Key_3: return GHOSTTY_KEY_DIGIT_3;
-    case Qt::Key_4: return GHOSTTY_KEY_DIGIT_4;
-    case Qt::Key_5: return GHOSTTY_KEY_DIGIT_5;
-    case Qt::Key_6: return GHOSTTY_KEY_DIGIT_6;
-    case Qt::Key_7: return GHOSTTY_KEY_DIGIT_7;
-    case Qt::Key_8: return GHOSTTY_KEY_DIGIT_8;
-    case Qt::Key_9: return GHOSTTY_KEY_DIGIT_9;
-
-    // Special keys
-    case Qt::Key_Return:
-    case Qt::Key_Enter:    return GHOSTTY_KEY_ENTER;
-    case Qt::Key_Backspace: return GHOSTTY_KEY_BACKSPACE;
-    case Qt::Key_Tab:      return GHOSTTY_KEY_TAB;
-    case Qt::Key_Escape:   return GHOSTTY_KEY_ESCAPE;
-    case Qt::Key_Space:    return GHOSTTY_KEY_SPACE;
-    case Qt::Key_Delete:   return GHOSTTY_KEY_DELETE;
-    case Qt::Key_Insert:   return GHOSTTY_KEY_INSERT;
-    case Qt::Key_Home:     return GHOSTTY_KEY_HOME;
-    case Qt::Key_End:      return GHOSTTY_KEY_END;
-    case Qt::Key_PageUp:   return GHOSTTY_KEY_PAGE_UP;
-    case Qt::Key_PageDown: return GHOSTTY_KEY_PAGE_DOWN;
-
-    // Arrow keys
-    case Qt::Key_Up:    return GHOSTTY_KEY_ARROW_UP;
-    case Qt::Key_Down:  return GHOSTTY_KEY_ARROW_DOWN;
-    case Qt::Key_Left:  return GHOSTTY_KEY_ARROW_LEFT;
-    case Qt::Key_Right: return GHOSTTY_KEY_ARROW_RIGHT;
-
-    // Function keys
-    case Qt::Key_F1:  return GHOSTTY_KEY_F1;
-    case Qt::Key_F2:  return GHOSTTY_KEY_F2;
-    case Qt::Key_F3:  return GHOSTTY_KEY_F3;
-    case Qt::Key_F4:  return GHOSTTY_KEY_F4;
-    case Qt::Key_F5:  return GHOSTTY_KEY_F5;
-    case Qt::Key_F6:  return GHOSTTY_KEY_F6;
-    case Qt::Key_F7:  return GHOSTTY_KEY_F7;
-    case Qt::Key_F8:  return GHOSTTY_KEY_F8;
-    case Qt::Key_F9:  return GHOSTTY_KEY_F9;
-    case Qt::Key_F10: return GHOSTTY_KEY_F10;
-    case Qt::Key_F11: return GHOSTTY_KEY_F11;
-    case Qt::Key_F12: return GHOSTTY_KEY_F12;
-
-    // Punctuation
-    case Qt::Key_Minus:       return GHOSTTY_KEY_MINUS;
-    case Qt::Key_Equal:       return GHOSTTY_KEY_EQUAL;
-    case Qt::Key_BracketLeft: return GHOSTTY_KEY_BRACKET_LEFT;
-    case Qt::Key_BracketRight: return GHOSTTY_KEY_BRACKET_RIGHT;
-    case Qt::Key_Backslash:   return GHOSTTY_KEY_BACKSLASH;
-    case Qt::Key_Semicolon:   return GHOSTTY_KEY_SEMICOLON;
-    case Qt::Key_Apostrophe:  return GHOSTTY_KEY_QUOTE;
-    case Qt::Key_Comma:       return GHOSTTY_KEY_COMMA;
-    case Qt::Key_Period:      return GHOSTTY_KEY_PERIOD;
-    case Qt::Key_Slash:       return GHOSTTY_KEY_SLASH;
-    case Qt::Key_QuoteLeft:   return GHOSTTY_KEY_BACKQUOTE;
-
-    default: return GHOSTTY_KEY_UNIDENTIFIED;
-    }
+    QString procPath = QStringLiteral("/proc/%1/cwd").arg(m_pty->childPid());
+    QString target = QFileInfo(procPath).symLinkTarget();
+    return target; // Empty if /proc unavailable or process exited
 }
 
-GhosttyMods TerminalView::mapQtModifiers(Qt::KeyboardModifiers mods) const
+void TerminalView::setWorkingDirectory(const QString &dir)
 {
-    GhosttyMods result = 0;
-    if (mods & Qt::ShiftModifier)   result |= GHOSTTY_MODS_SHIFT;
-    if (mods & Qt::ControlModifier) result |= GHOSTTY_MODS_CTRL;
-    if (mods & Qt::AltModifier)     result |= GHOSTTY_MODS_ALT;
-    if (mods & Qt::MetaModifier)    result |= GHOSTTY_MODS_SUPER;
-    return result;
+    if (m_pty)
+        m_pty->setWorkingDirectory(dir);
 }

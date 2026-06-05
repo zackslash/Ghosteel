@@ -1,0 +1,24 @@
+#ifndef QMLLISTPROPERTY_STUB_H
+#define QMLLISTPROPERTY_STUB_H
+
+// Minimal QQmlListProperty stub for test builds without Qt5Qml.
+// Only provides the constructor and accessors used by SessionManager.
+
+template <typename T>
+class QQmlListProperty
+{
+public:
+    using CountFunction = int (*)(QQmlListProperty *);
+    using AtFunction = T *(*)(QQmlListProperty *, int);
+
+    QQmlListProperty() : object(nullptr), m_data(nullptr), m_count(nullptr), m_at(nullptr) {}
+    QQmlListProperty(QObject *obj, void *data, CountFunction count, AtFunction at)
+        : object(obj), m_data(data), m_count(count), m_at(at) {}
+
+    QObject *object;
+    void *m_data = nullptr;
+    CountFunction m_count;
+    AtFunction m_at;
+};
+
+#endif // QMLLISTPROPERTY_STUB_H

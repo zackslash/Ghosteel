@@ -22,9 +22,31 @@ jobs:
           fi
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
 
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Qt5 dev packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qtbase5-dev qt5-qmake cmake build-essential
+
+      - name: Build tests
+        run: |
+          cd tests
+          cmake -B build
+          cmake --build build -j$(nproc)
+
+      - name: Run tests
+        run: |
+          cd tests/build
+          ctest --output-on-failure
+
   build:
     name: Build (${{ matrix.arch }})
-    needs: validate
+    needs: [validate, test]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
