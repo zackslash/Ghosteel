@@ -5,6 +5,9 @@
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QDir>
+#include <QLocalSocket>
+#include <QWindow>
+#include <QGuiApplication>
 
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(
@@ -108,6 +111,12 @@ TerminalView* SessionManager::createSession()
 
     int index = m_sessions.size();
     m_sessions.append(info);
+
+    // Route this view's notifications through the aggregated signal
+    connect(view, &TerminalView::desktopNotification, this,
+            [this, sessionId = info.id](const QString &summary, const QString &body) {
+        Q_EMIT desktopNotification(sessionId, summary, body);
+    });
 
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionsChanged();
@@ -290,6 +299,106 @@ void SessionManager::removeSessionById(int id)
     }
 }
 
+int SessionManager::sessionIndexById(int id) const
+{
+    for (int i = 0; i < m_sessions.size(); i++) {
+        if (m_sessions[i].id == id)
+            return i;
+    }
+    return -1;
+}
+
+void SessionManager::setDbusRegistered(bool registered)
+{
+    if (m_dbusRegistered == registered)
+        return;
+    m_dbusRegistered = registered;
+    Q_EMIT dbusRegisteredChanged();
+}
+
+QString SessionManager::socketPath()
+{
+    // Use XDG_RUNTIME_DIR directly — safe to call before QGuiApplication exists
+    const QString runtime = QString::fromLocal8Bit(qgetenv("XDG_RUNTIME_DIR"));
+    if (!runtime.isEmpty())
+        return runtime + QStringLiteral("/ghosteel-singleton");
+    return QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation)
+           + QStringLiteral("/ghosteel-singleton");
+}
+
+bool SessionManager::checkSingleInstance()
+{
+    QLocalSocket socket;
+    socket.connectToServer(socketPath());
+    if (socket.waitForConnected(500)) {
+        socket.write("raise\n");
+        socket.waitForBytesWritten(1000);
+        socket.disconnectFromServer();
+        return true;
+    }
+    return false;
+}
+
+void SessionManager::startSingleInstanceServer()
+{
+    m_localServer = new QLocalServer(this);
+    if (!m_localServer->listen(socketPath())) {
+        // AddressInUse — either another instance is running (live socket)
+        // or a stale socket file remains from a crash.  Try connecting
+        // to distinguish: if the connect succeeds, the other instance is
+        // alive (shouldn't happen since checkSingleInstance() already
+        // caught it, but handle the race).  If the connect fails, the
+        // socket is stale and we can safely remove it.
+        if (m_localServer->serverError() == QAbstractSocket::AddressInUseError) {
+            QLocalSocket probe;
+            probe.connectToServer(socketPath());
+            if (probe.waitForConnected(200)) {
+                // Live instance exists — this shouldn't happen after
+                // checkSingleInstance(), but be safe.
+                qWarning() << "Ghosteel: Another instance detected via socket probe";
+                delete m_localServer;
+                m_localServer = nullptr;
+                return;
+            }
+            // Stale socket — remove and retry
+            QLocalServer::removeServer(socketPath());
+            if (!m_localServer->listen(socketPath())) {
+                qWarning() << "Ghosteel: Single-instance server failed:" << m_localServer->errorString();
+                delete m_localServer;
+                m_localServer = nullptr;
+                return;
+            }
+        } else {
+            qWarning() << "Ghosteel: Single-instance server failed:" << m_localServer->errorString();
+            delete m_localServer;
+            m_localServer = nullptr;
+            return;
+        }
+    }
+    connect(m_localServer, &QLocalServer::newConnection,
+            this, &SessionManager::onNewInstanceConnection);
+}
+
+void SessionManager::onNewInstanceConnection()
+{
+    QLocalSocket *socket = m_localServer->nextPendingConnection();
+    if (!socket) return;
+
+    // Read data in the disconnected handler — by then all bytes are
+    // guaranteed to be in the buffer, avoiding partial-read issues.
+    connect(socket, &QLocalSocket::disconnected, this, [this, socket]() {
+        QByteArray data = socket->readAll();
+        if (data.trimmed() == "raise") {
+            const auto windows = QGuiApplication::topLevelWindows();
+            if (!windows.isEmpty()) {
+                if (auto *window = windows.first())
+                    window->requestActivate();
+            }
+        }
+        socket->deleteLater();
+    });
+}
+
 void SessionManager::saveSessions()
 {
     m_settings.beginGroup(QStringLiteral("sessions"));
@@ -306,6 +415,7 @@ void SessionManager::saveSessions()
         SessionInfo &info = m_sessions[i];
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
         m_settings.beginGroup(group);
+        m_settings.setValue(QStringLiteral("id"), info.id);
         m_settings.setValue(QStringLiteral("name"), info.name);
         // Use live CWD from /proc if shell is running, otherwise use cached value
         if (info.view) {
@@ -354,6 +464,7 @@ bool SessionManager::restoreSessions()
     for (int i = 0; i < count; i++) {
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
         m_settings.beginGroup(group);
+        int savedId = m_settings.value(QStringLiteral("id"), m_nextSessionId).toInt();
         QString name = m_settings.value(QStringLiteral("name"),
                                         tr("Session %1").arg(i + 1)).toString();
         QString workingDir = m_settings.value(QStringLiteral("workingDirectory"),
@@ -374,7 +485,7 @@ bool SessionManager::restoreSessions()
             view->setAutorunCommand(autorun);
 
         SessionInfo info;
-        info.id = m_nextSessionId++;
+        info.id = savedId;
         info.name = name;
         info.cachedWorkingDirectory = workingDir;
         info.autorunCommand = autorun;
@@ -383,6 +494,16 @@ bool SessionManager::restoreSessions()
         info.view = view;
 
         m_sessions.append(info);
+
+        // Route this view's notifications through the aggregated signal
+        connect(view, &TerminalView::desktopNotification, this,
+                [this, sessionId = info.id](const QString &summary, const QString &body) {
+            Q_EMIT desktopNotification(sessionId, summary, body);
+        });
+
+        // Ensure nextSessionId stays ahead of any restored ID
+        if (savedId >= m_nextSessionId)
+            m_nextSessionId = savedId + 1;
 
         Q_EMIT sessionCountChanged();
         Q_EMIT sessionsChanged();

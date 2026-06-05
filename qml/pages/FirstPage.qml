@@ -2,7 +2,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtMultimedia 5.0
 import Nemo.Notifications 1.0
-import harbour.ghosteel 1.0
+import com.zackslash.ghosteel 1.0
 
 Page {
     id: page
@@ -81,9 +81,6 @@ Page {
         t.stickyModifiersChanged.connect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
         t.terminalBell.connect(onTerminalBell)
-        t.desktopNotification.disconnect(onDesktopNotification)
-        t.desktopNotification.connect(onDesktopNotification)
-
         terminal = t
         updateWindowTitle()
     }
@@ -93,7 +90,6 @@ Page {
         t.titleChanged.disconnect(updateWindowTitle)
         t.stickyModifiersChanged.disconnect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
-        t.desktopNotification.disconnect(onDesktopNotification)
         t.visible = false
     }
 
@@ -186,6 +182,25 @@ Page {
             if (index < currentSessionIndex)
                 currentSessionIndex--
         }
+        onDesktopNotification: {
+            terminalNotification.summary = summary
+            terminalNotification.body = body || ""
+            if (SessionManager.dbusRegistered) {
+                terminalNotification.remoteActions = [{
+                    "name": "default",
+                    "displayName": qsTr("Switch to session"),
+                    "icon": "image://theme/icon-m-tabs",
+                    "service": "com.zackslash.ghosteel",
+                    "path": "/com/zackslash/ghosteel",
+                    "iface": "com.zackslash.ghosteel",
+                    "method": "activateSession",
+                    "arguments": [sessionId]
+                }]
+            } else {
+                terminalNotification.remoteActions = []
+            }
+            terminalNotification.publish()
+        }
     }
 
     function updateWindowTitle() {
@@ -222,12 +237,6 @@ Page {
         if (mode === 2 || mode === 3) {
             bellSound.play()
         }
-    }
-
-    function onDesktopNotification(summary, body) {
-        terminalNotification.summary = summary
-        terminalNotification.body = body || ""
-        terminalNotification.publish()
     }
 
     SilicaFlickable {

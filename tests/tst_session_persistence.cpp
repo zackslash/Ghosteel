@@ -47,6 +47,7 @@ private:
                 s.setValue(QStringLiteral("keybarOpen"), sessions[i].at(3));
             if (sessions[i].size() > 4)
                 s.setValue(QStringLiteral("keyboardVisible"), sessions[i].at(4));
+            s.setValue(QStringLiteral("id"), i + 1);
             s.endGroup();
         }
         s.sync();
@@ -873,6 +874,140 @@ private slots:
         TerminalView *view = mgr.createSession();
         QVERIFY(view != nullptr);
         QCOMPARE(mgr.sessionId(2), 12);
+    }
+
+    // --- Session ID persistence tests ---
+
+    void testSessionIdPersistence()
+    {
+        // Write 3 sessions with known IDs
+        writeRawSessions({
+            {"Alpha", QDir::homePath()},
+            {"Beta", QDir::homePath()},
+            {"Gamma", QDir::homePath()}
+        });
+        // Manually set IDs in the settings file
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            s.setValue("id", 10);
+            s.endGroup();
+            s.beginGroup("sessionData/session_1");
+            s.setValue("id", 20);
+            s.endGroup();
+            s.beginGroup("sessionData/session_2");
+            s.setValue("id", 30);
+            s.endGroup();
+            s.beginGroup("sessions");
+            s.setValue("nextId", 31);
+            s.endGroup();
+            s.sync();
+        }
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionCount(), 3);
+        QCOMPARE(mgr.sessionId(0), 10);
+        QCOMPARE(mgr.sessionId(1), 20);
+        QCOMPARE(mgr.sessionId(2), 30);
+    }
+
+    void testSessionIndexById()
+    {
+        writeRawSessions({
+            {"A", QDir::homePath()},
+            {"B", QDir::homePath()},
+            {"C", QDir::homePath()}
+        });
+        // Set known IDs
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0"); s.setValue("id", 5); s.endGroup();
+            s.beginGroup("sessionData/session_1"); s.setValue("id", 10); s.endGroup();
+            s.beginGroup("sessionData/session_2"); s.setValue("id", 15); s.endGroup();
+            s.beginGroup("sessions"); s.setValue("nextId", 16); s.endGroup();
+            s.sync();
+        }
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionIndexById(5), 0);
+        QCOMPARE(mgr.sessionIndexById(10), 1);
+        QCOMPARE(mgr.sessionIndexById(15), 2);
+        QCOMPARE(mgr.sessionIndexById(99), -1);
+        QCOMPARE(mgr.sessionIndexById(-1), -1);
+    }
+
+    void testSessionIndexByIdAfterRemoval()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions(); // initialize
+
+        mgr.createSession(); // id=1, index=0
+        mgr.createSession(); // id=2, index=1
+        mgr.createSession(); // id=3, index=2
+
+        QCOMPARE(mgr.sessionIndexById(1), 0);
+        QCOMPARE(mgr.sessionIndexById(2), 1);
+        QCOMPARE(mgr.sessionIndexById(3), 2);
+
+        // Remove middle session (id=2)
+        mgr.removeSession(1);
+
+        // After removal: id=1 at index 0, id=3 at index 1
+        QCOMPARE(mgr.sessionIndexById(1), 0);
+        QCOMPARE(mgr.sessionIndexById(2), -1); // removed
+        QCOMPARE(mgr.sessionIndexById(3), 1);
+    }
+
+    void testDesktopNotificationSignal()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions(); // initialize
+
+        TerminalView *view1 = mgr.createSession(); // id=1
+        TerminalView *view2 = mgr.createSession(); // id=2
+
+        QSignalSpy spy(&mgr, &SessionManager::desktopNotification);
+
+        // Emit notification from session 1's view
+        emit view1->desktopNotification("title1", "body1");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toInt(), 1); // sessionId
+        QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("title1"));
+        QCOMPARE(spy.at(0).at(2).toString(), QStringLiteral("body1"));
+
+        // Emit notification from session 2's view
+        emit view2->desktopNotification("title2", "body2");
+        QCOMPARE(spy.count(), 2);
+        QCOMPARE(spy.at(1).at(0).toInt(), 2); // sessionId
+        QCOMPARE(spy.at(1).at(1).toString(), QStringLiteral("title2"));
+        QCOMPARE(spy.at(1).at(2).toString(), QStringLiteral("body2"));
+    }
+
+    void testNextSessionIdAfterRestore()
+    {
+        // Write sessions with high IDs
+        writeRawSessions({
+            {"A", QDir::homePath()},
+            {"B", QDir::homePath()}
+        });
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0"); s.setValue("id", 100); s.endGroup();
+            s.beginGroup("sessionData/session_1"); s.setValue("id", 200); s.endGroup();
+            s.beginGroup("sessions"); s.setValue("nextId", 201); s.endGroup();
+            s.sync();
+        }
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create a new session — its ID should be >= 201
+        mgr.createSession();
+        QCOMPARE(mgr.sessionId(2), 201); // nextId was 201
     }
 };
 
