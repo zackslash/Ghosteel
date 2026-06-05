@@ -32,6 +32,10 @@ ghostty/.zig-cache/
 *.a
 *.lib
 *.exe
+moc_*.cpp
+Makefile
+documentation.list
+/ghosteel
 
 # Pre-built libs: built locally via ./scripts/build-libs.sh
 lib/

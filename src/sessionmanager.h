@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QSettings>
 #include <QTimer>
+#include <QLocalServer>
 
 class TerminalView;
 
@@ -25,6 +26,7 @@ class SessionManager : public QObject
     Q_PROPERTY(int activeSessionIndex READ activeSessionIndex WRITE setActiveSessionIndex NOTIFY activeSessionIndexChanged)
     Q_PROPERTY(int sessionCount READ sessionCount NOTIFY sessionCountChanged)
     Q_PROPERTY(QQmlListProperty<TerminalView> sessions READ sessions NOTIFY sessionsChanged)
+    Q_PROPERTY(bool dbusRegistered READ dbusRegistered NOTIFY dbusRegisteredChanged)
 
 public:
     explicit SessionManager(QObject *parent = nullptr);
@@ -35,6 +37,9 @@ public:
     void setActiveSessionIndex(int index);
 
     int sessionCount() const { return m_sessions.size(); }
+
+    bool dbusRegistered() const { return m_dbusRegistered; }
+    void setDbusRegistered(bool registered);
 
     QQmlListProperty<TerminalView> sessions();
 
@@ -48,6 +53,7 @@ public:
     Q_INVOKABLE void setSessionName(int index, const QString &name);
     Q_INVOKABLE int sessionId(int index) const;
     Q_INVOKABLE void removeSessionById(int id);
+    Q_INVOKABLE int sessionIndexById(int id) const; // Returns vector index for session ID, or -1
     Q_INVOKABLE bool restoreSessions(); // Returns true if sessions were restored
     Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
     Q_INVOKABLE QString sessionAutorunCommand(int index) const;
@@ -56,6 +62,15 @@ public:
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
     Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
     Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
+
+    // Single-instance guard: returns true if another instance is already running.
+    // Call before creating SessionManager. If true, a "raise" message was sent
+    // to the existing instance and the caller should exit.
+    static bool checkSingleInstance();
+
+    // Start the single-instance socket server. Call after D-Bus registration
+    // so that future instances can detect this one.
+    void startSingleInstanceServer();
 
 Q_SIGNALS:
     void activeSessionIndexChanged();
@@ -69,14 +84,23 @@ Q_SIGNALS:
     void sessionKeybarOpenChanged(int idx);
     void sessionKeyboardVisibleChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
+    void dbusRegisteredChanged();
+    // Aggregated notification signal — emitted for any session, not just the active one.
+    // QML connects once to this instead of per-view.
+    void desktopNotification(int sessionId, const QString &summary, const QString &body);
 
 private:
     static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
     static TerminalView* sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index);
+    static QString socketPath();
 
     void saveSessions();
     void scheduleSave();
 
+private Q_SLOTS:
+    void onNewInstanceConnection();
+
+private:
     QVector<SessionInfo> m_sessions;
     int m_activeSessionIndex = -1;
     int m_nextSessionId = 1;
@@ -86,6 +110,10 @@ private:
     QTimer *m_saveTimer = nullptr;
     bool m_sessionsLoaded = false;
     bool m_savedOnQuit = false;
+    bool m_dbusRegistered = false;
+
+    // Single-instance socket server
+    QLocalServer *m_localServer = nullptr;
 };
 
 #endif // SESSIONMANAGER_H

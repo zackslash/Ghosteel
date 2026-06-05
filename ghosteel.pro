@@ -13,12 +13,12 @@ TARGET = ghosteel
 
 CONFIG += sailfishapp
 
-QT += gui quick qml
+QT += gui quick qml dbus
 
 # Centralized app identity — change these to rename the app
 APP_NAME = $$TARGET
-APP_ORG = harbour.ghosteel
-APP_QML_MODULE = harbour.ghosteel
+APP_ORG = com.zackslash
+APP_QML_MODULE = com.zackslash.ghosteel
 DEFINES += APP_NAME=\\\"$$APP_NAME\\\"
 DEFINES += APP_ORG=\\\"$$APP_ORG\\\"
 DEFINES += APP_QML_MODULE=\\\"$$APP_QML_MODULE\\\"
@@ -49,6 +49,7 @@ equals(QT_ARCH, arm64) {
 LIBS += -lpthread -lm -ldl -lutil -lrt
 
 HEADERS += \
+    src/ghosteeladapter.h \
     src/ghosttyvt.h \
     src/keymapping.h \
     src/ptymanager.h \
@@ -59,6 +60,7 @@ HEADERS += \
 
 SOURCES += \
     src/ghosteel.cpp \
+    src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \
     src/keymapping.cpp \
     src/ptymanager.cpp \
@@ -127,3 +129,8 @@ shell_integration.files = $$PWD/ghostty/src/shell-integration/bash \
                           $$PWD/ghostty/src/shell-integration/fish
 shell_integration.path = /usr/share/$${APP_NAME}/shell-integration
 INSTALLS += shell_integration
+
+# D-Bus service file for notification action activation
+dbus_service.path = /usr/share/dbus-1/services
+dbus_service.files = dbus-1/com.zackslash.ghosteel.service
+INSTALLS += dbus_service

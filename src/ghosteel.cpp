@@ -16,6 +16,8 @@
 #include <QQmlContext>
 #include <QTranslator>
 #include <QLocale>
+#include <QDBusConnection>
+#include <QDBusError>
 
 // Re-undefine emit — the Qt headers above re-define it, and any
 // Ghostty header included after this point would see the empty macro.
@@ -23,6 +25,8 @@
 #ifdef emit
 #undef emit
 #endif
+
+#include "ghosteeladapter.h"
 
 static void loadTranslations(QCoreApplication *app)
 {
@@ -46,6 +50,12 @@ int main(int argc, char *argv[])
 {
     qmlRegisterType<TerminalView>(APP_QML_MODULE, 1, 0, "TerminalView");
 
+    // Single-instance guard: if another instance is running, tell it to raise
+    // its window and exit.  This handles D-Bus activation launching a duplicate
+    // when a sandboxed instance is already running.
+    if (SessionManager::checkSingleInstance())
+        return 0;
+
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
     loadTranslations(app.data());
     QScopedPointer<QQuickView> view(SailfishApp::createView());
@@ -56,6 +66,35 @@ int main(int argc, char *argv[])
     // Expose SessionManager singleton to QML
     SessionManager *sessionManager = new SessionManager(app.data());
     view->rootContext()->setContextProperty(QStringLiteral("SessionManager"), sessionManager);
+
+    // Register D-Bus adaptor for notification action callbacks.
+    // Under Sailjail, D-Bus name ownership is restricted, so registration
+    // may fail silently — this is expected and notification actions will
+    // simply not work when sandboxed.  When launched via D-Bus activation
+    // (the .service file), registration succeeds and actions work.
+    QDBusConnection bus = QDBusConnection::sessionBus();
+    if (bus.isConnected()) {
+        if (bus.registerService(QStringLiteral("com.zackslash.ghosteel"))) {
+            // Create adaptor as child of sessionManager — must exist before registerObject
+            new GhosteelAdapter(sessionManager);
+            if (bus.registerObject(QStringLiteral("/com/zackslash/ghosteel"), sessionManager)) {
+                qDebug() << "Ghosteel: D-Bus service registered";
+                sessionManager->setDbusRegistered(true);
+            } else {
+                qWarning() << "Ghosteel: D-Bus object registration failed:" << bus.lastError().message();
+                bus.unregisterService(QStringLiteral("com.zackslash.ghosteel"));
+            }
+        } else {
+            // Expected under Sailjail — dbus-user.own is restricted
+            qDebug() << "Ghosteel: D-Bus service not registered (expected under Sailjail):" << bus.lastError().message();
+        }
+    } else {
+        qDebug() << "Ghosteel: D-Bus session bus not available";
+    }
+
+    // Start single-instance socket server so future D-Bus activations
+    // can detect this instance instead of spawning a duplicate.
+    sessionManager->startSingleInstanceServer();
 
     // Expose version strings to QML
 #ifndef GIT_VERSION

@@ -6,7 +6,7 @@ Exec=ghosteel
 Name=Ghosteel
 
 [X-Sailjail]
-OrganizationName=harbour.ghosteel
+OrganizationName=com.zackslash
 ApplicationName=ghosteel
 Permissions=UserDirs;
 Sandboxing=Disabled

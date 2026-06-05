@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt5 REQUIRED COMPONENTS Core Test)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Test Network)
 
 enable_testing()
 
@@ -36,7 +36,7 @@ target_compile_options(tst_session_persistence PRIVATE
 target_include_directories(tst_session_persistence PRIVATE SYSTEM
     ${CMAKE_SOURCE_DIR}/stubs
 )
-target_link_libraries(tst_session_persistence PRIVATE Qt5::Core Qt5::Test)
+target_link_libraries(tst_session_persistence PRIVATE Qt5::Core Qt5::Gui Qt5::Test Qt5::Network)
 add_test(NAME SessionPersistence COMMAND tst_session_persistence)
 
 # --- Settings tests ---

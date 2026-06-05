@@ -1,0 +1,3 @@
+[D-Bus Service]
+Name=com.zackslash.ghosteel
+Exec=/usr/bin/ghosteel
