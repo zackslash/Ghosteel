@@ -85,8 +85,8 @@ Page {
             property string autorunCommand: SessionManager.sessionAutorunCommand(index)
 
             onClicked: {
-                SessionManager.switchToSession(index)
                 pageStack.pop()
+                SessionManager.switchToSession(index)
             }
 
             Connections {
@@ -221,8 +221,8 @@ Page {
         height: Theme.itemSizeMedium
 
         onClicked: {
-            SessionManager.createSession()
             pageStack.pop()
+            SessionManager.createSession()
         }
 
         Row {

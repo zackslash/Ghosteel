@@ -17,6 +17,10 @@ Page {
     property bool ctrlActive: false
     property bool altActive: false
     property bool keyboardVisible: Qt.inputMethod && Qt.inputMethod.visible
+    // Per-session UI state (keyboard + keybar visibility), keyed by session ID
+    property var sessionUIState: ({})
+    property int currentSessionIndex: -1  // Tracked imperatively to avoid binding race
+    property int currentSessionId: -1     // Stable key for sessionUIState lookups
     property TerminalView terminal: null
 
     // Bell sound for terminal BEL character
@@ -95,17 +99,78 @@ Page {
 
     Component.onCompleted: {
         var t = SessionManager.activeSession()
-        if (t) attachTerminal(t)
+        if (t) {
+            var idx = SessionManager.activeSessionIndex
+            // Suppress keyboard BEFORE attach if persisted state is hidden
+            if (!SessionManager.sessionKeyboardVisible(idx))
+                t.suppressNextKeyboardAutoShow()
+            attachTerminal(t)
+            // Apply persisted UI state for the initial session
+            currentSessionIndex = idx
+            currentSessionId = SessionManager.sessionId(idx)
+            // Ensure keyboard hidden if persisted state says so
+            if (!SessionManager.sessionKeyboardVisible(idx))
+                Qt.inputMethod.hide()
+            // Restore keybar state
+            keybar.open = SessionManager.sessionKeybarOpen(idx)
+        }
     }
 
     // Listen for session switches from SessionManager
     Connections {
         target: SessionManager
         onSessionSwitched: {
+            // Save outgoing session's UI state using session ID (stable across removals)
+            if (terminal && currentSessionId >= 0) {
+                // Keybar: read directly from DockedPanel (reliable, sync, local)
+                var keybarState = keybar.open
+                // Keyboard: use persisted preference (not Qt.inputMethod.visible which
+                // is global/async and affected by focus changes, not just user intent)
+                var kbState = sessionUIState[currentSessionId]
+                    ? sessionUIState[currentSessionId].kb
+                    : SessionManager.sessionKeyboardVisible(currentSessionIndex)
+                sessionUIState[currentSessionId] = {
+                    kb: kbState,
+                    kbbar: keybarState
+                }
+                // Only persist if the index still points to the same session
+                // (avoids writing to the wrong session after removal shifts the vector)
+                if (currentSessionId == SessionManager.sessionId(currentSessionIndex)) {
+                    SessionManager.setSessionKeybarOpen(currentSessionIndex, keybarState)
+                    SessionManager.setSessionKeyboardVisible(currentSessionIndex, kbState)
+                }
+            }
+
             var newTerminal = SessionManager.activeSession()
+            var incomingSid = SessionManager.sessionId(index)
             if (newTerminal && newTerminal !== terminal) {
+                // Suppress keyboard BEFORE attach/focus to prevent flash
+                var incomingState = sessionUIState[incomingSid]
+                var incomingKb = incomingState
+                    ? incomingState.kb
+                    : SessionManager.sessionKeyboardVisible(index)
+                if (!incomingKb)
+                    newTerminal.suppressNextKeyboardAutoShow()
+
                 detachTerminal(terminal)
                 attachTerminal(newTerminal)
+            }
+
+            currentSessionIndex = index
+            currentSessionId = SessionManager.sessionId(index)
+
+            // Restore incoming session's keybar state
+            var state = sessionUIState[incomingSid]
+            if (state) {
+                keybar.open = state.kbbar
+            } else {
+                keybar.open = SessionManager.sessionKeybarOpen(index)
+            }
+            // Ensure keyboard hidden if needed — suppress prevents focus-triggered show,
+            // but we also need explicit hide for the case where keyboard was already visible
+            var incomingKbRestore = state ? state.kb : SessionManager.sessionKeyboardVisible(index)
+            if (!incomingKbRestore) {
+                Qt.inputMethod.hide()
             }
 
             // Show session switch indicator (only when multiple sessions exist)
@@ -113,6 +178,13 @@ Page {
                 var name = SessionManager.sessionName(index)
                 sessionIndicator.show(name || qsTr("Session %1").arg(index + 1))
             }
+        }
+        onSessionRemoved: {
+            // Clean up runtime UI state for removed session (ID never reused)
+            delete sessionUIState[sessionId]
+            // Adjust for vector shift when removal was before current index
+            if (index < currentSessionIndex)
+                currentSessionIndex--
         }
     }
 
@@ -195,7 +267,17 @@ Page {
             }
             MenuItem {
                 text: keybar.open ? qsTr("Hide extra keys") : qsTr("Show extra keys")
-                onClicked: keybar.open = !keybar.open
+                onClicked: {
+                    keybar.open = !keybar.open
+                    SessionManager.setSessionKeybarOpen(currentSessionIndex, keybar.open)
+                    // Update runtime map (keyed by session ID)
+                    var state = sessionUIState[currentSessionId] || {
+                        kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
+                        kbbar: keybar.open
+                    }
+                    state.kbbar = keybar.open
+                    sessionUIState[currentSessionId] = state
+                }
             }
             MenuItem {
                 text: qsTr("Settings")
@@ -336,10 +418,19 @@ Page {
                     icon.source: "image://theme/icon-m-keyboard"
                     highlighted: page.keyboardVisible
                     onClicked: {
-                        if (page.keyboardVisible)
-                            Qt.inputMethod.hide()
-                        else
+                        var newVisible = !page.keyboardVisible
+                        if (newVisible)
                             Qt.inputMethod.show()
+                        else
+                            Qt.inputMethod.hide()
+                        SessionManager.setSessionKeyboardVisible(currentSessionIndex, newVisible)
+                        // Update runtime map (keyed by session ID)
+                        var state = sessionUIState[currentSessionId] || {
+                            kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
+                            kbbar: keybar.open
+                        }
+                        state.kb = newVisible
+                        sessionUIState[currentSessionId] = state
                     }
                 }
             }

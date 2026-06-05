@@ -38,6 +38,7 @@ public:
     Q_INVOKABLE void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
     Q_INVOKABLE void setAutorunCommand(const QString &cmd) { m_autorunCommand = cmd; }
     Q_INVOKABLE QString autorunCommand() const { return m_autorunCommand; }
+    Q_INVOKABLE void suppressNextKeyboardAutoShow() {}
     void cleanup() {}
 
     // Test helpers — allow tests to control the stub's state

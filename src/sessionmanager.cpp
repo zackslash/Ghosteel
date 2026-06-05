@@ -99,9 +99,11 @@ TerminalView* SessionManager::createSession()
 
     SessionInfo info;
     info.id = m_nextSessionId++;
-    info.name = tr("Session %1").arg(info.id);
+    info.name = tr("Session %1").arg(m_sessions.size() + 1);
     info.cachedWorkingDirectory = QDir::homePath();
     info.autorunCommand = QString();
+    info.keybarOpen = true;
+    info.keyboardVisible = true;
     info.view = view;
 
     int index = m_sessions.size();
@@ -148,7 +150,7 @@ void SessionManager::removeSession(int index)
 
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionsChanged();
-    Q_EMIT sessionRemoved(index);
+    Q_EMIT sessionRemoved(index, info.id);
 
     // Clean up and delete the view AFTER all signals have been emitted,
     // so handlers that reference the old view (e.g. to disconnect
@@ -242,6 +244,42 @@ void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
     scheduleSave();
 }
 
+bool SessionManager::sessionKeybarOpen(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return true;
+    return m_sessions[index].keybarOpen;
+}
+
+void SessionManager::setSessionKeybarOpen(int index, bool open)
+{
+    if (index < 0 || index >= m_sessions.size())
+        return;
+    if (m_sessions[index].keybarOpen == open)
+        return;
+    m_sessions[index].keybarOpen = open;
+    Q_EMIT sessionKeybarOpenChanged(index);
+    scheduleSave();
+}
+
+bool SessionManager::sessionKeyboardVisible(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return true;
+    return m_sessions[index].keyboardVisible;
+}
+
+void SessionManager::setSessionKeyboardVisible(int index, bool visible)
+{
+    if (index < 0 || index >= m_sessions.size())
+        return;
+    if (m_sessions[index].keyboardVisible == visible)
+        return;
+    m_sessions[index].keyboardVisible = visible;
+    Q_EMIT sessionKeyboardVisibleChanged(index);
+    scheduleSave();
+}
+
 void SessionManager::removeSessionById(int id)
 {
     for (int i = 0; i < m_sessions.size(); i++) {
@@ -280,6 +318,8 @@ void SessionManager::saveSessions()
             cwd = QDir::homePath();
         m_settings.setValue(QStringLiteral("workingDirectory"), cwd);
         m_settings.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
+        m_settings.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
+        m_settings.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
         m_settings.endGroup();
     }
 
@@ -319,6 +359,8 @@ bool SessionManager::restoreSessions()
         QString workingDir = m_settings.value(QStringLiteral("workingDirectory"),
                                               QDir::homePath()).toString();
         QString autorun = m_settings.value(QStringLiteral("autorunCommand"), QString()).toString();
+        bool keybarOpen = m_settings.value(QStringLiteral("keybarOpen"), true).toBool();
+        bool keyboardVisible = m_settings.value(QStringLiteral("keyboardVisible"), true).toBool();
         m_settings.endGroup();
 
         // Validate working directory exists, fallback to home
@@ -336,6 +378,8 @@ bool SessionManager::restoreSessions()
         info.name = name;
         info.cachedWorkingDirectory = workingDir;
         info.autorunCommand = autorun;
+        info.keybarOpen = keybarOpen;
+        info.keyboardVisible = keyboardVisible;
         info.view = view;
 
         m_sessions.append(info);
