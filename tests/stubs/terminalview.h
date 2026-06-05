@@ -36,6 +36,8 @@ public:
     Q_INVOKABLE void setActive(bool) {}
     Q_INVOKABLE QString workingDirectory() const { return m_workingDirectory; }
     Q_INVOKABLE void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
+    Q_INVOKABLE void setAutorunCommand(const QString &cmd) { m_autorunCommand = cmd; }
+    Q_INVOKABLE QString autorunCommand() const { return m_autorunCommand; }
     void cleanup() {}
 
     // Test helpers — allow tests to control the stub's state
@@ -53,6 +55,7 @@ private:
     int m_stickyModifiers = 0;
     QString m_title;
     QString m_workingDirectory;
+    QString m_autorunCommand;
 };
 
 #endif // TERMINALVIEW_H

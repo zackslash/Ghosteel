@@ -36,6 +36,36 @@ Page {
         }
     }
 
+    // Autorun command dialog
+    Component {
+        id: autorunDialogComponent
+        Dialog {
+            id: autorunDialog
+            property int sessionIndex: -1
+            property string currentCommand: ""
+            canAccept: true // allow empty to clear autorun
+            onAccepted: {
+                SessionManager.setSessionAutorunCommand(sessionIndex, autorunField.text.trim())
+            }
+            Column {
+                width: parent.width
+                DialogHeader {
+                    acceptText: qsTr("Autorun")
+                }
+                TextField {
+                    id: autorunField
+                    width: parent.width
+                    label: qsTr("Command to run on startup")
+                    text: autorunDialog.currentCommand
+                    placeholderText: qsTr("e.g. htop")
+                    focus: true
+                    EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                    EnterKey.onClicked: autorunDialog.accept()
+                }
+            }
+        }
+    }
+
     SilicaListView {
         id: sessionList
         anchors.fill: parent
@@ -52,6 +82,7 @@ Page {
             highlighted: index === SessionManager.activeSessionIndex
 
             property string sessionName: SessionManager.sessionName(index)
+            property string autorunCommand: SessionManager.sessionAutorunCommand(index)
 
             onClicked: {
                 SessionManager.switchToSession(index)
@@ -63,6 +94,10 @@ Page {
                 onSessionNameChanged: {
                     if (idx === index)
                         sessionDelegate.sessionName = SessionManager.sessionName(index)
+                }
+                onSessionAutorunCommandChanged: {
+                    if (idx === index)
+                        sessionDelegate.autorunCommand = SessionManager.sessionAutorunCommand(index)
                 }
             }
 
@@ -115,6 +150,20 @@ Page {
                     truncationMode: TruncationMode.Fade
                     anchors.leftMargin: Theme.iconSizeSmall + Theme.paddingMedium
                 }
+
+                // Autorun command subtitle
+                Label {
+                    visible: sessionDelegate.autorunCommand.length > 0
+                    text: "\u25B6 " + sessionDelegate.autorunCommand
+                    color: sessionDelegate.highlighted
+                           ? Theme.secondaryHighlightColor
+                           : Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    font.italic: true
+                    width: parent.width
+                    truncationMode: TruncationMode.Fade
+                    anchors.leftMargin: Theme.iconSizeSmall + Theme.paddingMedium
+                }
             }
 
             menu: ContextMenu {
@@ -124,6 +173,16 @@ Page {
                         var dialog = renameDialogComponent.createObject(sessionPage, {
                             sessionIndex: index,
                             currentName: sessionDelegate.sessionName
+                        })
+                        pageStack.push(dialog)
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Autorun command")
+                    onClicked: {
+                        var dialog = autorunDialogComponent.createObject(sessionPage, {
+                            sessionIndex: index,
+                            currentCommand: SessionManager.sessionAutorunCommand(index)
                         })
                         pageStack.push(dialog)
                     }

@@ -35,6 +35,7 @@ public:
     Q_INVOKABLE void setActive(bool active); // Start/stop blink timer
     Q_INVOKABLE QString workingDirectory() const; // Get CWD from /proc/<pid>/cwd
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
+    Q_INVOKABLE void setAutorunCommand(const QString &cmd);
     void cleanup();                   // Stop PTY/threads before destruction
 
 Q_SIGNALS:
@@ -74,6 +75,7 @@ private:
     void sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
                         const QPointF &pos, GhosttyMods mods);
     void resetBlinkOnInput();
+    void runAutorunCommand();
     const QFont &fontForStyle(const GhosttyStyle &style) const;
 
     // Cell data extracted from the render state for a single grid position.
@@ -164,6 +166,10 @@ private:
     // --- Shell exit state ---
     bool m_shellExited = false;
     int m_shellExitCode = 0;
+
+    // --- Autorun command (per-session startup command) ---
+    QString m_autorunCommand;
+    static const int AutorunDelayMs = 500;
 };
 
 #endif // TERMINALVIEW_H

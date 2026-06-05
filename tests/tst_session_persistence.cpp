@@ -24,7 +24,8 @@ private:
     // update this constant to match (debounce + ~100ms margin).
     static constexpr int DEBOUNCE_WAIT_MS = 600;
 
-    // Helper: write raw session data to settings file
+    // Helper: write raw session data to settings file.
+    // Each session is a QStringList: {name, workingDirectory[, autorunCommand]}
     void writeRawSessions(const QList<QStringList> &sessions, int activeIndex = 0)
     {
         QSettings s(m_settingsPath, QSettings::IniFormat);
@@ -40,6 +41,8 @@ private:
             s.beginGroup(QStringLiteral("sessionData/session_%1").arg(i));
             s.setValue(QStringLiteral("name"), sessions[i].at(0));
             s.setValue(QStringLiteral("workingDirectory"), sessions[i].at(1));
+            if (sessions[i].size() > 2)
+                s.setValue(QStringLiteral("autorunCommand"), sessions[i].at(2));
             s.endGroup();
         }
         s.sync();
@@ -460,6 +463,135 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 1);
         QCOMPARE(mgr.activeSessionIndex(), 0);
         QCOMPARE(mgr.sessionName(0), QStringLiteral("B"));
+    }
+
+    void testRestoreWithAutorunCommand()
+    {
+        writeRawSessions({{"Htop", "/tmp", "htop"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.sessionName(0), QStringLiteral("Htop"));
+        QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("htop"));
+    }
+
+    void testRestoreWithEmptyAutorunCommand()
+    {
+        writeRawSessions({{"Terminal", "/tmp"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.sessionAutorunCommand(0), QString());
+    }
+
+    void testSaveAutorunCommand()
+    {
+        writeRawSessions({{"Htop", "/tmp"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.setSessionAutorunCommand(0, "htop");
+        QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("htop"));
+
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessionData/session_0");
+        QCOMPARE(s.value("autorunCommand").toString(), QStringLiteral("htop"));
+        s.endGroup();
+    }
+
+    void testSetAutorunCommandNoOp()
+    {
+        writeRawSessions({{"Htop", "/tmp", "htop"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
+
+        // Set same value — should not emit signal
+        mgr.setSessionAutorunCommand(0, "htop");
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testSetAutorunCommandChanged()
+    {
+        writeRawSessions({{"Htop", "/tmp", "htop"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
+
+        mgr.setSessionAutorunCommand(0, "vim");
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("vim"));
+    }
+
+    void testFullSaveRestoreCycleWithAutorun()
+    {
+        // Create fresh manager, set autorun, save
+        {
+            SessionManager mgr(m_settingsPath);
+            mgr.restoreSessions();
+
+            mgr.createSession();
+            mgr.setSessionName(0, "Htop");
+            mgr.setSessionAutorunCommand(0, "htop");
+        }
+
+        // New instance — restore
+        SessionManager mgr2(m_settingsPath);
+        mgr2.restoreSessions();
+
+        QCOMPARE(mgr2.sessionCount(), 1);
+        QCOMPARE(mgr2.sessionName(0), QStringLiteral("Htop"));
+        QCOMPARE(mgr2.sessionAutorunCommand(0), QStringLiteral("htop"));
+    }
+
+    void testAutorunWithSpecialCharacters()
+    {
+        writeRawSessions({{"Logs", "/tmp", "tail -f /var/log/syslog | grep error"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("tail -f /var/log/syslog | grep error"));
+    }
+
+    void testClearAutorunCommand()
+    {
+        // Start with autorun set
+        writeRawSessions({{"Htop", "/tmp", "htop"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("htop"));
+
+        // Clear it
+        mgr.setSessionAutorunCommand(0, "");
+        QCOMPARE(mgr.sessionAutorunCommand(0), QString());
+
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Verify cleared on disk
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            QCOMPARE(s.value("autorunCommand").toString(), QString());
+            s.endGroup();
+        }
+
+        // Verify stays cleared after restore
+        SessionManager mgr2(m_settingsPath);
+        mgr2.restoreSessions();
+        QCOMPARE(mgr2.sessionAutorunCommand(0), QString());
     }
 
     void testSavePreservesCachedCwdForInactiveSessions()
