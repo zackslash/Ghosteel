@@ -150,8 +150,9 @@ void TerminalView::focusInEvent(QFocusEvent *event)
 
     // Show the software keyboard when terminal gains focus
     QInputMethod *im = QGuiApplication::inputMethod();
-    if (im)
+    if (im && !m_suppressKeyboardAutoShow)
         im->show();
+    m_suppressKeyboardAutoShow = false;
 
     update();
 }
@@ -1409,6 +1410,11 @@ void TerminalView::setWorkingDirectory(const QString &dir)
 void TerminalView::setAutorunCommand(const QString &cmd)
 {
     m_autorunCommand = cmd;
+}
+
+void TerminalView::suppressNextKeyboardAutoShow()
+{
+    m_suppressKeyboardAutoShow = true;
 }
 
 void TerminalView::runAutorunCommand()

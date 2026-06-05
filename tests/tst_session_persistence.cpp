@@ -25,7 +25,7 @@ private:
     static constexpr int DEBOUNCE_WAIT_MS = 600;
 
     // Helper: write raw session data to settings file.
-    // Each session is a QStringList: {name, workingDirectory[, autorunCommand]}
+    // Each session is a QStringList: {name, workingDirectory[, autorunCommand[, keybarOpen[, keyboardVisible]]]}
     void writeRawSessions(const QList<QStringList> &sessions, int activeIndex = 0)
     {
         QSettings s(m_settingsPath, QSettings::IniFormat);
@@ -43,6 +43,10 @@ private:
             s.setValue(QStringLiteral("workingDirectory"), sessions[i].at(1));
             if (sessions[i].size() > 2)
                 s.setValue(QStringLiteral("autorunCommand"), sessions[i].at(2));
+            if (sessions[i].size() > 3)
+                s.setValue(QStringLiteral("keybarOpen"), sessions[i].at(3));
+            if (sessions[i].size() > 4)
+                s.setValue(QStringLiteral("keyboardVisible"), sessions[i].at(4));
             s.endGroup();
         }
         s.sync();
@@ -592,6 +596,142 @@ private slots:
         SessionManager mgr2(m_settingsPath);
         mgr2.restoreSessions();
         QCOMPARE(mgr2.sessionAutorunCommand(0), QString());
+    }
+
+    // --- Keybar & keyboard state tests ---
+
+    void testRestoreKeybarOpen()
+    {
+        writeRawSessions({{"Test", "/tmp", "", "true"}});
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionKeybarOpen(0), true);
+    }
+
+    void testRestoreKeybarClosed()
+    {
+        writeRawSessions({{"Test", "/tmp", "", "false"}});
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionKeybarOpen(0), false);
+    }
+
+    void testRestoreKeyboardVisible()
+    {
+        writeRawSessions({{"Test", "/tmp", "", "", "true"}});
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionKeyboardVisible(0), true);
+    }
+
+    void testRestoreKeyboardHidden()
+    {
+        writeRawSessions({{"Test", "/tmp", "", "", "false"}});
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionKeyboardVisible(0), false);
+    }
+
+    void testSaveKeybarState()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        mgr.setSessionKeybarOpen(0, false);
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup(QStringLiteral("sessionData/session_0"));
+        QCOMPARE(s.value("keybarOpen").toBool(), false);
+        s.endGroup();
+    }
+
+    void testSaveKeyboardState()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        mgr.setSessionKeyboardVisible(0, false);
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup(QStringLiteral("sessionData/session_0"));
+        QCOMPARE(s.value("keyboardVisible").toBool(), false);
+        s.endGroup();
+    }
+
+    void testKeybarNoOpSuppressesSignal()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        QSignalSpy spy(&mgr, &SessionManager::sessionKeybarOpenChanged);
+        mgr.setSessionKeybarOpen(0, true); // default is true
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testKeyboardNoOpSuppressesSignal()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        QSignalSpy spy(&mgr, &SessionManager::sessionKeyboardVisibleChanged);
+        mgr.setSessionKeyboardVisible(0, true); // default is true
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testKeybarSignalOnChange()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        QSignalSpy spy(&mgr, &SessionManager::sessionKeybarOpenChanged);
+        mgr.setSessionKeybarOpen(0, false);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toInt(), 0);
+    }
+
+    void testKeyboardSignalOnChange()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        QSignalSpy spy(&mgr, &SessionManager::sessionKeyboardVisibleChanged);
+        mgr.setSessionKeyboardVisible(0, false);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toInt(), 0);
+    }
+
+    void testKeybarDefaultValue()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        QCOMPARE(mgr.sessionKeybarOpen(0), true);
+    }
+
+    void testKeyboardDefaultValue()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.createSession();
+        QCOMPARE(mgr.sessionKeyboardVisible(0), true);
+    }
+
+    void testKeybarKeyboardFullCycle()
+    {
+        // Save sessions with custom UI state
+        {
+            SessionManager mgr(m_settingsPath);
+            mgr.restoreSessions(); // initialize (sets m_sessionsLoaded)
+            mgr.createSession();
+            mgr.createSession();
+            mgr.setSessionKeybarOpen(0, false);
+            mgr.setSessionKeyboardVisible(0, false);
+            mgr.setSessionKeybarOpen(1, true);
+            mgr.setSessionKeyboardVisible(1, true);
+            QTest::qWait(DEBOUNCE_WAIT_MS);
+        }
+
+        // Restore and verify
+        SessionManager mgr(m_settingsPath);
+        QVERIFY(mgr.restoreSessions());
+        QCOMPARE(mgr.sessionKeybarOpen(0), false);
+        QCOMPARE(mgr.sessionKeyboardVisible(0), false);
+        QCOMPARE(mgr.sessionKeybarOpen(1), true);
+        QCOMPARE(mgr.sessionKeyboardVisible(1), true);
     }
 
     void testSavePreservesCachedCwdForInactiveSessions()

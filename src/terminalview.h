@@ -36,6 +36,7 @@ public:
     Q_INVOKABLE QString workingDirectory() const; // Get CWD from /proc/<pid>/cwd
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     Q_INVOKABLE void setAutorunCommand(const QString &cmd);
+    Q_INVOKABLE void suppressNextKeyboardAutoShow();
     void cleanup();                   // Stop PTY/threads before destruction
 
 Q_SIGNALS:
@@ -170,6 +171,9 @@ private:
     // --- Autorun command (per-session startup command) ---
     QString m_autorunCommand;
     static const int AutorunDelayMs = 500;
+
+    // --- Suppress keyboard auto-show flag ---
+    bool m_suppressKeyboardAutoShow = false;
 };
 
 #endif // TERMINALVIEW_H

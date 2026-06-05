@@ -14,6 +14,8 @@ struct SessionInfo {
     QString name;
     QString cachedWorkingDirectory; // Persisted CWD for inactive sessions
     QString autorunCommand;  // Command to run when session starts
+    bool keybarOpen = true;           // Whether the extra keys panel is open
+    bool keyboardVisible = true;      // Whether the software keyboard is visible
     TerminalView *view;
 };
 
@@ -50,16 +52,22 @@ public:
     Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
     Q_INVOKABLE QString sessionAutorunCommand(int index) const;
     Q_INVOKABLE void setSessionAutorunCommand(int index, const QString &cmd);
+    Q_INVOKABLE bool sessionKeybarOpen(int index) const;
+    Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
+    Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
+    Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
 
 Q_SIGNALS:
     void activeSessionIndexChanged();
     void sessionCountChanged();
     void sessionsChanged();
     void sessionCreated(int index);
-    void sessionRemoved(int index);
+    void sessionRemoved(int index, int sessionId);
     void sessionSwitched(int index);
     void sessionNameChanged(int idx);
     void sessionAutorunCommandChanged(int idx);
+    void sessionKeybarOpenChanged(int idx);
+    void sessionKeyboardVisibleChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
 
 private:
