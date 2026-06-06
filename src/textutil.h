@@ -34,6 +34,11 @@ struct Dimensions {
 };
 Dimensions calculateDimensions(int width, int height, int cellWidth, int cellHeight, int topPadding);
 
+// Check whether a Unicode codepoint is a "word" character for selection purposes.
+// Word characters are alphanumeric, underscore, or non-ASCII (CJK, etc.).
+// This is intentionally broad so that CJK and other scripts are treated as words.
+bool isWordChar(uint32_t codepoint);
+
 } // namespace TextUtil
 
 #endif // TEXTUTIL_H

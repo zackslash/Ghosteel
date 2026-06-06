@@ -14,6 +14,8 @@
 #include <QTouchEvent>
 #include <QFileInfo>
 #include <QDir>
+#include <QDateTime>
+#include <QLineF>
 #include <cstring>
 #include <sys/ioctl.h>
 
@@ -401,6 +403,11 @@ void TerminalView::paint(QPainter *painter)
         drawSelectionHighlight(painter, 0, 0, 1.0);
     }
 
+    // Draw selection handles when selection is finalized (not during active drag)
+    if (m_handlesVisible && m_selecting && m_selStart != m_selEnd && !m_magnifierVisible) {
+        drawSelectionHandles(painter);
+    }
+
     // Draw magnifier on top of everything when actively dragging selection
     if (m_magnifierVisible && m_selStart != m_selEnd) {
         renderMagnifier(painter);
@@ -765,7 +772,7 @@ void TerminalView::renderMagnifier(QPainter *painter)
     if (m_image.isNull())
         return;
 
-    QPointF fingerPos = m_selEnd;
+    QPointF fingerPos = (m_draggingHandle == 1) ? m_selStart : m_selEnd;
 
     // Source region: the area around the finger to zoom into
     int srcW = MagnifierWidth / MagnifierZoom;
@@ -953,6 +960,12 @@ void TerminalView::copySelection()
         QClipboard *clipboard = QGuiApplication::clipboard();
         clipboard->setText(result, QClipboard::Clipboard);
     }
+
+    // Update selectedText property for QML share action
+    if (m_selectedText != result) {
+        m_selectedText = result;
+        Q_EMIT selectedTextChanged();
+    }
 }
 
 void TerminalView::setFontSize(int size)
@@ -1028,14 +1041,152 @@ void TerminalView::clearSelection()
     if (m_selecting) {
         m_selecting = false;
         m_magnifierVisible = false;
+        m_handlesVisible = false;
+        m_draggingHandle = 0;
         setKeepMouseGrab(false);
         if (m_longPressTimerId) {
             killTimer(m_longPressTimerId);
             m_longPressTimerId = 0;
         }
+        m_velocityInitialized = false;
+        // Clear selected text and notify QML
+        if (!m_selectedText.isEmpty()) {
+            m_selectedText.clear();
+            Q_EMIT selectedTextChanged();
+        }
         m_needsRender = true;
         update();
+        m_tapCount = 0; // Only reset when clearing an active selection
     }
+}
+
+void TerminalView::selectWordAt(const QPointF &pos)
+{
+    QPointF cell = cellFromPixel(pos);
+    if (cell.x() < 0)
+        return;
+
+    int col = static_cast<int>(cell.x());
+    int row = static_cast<int>(cell.y());
+
+    GhosttyRenderState state = m_vt ? m_vt->renderState() : nullptr;
+    if (!state)
+        return;
+
+    // Get the row's cells to scan for word boundaries
+    GhosttyRenderStateRowIterator iterator;
+    ghostty_render_state_row_iterator_new(nullptr, &iterator);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
+
+    GhosttyRenderStateRowCells cells;
+    ghostty_render_state_row_cells_new(nullptr, &cells);
+
+    int rowIdx = 0;
+    while (ghostty_render_state_row_iterator_next(iterator)) {
+        if (rowIdx == row) {
+            ghostty_render_state_row_get(iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &cells);
+            break;
+        }
+        rowIdx++;
+    }
+
+    if (rowIdx != row) {
+        // Row not found (shouldn't happen)
+        ghostty_render_state_row_cells_free(cells);
+        ghostty_render_state_row_iterator_free(iterator);
+        return;
+    }
+
+    // Check if the tapped cell is a word character
+    // First, get the grapheme at the tapped column
+    auto getGraphemeAt = [&](int c) -> uint32_t {
+        if (ghostty_render_state_row_cells_select(cells, static_cast<uint16_t>(c)) != GHOSTTY_SUCCESS)
+            return 0;
+        uint32_t len = 0;
+        ghostty_render_state_row_cells_get(cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &len);
+        if (len == 0)
+            return 0;
+        uint32_t buf[128];
+        if (len > 128) return 0;
+        ghostty_render_state_row_cells_get(cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, buf);
+        return buf[0]; // base codepoint
+    };
+
+    uint32_t tappedChar = getGraphemeAt(col);
+    bool tappedIsWord = TextUtil::isWordChar(tappedChar);
+
+    int startCol = col;
+    int endCol = col;
+
+    if (tappedIsWord) {
+        // Expand left to find word start
+        while (startCol > 0) {
+            uint32_t ch = getGraphemeAt(startCol - 1);
+            if (!TextUtil::isWordChar(ch))
+                break;
+            startCol--;
+        }
+        // Expand right to find word end
+        while (endCol < m_cols - 1) {
+            uint32_t ch = getGraphemeAt(endCol + 1);
+            if (!TextUtil::isWordChar(ch))
+                break;
+            endCol++;
+        }
+    } else {
+        // Non-word character: select just this character (whitespace/punctuation)
+        // Expand left/right over contiguous non-word, non-space characters
+        // Actually, for non-word chars like punctuation, select just the single char.
+        // For spaces, select the run of spaces.
+        if (tappedChar == 0) {
+            // Empty cell — select a run of empty cells
+            while (startCol > 0) {
+                uint32_t ch = getGraphemeAt(startCol - 1);
+                if (ch != 0) break;
+                startCol--;
+            }
+            while (endCol < m_cols - 1) {
+                uint32_t ch = getGraphemeAt(endCol + 1);
+                if (ch != 0) break;
+                endCol++;
+            }
+        }
+        // Otherwise: single punctuation char selected (startCol == endCol == col)
+    }
+
+    ghostty_render_state_row_cells_free(cells);
+    ghostty_render_state_row_iterator_free(iterator);
+
+    // Convert cell boundaries to pixel coordinates
+    m_selStart = QPointF(startCol * m_cellWidth, row * m_cellHeight + TopPadding);
+    m_selEnd = QPointF((endCol + 1) * m_cellWidth - 1, row * m_cellHeight + TopPadding);
+    m_selecting = true;
+    m_magnifierVisible = false; // No magnifier for double-tap — instant selection
+    m_handlesVisible = true;    // Show drag handles for precise adjustment
+
+    copySelection();
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::selectLineAt(const QPointF &pos)
+{
+    QPointF cell = cellFromPixel(pos);
+    if (cell.x() < 0)
+        return;
+
+    int row = static_cast<int>(cell.y());
+
+    // Select entire row from column 0 to last column
+    m_selStart = QPointF(0, row * m_cellHeight + TopPadding);
+    m_selEnd = QPointF(m_cols * m_cellWidth - 1, row * m_cellHeight + TopPadding);
+    m_selecting = true;
+    m_magnifierVisible = false; // No magnifier for triple-tap — instant selection
+    m_handlesVisible = true;    // Show drag handles for precise adjustment
+
+    copySelection();
+    m_needsRender = true;
+    update();
 }
 
 void TerminalView::drawSelectionHighlight(QPainter *painter, qreal offsetX, qreal offsetY, qreal scale)
@@ -1066,6 +1217,108 @@ void TerminalView::drawSelectionHighlight(QPainter *painter, qreal offsetX, qrea
         qreal rh = m_cellHeight * scale;
         painter->fillRect(QRectF(rx, ry, rw, rh), highlightColor);
     }
+}
+
+void TerminalView::drawSelectionHandles(QPainter *painter)
+{
+    QPointF startCell = cellFromPixel(m_selStart);
+    QPointF endCell = cellFromPixel(m_selEnd);
+    if (startCell.x() < 0 || endCell.x() < 0)
+        return;
+
+    int sc = static_cast<int>(startCell.x());
+    int sr = static_cast<int>(startCell.y());
+    int ec = static_cast<int>(endCell.x());
+    int er = static_cast<int>(endCell.y());
+
+    // No normalization — handle positions match m_selStart/m_selEnd directly
+    // so handle 1 always corresponds to m_selStart and handle 2 to m_selEnd
+    QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + TopPadding);
+    QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + TopPadding);
+
+    painter->setPen(Qt::NoPen);
+
+    // Draw handles as filled circles with highlight color
+    QColor handleColor(255, 255, 255, 200);
+    QColor borderColor(255, 255, 255, 120);
+
+    for (const QPointF &pos : {startPos, endPos}) {
+        QRectF circle(pos.x() - HandleRadius, pos.y() - HandleRadius,
+                      HandleRadius * 2, HandleRadius * 2);
+
+        // Shadow/border
+        painter->setBrush(borderColor);
+        painter->drawEllipse(circle.adjusted(-2, -2, 2, 2));
+
+        // Fill
+        painter->setBrush(handleColor);
+        painter->drawEllipse(circle);
+    }
+}
+
+int TerminalView::handleHitTest(const QPointF &pos) const
+{
+    if (!m_handlesVisible || !m_selecting || m_selStart == m_selEnd)
+        return 0;
+
+    QPointF startCell = cellFromPixel(m_selStart);
+    QPointF endCell = cellFromPixel(m_selEnd);
+    if (startCell.x() < 0 || endCell.x() < 0)
+        return 0;
+
+    int sc = static_cast<int>(startCell.x());
+    int sr = static_cast<int>(startCell.y());
+    int ec = static_cast<int>(endCell.x());
+    int er = static_cast<int>(endCell.y());
+
+    // No normalization swap — handle 1 always maps to m_selStart,
+    // handle 2 always maps to m_selEnd, regardless of selection direction
+    QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + TopPadding);
+    QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + TopPadding);
+
+    // Use a generous hit area (HandleRadius + some padding for finger imprecision)
+    qreal hitRadius = HandleRadius * 1.5;
+
+    if (QLineF(pos, startPos).length() <= hitRadius)
+        return 1; // Start handle (m_selStart)
+    if (QLineF(pos, endPos).length() <= hitRadius)
+        return 2; // End handle (m_selEnd)
+
+    return 0; // No hit
+}
+
+bool TerminalView::updateMagnifierVelocity(const QPointF &pos)
+{
+    // Minimum interval between velocity samples — skip sub-frame deltas
+    // that produce noisy velocity spikes from tiny position jitter
+    static const qint64 MinVelocityDtMs = 16;
+
+    if (m_velocityInitialized) {
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        qint64 dt = now - m_lastMoveTime;
+        if (dt >= MinVelocityDtMs) {
+            qreal dist = QLineF(pos, m_lastMovePos).length();
+            qreal velocity = dist * 1000.0 / dt; // pixels per second
+            m_lastMoveTime = now;
+            m_lastMovePos = pos;
+            // Hysteresis: use different thresholds to prevent flicker
+            // when velocity oscillates around the boundary
+            if (m_magnifierVisible)
+                return velocity <= MagnifierVelocityHide;  // hide only above 600
+            else
+                return velocity < MagnifierVelocityShow;   // show only below 400
+        }
+        if (dt > 0) {
+            m_lastMoveTime = now;
+            m_lastMovePos = pos;
+        }
+        return m_magnifierVisible; // no change when dt is too small
+    }
+    // First move after activation — initialize velocity tracking
+    m_lastMoveTime = QDateTime::currentMSecsSinceEpoch();
+    m_lastMovePos = pos;
+    m_velocityInitialized = true;
+    return true; // show magnifier on first move
 }
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
@@ -1100,7 +1353,50 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             return;
         }
 
-        // No mouse tracking — start long-press for selection
+        // Check if tapping a selection handle (before tap detection or clearing)
+        int handle = handleHitTest(event->pos());
+        if (handle != 0) {
+            m_draggingHandle = handle;
+            m_handlesVisible = false; // Hide handles while dragging
+            m_magnifierVisible = true;
+            m_velocityInitialized = false;
+            m_tapCount = 0; // Prevent phantom triple-tap after handle drag
+            setKeepMouseGrab(true);
+            event->accept();
+            return;
+        }
+
+        // No mouse tracking — detect double/triple tap for word/line selection
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        qreal dist = QLineF(event->pos(), m_lastTapPos).length();
+        bool withinWindow = (m_tapCount > 0)
+            && (now - m_lastTapTime) <= TapTimeoutMs
+            && dist <= TapDistancePx;
+
+        if (withinWindow) {
+            m_tapCount = qMin(m_tapCount + 1, 3);
+        } else {
+            m_tapCount = 1;
+        }
+        m_lastTapTime = now;
+        m_lastTapPos = event->pos();
+
+        if (m_tapCount == 2) {
+            // Double-tap → select word
+            clearSelection();
+            selectWordAt(event->pos());
+            event->accept();
+            return;
+        }
+        if (m_tapCount == 3) {
+            // Triple-tap → select line
+            clearSelection();
+            selectLineAt(event->pos());
+            event->accept();
+            return;
+        }
+
+        // Single tap — start long-press timer for manual selection
         clearSelection();
         m_selStart = event->pos();
         m_selEnd = event->pos();
@@ -1113,8 +1409,38 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
 
 void TerminalView::mouseMoveEvent(QMouseEvent *event)
 {
+    // Handle dragging a selection handle
+    if (m_draggingHandle != 0) {
+        if (m_draggingHandle == 1)
+            m_selStart = event->pos();
+        else
+            m_selEnd = event->pos();
+
+        // Velocity-based magnifier hiding (same logic as normal selection)
+        m_magnifierVisible = updateMagnifierVelocity(event->pos());
+
+        // Keep cursor blink paused during handle drag
+        m_lastInputTime.start();
+
+        update();
+        event->accept();
+        return;
+    }
+
     if (m_selecting) {
-        m_selEnd = event->pos();
+        // Only track movement for long-press drags (handles not yet visible).
+        // Word/line selections have finalized endpoints — use handles to adjust.
+        if (!m_handlesVisible) {
+            m_selEnd = event->pos();
+        }
+
+        // Velocity-based magnifier hiding: hide during fast swipes
+        m_magnifierVisible = updateMagnifierVelocity(event->pos());
+
+        // Keep cursor blink paused during active selection to prevent
+        // full renderCells() redraws that cause magnifier flicker
+        m_lastInputTime.start();
+
         // Don't set m_needsRender — the selection highlight and magnifier
         // are drawn on top of the cached terminal image. Just trigger a
         // repaint so the magnifier follows the finger.
@@ -1158,12 +1484,39 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
 
-    if (m_selecting) {
-        m_selEnd = event->pos();
-        // Auto-copy selection to clipboard
-        copySelection();
-        // Hide magnifier on finger lift, but keep highlight visible
+    // Finalize handle drag
+    if (m_draggingHandle != 0) {
+        if (m_draggingHandle == 1)
+            m_selStart = event->pos();
+        else
+            m_selEnd = event->pos();
+        m_draggingHandle = 0;
         m_magnifierVisible = false;
+        m_handlesVisible = true; // Show handles again after adjustment
+        setKeepMouseGrab(false);
+        copySelection();
+        update();
+        event->accept();
+        return;
+    }
+
+    if (m_selecting) {
+        // Only update endpoint for long-press drags (handles not yet visible).
+        // Word/line selections already finalized their endpoints.
+        if (!m_handlesVisible) {
+            m_selEnd = event->pos();
+            // Cancel if finger didn't move enough — long-press without drag
+            // would create a phantom single-character selection
+            if (QLineF(m_selStart, m_selEnd).length() < TapDistancePx) {
+                clearSelection();
+                event->accept();
+                return;
+            }
+            copySelection();
+        }
+        // Hide magnifier on finger lift, but keep highlight and show handles
+        m_magnifierVisible = false;
+        m_handlesVisible = true;
         update();
         event->accept();
         return;
@@ -1230,6 +1583,16 @@ void TerminalView::touchEvent(QTouchEvent *event)
                 killTimer(m_longPressTimerId);
                 m_longPressTimerId = 0;
             }
+            // Cancel any active handle drag
+            if (m_draggingHandle != 0) {
+                m_draggingHandle = 0;
+                m_magnifierVisible = false;
+                m_handlesVisible = true;
+                setKeepMouseGrab(false);
+            }
+            // Clear any active selection — pixel coordinates become stale after scroll
+            if (m_selecting)
+                clearSelection();
             // Average Y of both fingers as starting point
             m_twoFingerLastY = (points[0].pos().y() + points[1].pos().y()) / 2.0;
             event->accept();
@@ -1283,6 +1646,8 @@ void TerminalView::timerEvent(QTimerEvent *event)
         m_longPressTimerId = 0;
         m_selecting = true;
         m_magnifierVisible = true;
+        // Initialize velocity tracking so first move doesn't use stale data
+        m_velocityInitialized = false;
         // Prevent parent SilicaFlickable from stealing the drag
         setKeepMouseGrab(true);
         m_needsRender = true;

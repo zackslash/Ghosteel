@@ -18,6 +18,7 @@ class TerminalView : public QQuickPaintedItem
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(int stickyModifiers READ stickyModifiers WRITE setStickyModifiers NOTIFY stickyModifiersChanged)
+    Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
 public:
     explicit TerminalView(QQuickItem *parent = nullptr);
     ~TerminalView();
@@ -27,6 +28,7 @@ public:
     QString title() const { return m_title; }
     int stickyModifiers() const { return m_stickyModifiers; }
     void setStickyModifiers(int mods);
+    QString selectedText() const { return m_selectedText; }
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
@@ -45,6 +47,7 @@ Q_SIGNALS:
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
+    void selectedTextChanged();
 
 protected:
     void paint(QPainter *painter) override;
@@ -103,6 +106,11 @@ private:
     QPointF cellFromPixel(const QPointF &pos) const;
     void clearSelection();
     void drawSelectionHighlight(QPainter *painter, qreal offsetX, qreal offsetY, qreal scale);
+    void selectWordAt(const QPointF &pos);
+    void selectLineAt(const QPointF &pos);
+    void drawSelectionHandles(QPainter *painter);
+    int handleHitTest(const QPointF &pos) const; // 0=none, 1=start, 2=end
+    bool updateMagnifierVelocity(const QPointF &pos); // returns true if magnifier should be visible
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -130,6 +138,29 @@ private:
     QPointF m_selEnd;     // pixel coordinates
     int m_longPressTimerId = 0;
     static const int LongPressTimeout = 300; // ms — faster activation for better UX
+
+    // Tap detection for double/triple tap word/line selection
+    qint64 m_lastTapTime = 0;     // ms since epoch
+    QPointF m_lastTapPos;
+    int m_tapCount = 0;            // 1=single, 2=double, 3=triple
+    static const int TapTimeoutMs = 300;   // ms between taps for double/triple
+    static const int TapDistancePx = 30;   // max pixel distance between taps
+
+    // Velocity tracking for magnifier hiding during fast swipes
+    qint64 m_lastMoveTime = 0;
+    QPointF m_lastMovePos;
+    bool m_velocityInitialized = false;
+    // Hysteresis thresholds prevent flicker when velocity oscillates around the boundary
+    static const int MagnifierVelocityHide = 600; // px/s — hide above this
+    static const int MagnifierVelocityShow = 400;  // px/s — show below this
+
+    // Selected text (exposed to QML for share action)
+    QString m_selectedText;
+
+    // Selection handles (SailfishOS-style draggable endpoints)
+    bool m_handlesVisible = false;
+    int m_draggingHandle = 0; // 0=none, 1=start, 2=end
+    static const int HandleRadius = 14; // px — touch-friendly target size
 
     // Selection magnifier (SailfishOS-style zoom bubble)
     void renderMagnifier(QPainter *painter);
