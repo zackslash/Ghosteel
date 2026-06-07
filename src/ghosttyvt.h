@@ -14,6 +14,7 @@
 
 #include <QObject>
 #include <functional>
+#include <QStringList>
 
 // Thread safety: This class is NOT thread-safe. All methods and callbacks
 // (including writePtyCallback) run on the main GUI thread. The PtyReaderThread
@@ -63,6 +64,8 @@ public:
                                 uint32_t cellW, uint32_t cellH,
                                 uint32_t paddingTop);
     void setMouseButtonPressed(bool pressed);
+    QStringList extractSearchText();
+    bool isSearchTextDirty() const { return m_searchTextDirty; }
 
 Q_SIGNALS:
     void titleChanged(const QString &title);
@@ -81,6 +84,7 @@ private:
     GhosttyMouseEncoder m_mouseEncoder = nullptr;
     PtyWriteFn m_ptyWriteFn;
     bool m_needsEncoderSync = true; // Only sync encoders when terminal modes change
+    bool m_searchTextDirty = true; // Set in vtWrite(), cleared by extractSearchText()
 
     // OSC 777 desktop notification scanner
     Osc777State m_osc777State = OSC777_IDLE;

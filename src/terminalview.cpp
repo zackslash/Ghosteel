@@ -361,6 +361,7 @@ void TerminalView::onShellExited(int exitCode)
 
 void TerminalView::restartShell()
 {
+    closeSearch(); // Clear stale search state before destroying terminal
     m_shellExited = false;
     m_shellExitCode = 0;
     m_pty->stop();
@@ -401,6 +402,11 @@ void TerminalView::paint(QPainter *painter)
     // Draw selection highlight on top of cached image (updates every frame during drag)
     if (m_selecting && m_selStart != m_selEnd) {
         drawSelectionHighlight(painter, 0, 0, 1.0);
+    }
+
+    // Draw search match highlights (below handles/magnifier)
+    if (m_searchActive && !m_searchMatches.isEmpty()) {
+        drawSearchHighlights(painter);
     }
 
     // Draw selection handles when selection is finalized (not during active drag)
@@ -1732,6 +1738,18 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
         if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
     }
 
+    // Handle Ctrl+F = toggle scrollback search
+    if ((mods & GHOSTTY_MODS_CTRL) && !(mods & GHOSTTY_MODS_SHIFT)) {
+        if (key == GHOSTTY_KEY_F) {
+            if (m_searchActive)
+                closeSearch();
+            else
+                openSearch();
+            event->accept();
+            return;
+        }
+    }
+
     // Auto-repeat maps to REPEAT action (enables Kitty protocol repeat)
     GhosttyKeyAction action = event->isAutoRepeat()
         ? GHOSTTY_KEY_ACTION_REPEAT : GHOSTTY_KEY_ACTION_PRESS;
@@ -1780,6 +1798,195 @@ void TerminalView::setAutorunCommand(const QString &cmd)
 void TerminalView::suppressNextKeyboardAutoShow()
 {
     m_suppressKeyboardAutoShow = true;
+}
+
+void TerminalView::openSearch()
+{
+    if (m_searchActive)
+        return;
+
+    m_searchActive = true;
+
+    // Extract text from terminal (scrollback + active area)
+    if (m_vt)
+        m_searchCache = m_vt->extractSearchText();
+
+    // Clear any existing selection to avoid visual confusion
+    clearSelection();
+
+    Q_EMIT searchActiveChanged();
+}
+
+void TerminalView::closeSearch()
+{
+    if (!m_searchActive)
+        return;
+
+    m_searchActive = false;
+    m_searchPattern.clear();
+    m_searchCache.clear();
+    m_searchMatches.clear();
+    m_currentMatchIndex = -1;
+    m_needsRender = true;
+    update();
+    Q_EMIT searchActiveChanged();
+    Q_EMIT searchMatchCountChanged();
+    Q_EMIT currentMatchIndexChanged();
+}
+
+void TerminalView::setSearchPattern(const QString &pattern)
+{
+    if (pattern == m_searchPattern)
+        return;
+
+    m_searchPattern = pattern;
+
+    // Re-extract if cache is empty or terminal received new data since last extract
+    if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty()))
+        m_searchCache = m_vt->extractSearchText();
+
+    performSearch();
+
+    // Scroll to first match
+    if (m_currentMatchIndex >= 0)
+        scrollToMatch(m_currentMatchIndex);
+
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::performSearch()
+{
+    m_searchMatches.clear();
+    m_currentMatchIndex = -1;
+
+    if (m_searchPattern.isEmpty() || m_searchCache.isEmpty()) {
+        Q_EMIT searchMatchCountChanged();
+        Q_EMIT currentMatchIndexChanged();
+        return;
+    }
+
+    // Case-insensitive search across all rows
+    for (int row = 0; row < m_searchCache.size(); row++) {
+        int col = 0;
+        const QString &line = m_searchCache[row];
+        while (col < line.size()) {
+            int idx = line.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
+            if (idx < 0)
+                break;
+            m_searchMatches.append({row, idx, m_searchPattern.size()});
+            col = idx + 1;
+        }
+    }
+
+    if (!m_searchMatches.isEmpty())
+        m_currentMatchIndex = 0;
+
+    Q_EMIT searchMatchCountChanged();
+    Q_EMIT currentMatchIndexChanged();
+}
+
+void TerminalView::scrollToMatch(int index)
+{
+    if (index < 0 || index >= m_searchMatches.size() || !m_vt || !m_vt->terminal())
+        return;
+
+    const auto &match = m_searchMatches[index];
+
+    // Query scrollbar state to find current viewport position
+    GhosttyTerminalScrollbar scrollbar = {};
+    ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
+
+    int matchRow = match.row;
+    int viewTop = static_cast<int>(scrollbar.offset);
+    int viewLen = static_cast<int>(scrollbar.len);
+
+    // Already visible — no scroll needed
+    if (viewLen > 0 && matchRow >= viewTop && matchRow < viewTop + viewLen)
+        return;
+
+    // Center the match in the viewport
+    int targetTop = matchRow - viewLen / 2;
+    if (targetTop < 0)
+        targetTop = 0;
+    int delta = targetTop - viewTop;
+
+    if (delta != 0) {
+        GhosttyTerminalScrollViewport scroll = {};
+        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+        scroll.value.delta = delta;
+        ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+        m_needsRender = true;
+        update();
+    }
+}
+
+void TerminalView::findNext()
+{
+    if (m_searchMatches.isEmpty())
+        return;
+
+    m_currentMatchIndex = (m_currentMatchIndex + 1) % m_searchMatches.size();
+    scrollToMatch(m_currentMatchIndex);
+    Q_EMIT currentMatchIndexChanged();
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::findPrevious()
+{
+    if (m_searchMatches.isEmpty())
+        return;
+
+    m_currentMatchIndex = (m_currentMatchIndex - 1 + m_searchMatches.size()) % m_searchMatches.size();
+    scrollToMatch(m_currentMatchIndex);
+    Q_EMIT currentMatchIndexChanged();
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::drawSearchHighlights(QPainter *painter)
+{
+    if (m_searchMatches.isEmpty() || !m_vt || !m_vt->terminal())
+        return;
+
+    // Query scrollbar state to map absolute rows to viewport rows
+    GhosttyTerminalScrollbar scrollbar = {};
+    ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
+
+    int viewTop = static_cast<int>(scrollbar.offset);
+    int viewLen = static_cast<int>(scrollbar.len);
+    if (viewLen <= 0)
+        return;
+
+    // Amber/yellow for all matches, brighter orange for current match
+    QColor highlightColor(255, 200, 0, 100);
+    QColor currentColor(255, 100, 0, 140);
+
+    painter->setPen(Qt::NoPen);
+
+    for (int i = 0; i < m_searchMatches.size(); i++) {
+        const auto &match = m_searchMatches[i];
+
+        // Skip matches outside the current viewport
+        if (match.row < viewTop || match.row >= viewTop + viewLen)
+            continue;
+
+        int vpRow = match.row - viewTop;
+        int x = match.col * m_cellWidth;
+        int y = vpRow * m_cellHeight + TopPadding;
+        int w = match.length * m_cellWidth;
+        int h = m_cellHeight;
+
+        // Clamp to terminal width
+        if (x + w > m_cols * m_cellWidth)
+            w = m_cols * m_cellWidth - x;
+        if (w <= 0)
+            continue;
+
+        QColor color = (i == m_currentMatchIndex) ? currentColor : highlightColor;
+        painter->fillRect(x, y, w, h, color);
+    }
 }
 
 void TerminalView::runAutorunCommand()

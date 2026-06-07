@@ -19,6 +19,9 @@ class TerminalView : public QQuickPaintedItem
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(int stickyModifiers READ stickyModifiers WRITE setStickyModifiers NOTIFY stickyModifiersChanged)
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
+    Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
+    Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
+    Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
 public:
     explicit TerminalView(QQuickItem *parent = nullptr);
     ~TerminalView();
@@ -29,6 +32,9 @@ public:
     int stickyModifiers() const { return m_stickyModifiers; }
     void setStickyModifiers(int mods);
     QString selectedText() const { return m_selectedText; }
+    int searchMatchCount() const { return m_searchMatches.size(); }
+    int currentMatchIndex() const { return m_currentMatchIndex; }
+    bool searchActive() const { return m_searchActive; }
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
@@ -39,6 +45,11 @@ public:
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     Q_INVOKABLE void setAutorunCommand(const QString &cmd);
     Q_INVOKABLE void suppressNextKeyboardAutoShow();
+    Q_INVOKABLE void openSearch();
+    Q_INVOKABLE void closeSearch();
+    Q_INVOKABLE void setSearchPattern(const QString &pattern);
+    Q_INVOKABLE void findNext();
+    Q_INVOKABLE void findPrevious();
     void cleanup();                   // Stop PTY/threads before destruction
 
 Q_SIGNALS:
@@ -48,6 +59,9 @@ Q_SIGNALS:
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
     void selectedTextChanged();
+    void searchMatchCountChanged();
+    void currentMatchIndexChanged();
+    void searchActiveChanged();
 
 protected:
     void paint(QPainter *painter) override;
@@ -111,6 +125,9 @@ private:
     void drawSelectionHandles(QPainter *painter);
     int handleHitTest(const QPointF &pos) const; // 0=none, 1=start, 2=end
     bool updateMagnifierVelocity(const QPointF &pos); // returns true if magnifier should be visible
+    void performSearch();
+    void scrollToMatch(int index);
+    void drawSearchHighlights(QPainter *painter);
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -205,6 +222,14 @@ private:
 
     // --- Suppress keyboard auto-show flag ---
     bool m_suppressKeyboardAutoShow = false;
+
+    // --- Scrollback search ---
+    struct SearchMatch { int row; int col; int length; };
+    bool m_searchActive = false;
+    QString m_searchPattern;
+    QStringList m_searchCache;       // Cached terminal text (one string per row)
+    QVector<SearchMatch> m_searchMatches;
+    int m_currentMatchIndex = -1;
 };
 
 #endif // TERMINALVIEW_H

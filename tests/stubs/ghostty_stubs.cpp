@@ -8,6 +8,7 @@
 
 #include <ghostty/vt.h>
 #include <string.h>
+#include <stdlib.h>
 
 // ---- Terminal ----
 
@@ -357,6 +358,47 @@ GHOSTTY_API void ghostty_color_rgb_get(
     if (g) *g = color.g;
     if (b) *b = color.b;
 }
+
+// ---- Allocator ----
+
+GHOSTTY_API uint8_t* ghostty_alloc(const GhosttyAllocator*, size_t len)
+{
+    return (uint8_t*)malloc(len);
+}
+
+GHOSTTY_API void ghostty_free(const GhosttyAllocator*, uint8_t* ptr, size_t)
+{
+    free(ptr);
+}
+
+// ---- Formatter ----
+
+GHOSTTY_API GhosttyResult ghostty_formatter_terminal_new(
+    const GhosttyAllocator*, GhosttyFormatter* out, GhosttyTerminal, GhosttyFormatterTerminalOptions)
+{
+    if (out) *out = (GhosttyFormatter)1;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_formatter_format_buf(
+    GhosttyFormatter, uint8_t*, size_t, size_t* out_written)
+{
+    if (out_written) *out_written = 0;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_formatter_format_alloc(
+    GhosttyFormatter, const GhosttyAllocator*, uint8_t** out_ptr, size_t* out_len)
+{
+    // Return empty string (just a newline) for tests
+    if (out_ptr) {
+        *out_ptr = (uint8_t*)strdup("\n");
+    }
+    if (out_len) *out_len = 1;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API void ghostty_formatter_free(GhosttyFormatter) {}
 
 // ---- Type JSON ----
 

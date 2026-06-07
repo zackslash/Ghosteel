@@ -1,5 +1,6 @@
 #include "ghosttyvt.h"
 #include <QDebug>
+#include <QStringList>
 
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
@@ -170,6 +171,7 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
     if (m_terminal) {
         ghostty_terminal_vt_write(m_terminal, data, len);
         m_needsEncoderSync = true; // Terminal modes may have changed
+        m_searchTextDirty = true;
     }
 }
 
@@ -319,4 +321,40 @@ void GhosttyVt::bellCallback(GhosttyTerminal, void *ud)
 {
     auto *self = static_cast<GhosttyVt *>(ud);
     Q_EMIT self->bell();
+}
+
+QStringList GhosttyVt::extractSearchText()
+{
+    if (!m_terminal)
+        return {};
+
+    GhosttyFormatter formatter = nullptr;
+    GhosttyFormatterTerminalOptions opts = {};
+    opts.size = sizeof(GhosttyFormatterTerminalOptions);
+    // GhosttyFormatterTerminalOptions.emit conflicts with Qt's emit macro.
+    // Undefine temporarily to assign the field.
+#ifdef emit
+#undef emit
+#endif
+    opts.emit = GHOSTTY_FORMATTER_FORMAT_PLAIN;
+    opts.unwrap = false;  // Preserve visual row mapping (1 line = 1 row)
+    opts.trim = false;    // Preserve exact cell content
+
+    GhosttyResult res = ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, opts);
+    if (res != GHOSTTY_SUCCESS)
+        return {};
+
+    uint8_t *buf = nullptr;
+    size_t len = 0;
+    res = ghostty_formatter_format_alloc(formatter, nullptr, &buf, &len);
+    ghostty_formatter_free(formatter);
+
+    if (res != GHOSTTY_SUCCESS || !buf)
+        return {};
+
+    QString text = QString::fromUtf8(reinterpret_cast<const char *>(buf), static_cast<int>(len));
+    ghostty_free(nullptr, buf, len);
+
+    m_searchTextDirty = false;
+    return text.split(QLatin1Char('\n'));
 }
