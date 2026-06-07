@@ -321,6 +321,12 @@ Page {
         height: searchRow.height + Theme.paddingSmall * 2
         open: false
 
+        // Opaque background so terminal text doesn't show through
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.overlayBackgroundColor
+        }
+
         onOpenChanged: {
             if (!open && terminal) {
                 terminal.closeSearch()
