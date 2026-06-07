@@ -388,45 +388,47 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
     // Get terminal dimensions
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &outCols);
-    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_ROWS, &outRows);
+    size_t totalRows = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+    outRows = static_cast<uint16_t>(totalRows);
 
-    if (outCols == 0 || outRows == 0)
+    if (outCols == 0 || totalRows == 0)
         return {};
 
-    // Use VT formatter to serialize full terminal content (scrollback + active)
-    GhosttyFormatterTerminalOptions fmtOpts = GHOSTTY_INIT_SIZED(GhosttyFormatterTerminalOptions);
-    // Workaround: QObject re-defines `emit` as a macro after the header's #undef
-    #ifdef emit
-    #undef emit
-    #endif
-    fmtOpts.emit = GHOSTTY_FORMATTER_FORMAT_VT;
-    fmtOpts.trim = false;
-    fmtOpts.unwrap = false;
+    // Use grid_ref API to read all cells (same approach as extractSearchText).
+    // The formatter API crashes due to Zig null-unwrap on empty page lists.
+    QByteArray result;
+    result.reserve(static_cast<int>(totalRows * outCols));
+    uint32_t graphemeBuf[128];
 
-    GhosttyFormatter formatter = nullptr;
-    GhosttyResult res = ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, fmtOpts);
-    if (res != GHOSTTY_SUCCESS || !formatter) {
-        qWarning() << "exportScrollback: formatter_terminal_new failed:" << res;
-        return {};
+    for (size_t row = 0; row < totalRows; row++) {
+        for (uint16_t col = 0; col < outCols; col++) {
+            GhosttyPoint point = {};
+            point.tag = GHOSTTY_POINT_TAG_SCREEN;
+            point.value.coordinate.x = col;
+            point.value.coordinate.y = static_cast<uint32_t>(row);
+
+            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
+                result.append(' ');
+                continue;
+            }
+
+            size_t graphemeLen = 0;
+            if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
+                    == GHOSTTY_SUCCESS && graphemeLen > 0) {
+                result.append(QString::fromUcs4(graphemeBuf, graphemeLen).toUtf8());
+            } else {
+                result.append(' ');
+            }
+        }
+        result.append('\n');
     }
 
-    uint8_t *buf = nullptr;
-    size_t len = 0;
-    res = ghostty_formatter_format_alloc(formatter, nullptr, &buf, &len);
-    ghostty_formatter_free(formatter);
-
-    if (res != GHOSTTY_SUCCESS || !buf || len == 0) {
-        qWarning() << "exportScrollback: format_alloc failed:" << res << "len=" << len;
-        return {};
-    }
-
-    // Build file: header + VT data
+    // Build file: header + text data
     QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
-                            .arg(outCols).arg(outRows).toUtf8();
-    QByteArray vtData(reinterpret_cast<const char *>(buf), static_cast<int>(len));
-    ghostty_free(nullptr, buf, len);
-
-    return header + vtData;
+                            .arg(outCols).arg(totalRows).toUtf8();
+    return header + result;
 }
 
 void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, uint16_t actualRows)
@@ -434,58 +436,53 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
     if (!m_terminal || data.isEmpty())
         return;
 
-    qDebug() << "restoreScrollback: data size=" << data.size() << "actual=" << actualCols << "x" << actualRows;
-
-    // Parse header: GHOSTTY_SCROLLBACK_V1\nCOLS=X\nROWS=Y\n\n<VT data>
+    // Parse header: GHOSTTY_SCROLLBACK_V1\nCOLS=X\nROWS=Y\n\n<text data>
     int headerEnd = data.indexOf("\n\n");
-    if (headerEnd < 0) {
-        qWarning() << "restoreScrollback: no header found (no double newline)";
+    if (headerEnd < 0)
         return;
-    }
 
     QByteArray header = data.left(headerEnd);
-    QByteArray vtData = data.mid(headerEnd + 2);
+    QByteArray textData = data.mid(headerEnd + 2);
 
-    qDebug() << "restoreScrollback: header=" << header << "vtData size=" << vtData.size();
-
-    if (vtData.isEmpty())
+    if (textData.isEmpty())
         return;
 
     // Extract saved dimensions from header
-    uint16_t savedCols = 0, savedRows = 0;
+    uint16_t savedCols = 0;
     for (const QByteArray &line : header.split('\n')) {
         if (line.startsWith("COLS="))
             savedCols = line.mid(5).toUShort();
-        else if (line.startsWith("ROWS="))
-            savedRows = line.mid(5).toUShort();
     }
 
-    qDebug() << "restoreScrollback: saved=" << savedCols << "x" << savedRows;
-
-    if (savedCols == 0 || savedRows == 0)
+    if (savedCols == 0)
         return;
 
-    // Resize to saved dimensions first (so VT sequences have correct column widths)
-    if (savedCols != actualCols || savedRows != actualRows) {
-        qDebug() << "restoreScrollback: resizing to saved dims";
-        ghostty_terminal_resize(m_terminal, savedCols, savedRows, 0, 0);
+    // If column count differs, pad/trim each line to match actual width
+    QByteArray replayData;
+    if (savedCols != actualCols) {
+        replayData.reserve(textData.size());
+        int lineStart = 0;
+        for (int i = 0; i <= textData.size(); i++) {
+            if (i == textData.size() || textData[i] == '\n') {
+                QByteArray line = textData.mid(lineStart, i - lineStart);
+                // Trim trailing spaces, then pad to actual width
+                while (!line.isEmpty() && line.endsWith(' '))
+                    line.chop(1);
+                if (line.size() < actualCols)
+                    line.append(QByteArray(actualCols - line.size(), ' '));
+                else if (line.size() > actualCols)
+                    line.truncate(actualCols);
+                replayData.append(line);
+                replayData.append('\n');
+                lineStart = i + 1;
+            }
+        }
+    } else {
+        replayData = textData;
     }
 
-    // Replay VT data to reconstruct scrollback content
-    qDebug() << "restoreScrollback: writing" << vtData.size() << "bytes of VT data";
+    // Replay text as VT input — plain text is valid VT, newlines scroll
     ghostty_terminal_vt_write(m_terminal,
-                              reinterpret_cast<const uint8_t *>(vtData.constData()),
-                              vtData.size());
-
-    // Check result
-    size_t totalRows = 0, scrollbackRows = 0;
-    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
-    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS, &scrollbackRows);
-    qDebug() << "restoreScrollback: after replay totalRows=" << totalRows << "scrollbackRows=" << scrollbackRows;
-
-    // Resize to actual dimensions — triggers reflow on primary screen
-    if (savedCols != actualCols || savedRows != actualRows) {
-        qDebug() << "restoreScrollback: resizing to actual dims";
-        ghostty_terminal_resize(m_terminal, actualCols, actualRows, 0, 0);
-    }
+                              reinterpret_cast<const uint8_t *>(replayData.constData()),
+                              replayData.size());
 }
