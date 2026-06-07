@@ -1,6 +1,7 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 #include <QStringList>
+#include <QByteArray>
 
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
@@ -16,16 +17,13 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
 {
     m_ptyWriteFn = writeFn;
 
+    // Options passed by pointer to work around Zig i386 struct-by-value
+    // ABI bug. See ghostty/src/terminal/c/terminal.zig new_ptr() comment.
     GhosttyTerminalOptions opts = {};
     opts.cols = cols;
     opts.rows = rows;
-    // max_scrollback is in BYTES (not lines despite the C header comment).
-    // The PageList clamps this to at least min_max_size (active area size),
-    // so values smaller than ~100KB result in zero scrollback for typical
-    // terminal sizes. 10MB gives ~4000+ lines of scrollback on mobile.
-    opts.max_scrollback = 10 * 1024 * 1024;
-
-    GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, opts);
+    opts.max_scrollback = 3 * 1024 * 1024; // 3MB (~2500 lines)
+    GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, &opts);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_terminal_new failed:" << res;
         return false;
@@ -374,4 +372,97 @@ QStringList GhosttyVt::extractSearchText()
 
     m_searchTextDirty = false;
     return result;
+}
+
+QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) const
+{
+    if (!m_terminal)
+        return {};
+
+    // Skip alternate screen — TUI apps (vim, htop) use alternate screen
+    // with no meaningful scrollback to persist.
+    GhosttyTerminalScreen screen;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN, &screen);
+    if (screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE)
+        return {};
+
+    // Get terminal dimensions
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &outCols);
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_ROWS, &outRows);
+
+    if (outCols == 0 || outRows == 0)
+        return {};
+
+    // Use VT formatter to serialize full terminal content (scrollback + active)
+    GhosttyFormatterTerminalOptions fmtOpts = GHOSTTY_INIT_SIZED(GhosttyFormatterTerminalOptions);
+    // Workaround: QObject re-defines `emit` as a macro after the header's #undef
+    #ifdef emit
+    #undef emit
+    #endif
+    fmtOpts.emit = GHOSTTY_FORMATTER_FORMAT_VT;
+    fmtOpts.trim = false;
+    fmtOpts.unwrap = false;
+
+    GhosttyFormatter formatter = nullptr;
+    GhosttyResult res = ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, fmtOpts);
+    if (res != GHOSTTY_SUCCESS || !formatter)
+        return {};
+
+    uint8_t *buf = nullptr;
+    size_t len = 0;
+    res = ghostty_formatter_format_alloc(formatter, nullptr, &buf, &len);
+    ghostty_formatter_free(formatter);
+
+    if (res != GHOSTTY_SUCCESS || !buf || len == 0)
+        return {};
+
+    // Build file: header + VT data
+    QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
+                            .arg(outCols).arg(outRows).toUtf8();
+    QByteArray vtData(reinterpret_cast<const char *>(buf), static_cast<int>(len));
+    ghostty_free(nullptr, buf, len);
+
+    return header + vtData;
+}
+
+void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, uint16_t actualRows)
+{
+    if (!m_terminal || data.isEmpty())
+        return;
+
+    // Parse header: GHOSTTY_SCROLLBACK_V1\nCOLS=X\nROWS=Y\n\n<VT data>
+    int headerEnd = data.indexOf("\n\n");
+    if (headerEnd < 0)
+        return;
+
+    QByteArray header = data.left(headerEnd);
+    QByteArray vtData = data.mid(headerEnd + 2);
+
+    if (vtData.isEmpty())
+        return;
+
+    // Extract saved dimensions from header
+    uint16_t savedCols = 0, savedRows = 0;
+    for (const QByteArray &line : header.split('\n')) {
+        if (line.startsWith("COLS="))
+            savedCols = line.mid(5).toUShort();
+        else if (line.startsWith("ROWS="))
+            savedRows = line.mid(5).toUShort();
+    }
+
+    if (savedCols == 0 || savedRows == 0)
+        return;
+
+    // Resize to saved dimensions first (so VT sequences have correct column widths)
+    if (savedCols != actualCols || savedRows != actualRows)
+        ghostty_terminal_resize(m_terminal, savedCols, savedRows, 0, 0);
+
+    // Replay VT data to reconstruct scrollback content
+    ghostty_terminal_vt_write(m_terminal,
+                              reinterpret_cast<const uint8_t *>(vtData.constData()),
+                              vtData.size());
+
+    // Resize to actual dimensions — triggers reflow on primary screen
+    if (savedCols != actualCols || savedRows != actualRows)
+        ghostty_terminal_resize(m_terminal, actualCols, actualRows, 0, 0);
 }

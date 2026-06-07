@@ -24,6 +24,7 @@ include_directories(${CMAKE_SOURCE_DIR}/../ghostty/include)
 add_executable(tst_session_persistence
     tst_session_persistence.cpp
     ${CMAKE_SOURCE_DIR}/../src/sessionmanager.cpp
+    ${CMAKE_SOURCE_DIR}/../src/settings.cpp
     ${CMAKE_SOURCE_DIR}/stubs/terminalview.cpp
 )
 # Force-include the stub terminalview.h before any source file.

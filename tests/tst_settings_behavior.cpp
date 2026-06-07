@@ -244,6 +244,75 @@ private slots:
         QCOMPARE(s.colorScheme(), QStringLiteral("dark"));
         QCOMPARE(s.backgroundOpacity(), 0.6f);
         QCOMPARE(s.bellMode(), 1);
+        QCOMPARE(s.scrollbackPersistence(), false);
+        QCOMPARE(s.scrollbackRetentionDays(), 30);
+    }
+
+    // --- Scrollback persistence ---
+
+    void testScrollbackPersistenceNoOpSignalSuppression()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+
+        QSignalSpy spy(&s, &Settings::scrollbackPersistenceChanged);
+        s.setScrollbackPersistence(false); // same as default
+        QCOMPARE(spy.count(), 0);
+
+        s.setScrollbackPersistence(true);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.scrollbackPersistence(), true);
+
+        s.setScrollbackPersistence(true); // no-op
+        QCOMPARE(spy.count(), 1);
+    }
+
+    void testScrollbackRetentionDaysClamping()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+
+        s.setScrollbackRetentionDays(1);
+        QCOMPARE(s.scrollbackRetentionDays(), 7); // clamped to min
+
+        s.setScrollbackRetentionDays(999);
+        QCOMPARE(s.scrollbackRetentionDays(), 365); // clamped to max
+
+        s.setScrollbackRetentionDays(30);
+        QCOMPARE(s.scrollbackRetentionDays(), 30);
+    }
+
+    void testScrollbackRetentionDaysNoOpSignalSuppression()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+
+        QSignalSpy spy(&s, &Settings::scrollbackRetentionDaysChanged);
+        s.setScrollbackRetentionDays(30); // same as default
+        QCOMPARE(spy.count(), 0);
+
+        s.setScrollbackRetentionDays(7);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.scrollbackRetentionDays(), 7);
+
+        s.setScrollbackRetentionDays(7); // no-op
+        QCOMPARE(spy.count(), 1);
+    }
+
+    void testScrollbackSettingsPersistence()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            Settings s(path);
+            s.setScrollbackPersistence(true);
+            s.setScrollbackRetentionDays(90);
+        }
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        Settings s2(path);
+        QCOMPARE(s2.scrollbackPersistence(), true);
+        QCOMPARE(s2.scrollbackRetentionDays(), 90);
     }
 };
 

@@ -199,6 +199,19 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
         }
 
         m_pty->writeData(utf8.constData(), utf8.size());
+
+        // If scrolled up viewing history, scroll back to bottom
+        if (m_vt && m_vt->terminal()) {
+            bool viewportActive = true;
+            ghostty_terminal_get(m_vt->terminal(),
+                                 GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
+            if (!viewportActive) {
+                GhosttyTerminalScrollViewport scroll = {};
+                scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+                ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+            }
+        }
+
         m_needsRender = true;
         update();
         event->accept();
@@ -315,6 +328,17 @@ void TerminalView::setupTerminal()
     // Resize terminal with pixel dimensions
     ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
                             m_cellWidth, m_cellHeight);
+
+    // Restore scrollback if pending (must be before startShell)
+    if (!m_pendingScrollback.isEmpty()) {
+        m_vt->restoreScrollback(m_pendingScrollback, m_cols, m_rows);
+        m_pendingScrollback.clear();
+        // Re-apply color scheme — VT replay may have overwritten palette
+        applyColorScheme();
+        // Re-resize with pixel dimensions (restoreScrollback uses 0,0 for pixel dims)
+        ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
+                                m_cellWidth, m_cellHeight);
+    }
 
     // Configure mouse encoder geometry
     m_vt->updateMouseEncoderSize(
@@ -1754,6 +1778,20 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
     GhosttyKeyAction action = event->isAutoRepeat()
         ? GHOSTTY_KEY_ACTION_REPEAT : GHOSTTY_KEY_ACTION_PRESS;
 
+    // If scrolled up viewing history, scroll back to bottom so the user
+    // can see what they're typing.
+    if (m_vt && m_vt->terminal()) {
+        bool viewportActive = true;
+        ghostty_terminal_get(m_vt->terminal(),
+                             GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
+        if (!viewportActive) {
+            GhosttyTerminalScrollViewport scroll = {};
+            scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+            ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+            m_needsRender = true;
+        }
+    }
+
     sendKeyEvent(key, action, mods, event->text());
     m_needsRender = true;
     update();
@@ -1793,6 +1831,18 @@ void TerminalView::setWorkingDirectory(const QString &dir)
 void TerminalView::setAutorunCommand(const QString &cmd)
 {
     m_autorunCommand = cmd;
+}
+
+void TerminalView::setPendingScrollback(const QByteArray &data)
+{
+    m_pendingScrollback = data;
+}
+
+QByteArray TerminalView::exportScrollback(uint16_t &outCols, uint16_t &outRows) const
+{
+    if (!m_vt)
+        return {};
+    return m_vt->exportScrollback(outCols, outRows);
 }
 
 void TerminalView::suppressNextKeyboardAutoShow()

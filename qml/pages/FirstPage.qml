@@ -274,7 +274,7 @@ Page {
                 onClicked: shareAction.trigger()
             }
             MenuItem {
-                text: searchPanel.open ? qsTr("Hide search") : qsTr("Search scrollback")
+                text: searchPanel.open ? qsTr("Hide search") : qsTr("Search terminal")
                 onClicked: {
                     if (searchPanel.open) {
                         searchPanel.open = false
@@ -335,10 +335,9 @@ Page {
         height: searchRow.height + Theme.paddingSmall * 2
         open: false
 
-        // Opaque background so terminal text doesn't show through
         Rectangle {
             anchors.fill: parent
-            color: Theme.overlayBackgroundColor
+            color: Theme.highlightDimmerColor
         }
 
         onOpenChanged: {
@@ -357,7 +356,7 @@ Page {
             SearchField {
                 id: searchField
                 width: parent.width - navButtons.width
-                placeholderText: qsTr("Search scrollback")
+                placeholderText: qsTr("Search terminal")
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                 canHide: true
 

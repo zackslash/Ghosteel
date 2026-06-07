@@ -36,6 +36,8 @@ void Settings::load()
                                      QStringLiteral("dark")).toString();
     m_backgroundOpacity = qBound(0.0f, m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat(), 1.0f);
     m_bellMode = qBound(0, m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(), 3);
+    m_scrollbackPersistence = m_settings.value(QStringLiteral("scrollback/enabled"), false).toBool();
+    m_scrollbackRetentionDays = qBound(7, m_settings.value(QStringLiteral("scrollback/retentionDays"), 30).toInt(), 365);
 }
 
 void Settings::save()
@@ -110,4 +112,26 @@ void Settings::setBellMode(int mode)
     m_settings.setValue(QStringLiteral("terminal/bellMode"), mode);
     scheduleSave();
     Q_EMIT bellModeChanged();
+}
+
+void Settings::setScrollbackPersistence(bool enabled)
+{
+    if (m_scrollbackPersistence == enabled)
+        return;
+    m_scrollbackPersistence = enabled;
+    m_settings.setValue(QStringLiteral("scrollback/enabled"), enabled);
+    scheduleSave();
+    Q_EMIT scrollbackPersistenceChanged();
+}
+
+void Settings::setScrollbackRetentionDays(int days)
+{
+    if (days < 7) days = 7;
+    if (days > 365) days = 365;
+    if (m_scrollbackRetentionDays == days)
+        return;
+    m_scrollbackRetentionDays = days;
+    m_settings.setValue(QStringLiteral("scrollback/retentionDays"), days);
+    scheduleSave();
+    Q_EMIT scrollbackRetentionDaysChanged();
 }

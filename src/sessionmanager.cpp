@@ -1,6 +1,7 @@
 #include "sessionmanager.h"
 #include "terminalview.h"
 #include "ptymanager.h"
+#include "settings.h"
 
 #include <QStandardPaths>
 #include <QCoreApplication>
@@ -8,6 +9,9 @@
 #include <QLocalSocket>
 #include <QWindow>
 #include <QGuiApplication>
+#include <QFile>
+#include <QFileInfo>
+#include <QDateTime>
 
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(
@@ -31,6 +35,7 @@ SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
     connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
             this, [this]() {
         saveSessions();
+        saveScrollback();
         m_savedOnQuit = true;
     });
 }
@@ -168,6 +173,10 @@ void SessionManager::removeSession(int index)
         info.view->cleanup();
         delete info.view;
     }
+
+    // Delete scrollback file for removed session (regardless of persistence
+    // toggle — if the session is gone, the file has no reason to exist)
+    QFile::remove(scrollbackFilePath(info.id));
 
     scheduleSave();
 }
@@ -442,6 +451,64 @@ void SessionManager::scheduleSave()
         m_saveTimer->start(); // restarts timer on each call (debounce)
 }
 
+QString SessionManager::scrollbackDir() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+           + QStringLiteral("/scrollback");
+}
+
+QString SessionManager::scrollbackFilePath(int sessionId) const
+{
+    return scrollbackDir() + QStringLiteral("/session_%1.vt").arg(sessionId);
+}
+
+void SessionManager::saveScrollback()
+{
+    if (!Settings::instance()->scrollbackPersistence())
+        return;
+
+    QString dir = scrollbackDir();
+    QDir().mkpath(dir);
+
+    for (const SessionInfo &info : m_sessions) {
+        if (!info.view)
+            continue;
+
+        uint16_t cols = 0, rows = 0;
+        QByteArray data = info.view->exportScrollback(cols, rows);
+        if (data.isEmpty())
+            continue;
+
+        QString path = scrollbackFilePath(info.id);
+        QFile file(path);
+        if (file.open(QIODevice::WriteOnly)) {
+            if (file.write(data) == -1) {
+                qWarning() << "Failed to write scrollback:" << file.errorString();
+                file.remove(); // don't leave a corrupt partial
+            }
+            file.close();
+        }
+    }
+}
+
+void SessionManager::cleanupScrollbackFiles()
+{
+    int retentionDays = Settings::instance()->scrollbackRetentionDays();
+    QDir dir(scrollbackDir());
+    if (!dir.exists())
+        return;
+
+    QDateTime cutoff = QDateTime::currentDateTime().addDays(-retentionDays);
+    const QFileInfoList files = dir.entryInfoList(QDir::Files);
+    for (const QFileInfo &fi : files) {
+        if (fi.fileName().startsWith(QStringLiteral("session_"))
+            && fi.fileName().endsWith(QStringLiteral(".vt"))) {
+            if (fi.lastModified() < cutoff)
+                QFile::remove(fi.absoluteFilePath());
+        }
+    }
+}
+
 bool SessionManager::restoreSessions()
 {
     m_settings.beginGroup(QStringLiteral("sessions"));
@@ -460,6 +527,9 @@ bool SessionManager::restoreSessions()
         count = 50;
 
     m_nextSessionId = nextId;
+
+    // Clean up expired scrollback files on app launch
+    cleanupScrollbackFiles();
 
     for (int i = 0; i < count; i++) {
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
@@ -483,6 +553,22 @@ bool SessionManager::restoreSessions()
         view->setWorkingDirectory(workingDir);
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
+
+        // Restore scrollback if persistence is enabled and file exists
+        if (Settings::instance()->scrollbackPersistence()) {
+            QString sbPath = scrollbackFilePath(savedId);
+            QFile sbFile(sbPath);
+            if (sbFile.exists() && sbFile.open(QIODevice::ReadOnly)) {
+                if (sbFile.size() > 4 * 1024 * 1024) { // 4MB — generous headroom over 3MB cap
+                    qWarning() << "Scrollback file too large, skipping:" << sbPath;
+                } else {
+                    QByteArray sbData = sbFile.readAll();
+                    if (!sbData.isEmpty())
+                        view->setPendingScrollback(sbData);
+                }
+                sbFile.close();
+            }
+        }
 
         SessionInfo info;
         info.id = savedId;

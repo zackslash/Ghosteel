@@ -7,6 +7,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QLocalServer>
+#include <QByteArray>
 
 class TerminalView;
 
@@ -96,6 +97,12 @@ private:
 
     void saveSessions();
     void scheduleSave();
+
+    // Scrollback persistence
+    void saveScrollback();
+    void cleanupScrollbackFiles();
+    QString scrollbackDir() const;
+    QString scrollbackFilePath(int sessionId) const;
 
 private Q_SLOTS:
     void onNewInstanceConnection();

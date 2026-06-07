@@ -13,7 +13,7 @@
 // ---- Terminal ----
 
 GHOSTTY_API GhosttyResult ghostty_terminal_new(
-    const GhosttyAllocator*, GhosttyTerminal* out, GhosttyTerminalOptions)
+    const GhosttyAllocator*, GhosttyTerminal* out, const GhosttyTerminalOptions*)
 {
     if (out) *out = (GhosttyTerminal)1;
     return GHOSTTY_SUCCESS;

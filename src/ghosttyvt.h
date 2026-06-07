@@ -67,6 +67,17 @@ public:
     QStringList extractSearchText();
     bool isSearchTextDirty() const { return m_searchTextDirty; }
 
+    // Scrollback persistence — export terminal content (scrollback + active) as
+    // VT sequences that can be replayed to restore the terminal state.
+    // Returns empty if on alternate screen (TUI apps) or terminal is null.
+    QByteArray exportScrollback(uint16_t &outCols, uint16_t &outRows) const;
+
+    // Restore scrollback from a previously exported byte array.
+    // The data must be in the format produced by exportScrollback() (header + VT).
+    // Caller must ensure the terminal is freshly created and has not been resized yet.
+    // After this call, the caller should resize the terminal to actual dimensions.
+    void restoreScrollback(const QByteArray &data, uint16_t actualCols, uint16_t actualRows);
+
 Q_SIGNALS:
     void titleChanged(const QString &title);
     void bell();
