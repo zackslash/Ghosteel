@@ -214,17 +214,6 @@ Page {
         }
     }
 
-    // Close search panel when terminal regains focus (user taps on terminal)
-    Connections {
-        target: terminal
-        ignoreUnknownSignals: true
-        onActiveFocusChanged: {
-            if (terminal && terminal.activeFocus && searchPanel.open) {
-                searchPanel.open = false
-            }
-        }
-    }
-
     function updateWindowTitle() {
         if (terminal)
             appWindow.windowTitle = terminal.title
@@ -321,6 +310,20 @@ Page {
         Item {
             id: terminalContainer
             anchors.fill: parent
+        }
+
+        // Transparent overlay that captures taps to dismiss search panel.
+        // Only enabled when search is open; passes the tap through to the terminal.
+        MouseArea {
+            anchors.fill: parent
+            enabled: searchPanel.open
+            visible: searchPanel.open
+            z: 1
+            onPressed: {
+                searchPanel.open = false
+                if (terminal) terminal.forceActiveFocus()
+                mouse.accepted = false // Let the terminal receive the event
+            }
         }
     }
 
