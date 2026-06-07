@@ -435,6 +435,12 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         result.append(line);
     }
 
+    // Strip trailing empty lines — these are blank viewport rows below the
+    // last real content. Without this, restoring creates a screen-height
+    // gap of whitespace before the shell prompt.
+    while (result.endsWith("\r\n"))
+        result.chop(2);
+
     // Build file: header + text data
     QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
                             .arg(outCols).arg(totalRows).toUtf8();
