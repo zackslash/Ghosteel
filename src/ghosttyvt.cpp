@@ -401,6 +401,11 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     result.reserve(static_cast<int>(totalRows * outCols));
     uint32_t graphemeBuf[128];
 
+    // Accumulate into a logical line buffer. Soft-wrapped continuation rows
+    // are merged into the current line without a newline. Only when we reach
+    // a non-continuation row do we flush the previous line with \r\n.
+    QByteArray lineBuf;
+
     for (size_t row = 0; row < totalRows; row++) {
         QByteArray line;
         line.reserve(outCols);
@@ -431,8 +436,6 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             line.chop(1);
 
         // Check if this row is a soft-wrap continuation of the previous row.
-        // If so, append without a newline — the original long line will be
-        // reconstructed as one continuous string and re-wrap naturally on replay.
         bool isContinuation = false;
         if (row > 0) {
             GhosttyPoint firstCol = {};
@@ -451,13 +454,25 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         }
 
         if (isContinuation) {
-            // Soft-wrapped continuation — append directly, no newline separator
-            result.append(line);
+            // Soft-wrapped continuation — merge into current line buffer.
+            // Don't trim: the original line content needs to stay intact
+            // so it re-wraps at the same point on replay.
+            lineBuf.append(line);
         } else {
-            // New logical line — terminate previous content with newline
-            result.append(line);
-            result.append("\r\n");
+            // New logical line — flush the previous line buffer with \r\n,
+            // then start accumulating this row.
+            if (!lineBuf.isEmpty()) {
+                result.append(lineBuf);
+                result.append("\r\n");
+            }
+            lineBuf = line;
         }
+    }
+
+    // Flush the last line
+    if (!lineBuf.isEmpty()) {
+        result.append(lineBuf);
+        result.append("\r\n");
     }
 
     // Strip trailing empty lines — these are blank viewport rows below the
