@@ -85,6 +85,38 @@ GHOSTTY_API GhosttyResult ghostty_terminal_point_from_grid_ref(
     return GHOSTTY_SUCCESS;
 }
 
+GHOSTTY_API GhosttyResult ghostty_grid_ref_cell(
+    const GhosttyGridRef*, GhosttyCell*)
+{
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_row(
+    const GhosttyGridRef*, GhosttyRow*)
+{
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_graphemes(
+    const GhosttyGridRef*, uint32_t*, size_t, size_t *out_len)
+{
+    if (out_len) *out_len = 0;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_hyperlink_uri(
+    const GhosttyGridRef*, uint8_t*, size_t, size_t *out_len)
+{
+    if (out_len) *out_len = 0;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_style(
+    const GhosttyGridRef*, GhosttyStyle*)
+{
+    return GHOSTTY_SUCCESS;
+}
+
 // ---- Render state ----
 
 GHOSTTY_API GhosttyResult ghostty_render_state_new(
