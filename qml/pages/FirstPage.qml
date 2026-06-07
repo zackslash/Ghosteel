@@ -214,6 +214,17 @@ Page {
         }
     }
 
+    // Close search panel when terminal regains focus (user taps on terminal)
+    Connections {
+        target: terminal
+        ignoreUnknownSignals: true
+        onActiveFocusChanged: {
+            if (terminal && terminal.activeFocus && searchPanel.open) {
+                searchPanel.open = false
+            }
+        }
+    }
+
     function updateWindowTitle() {
         if (terminal)
             appWindow.windowTitle = terminal.title
