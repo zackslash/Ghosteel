@@ -14,6 +14,7 @@ class TerminalView : public QObject
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(int stickyModifiers READ stickyModifiers WRITE setStickyModifiers NOTIFY stickyModifiersChanged)
+    Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
 
 public:
     explicit TerminalView(QObject *parent = nullptr) : QObject(parent) {}
@@ -28,6 +29,7 @@ public:
     void setStickyModifiers(int mods) {
         if (m_stickyModifiers != mods) { m_stickyModifiers = mods; Q_EMIT stickyModifiersChanged(); }
     }
+    QString selectedText() const { return m_selectedText; }
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
@@ -43,6 +45,7 @@ public:
 
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
+    void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
 
 Q_SIGNALS:
     void fontSizeChanged();
@@ -50,11 +53,13 @@ Q_SIGNALS:
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
+    void selectedTextChanged();
 
 private:
     int m_fontSize = 10;
     int m_stickyModifiers = 0;
     QString m_title;
+    QString m_selectedText;
     QString m_workingDirectory;
     QString m_autorunCommand;
 };

@@ -92,3 +92,11 @@ target_include_directories(tst_osc777 PRIVATE SYSTEM
 )
 target_link_libraries(tst_osc777 PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME Osc777 COMMAND tst_osc777)
+
+# --- Word boundary (isWordChar) tests ---
+add_executable(tst_word_boundary
+    tst_word_boundary.cpp
+    ${CMAKE_SOURCE_DIR}/../src/textutil.cpp
+)
+target_link_libraries(tst_word_boundary PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME WordBoundary COMMAND tst_word_boundary)

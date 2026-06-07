@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Share 1.0
 import QtMultimedia 5.0
 import Nemo.Notifications 1.0
 import com.zackslash.ghosteel 1.0
@@ -43,6 +44,16 @@ Page {
     Timer {
         id: bellCooldown
         interval: 200
+    }
+
+    // Share selected text to other Sailfish apps
+    ShareAction {
+        id: shareAction
+        mimeType: "text/plain"
+        resources: [{
+            "data": terminal ? terminal.selectedText : "",
+            "name": "selected-text"
+        }]
     }
 
     // System notification for OSC 777 desktop notifications
@@ -256,6 +267,11 @@ Page {
             MenuItem {
                 text: qsTr("Sessions")
                 onClicked: pageStack.push(Qt.resolvedUrl("SessionPage.qml"))
+            }
+            MenuItem {
+                text: qsTr("Share selection")
+                visible: terminal && terminal.selectedText.length > 0
+                onClicked: shareAction.trigger()
             }
             MenuItem {
                 text: qsTr("Next session")

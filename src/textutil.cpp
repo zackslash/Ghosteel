@@ -1,6 +1,7 @@
 #include "textutil.h"
 #include <QStringList>
 #include <QtMath>
+#include <cctype>
 
 namespace TextUtil {
 
@@ -68,6 +69,22 @@ Dimensions calculateDimensions(int width, int height, int cellWidth, int cellHei
     if (rows > 512) rows = 512;
 
     return { cols, rows };
+}
+
+bool isWordChar(uint32_t codepoint)
+{
+    // Standard terminal word characters: alphanumeric, underscore.
+    // Non-ASCII codepoints (CJK, accented letters, etc.) are treated as word chars
+    // so entire non-ASCII "words" get selected on double-tap.
+    // Exclude box-drawing (U+2500–U+257F) and block elements (U+2580–U+259F)
+    // which are common in TUI apps (htop, lazygit, midnight commander).
+    if (codepoint > 127) {
+        if (codepoint >= 0x2500 && codepoint <= 0x259F)
+            return false;
+        return true;
+    }
+    unsigned char c = static_cast<unsigned char>(codepoint);
+    return std::isalnum(c) || c == '_';
 }
 
 } // namespace TextUtil
