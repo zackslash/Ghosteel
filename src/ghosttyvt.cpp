@@ -328,16 +328,17 @@ QStringList GhosttyVt::extractSearchText()
     if (!m_terminal)
         return {};
 
-    // Read all terminal content (scrollback + active area) using the grid ref
-    // API with GHOSTTY_POINT_TAG_SCREEN coordinates. This directly accesses
-    // cells from the terminal's page list without manipulating the viewport,
-    // avoiding both the formatter API (which can panic on empty pages) and
-    // the viewport-scrolling approach (which has render state iterator issues).
-
     size_t totalRows = 0;
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+    size_t scrollbackRows = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS, &scrollbackRows);
     uint16_t cols = 0;
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
+    uint16_t viewportRows = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_ROWS, &viewportRows);
+
+    qDebug("extractSearchText: totalRows=%zu scrollbackRows=%zu cols=%u viewportRows=%u",
+           totalRows, scrollbackRows, cols, viewportRows);
 
     if (totalRows == 0 || cols == 0)
         return {};
@@ -346,12 +347,15 @@ QStringList GhosttyVt::extractSearchText()
     result.reserve(static_cast<int>(totalRows));
     uint32_t graphemeBuf[128];
 
+    int gridRefFailures = 0;
+    int graphemeZeroLen = 0;
+    int graphemeSuccess = 0;
+
     for (size_t row = 0; row < totalRows; row++) {
         QString line;
         line.reserve(cols);
 
         for (uint16_t col = 0; col < cols; col++) {
-            // Build a point in SCREEN coordinates (0 = top of scrollback)
             GhosttyPoint point = {};
             point.tag = GHOSTTY_POINT_TAG_SCREEN;
             point.value.coordinate.x = col;
@@ -360,6 +364,7 @@ QStringList GhosttyVt::extractSearchText()
             GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
             if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
                 line += QLatin1Char(' ');
+                gridRefFailures++;
                 continue;
             }
 
@@ -367,13 +372,23 @@ QStringList GhosttyVt::extractSearchText()
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
                     == GHOSTTY_SUCCESS && graphemeLen > 0) {
                 line += QString::fromUcs4(graphemeBuf, graphemeLen);
+                graphemeSuccess++;
             } else {
                 line += QLatin1Char(' ');
+                graphemeZeroLen++;
             }
+        }
+
+        // Log first few scrollback rows and last few viewport rows
+        if (row < 3 || row >= totalRows - 3) {
+            qDebug("  row %zu: '%s'", row, qPrintable(line.left(60)));
         }
 
         result.append(line);
     }
+
+    qDebug("extractSearchText done: %d rows, gridRefFailures=%d graphemeZeroLen=%d graphemeSuccess=%d",
+           result.size(), gridRefFailures, graphemeZeroLen, graphemeSuccess);
 
     m_searchTextDirty = false;
     return result;
