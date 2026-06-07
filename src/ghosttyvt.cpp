@@ -325,36 +325,96 @@ void GhosttyVt::bellCallback(GhosttyTerminal, void *ud)
 
 QStringList GhosttyVt::extractSearchText()
 {
-    if (!m_terminal)
+    if (!m_terminal || !m_renderState)
         return {};
 
-    GhosttyFormatter formatter = nullptr;
-    GhosttyFormatterTerminalOptions opts = {};
-    opts.size = sizeof(GhosttyFormatterTerminalOptions);
-    // GhosttyFormatterTerminalOptions.emit conflicts with Qt's emit macro.
-    // Undefine temporarily to assign the field.
-#ifdef emit
-#undef emit
-#endif
-    opts.emit = GHOSTTY_FORMATTER_FORMAT_PLAIN;
-    opts.unwrap = false;  // Preserve visual row mapping (1 line = 1 row)
-    opts.trim = false;    // Preserve exact cell content
+    // Use viewport-scrolling to read all terminal content (scrollback + active).
+    // This avoids the formatter API which can panic on null page lists.
+    // Pattern: save viewport → scroll to top → read chunks → restore viewport.
 
-    GhosttyResult res = ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, opts);
-    if (res != GHOSTTY_SUCCESS)
+    // Save current viewport position
+    GhosttyTerminalScrollbar scrollbar = {};
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
+    int viewTop = static_cast<int>(scrollbar.offset);
+    int viewLen = static_cast<int>(scrollbar.len);
+    if (viewLen <= 0)
         return {};
 
-    uint8_t *buf = nullptr;
-    size_t len = 0;
-    res = ghostty_formatter_format_alloc(formatter, nullptr, &buf, &len);
-    ghostty_formatter_free(formatter);
+    // Scroll to top of scrollback
+    GhosttyTerminalScrollViewport scroll = {};
+    scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+    scroll.value.delta = -viewTop;
+    ghostty_terminal_scroll_viewport(m_terminal, scroll);
 
-    if (res != GHOSTTY_SUCCESS || !buf)
-        return {};
+    QStringList result;
+    int totalRows = static_cast<int>(scrollbar.total);
+    int extractedRows = 0;
 
-    QString text = QString::fromUtf8(reinterpret_cast<const char *>(buf), static_cast<int>(len));
-    ghostty_free(nullptr, buf, len);
+    // Allocate cell-reading resources once
+    GhosttyRenderStateRowIterator iterator;
+    ghostty_render_state_row_iterator_new(nullptr, &iterator);
+    GhosttyRenderStateRowCells cells;
+    ghostty_render_state_row_cells_new(nullptr, &cells);
+
+    while (extractedRows < totalRows) {
+        // Update render state to reflect current viewport position
+        ghostty_render_state_update(m_renderState, m_terminal);
+
+        // Read all visible rows in this viewport chunk
+        int rowsThisChunk = 0;
+        ghostty_render_state_get(m_renderState, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
+        while (ghostty_render_state_row_iterator_next(iterator)) {
+            ghostty_render_state_row_get(iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &cells);
+
+            QString line;
+            while (ghostty_render_state_row_cells_next(cells)) {
+                uint32_t graphemesLen = 0;
+                ghostty_render_state_row_cells_get(cells,
+                    GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &graphemesLen);
+                if (graphemesLen > 0 && graphemesLen <= 128) {
+                    uint32_t buf[128];
+                    ghostty_render_state_row_cells_get(cells,
+                        GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, buf);
+                    line += QString::fromUcs4(buf, graphemesLen);
+                } else if (graphemesLen == 0) {
+                    line += QLatin1Char(' ');
+                }
+            }
+
+            result.append(line);
+            rowsThisChunk++;
+        }
+
+        extractedRows += rowsThisChunk;
+
+        // If this chunk had fewer rows than the viewport, we've hit the bottom
+        if (rowsThisChunk < viewLen)
+            break;
+
+        // Scroll down by one viewport height
+        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+        scroll.value.delta = viewLen;
+        ghostty_terminal_scroll_viewport(m_terminal, scroll);
+    }
+
+    // Free cell-reading resources
+    ghostty_render_state_row_cells_free(cells);
+    ghostty_render_state_row_iterator_free(iterator);
+
+    // Restore original viewport position
+    int currentOffset = viewTop + extractedRows - viewLen; // approximate current position
+    scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+    ghostty_terminal_scroll_viewport(m_terminal, scroll);
+    // Fine-tune: scroll up from bottom to restore exact position
+    GhosttyTerminalScrollbar restored = {};
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_SCROLLBAR, &restored);
+    int restoreDelta = static_cast<int>(restored.offset) - viewTop;
+    if (restoreDelta != 0) {
+        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+        scroll.value.delta = -restoreDelta;
+        ghostty_terminal_scroll_viewport(m_terminal, scroll);
+    }
 
     m_searchTextDirty = false;
-    return text.split(QLatin1Char('\n'));
+    return result;
 }
