@@ -1879,10 +1879,6 @@ void TerminalView::performSearch()
         }
     }
 
-    qDebug("performSearch: pattern='%s', cacheRows=%d, matches=%d",
-           m_searchPattern.toUtf8().constData(), m_searchCache.size(),
-           m_searchMatches.size());
-
     if (!m_searchMatches.isEmpty())
         m_currentMatchIndex = 0;
 
