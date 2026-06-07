@@ -431,7 +431,7 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         // making each exported row consume 2 terminal rows.
         while (!line.isEmpty() && line.endsWith(' '))
             line.chop(1);
-        line.append('\n');
+        line.append("\r\n");
         result.append(line);
     }
 
@@ -467,7 +467,8 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
     if (savedCols == 0)
         return;
 
-    // If column count differs, pad/trim each line to match actual width
+    // If column count differs, pad/trim each line to match actual width.
+    // Always use \r\n for replay — Ghostty's LF only moves down (no auto-CR).
     QByteArray replayData;
     if (savedCols != actualCols) {
         replayData.reserve(textData.size());
@@ -475,6 +476,8 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
         for (int i = 0; i <= textData.size(); i++) {
             if (i == textData.size() || textData[i] == '\n') {
                 QByteArray line = textData.mid(lineStart, i - lineStart);
+                if (!line.isEmpty() && line.endsWith('\r'))
+                    line.chop(1);
                 // Trim trailing spaces, then pad to actual width
                 while (!line.isEmpty() && line.endsWith(' '))
                     line.chop(1);
@@ -483,22 +486,23 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
                 else if (line.size() > actualCols)
                     line.truncate(actualCols);
                 replayData.append(line);
-                replayData.append('\n');
+                replayData.append("\r\n");
                 lineStart = i + 1;
             }
         }
     } else {
-        // Same column count — just trim trailing spaces from each line
-        // to prevent pending-wrap + newline double-skip
+        // Same column count — trim trailing spaces to prevent pending-wrap issues
         replayData.reserve(textData.size());
         int lineStart = 0;
         for (int i = 0; i <= textData.size(); i++) {
             if (i == textData.size() || textData[i] == '\n') {
                 QByteArray line = textData.mid(lineStart, i - lineStart);
+                if (!line.isEmpty() && line.endsWith('\r'))
+                    line.chop(1);
                 while (!line.isEmpty() && line.endsWith(' '))
                     line.chop(1);
                 replayData.append(line);
-                replayData.append('\n');
+                replayData.append("\r\n");
                 lineStart = i + 1;
             }
         }
