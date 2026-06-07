@@ -427,12 +427,37 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         }
 
         // Trim trailing spaces to avoid pending-wrap + newline double-skip on replay.
-        // Without this, the 51st char sets pending_wrap, then \n wraps AND advances,
-        // making each exported row consume 2 terminal rows.
         while (!line.isEmpty() && line.endsWith(' '))
             line.chop(1);
-        line.append("\r\n");
-        result.append(line);
+
+        // Check if this row is a soft-wrap continuation of the previous row.
+        // If so, append without a newline — the original long line will be
+        // reconstructed as one continuous string and re-wrap naturally on replay.
+        bool isContinuation = false;
+        if (row > 0) {
+            GhosttyPoint firstCol = {};
+            firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
+            firstCol.value.coordinate.x = 0;
+            firstCol.value.coordinate.y = static_cast<uint32_t>(row);
+            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
+                GhosttyRow rowHandle = 0;
+                if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {
+                    bool wc = false;
+                    if (ghostty_row_get(rowHandle, GHOSTTY_ROW_DATA_WRAP_CONTINUATION, &wc) == GHOSTTY_SUCCESS)
+                        isContinuation = wc;
+                }
+            }
+        }
+
+        if (isContinuation) {
+            // Soft-wrapped continuation — append directly, no newline separator
+            result.append(line);
+        } else {
+            // New logical line — terminate previous content with newline
+            result.append(line);
+            result.append("\r\n");
+        }
     }
 
     // Strip trailing empty lines — these are blank viewport rows below the

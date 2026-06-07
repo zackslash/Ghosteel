@@ -97,6 +97,12 @@ GHOSTTY_API GhosttyResult ghostty_grid_ref_row(
     return GHOSTTY_SUCCESS;
 }
 
+GHOSTTY_API GhosttyResult ghostty_row_get(GhosttyRow, GhosttyRowData, void *out)
+{
+    if (out) *static_cast<bool*>(out) = false;
+    return GHOSTTY_SUCCESS;
+}
+
 GHOSTTY_API GhosttyResult ghostty_grid_ref_graphemes(
     const GhosttyGridRef*, uint32_t*, size_t, size_t *out_len)
 {
