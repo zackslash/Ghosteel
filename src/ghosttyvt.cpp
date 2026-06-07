@@ -402,6 +402,9 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     uint32_t graphemeBuf[128];
 
     for (size_t row = 0; row < totalRows; row++) {
+        QByteArray line;
+        line.reserve(outCols);
+
         for (uint16_t col = 0; col < outCols; col++) {
             GhosttyPoint point = {};
             point.tag = GHOSTTY_POINT_TAG_SCREEN;
@@ -410,19 +413,26 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
             GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
             if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
-                result.append(' ');
+                line.append(' ');
                 continue;
             }
 
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
                     == GHOSTTY_SUCCESS && graphemeLen > 0) {
-                result.append(QString::fromUcs4(graphemeBuf, graphemeLen).toUtf8());
+                line.append(QString::fromUcs4(graphemeBuf, graphemeLen).toUtf8());
             } else {
-                result.append(' ');
+                line.append(' ');
             }
         }
-        result.append('\n');
+
+        // Trim trailing spaces to avoid pending-wrap + newline double-skip on replay.
+        // Without this, the 51st char sets pending_wrap, then \n wraps AND advances,
+        // making each exported row consume 2 terminal rows.
+        while (!line.isEmpty() && line.endsWith(' '))
+            line.chop(1);
+        line.append('\n');
+        result.append(line);
     }
 
     // Build file: header + text data
@@ -478,7 +488,20 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
             }
         }
     } else {
-        replayData = textData;
+        // Same column count — just trim trailing spaces from each line
+        // to prevent pending-wrap + newline double-skip
+        replayData.reserve(textData.size());
+        int lineStart = 0;
+        for (int i = 0; i <= textData.size(); i++) {
+            if (i == textData.size() || textData[i] == '\n') {
+                QByteArray line = textData.mid(lineStart, i - lineStart);
+                while (!line.isEmpty() && line.endsWith(' '))
+                    line.chop(1);
+                replayData.append(line);
+                replayData.append('\n');
+                lineStart = i + 1;
+            }
+        }
     }
 
     // Replay text as VT input — plain text is valid VT, newlines scroll
