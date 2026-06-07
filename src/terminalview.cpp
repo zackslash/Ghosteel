@@ -331,6 +331,7 @@ void TerminalView::setupTerminal()
 
     // Restore scrollback if pending (must be before startShell)
     if (!m_pendingScrollback.isEmpty()) {
+        qDebug() << "Restoring scrollback:" << m_pendingScrollback.size() << "bytes, terminal=" << m_cols << "x" << m_rows;
         m_vt->restoreScrollback(m_pendingScrollback, m_cols, m_rows);
         m_pendingScrollback.clear();
         // Re-apply color scheme — VT replay may have overwritten palette

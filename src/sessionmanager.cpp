@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QDebug>
 
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(
@@ -464,11 +465,14 @@ QString SessionManager::scrollbackFilePath(int sessionId) const
 
 void SessionManager::saveScrollback()
 {
-    if (!Settings::instance()->scrollbackPersistence())
+    if (!Settings::instance()->scrollbackPersistence()) {
+        qDebug() << "Scrollback persistence disabled, skipping save";
         return;
+    }
 
     QString dir = scrollbackDir();
     QDir().mkpath(dir);
+    qDebug() << "Saving scrollback for" << m_sessions.size() << "sessions to" << dir;
 
     for (const SessionInfo &info : m_sessions) {
         if (!info.view)
@@ -476,17 +480,23 @@ void SessionManager::saveScrollback()
 
         uint16_t cols = 0, rows = 0;
         QByteArray data = info.view->exportScrollback(cols, rows);
+        qDebug() << "Session" << info.id << ": export returned" << data.size() << "bytes, cols=" << cols << "rows=" << rows;
         if (data.isEmpty())
             continue;
 
         QString path = scrollbackFilePath(info.id);
         QFile file(path);
         if (file.open(QIODevice::WriteOnly)) {
-            if (file.write(data) == -1) {
+            qint64 written = file.write(data);
+            if (written == -1) {
                 qWarning() << "Failed to write scrollback:" << file.errorString();
-                file.remove(); // don't leave a corrupt partial
+                file.remove();
+            } else {
+                qDebug() << "Wrote scrollback:" << path << "(" << written << "bytes)";
             }
             file.close();
+        } else {
+            qWarning() << "Failed to open scrollback file for writing:" << path << file.errorString();
         }
     }
 }
@@ -563,10 +573,13 @@ bool SessionManager::restoreSessions()
                     qWarning() << "Scrollback file too large, skipping:" << sbPath;
                 } else {
                     QByteArray sbData = sbFile.readAll();
+                    qDebug() << "Restoring scrollback for session" << savedId << ":" << sbData.size() << "bytes from" << sbPath;
                     if (!sbData.isEmpty())
                         view->setPendingScrollback(sbData);
                 }
                 sbFile.close();
+            } else {
+                qDebug() << "No scrollback file for session" << savedId << "at" << sbPath;
             }
         }
 

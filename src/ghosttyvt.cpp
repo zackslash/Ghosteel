@@ -405,16 +405,20 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
     GhosttyFormatter formatter = nullptr;
     GhosttyResult res = ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, fmtOpts);
-    if (res != GHOSTTY_SUCCESS || !formatter)
+    if (res != GHOSTTY_SUCCESS || !formatter) {
+        qWarning() << "exportScrollback: formatter_terminal_new failed:" << res;
         return {};
+    }
 
     uint8_t *buf = nullptr;
     size_t len = 0;
     res = ghostty_formatter_format_alloc(formatter, nullptr, &buf, &len);
     ghostty_formatter_free(formatter);
 
-    if (res != GHOSTTY_SUCCESS || !buf || len == 0)
+    if (res != GHOSTTY_SUCCESS || !buf || len == 0) {
+        qWarning() << "exportScrollback: format_alloc failed:" << res << "len=" << len;
         return {};
+    }
 
     // Build file: header + VT data
     QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
@@ -430,13 +434,19 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
     if (!m_terminal || data.isEmpty())
         return;
 
+    qDebug() << "restoreScrollback: data size=" << data.size() << "actual=" << actualCols << "x" << actualRows;
+
     // Parse header: GHOSTTY_SCROLLBACK_V1\nCOLS=X\nROWS=Y\n\n<VT data>
     int headerEnd = data.indexOf("\n\n");
-    if (headerEnd < 0)
+    if (headerEnd < 0) {
+        qWarning() << "restoreScrollback: no header found (no double newline)";
         return;
+    }
 
     QByteArray header = data.left(headerEnd);
     QByteArray vtData = data.mid(headerEnd + 2);
+
+    qDebug() << "restoreScrollback: header=" << header << "vtData size=" << vtData.size();
 
     if (vtData.isEmpty())
         return;
@@ -450,19 +460,32 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
             savedRows = line.mid(5).toUShort();
     }
 
+    qDebug() << "restoreScrollback: saved=" << savedCols << "x" << savedRows;
+
     if (savedCols == 0 || savedRows == 0)
         return;
 
     // Resize to saved dimensions first (so VT sequences have correct column widths)
-    if (savedCols != actualCols || savedRows != actualRows)
+    if (savedCols != actualCols || savedRows != actualRows) {
+        qDebug() << "restoreScrollback: resizing to saved dims";
         ghostty_terminal_resize(m_terminal, savedCols, savedRows, 0, 0);
+    }
 
     // Replay VT data to reconstruct scrollback content
+    qDebug() << "restoreScrollback: writing" << vtData.size() << "bytes of VT data";
     ghostty_terminal_vt_write(m_terminal,
                               reinterpret_cast<const uint8_t *>(vtData.constData()),
                               vtData.size());
 
+    // Check result
+    size_t totalRows = 0, scrollbackRows = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS, &scrollbackRows);
+    qDebug() << "restoreScrollback: after replay totalRows=" << totalRows << "scrollbackRows=" << scrollbackRows;
+
     // Resize to actual dimensions — triggers reflow on primary screen
-    if (savedCols != actualCols || savedRows != actualRows)
+    if (savedCols != actualCols || savedRows != actualRows) {
+        qDebug() << "restoreScrollback: resizing to actual dims";
         ghostty_terminal_resize(m_terminal, actualCols, actualRows, 0, 0);
+    }
 }
