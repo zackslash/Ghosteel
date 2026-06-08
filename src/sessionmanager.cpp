@@ -11,6 +11,7 @@
 #include <QWindow>
 #include <QGuiApplication>
 #include <QFile>
+#include <QSaveFile>
 #include <QFileInfo>
 #include <QDateTime>
 
@@ -490,19 +491,17 @@ void SessionManager::saveScrollback()
         if (output.isEmpty())
             continue; // Don't write plaintext to disk
 
-        // Atomic write: write to .tmp, then rename (prevents truncated files on crash)
-        QString path = scrollbackFilePath(info.id);
-        QString tmpPath = path + QStringLiteral(".tmp");
-        QFile file(tmpPath);
-        if (file.open(QIODevice::WriteOnly)) {
-            if (file.write(output) != -1) {
-                file.close();
-                QFile::remove(path);
-                QFile::rename(tmpPath, path);
+        // Atomic write via QSaveFile — commit() is a POSIX rename(),
+        // which is atomic on the same filesystem. No window where both
+        // old and new files are gone.
+        QSaveFile saveFile(scrollbackFilePath(info.id));
+        if (saveFile.open(QIODevice::WriteOnly)) {
+            if (saveFile.write(output) != -1) {
+                if (!saveFile.commit()) {
+                    qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
+                }
             } else {
-                qWarning() << "Failed to write scrollback:" << file.errorString();
-                file.close();
-                file.remove();
+                qWarning() << "Failed to write scrollback:" << saveFile.errorString();
             }
         }
     }
@@ -518,10 +517,17 @@ void SessionManager::cleanupScrollbackFiles()
     QDateTime cutoff = QDateTime::currentDateTime().addDays(-retentionDays);
     const QFileInfoList files = dir.entryInfoList(QDir::Files);
     for (const QFileInfo &fi : files) {
-        if (fi.fileName().startsWith(QStringLiteral("session_"))
-            && fi.fileName().endsWith(QStringLiteral(".vt"))) {
-            if (fi.lastModified() < cutoff)
+        if (fi.fileName().startsWith(QStringLiteral("session_"))) {
+            if (fi.fileName().endsWith(QStringLiteral(".vt"))) {
+                // Normal encrypted scrollback file — expire by retention days
+                if (fi.lastModified() < cutoff)
+                    QFile::remove(fi.absoluteFilePath());
+            } else {
+                // Orphaned QSaveFile temp file from a crash during write.
+                // These have random suffixes (e.g. session_1.vt.aBcDeF).
+                // Safe to remove — they're never read on restore.
                 QFile::remove(fi.absoluteFilePath());
+            }
         }
     }
 }

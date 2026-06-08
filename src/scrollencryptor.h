@@ -14,9 +14,9 @@ namespace Sailfish { namespace Crypto { class CryptoManager; class Key; } }
 // Encrypts/decrypts scrollback data using the Sailfish Secrets + Crypto framework.
 // The AES-256 key is stored in the daemon and never enters app memory.
 //
-// Falls back to unavailable state if the secrets daemon is not running,
-// the device is locked, or any initialization step fails. Callers should
-// check isAvailable() and fall back to plaintext if false.
+// If isAvailable() returns false, callers should skip encryption entirely
+// rather than falling back to plaintext. Scrollback is silently dropped
+// when encryption is unavailable.
 //
 // Thread safety: main thread only. Uses synchronous waitForFinished() calls.
 class ScrollEncryptor : public QObject
