@@ -48,12 +48,12 @@ bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 #include <Sailfish/Crypto/cryptomanager.h>
 #include <Sailfish/Crypto/key.h>
 #include <Sailfish/Crypto/generatestoredkeyrequest.h>
-#include <Sailfish/Crypto/generateinitializationvectorrequest.h>
 #include <Sailfish/Crypto/encryptrequest.h>
 #include <Sailfish/Crypto/decryptrequest.h>
 #include <Sailfish/Crypto/result.h>
 
 #include <QDebug>
+#include <QRandomGenerator>
 
 using Sailfish::Secrets::SecretManager;
 using Sailfish::Secrets::CreateCollectionRequest;
@@ -178,27 +178,15 @@ bool ScrollEncryptor::ensureKey()
 
 void ScrollEncryptor::replenishIVs()
 {
-    if (!m_available)
-        return;
-
+    // Generate random IVs locally — avoids D-Bus round-trips and
+    // sidesteps GenerateInitializationVectorRequest not being supported
+    // on some crypto plugin configurations. IVs just need to be random;
+    // the daemon handles the actual key material.
     while (m_ivPool.size() < IV_POOL_TARGET) {
-        GenerateInitializationVectorRequest ivReq;
-        ivReq.setManager(m_cryptoManager.get());
-        ivReq.setAlgorithm(m_keyReference->algorithm());
-        ivReq.setKeySize(m_keyReference->size());
-        ivReq.setBlockMode(CryptoManager::BlockModeCbc);
-        ivReq.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
-        ivReq.startRequest();
-        ivReq.waitForFinished();
-
-        if (ivReq.result().code() != Sailfish::Crypto::Result::Succeeded) {
-            qWarning() << "Ghosteel: IV generation failed:"
-                        << ivReq.result().errorCode()
-                        << ivReq.result().errorMessage();
-            break; // Use however many we have
-        }
-
-        m_ivPool.append(ivReq.generatedInitializationVector());
+        QByteArray iv(16, '\0');
+        QRandomGenerator::global()->fillRange(
+                reinterpret_cast<quint32*>(iv.data()), 16 / sizeof(quint32));
+        m_ivPool.append(iv);
     }
 }
 
