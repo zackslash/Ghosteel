@@ -422,6 +422,19 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
                 continue;
             }
 
+            // Skip wide character spacer cells — they have no text content
+            // but would otherwise be exported as phantom spaces.
+            GhosttyCell cell = 0;
+            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS && cell != 0) {
+                GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+                if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) == GHOSTTY_SUCCESS) {
+                    if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
+                            || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
+                        continue; // skip spacer — the base wide char already emitted
+                    }
+                }
+            }
+
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
                     == GHOSTTY_SUCCESS && graphemeLen > 0) {
@@ -527,12 +540,23 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
                 // Trim trailing spaces, then pad to actual width
                 while (!line.isEmpty() && line.endsWith(' '))
                     line.chop(1);
-                if (line.size() < actualCols)
-                    line.append(QByteArray(actualCols - line.size(), ' '));
-                else if (line.size() > actualCols)
-                    line.truncate(actualCols);
-                replayData.append(line);
-                replayData.append("\r\n");
+                if (line.size() <= actualCols) {
+                    // Short enough — pad if needed
+                    if (line.size() < actualCols)
+                        line.append(QByteArray(actualCols - line.size(), ' '));
+                    replayData.append(line);
+                    replayData.append("\r\n");
+                } else {
+                    // Line is wider than the terminal — re-wrap by splitting
+                    // at actualCols boundaries instead of truncating.
+                    int offset = 0;
+                    while (offset < line.size()) {
+                        int chunk = qMin(static_cast<int>(actualCols), line.size() - offset);
+                        replayData.append(line.mid(offset, chunk));
+                        replayData.append("\r\n");
+                        offset += chunk;
+                    }
+                }
                 lineStart = i + 1;
             }
         }

@@ -91,6 +91,12 @@ GHOSTTY_API GhosttyResult ghostty_grid_ref_cell(
     return GHOSTTY_SUCCESS;
 }
 
+GHOSTTY_API GhosttyResult ghostty_cell_get(GhosttyCell, GhosttyCellData, void *out)
+{
+    if (out) *static_cast<int*>(out) = 0;
+    return GHOSTTY_SUCCESS;
+}
+
 GHOSTTY_API GhosttyResult ghostty_grid_ref_row(
     const GhosttyGridRef*, GhosttyRow*)
 {
