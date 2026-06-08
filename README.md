@@ -33,15 +33,13 @@ C++ host app with QML/Silica UI. Terminal engine is Ghostty's `libghostty-vt` (Z
 
 ## Development
 
-The `ghostty/` submodule carries a local patch on the `ghosteel-patches` branch to work around a Zig i386 C ABI bug that corrupts struct-by-value parameters. See [`ghostty/PATCHES.md`](ghostty/PATCHES.md) for details and the upstream Zig issues. The patch can be dropped once Ghostty upgrades to Zig >= 0.16.0.
-
-To update the Ghostty submodule to the latest upstream and rebase the patch:
+The Ghostty submodule needs a patch applied before building locally. The patch works around a Zig i386 C ABI bug that corrupts struct-by-value parameters. It's applied automatically in CI, but for local builds:
 
 ```bash
-cd ghostty
-git fetch origin
-git rebase origin/main
+git -C ghostty apply patches/ghostty-i386-abi-fix.patch
 ```
+
+The patch changes `ghostty_terminal_new` to accept options by pointer instead of by value. Can be dropped once Ghostty upgrades to Zig >= 0.16.0. See `patches/ghostty-i386-abi-fix.patch` for details.
 
 ## License
 
