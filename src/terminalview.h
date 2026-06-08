@@ -45,7 +45,7 @@ public:
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     Q_INVOKABLE void setAutorunCommand(const QString &cmd);
     Q_INVOKABLE void suppressNextKeyboardAutoShow();
-    Q_INVOKABLE void setPendingScrollback(const QByteArray &data); // Set VT data for restore on setupTerminal()
+    void setPendingScrollback(const QByteArray &data); // Set VT data for restore on setupTerminal()
     Q_INVOKABLE void openSearch();
     Q_INVOKABLE void closeSearch();
     Q_INVOKABLE void setSearchPattern(const QString &pattern);
