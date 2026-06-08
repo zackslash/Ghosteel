@@ -178,17 +178,14 @@ bool ScrollEncryptor::ensureKey()
 
 void ScrollEncryptor::replenishIVs()
 {
-    // Generate random IVs locally — avoids D-Bus round-trips and
-    // sidesteps GenerateInitializationVectorRequest not being supported
-    // on some crypto plugin configurations. IVs just need to be random;
-    // the daemon handles the actual key material.
+    // Generate random IVs locally using /dev/urandom (via std::random_device).
+    // Avoids D-Bus round-trips and sidesteps GenerateInitializationVectorRequest
+    // not being supported on some crypto plugin configurations.
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 255);
     while (m_ivPool.size() < IV_POOL_TARGET) {
         QByteArray iv(16, '\0');
         for (int i = 0; i < 16; i++)
-            iv[i] = static_cast<char>(dist(gen));
+            iv[i] = static_cast<char>(rd() & 0xFF);
         m_ivPool.append(iv);
     }
 }
