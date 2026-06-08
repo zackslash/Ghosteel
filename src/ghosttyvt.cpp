@@ -505,6 +505,37 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     while (result.endsWith("\r\n"))
         result.chop(2);
 
+    // Strip the active prompt line — when the shell is waiting for input,
+    // the last line is just the prompt (e.g. "[user@host ~]$"). On restore,
+    // the shell prints a fresh prompt, so exporting the old one causes
+    // duplicate prompts to accumulate across restarts.
+    // Detection: if the cursor is at the end of the last line with nothing
+    // typed after it, the line is just a prompt — safe to strip.
+    if (!result.isEmpty()) {
+        uint16_t cursorX = 0;
+        ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_CURSOR_X, &cursorX);
+
+        int lastNl = result.lastIndexOf('\n');
+        QByteArray lastLine = (lastNl >= 0) ? result.mid(lastNl + 1) : result;
+        // Trim trailing \r for length comparison
+        QByteArray trimmed = lastLine;
+        while (trimmed.endsWith('\r'))
+            trimmed.chop(1);
+
+        if (cursorX > 0 && cursorX >= trimmed.size()) {
+            // Cursor is at or past end of last line — it's an un-typed prompt.
+            // Strip the last line entirely.
+            if (lastNl >= 0)
+                result.resize(lastNl);
+            else
+                result.clear();
+
+            // Re-strip any blank lines exposed by the removal
+            while (result.endsWith("\r\n"))
+                result.chop(2);
+        }
+    }
+
     // Build file: header + text data
     QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
                             .arg(outCols).arg(totalRows).toUtf8();
