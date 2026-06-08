@@ -4,6 +4,7 @@ import Sailfish.Share 1.0
 import QtMultimedia 5.0
 import Nemo.Notifications 1.0
 import com.zackslash.ghosteel 1.0
+import "KeyCatalog.js" as KeyCatalog
 
 Page {
     id: page
@@ -30,8 +31,18 @@ Page {
         }
     }
 
+    // Key definition lookup map (O(1) access by ID)
+    property var keyLookup: {
+        var lookup = {}
+        for (var i = 0; i < KeyCatalog.keys.length; i++)
+            lookup[KeyCatalog.keys[i].id] = KeyCatalog.keys[i]
+        return lookup
+    }
+
     // Per-session UI state (keyboard + keybar visibility), keyed by session ID
     property var sessionUIState: ({})
+
+
     property int currentSessionIndex: -1  // Tracked imperatively to avoid binding race
     property int currentSessionId: -1     // Stable key for sessionUIState lookups
     property TerminalView terminal: null
@@ -104,6 +115,8 @@ Page {
         t.stickyModifiersChanged.connect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
         t.terminalBell.connect(onTerminalBell)
+        t.navigateSession.disconnect(onNavigateSession)
+        t.navigateSession.connect(onNavigateSession)
         terminal = t
         updateWindowTitle()
     }
@@ -113,7 +126,15 @@ Page {
         t.titleChanged.disconnect(updateWindowTitle)
         t.stickyModifiersChanged.disconnect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
+        t.navigateSession.disconnect(onNavigateSession)
         t.visible = false
+    }
+
+    function switchSession(direction) {
+        var count = SessionManager.sessionCount
+        if (count <= 1) return
+        var idx = SessionManager.activeSessionIndex + direction
+        SessionManager.switchToSession(((idx % count) + count) % count)
     }
 
     Component.onCompleted: {
@@ -263,6 +284,10 @@ Page {
         if (mode === 2 || mode === 3) {
             bellSound.play()
         }
+    }
+
+    function onNavigateSession(direction) {
+        switchSession(direction)
     }
 
     SilicaFlickable {
@@ -465,101 +490,82 @@ Page {
         height: Theme.itemSizeMedium + Theme.paddingSmall
         open: true
 
-        Column {
-            anchors.centerIn: parent
-            spacing: Theme.paddingSmall
+        SilicaFlickable {
+            anchors.fill: parent
+            clip: true
+            flickableDirection: Flickable.HorizontalFlick
+            contentWidth: keyRow.implicitWidth
 
-            // Navigation and modifier row
             Row {
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: keyRow
+                anchors.verticalCenter: parent.verticalCenter
+                x: Theme.paddingSmall
                 spacing: Theme.paddingSmall
 
-                // Arrow keys
-                IconButton {
-                    icon.source: "image://theme/icon-m-back"
-                    onClicked: terminal.sendKey(Qt.Key_Left, page.activeModifiers)
-                }
-                IconButton {
-                    icon.source: "image://theme/icon-m-down"
-                    onClicked: terminal.sendKey(Qt.Key_Down, page.activeModifiers)
-                }
-                IconButton {
-                    icon.source: "image://theme/icon-m-up"
-                    onClicked: terminal.sendKey(Qt.Key_Up, page.activeModifiers)
-                }
-                IconButton {
-                    icon.source: "image://theme/icon-m-forward"
-                    onClicked: terminal.sendKey(Qt.Key_Right, page.activeModifiers)
-                }
+                Repeater {
+                    model: Settings.keybarKeys
 
-                // Separator
-                Item { width: Theme.paddingMedium; height: 1 }
+                    delegate: BackgroundItem {
+                        id: keyDelegate
+                        property var keyDef: page.keyLookup[modelData]
 
-                // Tab
-                BackgroundItem {
-                    width: Theme.itemSizeSmall
-                    height: Theme.itemSizeSmall
-                    onClicked: terminal.sendKey(Qt.Key_Tab, 0)
+                        width: Theme.itemSizeSmall
+                        height: Theme.itemSizeSmall
 
-                    Label {
-                        anchors.centerIn: parent
-                        text: qsTr("Tab")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
-                    }
-                }
-
-                // Separator
-                Item { width: Theme.paddingMedium; height: 1 }
-
-                // Ctrl toggle
-                BackgroundItem {
-                    width: Theme.itemSizeSmall
-                    height: Theme.itemSizeSmall
-                    highlighted: page.ctrlActive
-                    onClicked: page.ctrlActive = !page.ctrlActive
-
-                    Label {
-                        anchors.centerIn: parent
-                        text: qsTr("Ctrl")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
-                    }
-                }
-
-                // Alt toggle
-                BackgroundItem {
-                    width: Theme.itemSizeSmall
-                    height: Theme.itemSizeSmall
-                    highlighted: page.altActive
-                    onClicked: page.altActive = !page.altActive
-
-                    Label {
-                        anchors.centerIn: parent
-                        text: qsTr("Alt")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
-                    }
-                }
-
-                // Toggle software keyboard
-                IconButton {
-                    icon.source: "image://theme/icon-m-keyboard"
-                    highlighted: page.keyboardVisible
-                    onClicked: {
-                        var newVisible = !page.keyboardVisible
-                        if (newVisible)
-                            Qt.inputMethod.show()
-                        else
-                            Qt.inputMethod.hide()
-                        SessionManager.setSessionKeyboardVisible(currentSessionIndex, newVisible)
-                        // Update runtime map (keyed by session ID)
-                        var state = sessionUIState[currentSessionId] || {
-                            kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
-                            kbbar: keybar.open
+                        highlighted: {
+                            if (!keyDef) return false
+                            if (keyDef.id === "ctrl") return page.ctrlActive
+                            if (keyDef.id === "alt") return page.altActive
+                            if (keyDef.id === "keyboard") return page.keyboardVisible
+                            return false
                         }
-                        state.kb = newVisible
-                        sessionUIState[currentSessionId] = state
+
+                        onClicked: {
+                            if (!terminal || !keyDef) return
+
+                            if (keyDef.action === "key") {
+                                terminal.sendKey(keyDef.qtKey, page.activeModifiers)
+                            } else if (keyDef.id === "ctrl") {
+                                page.ctrlActive = !page.ctrlActive
+                            } else if (keyDef.id === "alt") {
+                                page.altActive = !page.altActive
+                            } else if (keyDef.id === "keyboard") {
+                                var newVisible = !page.keyboardVisible
+                                if (newVisible)
+                                    Qt.inputMethod.show()
+                                else
+                                    Qt.inputMethod.hide()
+                                SessionManager.setSessionKeyboardVisible(currentSessionIndex, newVisible)
+                                var state = sessionUIState[currentSessionId] || {
+                                    kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
+                                    kbbar: keybar.open
+                                }
+                                state.kb = newVisible
+                                sessionUIState[currentSessionId] = state
+                            } else if (keyDef.id === "prevSession" || keyDef.id === "nextSession") {
+                                var dir = keyDef.id === "prevSession" ? -1 : 1
+                                switchSession(dir)
+                            }
+                        }
+
+                        // Icon for keys with iconSource (arrows, keyboard)
+                        IconButton {
+                            anchors.centerIn: parent
+                            visible: keyDef && keyDef.iconSource !== undefined
+                            icon.source: keyDef && keyDef.iconSource !== undefined
+                                       ? "image://theme/" + keyDef.iconSource : ""
+                            highlighted: keyDelegate.highlighted
+                            enabled: false
+                        }
+
+                        // Label for text keys (Tab, Esc, Ctrl, Alt, F-keys, etc.)
+                        Label {
+                            anchors.centerIn: parent
+                            visible: !keyDef || keyDef.iconSource === undefined
+                            text: keyDef ? keyDef.label : ""
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: keyDelegate.highlighted ? Theme.highlightColor : Theme.primaryColor
+                        }
                     }
                 }
             }

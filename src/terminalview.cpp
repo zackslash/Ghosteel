@@ -1754,6 +1754,8 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
             event->accept();
             return;
         }
+        if (key == GHOSTTY_KEY_LEFT)  { emit navigateSession(-1); event->accept(); return; }
+        if (key == GHOSTTY_KEY_RIGHT) { emit navigateSession(1);  event->accept(); return; }
     }
 
     // Auto-repeat maps to REPEAT action (enables Kitty protocol repeat)

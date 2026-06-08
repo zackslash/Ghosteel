@@ -246,6 +246,7 @@ private slots:
         QCOMPARE(s.bellMode(), 1);
         QCOMPARE(s.scrollbackPersistence(), false);
         QCOMPARE(s.scrollbackRetentionDays(), 30);
+        QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","keyboard"}));
     }
 
     // --- Scrollback persistence ---
@@ -313,6 +314,83 @@ private slots:
         Settings s2(path);
         QCOMPARE(s2.scrollbackPersistence(), true);
         QCOMPARE(s2.scrollbackRetentionDays(), 90);
+    }
+
+    // --- Keybar keys ---
+
+    void testKeybarKeysDefault()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QStringList expected = {QStringLiteral("left"), QStringLiteral("down"),
+                                QStringLiteral("up"), QStringLiteral("right"),
+                                QStringLiteral("tab"), QStringLiteral("ctrl"),
+                                QStringLiteral("alt"), QStringLiteral("keyboard")};
+        QCOMPARE(s.keybarKeys(), expected);
+    }
+
+    void testKeybarKeysSetAndGet()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QStringList custom = {QStringLiteral("a"), QStringLiteral("b"), QStringLiteral("c")};
+        s.setKeybarKeys(custom);
+        QCOMPARE(s.keybarKeys(), custom);
+    }
+
+    void testKeybarKeysSignalOnChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::keybarKeysChanged);
+        QStringList custom = {QStringLiteral("x"), QStringLiteral("y")};
+        s.setKeybarKeys(custom);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.keybarKeys(), custom);
+    }
+
+    void testKeybarKeysNoOpSuppressesSignal()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        // Default is {"left","down","up","right","tab","ctrl","alt","keyboard"}
+        QSignalSpy spy(&s, &Settings::keybarKeysChanged);
+        s.setKeybarKeys({QStringLiteral("left"), QStringLiteral("down"),
+                         QStringLiteral("up"), QStringLiteral("right"),
+                         QStringLiteral("tab"), QStringLiteral("ctrl"),
+                         QStringLiteral("alt"), QStringLiteral("keyboard")});
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testKeybarKeysPersistence()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        QStringList custom = {QStringLiteral("enter"), QStringLiteral("esc"), QStringLiteral("space")};
+        {
+            Settings s(path);
+            s.setKeybarKeys(custom);
+        }
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        Settings s2(path);
+        QCOMPARE(s2.keybarKeys(), custom);
+    }
+
+    void testKeybarKeysEmptyList()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::keybarKeysChanged);
+
+        s.setKeybarKeys(QStringList());
+        QCOMPARE(s.keybarKeys(), QStringList());
+        QCOMPARE(spy.count(), 1);
+
+        // Persists empty list
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+        Settings s2(dir.path() + "/test.conf");
+        QCOMPARE(s2.keybarKeys(), QStringList());
     }
 };
 

@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import com.zackslash.ghosteel 1.0
+import "KeyCatalog.js" as KeyCatalog
 
 Page {
     id: settingsPage
@@ -23,6 +24,7 @@ Page {
                     opacitySlider.value = 0.6
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
+                    Settings.keybarKeys = KeyCatalog.defaults.slice()
                 }
             }
         }
@@ -120,6 +122,25 @@ Page {
                 valueText: qsTr("%1%").arg(Math.round(value * 100))
 
                 onValueChanged: Settings.backgroundOpacity = value
+            }
+
+            // Extra keys section
+            SectionHeader {
+                text: qsTr("Extra keys")
+            }
+
+            BackgroundItem {
+                width: parent.width
+                height: Theme.itemSizeMedium
+                onClicked: pageStack.push(Qt.resolvedUrl("KeybarSettings.qml"))
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: qsTr("Configure keybar")
+                    color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
+                }
             }
 
             // Scrollback section

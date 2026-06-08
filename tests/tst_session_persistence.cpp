@@ -1009,6 +1009,20 @@ private slots:
         mgr.createSession();
         QCOMPARE(mgr.sessionId(2), 201); // nextId was 201
     }
+
+    void testNavigateSessionSignal()
+    {
+        TerminalView tv;
+        QSignalSpy spy(&tv, &TerminalView::navigateSession);
+
+        emit tv.navigateSession(-1);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toInt(), -1);
+
+        emit tv.navigateSession(1);
+        QCOMPARE(spy.count(), 2);
+        QCOMPARE(spy.at(1).at(0).toInt(), 1);
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)

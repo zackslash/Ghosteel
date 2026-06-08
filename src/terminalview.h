@@ -66,6 +66,7 @@ Q_SIGNALS:
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
     void searchActiveChanged();
+    void navigateSession(int direction);
 
 protected:
     void paint(QPainter *painter) override;
