@@ -533,6 +533,11 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             // Re-strip any blank lines exposed by the removal
             while (result.endsWith("\r\n"))
                 result.chop(2);
+            // Also strip lone \r left when prompt was on a line after blank rows
+            while (result.endsWith('\r'))
+                result.chop(1);
+            while (result.endsWith("\r\n"))
+                result.chop(2);
         }
     }
 
@@ -568,73 +573,84 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
     if (savedCols == 0)
         return;
 
-    // If column count differs, pad/trim each line to match actual width.
-    // Always use \r\n for replay — Ghostty's LF only moves down (no auto-CR).
+    // Replay text as VT input. Trim trailing spaces to avoid pending-wrap
+    // double-skip: when a line fills the full terminal width, the cursor
+    // reaches the right margin and sets a pending-wrap flag. A subsequent
+    // \r\n then resolves the wrap (moving down) AND the \n moves down again,
+    // producing an extra blank line. Trimming prevents the line from reaching
+    // the full width.
+    //
+    // For lines that are STILL full-width after trimming (rare), use \r
+    // instead of \r\n — the pending wrap resolves on \r, giving one line break.
     QByteArray replayData;
-    if (savedCols != actualCols) {
-        replayData.reserve(textData.size());
-        int lineStart = 0;
-        for (int i = 0; i <= textData.size(); i++) {
-            if (i == textData.size() || textData[i] == '\n') {
-                QByteArray line = textData.mid(lineStart, i - lineStart);
-                if (!line.isEmpty() && line.endsWith('\r'))
-                    line.chop(1);
-                // Trim trailing spaces, then pad to actual width
-                while (!line.isEmpty() && line.endsWith(' '))
-                    line.chop(1);
-                if (line.size() <= actualCols) {
-                    // Short enough — pad if needed
-                    if (line.size() < actualCols)
-                        line.append(QByteArray(actualCols - line.size(), ' '));
-                    replayData.append(line);
-                    replayData.append("\r\n");
-                } else {
-                    // Line is wider than the terminal — re-wrap by splitting at
-                    // column boundaries. Convert to QString for safe character
-                    // splitting (byte boundary splits would corrupt UTF-8).
-                    QString str = QString::fromUtf8(line);
-                    int pos = 0;
-                    while (pos < str.size()) {
-                        int width = 0;
-                        int end = pos;
-                        while (end < str.size()) {
-                            // Advance past surrogate pairs (emoji, rare CJK)
-                            int charWidth = 1;
-                            QChar ch = str.at(end);
-                            if (ch.isHighSurrogate() && end + 1 < str.size()
-                                    && str.at(end + 1).isLowSurrogate())
-                                charWidth = 2;
-                            // Approximate: non-ASCII chars take 2 columns (covers CJK)
-                            int displayW = (ch.unicode() > 127) ? 2 : 1;
-                            if (width + displayW > actualCols)
-                                break;
-                            width += displayW;
-                            end += charWidth;
-                        }
-                        if (end == pos) end = pos + 1; // safety: always advance
-                        replayData.append(str.mid(pos, end - pos).toUtf8());
+    int targetCols = static_cast<int>(actualCols);
+    replayData.reserve(textData.size());
+    int lineStart = 0;
+    for (int i = 0; i <= textData.size(); i++) {
+        if (i == textData.size() || textData[i] == '\n') {
+            QByteArray line = textData.mid(lineStart, i - lineStart);
+            if (!line.isEmpty() && line.endsWith('\r'))
+                line.chop(1);
+            while (!line.isEmpty() && line.endsWith(' '))
+                line.chop(1);
+
+            if (savedCols != actualCols && line.size() > targetCols) {
+                // Line is wider than the terminal — re-wrap by splitting at
+                // column boundaries. Convert to QString for safe character
+                // splitting (byte boundary splits would corrupt UTF-8).
+                QString str = QString::fromUtf8(line);
+                int pos = 0;
+                while (pos < str.size()) {
+                    int width = 0;
+                    int end = pos;
+                    while (end < str.size()) {
+                        int charWidth = 1;
+                        QChar ch = str.at(end);
+                        if (ch.isHighSurrogate() && end + 1 < str.size()
+                                && str.at(end + 1).isLowSurrogate())
+                            charWidth = 2;
+                        int displayW = (ch.unicode() > 127) ? 2 : 1;
+                        if (width + displayW > targetCols)
+                            break;
+                        width += displayW;
+                        end += charWidth;
+                    }
+                    if (end == pos) end = pos + 1;
+                    QByteArray segment = str.mid(pos, end - pos).toUtf8();
+                    replayData.append(segment);
+                    // If segment fills full column width, pending wrap handles
+                    // the line break — just send \r to position at col 0.
+                    // Use display width (not byte count) for CJK correctness.
+                    if (width >= targetCols)
+                        replayData.append("\r");
+                    else
                         replayData.append("\r\n");
-                        pos = end;
+                    pos = end;
+                }
+            } else {
+                replayData.append(line);
+                // If line fills full column width, pending wrap is set — use \r only.
+                // Compute display width (not byte count) for CJK correctness.
+                int lineDisplayW = 0;
+                {
+                    QString ls = QString::fromUtf8(line);
+                    for (int j = 0; j < ls.size(); j++) {
+                        QChar ch = ls.at(j);
+                        if (ch.isHighSurrogate() && j + 1 < ls.size()
+                                && ls.at(j + 1).isLowSurrogate()) {
+                            ++j;
+                            lineDisplayW += 2;
+                        } else {
+                            lineDisplayW += (ch.unicode() > 127) ? 2 : 1;
+                        }
                     }
                 }
-                lineStart = i + 1;
+                if (lineDisplayW > 0 && lineDisplayW % targetCols == 0)
+                    replayData.append("\r");
+                else
+                    replayData.append("\r\n");
             }
-        }
-    } else {
-        // Same column count — trim trailing spaces to prevent pending-wrap issues
-        replayData.reserve(textData.size());
-        int lineStart = 0;
-        for (int i = 0; i <= textData.size(); i++) {
-            if (i == textData.size() || textData[i] == '\n') {
-                QByteArray line = textData.mid(lineStart, i - lineStart);
-                if (!line.isEmpty() && line.endsWith('\r'))
-                    line.chop(1);
-                while (!line.isEmpty() && line.endsWith(' '))
-                    line.chop(1);
-                replayData.append(line);
-                replayData.append("\r\n");
-                lineStart = i + 1;
-            }
+            lineStart = i + 1;
         }
     }
 

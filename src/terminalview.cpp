@@ -1900,7 +1900,7 @@ void TerminalView::buildCellMapping()
     for (int row = 0; row < m_searchCache.size(); row++) {
         QVector<int> mapping;
         if (row < static_cast<int>(totalRows) && cols > 0) {
-            mapping.resize(cols, 0);
+            mapping.resize(static_cast<int>(cols));
             int charIdx = 0;
             const QString &line = m_searchCache[row];
             for (int cell = 0; cell < static_cast<int>(cols); cell++) {
