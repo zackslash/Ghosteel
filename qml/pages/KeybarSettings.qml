@@ -102,7 +102,7 @@ Page {
                                 var def = KeyCatalog.findById(modelData)
                                 if (!def) return modelData
                                 if (def.description && def.description !== def.label)
-                                    return def.label + "  " + def.description
+                                    return def.label + " - " + def.description
                                 return def.label
                             }
                             color: enabledItem.highlighted ? Theme.highlightColor : Theme.primaryColor
