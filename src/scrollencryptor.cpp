@@ -53,7 +53,7 @@ bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 #include <Sailfish/Crypto/result.h>
 
 #include <QDebug>
-#include <QRandomGenerator>
+#include <random>
 
 using Sailfish::Secrets::SecretManager;
 using Sailfish::Secrets::CreateCollectionRequest;
@@ -182,10 +182,13 @@ void ScrollEncryptor::replenishIVs()
     // sidesteps GenerateInitializationVectorRequest not being supported
     // on some crypto plugin configurations. IVs just need to be random;
     // the daemon handles the actual key material.
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 255);
     while (m_ivPool.size() < IV_POOL_TARGET) {
         QByteArray iv(16, '\0');
-        QRandomGenerator::global()->fillRange(
-                reinterpret_cast<quint32*>(iv.data()), 16 / sizeof(quint32));
+        for (int i = 0; i < 16; i++)
+            iv[i] = static_cast<char>(dist(gen));
         m_ivPool.append(iv);
     }
 }
