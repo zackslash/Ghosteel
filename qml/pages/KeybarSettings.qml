@@ -100,7 +100,10 @@ Page {
                             }
                             text: {
                                 var def = KeyCatalog.findById(modelData)
-                                return def ? (def.description || def.label) : modelData
+                                if (!def) return modelData
+                                if (def.description && def.description !== def.label)
+                                    return def.label + "  " + def.description
+                                return def.label
                             }
                             color: enabledItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                             truncationMode: TruncationMode.Fade
@@ -170,7 +173,7 @@ Page {
                             }
 
                             delegate: TextSwitch {
-                                text: modelData.description || modelData.label
+                                text: modelData.label
                                 automaticCheck: false
                                 checked: enabledKeys[modelData.id] || false
                                 width: parent.width / 3
