@@ -4,7 +4,7 @@ var categories = [
     { id: "nav",      label: "Navigation" },
     { id: "modifier", label: "Modifiers" },
     { id: "utility",  label: "Utility" },
-    { id: "session",  label: "Session" },
+    { id: "session",  label: "Session Navigation" },
     { id: "function", label: "Function keys" }
 ]
 
