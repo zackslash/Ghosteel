@@ -18,6 +18,18 @@ Page {
     property bool ctrlActive: false
     property bool altActive: false
     property bool keyboardVisible: Qt.inputMethod && Qt.inputMethod.visible
+    // Show session indicator when returning from background
+    Connections {
+        target: Qt.application
+        onStateChanged: {
+            if (Qt.application.state === Qt.ApplicationActive && terminal) {
+                var idx = SessionManager.activeSessionIndex
+                var name = SessionManager.sessionName(idx)
+                sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+            }
+        }
+    }
+
     // Per-session UI state (keyboard + keybar visibility), keyed by session ID
     property var sessionUIState: ({})
     property int currentSessionIndex: -1  // Tracked imperatively to avoid binding race
