@@ -38,6 +38,10 @@ void Settings::load()
     m_bellMode = qBound(0, m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(), 3);
     m_scrollbackPersistence = m_settings.value(QStringLiteral("scrollback/enabled"), false).toBool();
     m_scrollbackRetentionDays = qBound(7, m_settings.value(QStringLiteral("scrollback/retentionDays"), 30).toInt(), 365);
+    QStringList defaultKeys = {QStringLiteral("left"), QStringLiteral("down"), QStringLiteral("up"),
+                               QStringLiteral("right"), QStringLiteral("tab"), QStringLiteral("ctrl"),
+                               QStringLiteral("alt"), QStringLiteral("keyboard")};
+    m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
 }
 
 void Settings::save()
@@ -134,4 +138,14 @@ void Settings::setScrollbackRetentionDays(int days)
     m_settings.setValue(QStringLiteral("scrollback/retentionDays"), days);
     scheduleSave();
     Q_EMIT scrollbackRetentionDaysChanged();
+}
+
+void Settings::setKeybarKeys(const QStringList &keys)
+{
+    if (m_keybarKeys == keys)
+        return;
+    m_keybarKeys = keys;
+    m_settings.setValue(QStringLiteral("keybar/keys"), QVariant::fromValue(keys));
+    scheduleSave();
+    Q_EMIT keybarKeysChanged();
 }

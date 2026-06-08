@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - name: Install Qt5 dev packages
         run: |
@@ -40,6 +42,8 @@ jobs:
           cmake --build build -j$(nproc)
 
       - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           cd tests/build
           ctest --output-on-failure
@@ -58,6 +62,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Apply Ghosteel patches to Ghostty
+        run: |
+          for patch in patches/*.patch; do
+            [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
+          done
+
       - name: Set version from tag
         run: |
           VER="${{ needs.validate.outputs.version }}"
@@ -74,11 +84,21 @@ jobs:
           GHOSTTY_VER=$(cd ghostty && git describe --tags --always 2>/dev/null || echo "unknown")
           sed -i "s/isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = \"[^\"]*\"/isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = \"$GHOSTTY_VER\"/" ghosteel.pro
 
+      - name: Cache Zig
+        id: cache-zig
+        uses: actions/cache@v4
+        with:
+          path: /opt/zig-x86_64-linux-0.15.2
+          key: zig-0.15.2-linux-x86_64
+
       - name: Install Zig
+        if: steps.cache-zig.outputs.cache-hit != 'true'
         run: |
           ZIG_VERSION=0.15.2
           curl -L "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" | tar -xJ -C /opt
-          echo "/opt/zig-x86_64-linux-${ZIG_VERSION}" >> "$GITHUB_PATH"
+
+      - name: Add Zig to PATH
+        run: echo "/opt/zig-x86_64-linux-0.15.2" >> "$GITHUB_PATH"
 
       - name: Build libghostty-vt
         run: bash scripts/build-libs.sh ${{ matrix.arch }}

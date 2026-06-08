@@ -72,6 +72,7 @@ Q_SIGNALS:
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
     void searchActiveChanged();
+    void navigateSession(int direction);
 
 private:
     int m_fontSize = 10;

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSettings>
+#include <QStringList>
 #include <QTimer>
 
 // Singleton settings manager backed by QSettings (INI format).
@@ -20,6 +21,7 @@ class Settings : public QObject
     Q_PROPERTY(int bellMode READ bellMode WRITE setBellMode NOTIFY bellModeChanged)
     Q_PROPERTY(bool scrollbackPersistence READ scrollbackPersistence WRITE setScrollbackPersistence NOTIFY scrollbackPersistenceChanged)
     Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
+    Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
 
 public:
     static Settings *instance();
@@ -51,6 +53,9 @@ public:
     int scrollbackRetentionDays() const { return m_scrollbackRetentionDays; }
     void setScrollbackRetentionDays(int days);
 
+    QStringList keybarKeys() const { return m_keybarKeys; }
+    void setKeybarKeys(const QStringList &keys);
+
 Q_SIGNALS:
     void fontSizeChanged();
     void fontFamilyChanged();
@@ -60,6 +65,7 @@ Q_SIGNALS:
     void bellModeChanged();
     void scrollbackPersistenceChanged();
     void scrollbackRetentionDaysChanged();
+    void keybarKeysChanged();
 
 private:
     explicit Settings(QObject *parent = nullptr);
@@ -77,6 +83,7 @@ private:
     int m_bellMode = 1; // default: Vibrate
     bool m_scrollbackPersistence = false; // default: off (opt-in)
     int m_scrollbackRetentionDays = 30;
+    QStringList m_keybarKeys;
 };
 
 #endif // SETTINGS_H
