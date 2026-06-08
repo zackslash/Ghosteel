@@ -60,7 +60,6 @@ using Sailfish::Secrets::CreateCollectionRequest;
 using Sailfish::Crypto::CryptoManager;
 using Sailfish::Crypto::Key;
 using Sailfish::Crypto::GenerateStoredKeyRequest;
-using Sailfish::Crypto::GenerateInitializationVectorRequest;
 using Sailfish::Crypto::EncryptRequest;
 using Sailfish::Crypto::DecryptRequest;
 
