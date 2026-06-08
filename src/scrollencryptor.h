@@ -61,8 +61,8 @@ private:
 
     // Pre-generated IV pool (16 bytes each for AES-CBC)
     QVector<QByteArray> m_ivPool;
-    static const int IV_POOL_TARGET = 64;
-    static const int IV_POOL_THRESHOLD = 16;
+    static const int IV_POOL_TARGET = 32;
+    static const int IV_POOL_THRESHOLD = 8;
 
     // File format: magic(4) + reserved(4) + iv(16) + ciphertext
     static const int HEADER_SIZE = 24;

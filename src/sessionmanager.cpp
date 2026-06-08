@@ -15,6 +15,8 @@
 #include <QFileInfo>
 #include <QDateTime>
 
+#include <unistd.h>
+
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(
           QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
@@ -497,6 +499,9 @@ void SessionManager::saveScrollback()
         QSaveFile saveFile(scrollbackFilePath(info.id));
         if (saveFile.open(QIODevice::WriteOnly)) {
             if (saveFile.write(output) != -1) {
+                // fsync before rename to ensure data is on disk —
+                // protects against power loss between write and rename
+                ::fsync(saveFile.handle());
                 if (!saveFile.commit()) {
                     qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
                 }
