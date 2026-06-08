@@ -483,12 +483,12 @@ void SessionManager::saveScrollback()
         if (data.isEmpty())
             continue;
 
-        // Encrypt if secrets daemon is available, fall back to plaintext
+        // Encrypt — skip this session if encryption fails
         QByteArray output;
         if (m_encryptor && m_encryptor->isAvailable())
             output = m_encryptor->encrypt(data);
         if (output.isEmpty())
-            output = data; // Plaintext fallback
+            continue; // Don't write plaintext to disk
 
         // Atomic write: write to .tmp, then rename (prevents truncated files on crash)
         QString path = scrollbackFilePath(info.id);
@@ -581,17 +581,17 @@ bool SessionManager::restoreSessions()
                 } else {
                     QByteArray sbData = sbFile.readAll();
                     if (!sbData.isEmpty()) {
-                        // Detect encrypted format by magic header, decrypt if possible
-                        QByteArray restored;
+                        // Only restore if encrypted and decryption succeeds.
+                        // Plaintext files are not accepted — encryption is mandatory.
                         if (ScrollEncryptor::isEncryptedFormat(sbData)
                                 && m_encryptor && m_encryptor->isAvailable()) {
-                            restored = m_encryptor->decrypt(sbData);
+                            QByteArray restored = m_encryptor->decrypt(sbData);
+                            if (!restored.isEmpty())
+                                view->setPendingScrollback(restored);
+                        } else if (ScrollEncryptor::isEncryptedFormat(sbData)) {
+                            qWarning() << "Encrypted scrollback found but secrets "
+                                          "daemon unavailable, skipping:" << sbPath;
                         }
-                        // Use decrypted data, or fall back to plaintext
-                        if (restored.isEmpty())
-                            restored = sbData;
-                        if (!restored.isEmpty())
-                            view->setPendingScrollback(restored);
                     }
                 }
                 sbFile.close();
