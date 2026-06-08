@@ -8,5 +8,5 @@ Name=Ghosteel
 [X-Sailjail]
 OrganizationName=com.zackslash
 ApplicationName=ghosteel
-Permissions=UserDirs;
+Permissions=UserDirs;Secrets;
 Sandboxing=Disabled

@@ -21,6 +21,8 @@ Page {
                     bellModeCombo.currentIndex = 1
                     schemeCombo.currentIndex = 0
                     opacitySlider.value = 0.6
+                    scrollbackToggle.checked = false
+                    retentionCombo.currentIndex = 1  // 30 days
                 }
             }
         }
@@ -118,6 +120,47 @@ Page {
                 valueText: qsTr("%1%").arg(Math.round(value * 100))
 
                 onValueChanged: Settings.backgroundOpacity = value
+            }
+
+            // Scrollback section
+            SectionHeader {
+                text: qsTr("Scrollback")
+            }
+
+            TextSwitch {
+                id: scrollbackToggle
+                width: parent.width
+                text: qsTr("Persist scrollback")
+                description: qsTr("Save terminal history when app closes. Disabled by default for privacy.")
+                checked: Settings.scrollbackPersistence
+                onCheckedChanged: Settings.scrollbackPersistence = checked
+            }
+
+            ComboBox {
+                id: retentionCombo
+                width: parent.width
+                label: qsTr("Keep history for")
+                enabled: Settings.scrollbackPersistence
+                opacity: enabled ? 1.0 : 0.4
+                currentIndex: {
+                    var days = Settings.scrollbackRetentionDays
+                    if (days <= 7) return 0
+                    if (days <= 30) return 1
+                    if (days <= 90) return 2
+                    return 3
+                }
+
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("7 days") }
+                    MenuItem { text: qsTr("30 days") }
+                    MenuItem { text: qsTr("90 days") }
+                    MenuItem { text: qsTr("1 year") }
+                }
+
+                onCurrentIndexChanged: {
+                    var days = [7, 30, 90, 365][currentIndex]
+                    Settings.scrollbackRetentionDays = days
+                }
             }
 
             // About section

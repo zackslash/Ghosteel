@@ -9,6 +9,7 @@
 #include <QLocalServer>
 
 class TerminalView;
+class ScrollEncryptor;
 
 struct SessionInfo {
     int id;
@@ -97,6 +98,12 @@ private:
     void saveSessions();
     void scheduleSave();
 
+    // Scrollback persistence
+    void saveScrollback();
+    void cleanupScrollbackFiles();
+    QString scrollbackDir() const;
+    QString scrollbackFilePath(int sessionId) const;
+
 private Q_SLOTS:
     void onNewInstanceConnection();
 
@@ -114,6 +121,9 @@ private:
 
     // Single-instance socket server
     QLocalServer *m_localServer = nullptr;
+
+    // Scrollback encryption (Sailfish Secrets + Crypto)
+    ScrollEncryptor *m_encryptor = nullptr;
 };
 
 #endif // SESSIONMANAGER_H

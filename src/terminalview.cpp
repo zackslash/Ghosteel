@@ -17,6 +17,7 @@
 #include <QDateTime>
 #include <QLineF>
 #include <cstring>
+#include <algorithm>
 #include <sys/ioctl.h>
 
 static const int TopPadding = 12; // px, visual comfort padding at top of terminal
@@ -199,6 +200,10 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
         }
 
         m_pty->writeData(utf8.constData(), utf8.size());
+
+        // If scrolled up viewing history, scroll back to bottom
+        scrollViewportToBottom();
+
         m_needsRender = true;
         update();
         event->accept();
@@ -316,6 +321,12 @@ void TerminalView::setupTerminal()
     ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
                             m_cellWidth, m_cellHeight);
 
+    // Restore scrollback if pending (must be before startShell)
+    if (!m_pendingScrollback.isEmpty()) {
+        m_vt->restoreScrollback(m_pendingScrollback, m_cols);
+        m_pendingScrollback.clear();
+    }
+
     // Configure mouse encoder geometry
     m_vt->updateMouseEncoderSize(
         static_cast<uint32_t>(width()),
@@ -361,6 +372,7 @@ void TerminalView::onShellExited(int exitCode)
 
 void TerminalView::restartShell()
 {
+    closeSearch(); // Clear stale search state before destroying terminal
     m_shellExited = false;
     m_shellExitCode = 0;
     m_pty->stop();
@@ -401,6 +413,11 @@ void TerminalView::paint(QPainter *painter)
     // Draw selection highlight on top of cached image (updates every frame during drag)
     if (m_selecting && m_selStart != m_selEnd) {
         drawSelectionHighlight(painter, 0, 0, 1.0);
+    }
+
+    // Draw search match highlights (below handles/magnifier)
+    if (m_searchActive && !m_searchMatches.isEmpty()) {
+        drawSearchHighlights(painter);
     }
 
     // Draw selection handles when selection is finalized (not during active drag)
@@ -1726,15 +1743,26 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
     GhosttyKey key = KeyMapping::mapQtKey(event->key());
     GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
 
-    // Handle Ctrl+Shift+C = copy, Ctrl+Shift+V = paste
-    if (mods & GHOSTTY_MODS_CTRL && mods & GHOSTTY_MODS_SHIFT) {
+    if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
         if (key == GHOSTTY_KEY_C) { copySelection(); event->accept(); return; }
         if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
+        if (key == GHOSTTY_KEY_F) {
+            if (m_searchActive)
+                closeSearch();
+            else
+                openSearch();
+            event->accept();
+            return;
+        }
     }
 
     // Auto-repeat maps to REPEAT action (enables Kitty protocol repeat)
     GhosttyKeyAction action = event->isAutoRepeat()
         ? GHOSTTY_KEY_ACTION_REPEAT : GHOSTTY_KEY_ACTION_PRESS;
+
+    // If scrolled up viewing history, scroll back to bottom so the user
+    // can see what they're typing.
+    scrollViewportToBottom();
 
     sendKeyEvent(key, action, mods, event->text());
     m_needsRender = true;
@@ -1777,9 +1805,288 @@ void TerminalView::setAutorunCommand(const QString &cmd)
     m_autorunCommand = cmd;
 }
 
+void TerminalView::setPendingScrollback(const QByteArray &data)
+{
+    m_pendingScrollback = data;
+}
+
+QByteArray TerminalView::exportScrollback(uint16_t &outCols, uint16_t &outRows) const
+{
+    if (!m_vt)
+        return {};
+    return m_vt->exportScrollback(outCols, outRows);
+}
+
 void TerminalView::suppressNextKeyboardAutoShow()
 {
     m_suppressKeyboardAutoShow = true;
+}
+
+void TerminalView::openSearch()
+{
+    if (m_searchActive)
+        return;
+
+    m_searchActive = true;
+
+    if (m_vt) {
+        m_searchCache = m_vt->extractSearchText();
+        buildCellMapping();
+    }
+
+    // Clear any existing selection to avoid visual confusion
+    clearSelection();
+
+    Q_EMIT searchActiveChanged();
+}
+
+void TerminalView::closeSearch()
+{
+    if (!m_searchActive)
+        return;
+
+    m_searchActive = false;
+    m_searchPattern.clear();
+    m_searchCache.clear();
+    m_cellMapping.clear();
+    m_searchMatches.clear();
+    m_currentMatchIndex = -1;
+    m_needsRender = true;
+    update();
+    Q_EMIT searchActiveChanged();
+    Q_EMIT searchMatchCountChanged();
+    Q_EMIT currentMatchIndexChanged();
+}
+
+void TerminalView::buildCellMapping()
+{
+    // Build cell-to-character index mapping for CJK/emoji support.
+    // Wide characters (CJK, some emoji) occupy 2 terminal cells but
+    // produce 1 character in the QString. Without this mapping, search
+    // highlight positions would be wrong for non-ASCII text.
+    m_cellMapping.clear();
+    m_cellMapping.reserve(m_searchCache.size());
+    size_t totalRows = 0;
+    uint16_t cols = 0;
+    GhosttyTerminal terminal = m_vt ? m_vt->terminal() : nullptr;
+    if (terminal) {
+        ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+        ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
+    }
+    if (!terminal || cols == 0) {
+        // No terminal or zero columns — fill with empty mappings
+        for (int row = 0; row < m_searchCache.size(); row++)
+            m_cellMapping.append(QVector<int>());
+        return;
+    }
+    for (int row = 0; row < m_searchCache.size(); row++) {
+        QVector<int> mapping;
+        if (row < static_cast<int>(totalRows)) {
+            mapping.resize(static_cast<int>(cols));
+            int charIdx = 0;
+            const QString &line = m_searchCache[row];
+            for (int cell = 0; cell < static_cast<int>(cols); cell++) {
+                mapping[cell] = charIdx;
+                if (GhosttyVt::isWideCharSpacer(terminal, static_cast<uint16_t>(cell), static_cast<uint32_t>(row))) {
+                    continue;
+                }
+                if (charIdx < line.size())
+                    charIdx++;
+            }
+        }
+        m_cellMapping.append(mapping);
+    }
+}
+
+
+void TerminalView::setSearchPattern(const QString &pattern)
+{
+    if (pattern == m_searchPattern)
+        return;
+
+    m_searchPattern = pattern;
+
+    // Re-extract if cache is empty or terminal received new data since last extract
+    if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty())) {
+        m_searchCache = m_vt->extractSearchText();
+        buildCellMapping();
+    }
+
+    performSearch();
+
+    if (m_currentMatchIndex >= 0)
+        scrollToMatch(m_currentMatchIndex);
+
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::performSearch()
+{
+    m_searchMatches.clear();
+    m_currentMatchIndex = -1;
+
+    if (m_searchPattern.isEmpty() || m_searchCache.isEmpty()) {
+        Q_EMIT searchMatchCountChanged();
+        Q_EMIT currentMatchIndexChanged();
+        return;
+    }
+
+    // Case-insensitive search across all rows (capped to prevent OOM)
+    static const int MaxSearchMatches = 10000;
+    for (int row = 0; row < m_searchCache.size(); row++) {
+        int col = 0;
+        const QString &line = m_searchCache[row];
+        while (col < line.size()) {
+            int idx = line.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
+            if (idx < 0)
+                break;
+
+            // Map character index to cell column using the cell mapping.
+            // For pure ASCII, cellCol == idx. For CJK/emoji, the mapping
+            // accounts for wide characters occupying 2 cells.
+            int cellCol = idx;
+            int cellWidth = m_searchPattern.size();
+            if (row < m_cellMapping.size() && !m_cellMapping[row].isEmpty()) {
+                const QVector<int> &mapping = m_cellMapping[row];
+                // Find cell column for the start of the match
+                for (int cell = 0; cell < mapping.size(); cell++) {
+                    if (mapping[cell] == idx) {
+                        cellCol = cell;
+                        break;
+                    }
+                }
+                // Find cell width: count cells from cellCol that span the match characters
+                int matchEnd = idx + m_searchPattern.size();
+                cellWidth = 0;
+                for (int cell = cellCol; cell < mapping.size(); cell++) {
+                    if (mapping[cell] >= matchEnd)
+                        break;
+                    cellWidth++;
+                }
+                if (cellWidth == 0)
+                    cellWidth = 1; // safety
+            }
+
+            m_searchMatches.append({row, cellCol, cellWidth});
+            if (m_searchMatches.size() >= MaxSearchMatches)
+                goto searchDone;
+            col = idx + 1;
+        }
+    }
+searchDone: // exit point for nested row/col search loop (goto breaks both levels)
+
+    if (!m_searchMatches.isEmpty())
+        m_currentMatchIndex = 0;
+
+    Q_EMIT searchMatchCountChanged();
+    Q_EMIT currentMatchIndexChanged();
+}
+
+void TerminalView::scrollToMatch(int index)
+{
+    if (index < 0 || index >= m_searchMatches.size() || !m_vt || !m_vt->terminal())
+        return;
+
+    const auto &match = m_searchMatches[index];
+
+    GhosttyTerminalScrollbar scrollbar = {};
+    ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
+
+    int matchRow = match.row;
+    int viewTop = static_cast<int>(scrollbar.offset);
+    int viewLen = static_cast<int>(scrollbar.len);
+
+    if (viewLen > 0 && matchRow >= viewTop && matchRow < viewTop + viewLen)
+        return;
+
+    int targetTop = matchRow - viewLen / 2;
+    if (targetTop < 0)
+        targetTop = 0;
+    int delta = targetTop - viewTop;
+
+    if (delta != 0) {
+        GhosttyTerminalScrollViewport scroll = {};
+        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+        scroll.value.delta = delta;
+        ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+        m_needsRender = true;
+        update();
+    }
+}
+
+void TerminalView::findNext()
+{
+    if (m_searchMatches.isEmpty())
+        return;
+
+    m_currentMatchIndex = (m_currentMatchIndex + 1) % m_searchMatches.size();
+    scrollToMatch(m_currentMatchIndex);
+    Q_EMIT currentMatchIndexChanged();
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::findPrevious()
+{
+    if (m_searchMatches.isEmpty())
+        return;
+
+    m_currentMatchIndex = (m_currentMatchIndex - 1 + m_searchMatches.size()) % m_searchMatches.size();
+    scrollToMatch(m_currentMatchIndex);
+    Q_EMIT currentMatchIndexChanged();
+    m_needsRender = true;
+    update();
+}
+
+void TerminalView::drawSearchHighlights(QPainter *painter)
+{
+    if (m_searchMatches.isEmpty() || !m_vt || !m_vt->terminal())
+        return;
+
+    // Query scrollbar state to map absolute rows to viewport rows
+    GhosttyTerminalScrollbar scrollbar = {};
+    ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
+
+    int viewTop = static_cast<int>(scrollbar.offset);
+    int viewLen = static_cast<int>(scrollbar.len);
+    if (viewLen <= 0)
+        return;
+
+    // Amber/yellow for all matches, brighter orange for current match
+    QColor highlightColor(255, 200, 0, 100);
+    QColor currentColor(255, 100, 0, 140);
+
+    painter->setPen(Qt::NoPen);
+
+    // Binary search: find first match at or after viewTop.
+    // Matches are sorted by row (search iterates row-major), so we can skip
+    // all matches before the viewport in O(log n) instead of O(n).
+    SearchMatch lowerBound = {viewTop, 0, 0};
+    SearchMatch upperBound = {viewTop + viewLen, 0, 0};
+    auto begin = std::lower_bound(m_searchMatches.begin(), m_searchMatches.end(), lowerBound,
+        [](const SearchMatch &a, const SearchMatch &b) { return a.row < b.row; });
+    auto end = std::upper_bound(begin, m_searchMatches.end(), upperBound,
+        [](const SearchMatch &b, const SearchMatch &a) { return b.row < a.row; });
+
+    for (auto it = begin; it != end; ++it) {
+        int i = static_cast<int>(std::distance(m_searchMatches.begin(), it));
+        const auto &match = *it;
+
+        int vpRow = match.row - viewTop;
+        int x = match.cellCol * m_cellWidth;
+        int y = vpRow * m_cellHeight + TopPadding;
+        int w = match.cellWidth * m_cellWidth;
+        int h = m_cellHeight;
+
+        if (x + w > m_cols * m_cellWidth)
+            w = m_cols * m_cellWidth - x;
+        if (w <= 0)
+            continue;
+
+        QColor color = (i == m_currentMatchIndex) ? currentColor : highlightColor;
+        painter->fillRect(x, y, w, h, color);
+    }
 }
 
 void TerminalView::runAutorunCommand()
@@ -1791,4 +2098,18 @@ void TerminalView::runAutorunCommand()
     QByteArray cmd = m_autorunCommand.toUtf8();
     m_pty->writeData(cmd.constData(), cmd.size());
     m_pty->writeData("\r", 1);
+}
+
+void TerminalView::scrollViewportToBottom()
+{
+    if (!m_vt || !m_vt->terminal())
+        return;
+    bool viewportActive = true;
+    ghostty_terminal_get(m_vt->terminal(),
+                         GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
+    if (!viewportActive) {
+        GhosttyTerminalScrollViewport scroll = {};
+        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+        ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+    }
 }

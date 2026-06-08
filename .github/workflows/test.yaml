@@ -16,6 +16,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Apply Ghosteel patches to Ghostty
+        run: |
+          for patch in patches/*.patch; do
+            [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
+          done
+
       - name: Install Qt5 dev packages
         run: |
           sudo apt-get update

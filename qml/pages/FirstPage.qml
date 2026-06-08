@@ -18,6 +18,18 @@ Page {
     property bool ctrlActive: false
     property bool altActive: false
     property bool keyboardVisible: Qt.inputMethod && Qt.inputMethod.visible
+    // Show session indicator when returning from background
+    Connections {
+        target: Qt.application
+        onStateChanged: {
+            if (Qt.application.state === Qt.ApplicationActive && terminal) {
+                var idx = SessionManager.activeSessionIndex
+                var name = SessionManager.sessionName(idx)
+                sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+            }
+        }
+    }
+
     // Per-session UI state (keyboard + keybar visibility), keyed by session ID
     property var sessionUIState: ({})
     property int currentSessionIndex: -1  // Tracked imperatively to avoid binding race
@@ -120,6 +132,9 @@ Page {
                 Qt.inputMethod.hide()
             // Restore keybar state
             keybar.open = SessionManager.sessionKeybarOpen(idx)
+            // Show session indicator on launch so the user knows which session they're in
+            var name = SessionManager.sessionName(idx)
+            sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
         }
     }
 
@@ -274,20 +289,16 @@ Page {
                 onClicked: shareAction.trigger()
             }
             MenuItem {
-                text: qsTr("Next session")
-                visible: SessionManager.sessionCount > 1
+                text: searchPanel.open ? qsTr("Hide search") : qsTr("Search terminal")
                 onClicked: {
-                    var next = (SessionManager.activeSessionIndex + 1) % SessionManager.sessionCount
-                    SessionManager.switchToSession(next)
-                }
-            }
-            MenuItem {
-                text: qsTr("Previous session")
-                visible: SessionManager.sessionCount > 1
-                onClicked: {
-                    var prev = SessionManager.activeSessionIndex - 1
-                    if (prev < 0) prev = SessionManager.sessionCount - 1
-                    SessionManager.switchToSession(prev)
+                    if (searchPanel.open) {
+                        searchPanel.open = false
+                        // closeSearch() called by searchPanel.onOpenChanged
+                    } else {
+                        if (terminal) terminal.openSearch()
+                        searchPanel.open = true
+                        searchField.forceActiveFocus()
+                    }
                 }
             }
             MenuItem {
@@ -314,6 +325,99 @@ Page {
         Item {
             id: terminalContainer
             anchors.fill: parent
+        }
+
+        // Transparent overlay that captures taps to dismiss search panel.
+        // Only enabled when search is open; passes the tap through to the terminal.
+        MouseArea {
+            anchors.fill: parent
+            enabled: searchPanel.open
+            visible: searchPanel.open
+            z: 1
+            onPressed: {
+                searchPanel.open = false
+                if (terminal) terminal.forceActiveFocus()
+                mouse.accepted = false // Let the terminal receive the event
+            }
+        }
+    }
+
+    // Top-docked search bar for scrollback search
+    DockedPanel {
+        id: searchPanel
+        dock: Dock.Top
+        width: parent.width
+        height: searchRow.height + Theme.paddingSmall * 2
+        open: false
+
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.highlightDimmerColor
+        }
+
+        onOpenChanged: {
+            if (!open && terminal) {
+                terminal.closeSearch()
+            }
+        }
+
+        Row {
+            id: searchRow
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 0
+
+            SearchField {
+                id: searchField
+                width: parent.width - (navButtons.visible ? navButtons.width : 0)
+                placeholderText: qsTr("Search terminal")
+                inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
+                canHide: true
+
+                onTextChanged: {
+                    if (terminal) terminal.setSearchPattern(text)
+                }
+                onActiveChanged: {
+                    if (!active && text === "") {
+                        searchPanel.open = false
+                    }
+                }
+                EnterKey.iconSource: text !== "" ? "image://theme/icon-m-enter-accept" : "image://theme/icon-m-enter-close"
+                EnterKey.onClicked: {
+                    if (terminal && text !== "") terminal.findNext()
+                    focus = false
+                }
+            }
+
+            Row {
+                id: navButtons
+                anchors.verticalCenter: parent.verticalCenter
+                visible: terminal && terminal.searchMatchCount > 0
+
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: terminal ? (terminal.currentMatchIndex + 1) + "/" + terminal.searchMatchCount : ""
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.secondaryColor
+                    width: Math.max(implicitWidth, Theme.itemSizeSmall)
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                IconButton {
+                    icon.source: "image://theme/icon-m-left"
+                    onClicked: {
+                        if (terminal) terminal.findPrevious()
+                    }
+                }
+
+                IconButton {
+                    icon.source: "image://theme/icon-m-right"
+                    onClicked: {
+                        if (terminal) terminal.findNext()
+                    }
+                }
+            }
         }
     }
 

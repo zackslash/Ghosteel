@@ -8,11 +8,12 @@
 
 #include <ghostty/vt.h>
 #include <string.h>
+#include <stdlib.h>
 
 // ---- Terminal ----
 
 GHOSTTY_API GhosttyResult ghostty_terminal_new(
-    const GhosttyAllocator*, GhosttyTerminal* out, GhosttyTerminalOptions)
+    const GhosttyAllocator*, GhosttyTerminal* out, const GhosttyTerminalOptions*)
 {
     if (out) *out = (GhosttyTerminal)1;
     return GHOSTTY_SUCCESS;
@@ -81,6 +82,37 @@ GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref_track(
 GHOSTTY_API GhosttyResult ghostty_terminal_point_from_grid_ref(
     GhosttyTerminal, const GhosttyGridRef*, GhosttyPointTag, GhosttyPointCoordinate*)
 {
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_cell(
+    const GhosttyGridRef*, GhosttyCell*)
+{
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_cell_get(GhosttyCell, GhosttyCellData, void *out)
+{
+    if (out) *static_cast<int*>(out) = 0;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_row(
+    const GhosttyGridRef*, GhosttyRow*)
+{
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_row_get(GhosttyRow, GhosttyRowData, void *out)
+{
+    if (out) *static_cast<bool*>(out) = false;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_grid_ref_graphemes(
+    const GhosttyGridRef*, uint32_t*, size_t, size_t *out_len)
+{
+    if (out_len) *out_len = 0;
     return GHOSTTY_SUCCESS;
 }
 

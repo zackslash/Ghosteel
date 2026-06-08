@@ -15,6 +15,9 @@ class TerminalView : public QObject
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(int stickyModifiers READ stickyModifiers WRITE setStickyModifiers NOTIFY stickyModifiersChanged)
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
+    Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
+    Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
+    Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
 
 public:
     explicit TerminalView(QObject *parent = nullptr) : QObject(parent) {}
@@ -30,6 +33,9 @@ public:
         if (m_stickyModifiers != mods) { m_stickyModifiers = mods; Q_EMIT stickyModifiersChanged(); }
     }
     QString selectedText() const { return m_selectedText; }
+    int searchMatchCount() const { return 0; }
+    int currentMatchIndex() const { return m_currentMatchIndex; }
+    bool searchActive() const { return m_searchActive; }
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
@@ -41,7 +47,16 @@ public:
     Q_INVOKABLE void setAutorunCommand(const QString &cmd) { m_autorunCommand = cmd; }
     Q_INVOKABLE QString autorunCommand() const { return m_autorunCommand; }
     Q_INVOKABLE void suppressNextKeyboardAutoShow() {}
+    Q_INVOKABLE void setPendingScrollback(const QByteArray &) {}
+    Q_INVOKABLE void openSearch() { m_searchActive = true; Q_EMIT searchActiveChanged(); }
+    Q_INVOKABLE void closeSearch() { m_searchActive = false; m_currentMatchIndex = -1; Q_EMIT searchActiveChanged(); Q_EMIT searchMatchCountChanged(); Q_EMIT currentMatchIndexChanged(); }
+    Q_INVOKABLE void setSearchPattern(const QString &) {}
+    Q_INVOKABLE void findNext() {}
+    Q_INVOKABLE void findPrevious() {}
     void cleanup() {}
+
+    // Stub for scrollback persistence (GhosttyVt not available in stubs)
+    QByteArray exportScrollback(uint16_t &, uint16_t &) const { return {}; }
 
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
@@ -54,6 +69,9 @@ Q_SIGNALS:
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
     void selectedTextChanged();
+    void searchMatchCountChanged();
+    void currentMatchIndexChanged();
+    void searchActiveChanged();
 
 private:
     int m_fontSize = 10;
@@ -62,6 +80,9 @@ private:
     QString m_selectedText;
     QString m_workingDirectory;
     QString m_autorunCommand;
+
+    int m_currentMatchIndex = -1;
+    bool m_searchActive = false;
 };
 
 #endif // TERMINALVIEW_H

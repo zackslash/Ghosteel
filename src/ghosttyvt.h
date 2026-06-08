@@ -14,6 +14,7 @@
 
 #include <QObject>
 #include <functional>
+#include <QStringList>
 
 // Thread safety: This class is NOT thread-safe. All methods and callbacks
 // (including writePtyCallback) run on the main GUI thread. The PtyReaderThread
@@ -63,6 +64,23 @@ public:
                                 uint32_t cellW, uint32_t cellH,
                                 uint32_t paddingTop);
     void setMouseButtonPressed(bool pressed);
+    QStringList extractSearchText();
+    bool isSearchTextDirty() const { return m_searchTextDirty; }
+
+    // Scrollback persistence — export terminal content (scrollback + active) as
+    // VT sequences that can be replayed to restore the terminal state.
+    // Returns empty if on alternate screen (TUI apps) or terminal is null.
+    QByteArray exportScrollback(uint16_t &outCols, uint16_t &outRows) const;
+
+    // Restore scrollback from a previously exported byte array.
+    // The data must be in the format produced by exportScrollback() (header + VT).
+    // Replay saved VT data into the terminal. Safe to call after create()
+    // and same-dimension resize (setupTerminal does this correctly).
+    void restoreScrollback(const QByteArray &data, uint16_t actualCols);
+
+    // Returns true if the cell at (col, row) is a wide-character spacer
+    // (the invisible second half of a CJK/emoji character).
+    static bool isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row);
 
 Q_SIGNALS:
     void titleChanged(const QString &title);
@@ -81,6 +99,7 @@ private:
     GhosttyMouseEncoder m_mouseEncoder = nullptr;
     PtyWriteFn m_ptyWriteFn;
     bool m_needsEncoderSync = true; // Only sync encoders when terminal modes change
+    bool m_searchTextDirty = true; // Set in vtWrite(), cleared by extractSearchText()
 
     // OSC 777 desktop notification scanner
     Osc777State m_osc777State = OSC777_IDLE;

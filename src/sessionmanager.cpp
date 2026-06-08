@@ -1,6 +1,8 @@
 #include "sessionmanager.h"
 #include "terminalview.h"
 #include "ptymanager.h"
+#include "settings.h"
+#include "scrollencryptor.h"
 
 #include <QStandardPaths>
 #include <QCoreApplication>
@@ -8,6 +10,13 @@
 #include <QLocalSocket>
 #include <QWindow>
 #include <QGuiApplication>
+#include <QFile>
+#include <QSaveFile>
+#include <QFileInfo>
+#include <QDateTime>
+#include <QElapsedTimer>
+
+#include <unistd.h>
 
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(
@@ -20,6 +29,9 @@ SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
     : QObject(parent)
     , m_settings(settingsPath, QSettings::IniFormat)
 {
+    // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
+    m_encryptor = new ScrollEncryptor(this);
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
@@ -30,7 +42,16 @@ SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
     // unreadable.
     connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
             this, [this]() {
+        QElapsedTimer timer;
+        timer.start();
         saveSessions();
+        qint64 sessionMs = timer.elapsed();
+        saveScrollback();
+        qint64 totalMs = timer.elapsed();
+        if (totalMs > 1000)
+            qWarning() << "Ghosteel: Quit save took" << totalMs << "ms"
+                        << "(sessions:" << sessionMs << "ms, scrollback:"
+                        << (totalMs - sessionMs) << "ms)";
         m_savedOnQuit = true;
     });
 }
@@ -168,6 +189,10 @@ void SessionManager::removeSession(int index)
         info.view->cleanup();
         delete info.view;
     }
+
+    // Delete scrollback file for removed session (regardless of persistence
+    // toggle — if the session is gone, the file has no reason to exist)
+    QFile::remove(scrollbackFilePath(info.id));
 
     scheduleSave();
 }
@@ -442,6 +467,86 @@ void SessionManager::scheduleSave()
         m_saveTimer->start(); // restarts timer on each call (debounce)
 }
 
+QString SessionManager::scrollbackDir() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+           + QStringLiteral("/scrollback");
+}
+
+QString SessionManager::scrollbackFilePath(int sessionId) const
+{
+    return scrollbackDir() + QStringLiteral("/session_%1.vt").arg(sessionId);
+}
+
+void SessionManager::saveScrollback()
+{
+    if (!Settings::instance()->scrollbackPersistence())
+        return;
+
+    QString dir = scrollbackDir();
+    QDir().mkpath(dir);
+
+    for (const SessionInfo &info : m_sessions) {
+        if (!info.view)
+            continue;
+
+        uint16_t cols = 0, rows = 0;
+        QByteArray data = info.view->exportScrollback(cols, rows);
+        if (data.isEmpty())
+            continue;
+
+        QByteArray output;
+        if (m_encryptor && m_encryptor->isAvailable())
+            output = m_encryptor->encrypt(data);
+        if (output.isEmpty()) {
+            qWarning() << "Ghosteel: Scrollback encryption failed for session"
+                       << info.id << ", skipping";
+            continue; // Don't write plaintext to disk
+        }
+
+        // Atomic write via QSaveFile — commit() is a POSIX rename(),
+        // which is atomic on the same filesystem. No window where both
+        // old and new files are gone.
+        QSaveFile saveFile(scrollbackFilePath(info.id));
+        if (saveFile.open(QIODevice::WriteOnly)) {
+            if (saveFile.write(output) != -1) {
+                // fsync before rename to ensure data is on disk —
+                // protects against power loss between write and rename
+                ::fsync(saveFile.handle());
+                if (!saveFile.commit()) {
+                    qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
+                }
+            } else {
+                qWarning() << "Failed to write scrollback:" << saveFile.errorString();
+            }
+        }
+    }
+}
+
+void SessionManager::cleanupScrollbackFiles()
+{
+    int retentionDays = Settings::instance()->scrollbackRetentionDays();
+    QDir dir(scrollbackDir());
+    if (!dir.exists())
+        return;
+
+    QDateTime cutoff = QDateTime::currentDateTime().addDays(-retentionDays);
+    const QFileInfoList files = dir.entryInfoList(QDir::Files);
+    for (const QFileInfo &fi : files) {
+        if (fi.fileName().startsWith(QStringLiteral("session_"))) {
+            if (fi.fileName().endsWith(QStringLiteral(".vt"))) {
+                if (fi.lastModified() < cutoff)
+                    QFile::remove(fi.absoluteFilePath());
+            } else {
+                // Orphaned QSaveFile temp file from a crash during write.
+                // These have random suffixes (e.g. session_1.vt.aBcDeF).
+                // Safe to remove — they're never read on restore.
+                QFile::remove(fi.absoluteFilePath());
+            }
+        }
+    }
+}
+
 bool SessionManager::restoreSessions()
 {
     m_settings.beginGroup(QStringLiteral("sessions"));
@@ -460,6 +565,8 @@ bool SessionManager::restoreSessions()
         count = 50;
 
     m_nextSessionId = nextId;
+
+    cleanupScrollbackFiles();
 
     for (int i = 0; i < count; i++) {
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
@@ -483,6 +590,31 @@ bool SessionManager::restoreSessions()
         view->setWorkingDirectory(workingDir);
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
+
+        if (Settings::instance()->scrollbackPersistence()) {
+            QString sbPath = scrollbackFilePath(savedId);
+            QFile sbFile(sbPath);
+            if (sbFile.exists() && sbFile.open(QIODevice::ReadOnly)) {
+                if (sbFile.size() > 4 * 1024 * 1024) {
+                    qWarning() << "Scrollback file too large, skipping:" << sbPath;
+                } else {
+                    QByteArray sbData = sbFile.readAll();
+                    if (!sbData.isEmpty()) {
+                        // Only restore if encrypted and decryption succeeds.
+                        // Plaintext files are not accepted — encryption is mandatory.
+                        if (ScrollEncryptor::isEncryptedFormat(sbData)
+                                && m_encryptor && m_encryptor->isAvailable()) {
+                            QByteArray restored = m_encryptor->decrypt(sbData);
+                            if (!restored.isEmpty())
+                                view->setPendingScrollback(restored);
+                        } else if (ScrollEncryptor::isEncryptedFormat(sbData)) {
+                            qWarning() << "Encrypted scrollback found but secrets "
+                                          "daemon unavailable, skipping:" << sbPath;
+                        }
+                    }
+                }
+            }
+        }
 
         SessionInfo info;
         info.id = savedId;

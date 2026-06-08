@@ -24,6 +24,8 @@ include_directories(${CMAKE_SOURCE_DIR}/../ghostty/include)
 add_executable(tst_session_persistence
     tst_session_persistence.cpp
     ${CMAKE_SOURCE_DIR}/../src/sessionmanager.cpp
+    ${CMAKE_SOURCE_DIR}/../src/settings.cpp
+    ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
     ${CMAKE_SOURCE_DIR}/stubs/terminalview.cpp
 )
 # Force-include the stub terminalview.h before any source file.
@@ -100,3 +102,23 @@ add_executable(tst_word_boundary
 )
 target_link_libraries(tst_word_boundary PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME WordBoundary COMMAND tst_word_boundary)
+
+# --- Scrollback format parsing tests ---
+add_executable(tst_scrollback_format
+    tst_scrollback_format.cpp
+    ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
+)
+target_include_directories(tst_scrollback_format PRIVATE SYSTEM
+    ${CMAKE_SOURCE_DIR}/stubs
+)
+target_link_libraries(tst_scrollback_format PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME ScrollbackFormat COMMAND tst_scrollback_format)
+
+# --- ScrollEncryptor (padding + format detection) tests ---
+add_executable(tst_scrollencryptor
+    tst_scrollencryptor.cpp
+    ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
+)
+target_link_libraries(tst_scrollencryptor PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME ScrollEncryptor COMMAND tst_scrollencryptor)

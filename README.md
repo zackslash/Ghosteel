@@ -31,6 +31,16 @@ mb2 build
 
 C++ host app with QML/Silica UI. Terminal engine is Ghostty's `libghostty-vt` (Zig, built as a static C library). Rendering via QPainter. Built for aarch64, armv7hl, and i486.
 
+## Development
+
+The Ghostty submodule needs a patch applied before building locally. The patch works around a Zig i386 C ABI bug that corrupts struct-by-value parameters. It's applied automatically in CI, but for local builds:
+
+```bash
+git -C ghostty apply patches/ghostty-i386-abi-fix.patch
+```
+
+The patch changes `ghostty_terminal_new` to accept options by pointer instead of by value. Can be dropped once Ghostty upgrades to Zig >= 0.16.0. See `patches/ghostty-i386-abi-fix.patch` for details.
+
 ## License
 
 MIT

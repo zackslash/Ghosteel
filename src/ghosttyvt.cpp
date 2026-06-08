@@ -1,6 +1,23 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 
+// Compute terminal display width of a QString. CJK and non-ASCII chars
+// count as 2 columns; surrogate pairs (emoji) also count as 2.
+static int computeDisplayWidth(const QString &str) {
+    int width = 0;
+    for (int i = 0; i < str.size(); i++) {
+        QChar ch = str.at(i);
+        if (ch.isHighSurrogate() && i + 1 < str.size()
+                && str.at(i + 1).isLowSurrogate()) {
+            ++i;
+            width += 2;
+        } else {
+            width += (ch.unicode() > 127) ? 2 : 1;
+        }
+    }
+    return width;
+}
+
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
 {
@@ -15,12 +32,13 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
 {
     m_ptyWriteFn = writeFn;
 
+    // Options passed by pointer to work around Zig i386 struct-by-value
+    // ABI bug. See ghostty/src/terminal/c/terminal.zig new_ptr() comment.
     GhosttyTerminalOptions opts = {};
     opts.cols = cols;
     opts.rows = rows;
-    opts.max_scrollback = 5000; // Reduced from 10000 to save ~5MB on low-memory devices; configurable via API
-
-    GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, opts);
+    opts.max_scrollback = 3 * 1024 * 1024; // 3MB (~2500 lines)
+    GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, &opts);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_terminal_new failed:" << res;
         return false;
@@ -170,6 +188,7 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
     if (m_terminal) {
         ghostty_terminal_vt_write(m_terminal, data, len);
         m_needsEncoderSync = true; // Terminal modes may have changed
+        m_searchTextDirty = true;
     }
 }
 
@@ -220,6 +239,26 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
 
     ghostty_key_event_free(event);
     return result;
+}
+
+bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row)
+{
+    if (!terminal)
+        return false;
+    GhosttyPoint point = {};
+    point.tag = GHOSTTY_POINT_TAG_SCREEN;
+    point.value.coordinate.x = col;
+    point.value.coordinate.y = row;
+    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+    if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS)
+        return false;
+    GhosttyCell cell = 0;
+    if (ghostty_grid_ref_cell(&ref, &cell) != GHOSTTY_SUCCESS || cell == 0)
+        return false;
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) != GHOSTTY_SUCCESS)
+        return false;
+    return (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD);
 }
 
 bool GhosttyVt::isMouseTracking() const
@@ -319,4 +358,305 @@ void GhosttyVt::bellCallback(GhosttyTerminal, void *ud)
 {
     auto *self = static_cast<GhosttyVt *>(ud);
     Q_EMIT self->bell();
+}
+
+QStringList GhosttyVt::extractSearchText()
+{
+    if (!m_terminal)
+        return {};
+
+    size_t totalRows = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+    uint16_t cols = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
+
+    if (totalRows == 0 || cols == 0)
+        return {};
+
+    QStringList result;
+    result.reserve(static_cast<int>(totalRows));
+    uint32_t graphemeBuf[128];
+
+    for (size_t row = 0; row < totalRows; row++) {
+        QString line;
+        line.reserve(cols);
+
+        for (uint16_t col = 0; col < cols; col++) {
+            GhosttyPoint point = {};
+            point.tag = GHOSTTY_POINT_TAG_SCREEN;
+            point.value.coordinate.x = col;
+            point.value.coordinate.y = static_cast<uint32_t>(row);
+
+            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
+                line += QLatin1Char(' ');
+                continue;
+            }
+
+            // Skip wide character spacer cells to avoid phantom spaces in search text
+            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+                continue;
+
+            size_t graphemeLen = 0;
+            if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
+                    == GHOSTTY_SUCCESS && graphemeLen > 0) {
+                line += QString::fromUcs4(graphemeBuf, graphemeLen);
+            } else {
+                line += QLatin1Char(' ');
+            }
+        }
+
+        result.append(line);
+    }
+
+    m_searchTextDirty = false;
+    return result;
+}
+
+QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) const
+{
+    if (!m_terminal)
+        return {};
+
+    // Skip alternate screen — TUI apps (vim, htop) use alternate screen
+    // with no meaningful scrollback to persist.
+    GhosttyTerminalScreen screen;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN, &screen);
+    if (screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE)
+        return {};
+
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &outCols);
+    size_t totalRows = 0;
+    ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+    outRows = static_cast<uint16_t>(totalRows);
+
+    if (outCols == 0 || totalRows == 0)
+        return {};
+
+    // Using grid_ref API — the formatter API crashes on Zig null-unwrap with empty page lists.
+    QByteArray result;
+    // Reserve ~4 bytes per cell to avoid reallocations for UTF-8 content (CJK, emoji)
+    result.reserve(static_cast<int>(totalRows * outCols * 4));
+    uint32_t graphemeBuf[128];
+
+    // Accumulate into a logical line buffer. Soft-wrapped continuation rows
+    // are merged into the current line without a newline. Only when we reach
+    // a non-continuation row do we flush the previous line with \r\n.
+    QByteArray lineBuf;
+
+    for (size_t row = 0; row < totalRows; row++) {
+        QByteArray line;
+        line.reserve(outCols);
+
+        for (uint16_t col = 0; col < outCols; col++) {
+            GhosttyPoint point = {};
+            point.tag = GHOSTTY_POINT_TAG_SCREEN;
+            point.value.coordinate.x = col;
+            point.value.coordinate.y = static_cast<uint32_t>(row);
+
+            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
+                line.append(' ');
+                continue;
+            }
+
+            // Skip wide character spacer cells — they have no text content
+            // but would otherwise be exported as phantom spaces.
+            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+                continue;
+
+            size_t graphemeLen = 0;
+            if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
+                    == GHOSTTY_SUCCESS && graphemeLen > 0) {
+                line.append(QString::fromUcs4(graphemeBuf, graphemeLen).toUtf8());
+            } else {
+                line.append(' ');
+            }
+        }
+
+        // Trim trailing spaces to avoid pending-wrap + newline double-skip on replay.
+        while (!line.isEmpty() && line.endsWith(' '))
+            line.chop(1);
+
+        // Check if this row is a soft-wrap continuation of the previous row.
+        bool isContinuation = false;
+        if (row > 0) {
+            GhosttyPoint firstCol = {};
+            firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
+            firstCol.value.coordinate.x = 0;
+            firstCol.value.coordinate.y = static_cast<uint32_t>(row);
+            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
+                GhosttyRow rowHandle = 0;
+                if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {
+                    bool wc = false;
+                    if (ghostty_row_get(rowHandle, GHOSTTY_ROW_DATA_WRAP_CONTINUATION, &wc) == GHOSTTY_SUCCESS)
+                        isContinuation = wc;
+                }
+            }
+        }
+
+        if (isContinuation) {
+            // Soft-wrapped continuation — merge into current line buffer.
+            // Don't trim: the original line content needs to stay intact
+            // so it re-wraps at the same point on replay.
+            lineBuf.append(line);
+        } else {
+            // New logical line — flush the previous line buffer with \r\n,
+            // then start accumulating this row.
+            if (!lineBuf.isEmpty()) {
+                result.append(lineBuf);
+                result.append("\r\n");
+            }
+            lineBuf = line;
+        }
+    }
+
+    // Flush the last line
+    if (!lineBuf.isEmpty()) {
+        result.append(lineBuf);
+        result.append("\r\n");
+    }
+
+    // Strip trailing empty lines — these are blank viewport rows below the
+    // last real content. Without this, restoring creates a screen-height
+    // gap of whitespace before the shell prompt.
+    while (result.endsWith("\r\n"))
+        result.chop(2);
+
+    // Strip the active prompt line — when the shell is waiting for input,
+    // the last line is just the prompt (e.g. "[user@host ~]$"). On restore,
+    // the shell prints a fresh prompt, so exporting the old one causes
+    // duplicate prompts to accumulate across restarts.
+    // Detection: if the cursor is at the end of the last line with nothing
+    // typed after it, the line is just a prompt — safe to strip.
+    if (!result.isEmpty()) {
+        uint16_t cursorX = 0;
+        ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_CURSOR_X, &cursorX);
+
+        int lastNl = result.lastIndexOf('\n');
+        QByteArray lastLine = (lastNl >= 0) ? result.mid(lastNl + 1) : result;
+        // Trim trailing \r for length comparison
+        QByteArray trimmed = lastLine;
+        while (trimmed.endsWith('\r'))
+            trimmed.chop(1);
+
+        if (cursorX > 0 && cursorX >= trimmed.size()) {
+            // Cursor is at or past end of last line — it's an un-typed prompt.
+            // Strip the last line entirely.
+            if (lastNl >= 0)
+                result.resize(lastNl);
+            else
+                result.clear();
+
+            // Re-strip any blank lines exposed by the removal
+            while (result.endsWith("\r\n"))
+                result.chop(2);
+            // Also strip lone \r left when prompt was on a line after blank rows
+            while (result.endsWith('\r'))
+                result.chop(1);
+        }
+    }
+
+    QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
+                            .arg(outCols).arg(totalRows).toUtf8();
+    return header + result;
+}
+
+void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
+{
+    if (!m_terminal || data.isEmpty())
+        return;
+
+    // Parse header: GHOSTTY_SCROLLBACK_V1\nCOLS=X\nROWS=Y\n\n<text data>
+    int headerEnd = data.indexOf("\n\n");
+    if (headerEnd < 0)
+        return;
+
+    QByteArray header = data.left(headerEnd);
+    QByteArray textData = data.mid(headerEnd + 2);
+
+    if (textData.isEmpty())
+        return;
+
+    uint16_t savedCols = 0;
+    for (const QByteArray &line : header.split('\n')) {
+        if (line.startsWith("COLS="))
+            savedCols = line.mid(5).toUShort();
+    }
+
+    if (savedCols == 0)
+        return;
+
+    // Replay text as VT input. Trim trailing spaces to avoid pending-wrap
+    // double-skip: when a line fills the full terminal width, the cursor
+    // reaches the right margin and sets a pending-wrap flag. A subsequent
+    // \r\n then resolves the wrap (moving down) AND the \n moves down again,
+    // producing an extra blank line. Trimming prevents the line from reaching
+    // the full width.
+    //
+    // For lines that are STILL full-width after trimming (rare), use \r
+    // instead of \r\n — the pending wrap resolves on \r, giving one line break.
+    QByteArray replayData;
+    int targetCols = static_cast<int>(actualCols);
+    replayData.reserve(textData.size());
+    int lineStart = 0;
+    for (int i = 0; i <= textData.size(); i++) {
+        if (i == textData.size() || textData[i] == '\n') {
+            QByteArray line = textData.mid(lineStart, i - lineStart);
+            if (!line.isEmpty() && line.endsWith('\r'))
+                line.chop(1);
+            while (!line.isEmpty() && line.endsWith(' '))
+                line.chop(1);
+
+            if (savedCols != actualCols && line.size() > targetCols) {
+                // Line is wider than the terminal — re-wrap by splitting at
+                // column boundaries. Convert to QString for safe character
+                // splitting (byte boundary splits would corrupt UTF-8).
+                QString str = QString::fromUtf8(line);
+                int pos = 0;
+                while (pos < str.size()) {
+                    int width = 0;
+                    int end = pos;
+                    while (end < str.size()) {
+                        int charWidth = 1;
+                        QChar ch = str.at(end);
+                        if (ch.isHighSurrogate() && end + 1 < str.size()
+                                && str.at(end + 1).isLowSurrogate())
+                            charWidth = 2;
+                        int displayW = (ch.unicode() > 127) ? 2 : 1;
+                        if (width + displayW > targetCols)
+                            break;
+                        width += displayW;
+                        end += charWidth;
+                    }
+                    if (end == pos) end = pos + 1;
+                    QByteArray segment = str.mid(pos, end - pos).toUtf8();
+                    replayData.append(segment);
+                    // If segment fills full column width, pending wrap handles
+                    // the line break — just send \r to position at col 0.
+                    // Use display width (not byte count) for CJK correctness.
+                    if (width >= targetCols)
+                        replayData.append("\r");
+                    else
+                        replayData.append("\r\n");
+                    pos = end;
+                }
+            } else {
+                replayData.append(line);
+                // If line fills full column width, pending wrap is set — use \r only.
+                // Compute display width (not byte count) for CJK correctness.
+                int lineDisplayW = computeDisplayWidth(QString::fromUtf8(line));
+                if (lineDisplayW > 0 && lineDisplayW % targetCols == 0)
+                    replayData.append("\r");
+                else
+                    replayData.append("\r\n");
+            }
+            lineStart = i + 1;
+        }
+    }
+
+    ghostty_terminal_vt_write(m_terminal,
+                              reinterpret_cast<const uint8_t *>(replayData.constData()),
+                              replayData.size());
 }

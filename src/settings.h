@@ -18,6 +18,8 @@ class Settings : public QObject
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
     Q_PROPERTY(float backgroundOpacity READ backgroundOpacity WRITE setBackgroundOpacity NOTIFY backgroundOpacityChanged)
     Q_PROPERTY(int bellMode READ bellMode WRITE setBellMode NOTIFY bellModeChanged)
+    Q_PROPERTY(bool scrollbackPersistence READ scrollbackPersistence WRITE setScrollbackPersistence NOTIFY scrollbackPersistenceChanged)
+    Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
 
 public:
     static Settings *instance();
@@ -43,6 +45,12 @@ public:
     int bellMode() const { return m_bellMode; }
     void setBellMode(int mode);
 
+    bool scrollbackPersistence() const { return m_scrollbackPersistence; }
+    void setScrollbackPersistence(bool enabled);
+
+    int scrollbackRetentionDays() const { return m_scrollbackRetentionDays; }
+    void setScrollbackRetentionDays(int days);
+
 Q_SIGNALS:
     void fontSizeChanged();
     void fontFamilyChanged();
@@ -50,6 +58,8 @@ Q_SIGNALS:
     void colorSchemeChanged();
     void backgroundOpacityChanged();
     void bellModeChanged();
+    void scrollbackPersistenceChanged();
+    void scrollbackRetentionDaysChanged();
 
 private:
     explicit Settings(QObject *parent = nullptr);
@@ -65,6 +75,8 @@ private:
     QString m_colorScheme = QStringLiteral("dark");
     float m_backgroundOpacity = 0.6f;
     int m_bellMode = 1; // default: Vibrate
+    bool m_scrollbackPersistence = false; // default: off (opt-in)
+    int m_scrollbackRetentionDays = 30;
 };
 
 #endif // SETTINGS_H
