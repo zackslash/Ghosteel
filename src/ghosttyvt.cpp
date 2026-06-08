@@ -425,7 +425,6 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     if (screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE)
         return {};
 
-    // Get terminal dimensions
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &outCols);
     size_t totalRows = 0;
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
@@ -434,8 +433,7 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     if (outCols == 0 || totalRows == 0)
         return {};
 
-    // Use grid_ref API to read all cells (same approach as extractSearchText).
-    // The formatter API crashes due to Zig null-unwrap on empty page lists.
+    // Using grid_ref API — the formatter API crashes on Zig null-unwrap with empty page lists.
     QByteArray result;
     // Reserve ~4 bytes per cell to avoid reallocations for UTF-8 content (CJK, emoji)
     result.reserve(static_cast<int>(totalRows * outCols * 4));
@@ -465,7 +463,7 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             // Skip wide character spacer cells — they have no text content
             // but would otherwise be exported as phantom spaces.
             if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
-                continue; // skip spacer — the base wide char already emitted
+                continue;
 
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
@@ -560,7 +558,6 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         }
     }
 
-    // Build file: header + text data
     QByteArray header = QStringLiteral("GHOSTTY_SCROLLBACK_V1\nCOLS=%1\nROWS=%2\n\n")
                             .arg(outCols).arg(totalRows).toUtf8();
     return header + result;
@@ -582,7 +579,6 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
     if (textData.isEmpty())
         return;
 
-    // Extract saved dimensions from header
     uint16_t savedCols = 0;
     for (const QByteArray &line : header.split('\n')) {
         if (line.startsWith("COLS="))
@@ -660,7 +656,6 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
         }
     }
 
-    // Replay text as VT input — plain text is valid VT, newlines scroll
     ghostty_terminal_vt_write(m_terminal,
                               reinterpret_cast<const uint8_t *>(replayData.constData()),
                               replayData.size());

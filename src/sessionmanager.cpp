@@ -495,7 +495,6 @@ void SessionManager::saveScrollback()
         if (data.isEmpty())
             continue;
 
-        // Encrypt — skip this session if encryption fails
         QByteArray output;
         if (m_encryptor && m_encryptor->isAvailable())
             output = m_encryptor->encrypt(data);
@@ -536,7 +535,6 @@ void SessionManager::cleanupScrollbackFiles()
     for (const QFileInfo &fi : files) {
         if (fi.fileName().startsWith(QStringLiteral("session_"))) {
             if (fi.fileName().endsWith(QStringLiteral(".vt"))) {
-                // Normal encrypted scrollback file — expire by retention days
                 if (fi.lastModified() < cutoff)
                     QFile::remove(fi.absoluteFilePath());
             } else {
@@ -568,7 +566,6 @@ bool SessionManager::restoreSessions()
 
     m_nextSessionId = nextId;
 
-    // Clean up expired scrollback files on app launch
     cleanupScrollbackFiles();
 
     for (int i = 0; i < count; i++) {
@@ -594,7 +591,6 @@ bool SessionManager::restoreSessions()
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
 
-        // Restore scrollback if persistence is enabled and file exists
         if (Settings::instance()->scrollbackPersistence()) {
             QString sbPath = scrollbackFilePath(savedId);
             QFile sbFile(sbPath);

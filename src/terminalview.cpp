@@ -1743,7 +1743,6 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
     GhosttyKey key = KeyMapping::mapQtKey(event->key());
     GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
 
-    // Handle Ctrl+Shift+C = copy, Ctrl+Shift+V = paste, Ctrl+Shift+F = search
     if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
         if (key == GHOSTTY_KEY_C) { copySelection(); event->accept(); return; }
         if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
@@ -1830,7 +1829,6 @@ void TerminalView::openSearch()
 
     m_searchActive = true;
 
-    // Extract text from terminal (scrollback + active area)
     if (m_vt) {
         m_searchCache = m_vt->extractSearchText();
         buildCellMapping();
@@ -1889,11 +1887,9 @@ void TerminalView::buildCellMapping()
             const QString &line = m_searchCache[row];
             for (int cell = 0; cell < static_cast<int>(cols); cell++) {
                 mapping[cell] = charIdx;
-                // Check if this is a wide-char spacer (occupies 0 text chars)
                 if (GhosttyVt::isWideCharSpacer(terminal, static_cast<uint16_t>(cell), static_cast<uint32_t>(row))) {
-                    continue; // spacer — don't advance charIdx
+                    continue;
                 }
-                // Non-spacer cell — advance character index (if any chars remain)
                 if (charIdx < line.size())
                     charIdx++;
             }
@@ -1918,7 +1914,6 @@ void TerminalView::setSearchPattern(const QString &pattern)
 
     performSearch();
 
-    // Scroll to first match
     if (m_currentMatchIndex >= 0)
         scrollToMatch(m_currentMatchIndex);
 
@@ -1995,7 +1990,6 @@ void TerminalView::scrollToMatch(int index)
 
     const auto &match = m_searchMatches[index];
 
-    // Query scrollbar state to find current viewport position
     GhosttyTerminalScrollbar scrollbar = {};
     ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
 
@@ -2003,11 +1997,9 @@ void TerminalView::scrollToMatch(int index)
     int viewTop = static_cast<int>(scrollbar.offset);
     int viewLen = static_cast<int>(scrollbar.len);
 
-    // Already visible — no scroll needed
     if (viewLen > 0 && matchRow >= viewTop && matchRow < viewTop + viewLen)
         return;
 
-    // Center the match in the viewport
     int targetTop = matchRow - viewLen / 2;
     if (targetTop < 0)
         targetTop = 0;
@@ -2087,7 +2079,6 @@ void TerminalView::drawSearchHighlights(QPainter *painter)
         int w = match.cellWidth * m_cellWidth;
         int h = m_cellHeight;
 
-        // Clamp to terminal width
         if (x + w > m_cols * m_cellWidth)
             w = m_cols * m_cellWidth - x;
         if (w <= 0)

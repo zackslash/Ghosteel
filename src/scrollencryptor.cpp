@@ -31,7 +31,6 @@ QByteArray ScrollEncryptor::pkcs7Unpad(const QByteArray &data)
     return data.left(data.size() - padLen);
 }
 
-// static
 bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 {
     if (data.size() < 4)

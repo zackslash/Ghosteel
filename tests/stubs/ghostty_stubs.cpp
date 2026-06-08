@@ -390,8 +390,6 @@ GHOSTTY_API void ghostty_color_rgb_get(
     if (b) *b = color.b;
 }
 
-// ---- Allocator ----
-
 // ---- Type JSON ----
 
 GHOSTTY_API const char* ghostty_type_json(void) { return "{}"; }

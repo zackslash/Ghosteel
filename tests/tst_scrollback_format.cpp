@@ -12,7 +12,6 @@ class TestScrollbackFormat : public QObject
     Q_OBJECT
 
 private:
-    // Helper: build a scrollback file from header fields and text lines
     static QByteArray buildScrollback(uint16_t cols, uint16_t rows, const QStringList &lines)
     {
         QByteArray data;

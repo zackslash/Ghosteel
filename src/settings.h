@@ -76,7 +76,7 @@ private:
     float m_backgroundOpacity = 0.6f;
     int m_bellMode = 1; // default: Vibrate
     bool m_scrollbackPersistence = false; // default: off (opt-in)
-    int m_scrollbackRetentionDays = 30;   // default: 30 days
+    int m_scrollbackRetentionDays = 30;
 };
 
 #endif // SETTINGS_H
