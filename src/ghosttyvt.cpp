@@ -356,6 +356,18 @@ QStringList GhosttyVt::extractSearchText()
                 continue;
             }
 
+            // Skip wide character spacer cells to avoid phantom spaces in search text
+            GhosttyCell cell = 0;
+            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS && cell != 0) {
+                GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+                if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) == GHOSTTY_SUCCESS) {
+                    if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
+                            || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
+                        continue;
+                    }
+                }
+            }
+
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
                     == GHOSTTY_SUCCESS && graphemeLen > 0) {
@@ -545,14 +557,27 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
                     replayData.append(line);
                     replayData.append("\r\n");
                 } else {
-                    // Line is wider than the terminal — re-wrap by splitting
-                    // at actualCols boundaries instead of truncating.
-                    int offset = 0;
-                    while (offset < line.size()) {
-                        int chunk = qMin(static_cast<int>(actualCols), line.size() - offset);
-                        replayData.append(line.mid(offset, chunk));
+                    // Line is wider than the terminal — re-wrap by splitting at
+                    // column boundaries. Convert to QString for safe character
+                    // splitting (byte boundary splits would corrupt UTF-8).
+                    QString str = QString::fromUtf8(line);
+                    int pos = 0;
+                    while (pos < str.size()) {
+                        int width = 0;
+                        int end = pos;
+                        while (end < str.size()) {
+                            int cw = QStringView(str).mid(end, 1)[0].isHighSurrogate() ? 2 : 1;
+                            // Approximate: non-ASCII chars take 2 columns (covers CJK)
+                            int displayW = (str[end].unicode() > 127) ? 2 : 1;
+                            if (width + displayW > actualCols)
+                                break;
+                            width += displayW;
+                            end += cw;
+                        }
+                        if (end == pos) end = pos + 1; // safety: always advance
+                        replayData.append(str.mid(pos, end - pos).toUtf8());
                         replayData.append("\r\n");
-                        offset += chunk;
+                        pos = end;
                     }
                 }
                 lineStart = i + 1;

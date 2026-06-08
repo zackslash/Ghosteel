@@ -1911,7 +1911,8 @@ void TerminalView::performSearch()
         return;
     }
 
-    // Case-insensitive search across all rows
+    // Case-insensitive search across all rows (capped to prevent OOM)
+    static const int MaxSearchMatches = 10000;
     for (int row = 0; row < m_searchCache.size(); row++) {
         int col = 0;
         const QString &line = m_searchCache[row];
@@ -1920,9 +1921,12 @@ void TerminalView::performSearch()
             if (idx < 0)
                 break;
             m_searchMatches.append({row, idx, m_searchPattern.size()});
+            if (m_searchMatches.size() >= MaxSearchMatches)
+                goto searchDone;
             col = idx + 1;
         }
     }
+searchDone:
 
     if (!m_searchMatches.isEmpty())
         m_currentMatchIndex = 0;

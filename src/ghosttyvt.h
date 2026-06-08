@@ -74,7 +74,8 @@ public:
 
     // Restore scrollback from a previously exported byte array.
     // The data must be in the format produced by exportScrollback() (header + VT).
-    // Caller must ensure the terminal is freshly created and has not been resized yet.
+    // Replay saved VT data into the terminal. Safe to call after create()
+    // and same-dimension resize (setupTerminal does this correctly).
     // After this call, the caller should resize the terminal to actual dimensions.
     void restoreScrollback(const QByteArray &data, uint16_t actualCols, uint16_t actualRows);
 

@@ -370,7 +370,7 @@ Page {
 
             SearchField {
                 id: searchField
-                width: parent.width - navButtons.width
+                width: parent.width - (navButtons.visible ? navButtons.width : 0)
                 placeholderText: qsTr("Search terminal")
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                 canHide: true
