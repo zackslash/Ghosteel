@@ -120,6 +120,9 @@ Page {
                 Qt.inputMethod.hide()
             // Restore keybar state
             keybar.open = SessionManager.sessionKeybarOpen(idx)
+            // Show session indicator on launch so the user knows which session they're in
+            var name = SessionManager.sessionName(idx)
+            sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
         }
     }
 
