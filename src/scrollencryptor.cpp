@@ -55,8 +55,14 @@ bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 
 #include <QDebug>
 
-using namespace Sailfish::Secrets;
-using namespace Sailfish::Crypto;
+using Sailfish::Secrets::SecretManager;
+using Sailfish::Secrets::CreateCollectionRequest;
+using Sailfish::Crypto::CryptoManager;
+using Sailfish::Crypto::Key;
+using Sailfish::Crypto::GenerateStoredKeyRequest;
+using Sailfish::Crypto::GenerateInitializationVectorRequest;
+using Sailfish::Crypto::EncryptRequest;
+using Sailfish::Crypto::DecryptRequest;
 
 static const QString COLLECTION_NAME = QStringLiteral("ghosteel");
 static const QString KEY_NAME = QStringLiteral("ScrollbackKey");
@@ -118,9 +124,9 @@ bool ScrollEncryptor::ensureCollection()
     ccr.startRequest();
     ccr.waitForFinished();
 
-    if (ccr.result().code() != Secrets::Result::Succeeded) {
+    if (ccr.result().code() != Sailfish::Secrets::Result::Succeeded) {
         // CollectionAlreadyExists is not a real error — the collection is ready.
-        if (ccr.result().errorCode() == Secrets::Result::CollectionAlreadyExistsError)
+        if (ccr.result().errorCode() == Sailfish::Secrets::Result::CollectionAlreadyExistsError)
             return true;
 
         qWarning() << "Ghosteel: CreateCollection failed:"
@@ -151,7 +157,7 @@ bool ScrollEncryptor::ensureKey()
     genKey.startRequest();
     genKey.waitForFinished();
 
-    if (genKey.result().code() != Crypto::Result::Succeeded) {
+    if (genKey.result().code() != Sailfish::Crypto::Result::Succeeded) {
         qWarning() << "Ghosteel: GenerateStoredKey failed:"
                     << genKey.result().errorCode()
                     << genKey.result().errorMessage();
@@ -177,7 +183,7 @@ void ScrollEncryptor::replenishIVs()
         ivReq.startRequest();
         ivReq.waitForFinished();
 
-        if (ivReq.result().code() != Crypto::Result::Succeeded) {
+        if (ivReq.result().code() != Sailfish::Crypto::Result::Succeeded) {
             qWarning() << "Ghosteel: IV generation failed:"
                         << ivReq.result().errorCode()
                         << ivReq.result().errorMessage();
@@ -220,7 +226,7 @@ QByteArray ScrollEncryptor::encrypt(const QByteArray &plaintext)
     enc.startRequest();
     enc.waitForFinished();
 
-    if (enc.result().code() != Crypto::Result::Succeeded) {
+    if (enc.result().code() != Sailfish::Crypto::Result::Succeeded) {
         qWarning() << "Ghosteel: Encryption failed:"
                     << enc.result().errorCode()
                     << enc.result().errorMessage();
@@ -263,7 +269,7 @@ QByteArray ScrollEncryptor::decrypt(const QByteArray &ciphertextWithHeader)
     dec.startRequest();
     dec.waitForFinished();
 
-    if (dec.result().code() != Crypto::Result::Succeeded) {
+    if (dec.result().code() != Sailfish::Crypto::Result::Succeeded) {
         qWarning() << "Ghosteel: Decryption failed:"
                     << dec.result().errorCode()
                     << dec.result().errorMessage();
