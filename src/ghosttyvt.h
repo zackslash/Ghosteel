@@ -76,8 +76,11 @@ public:
     // The data must be in the format produced by exportScrollback() (header + VT).
     // Replay saved VT data into the terminal. Safe to call after create()
     // and same-dimension resize (setupTerminal does this correctly).
-    // After this call, the caller should resize the terminal to actual dimensions.
-    void restoreScrollback(const QByteArray &data, uint16_t actualCols, uint16_t actualRows);
+    void restoreScrollback(const QByteArray &data, uint16_t actualCols);
+
+    // Returns true if the cell at (col, row) is a wide-character spacer
+    // (the invisible second half of a CJK/emoji character).
+    static bool isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row);
 
 Q_SIGNALS:
     void titleChanged(const QString &title);

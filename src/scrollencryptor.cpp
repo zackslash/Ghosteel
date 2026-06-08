@@ -76,9 +76,7 @@ ScrollEncryptor::ScrollEncryptor(QObject *parent)
         replenishIVs();
 }
 
-ScrollEncryptor::~ScrollEncryptor()
-{
-}
+ScrollEncryptor::~ScrollEncryptor() = default;
 
 bool ScrollEncryptor::isAvailable() const
 {

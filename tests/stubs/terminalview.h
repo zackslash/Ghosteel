@@ -33,7 +33,7 @@ public:
         if (m_stickyModifiers != mods) { m_stickyModifiers = mods; Q_EMIT stickyModifiersChanged(); }
     }
     QString selectedText() const { return m_selectedText; }
-    int searchMatchCount() const { return m_searchMatchCount; }
+    int searchMatchCount() const { return 0; }
     int currentMatchIndex() const { return m_currentMatchIndex; }
     bool searchActive() const { return m_searchActive; }
 
@@ -49,7 +49,7 @@ public:
     Q_INVOKABLE void suppressNextKeyboardAutoShow() {}
     Q_INVOKABLE void setPendingScrollback(const QByteArray &) {}
     Q_INVOKABLE void openSearch() { m_searchActive = true; Q_EMIT searchActiveChanged(); }
-    Q_INVOKABLE void closeSearch() { m_searchActive = false; m_searchMatchCount = 0; m_currentMatchIndex = -1; Q_EMIT searchActiveChanged(); Q_EMIT searchMatchCountChanged(); Q_EMIT currentMatchIndexChanged(); }
+    Q_INVOKABLE void closeSearch() { m_searchActive = false; m_currentMatchIndex = -1; Q_EMIT searchActiveChanged(); Q_EMIT searchMatchCountChanged(); Q_EMIT currentMatchIndexChanged(); }
     Q_INVOKABLE void setSearchPattern(const QString &) {}
     Q_INVOKABLE void findNext() {}
     Q_INVOKABLE void findPrevious() {}
@@ -80,7 +80,7 @@ private:
     QString m_selectedText;
     QString m_workingDirectory;
     QString m_autorunCommand;
-    int m_searchMatchCount = 0;
+
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;
 };

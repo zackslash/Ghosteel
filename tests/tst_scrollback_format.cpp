@@ -33,19 +33,19 @@ private slots:
     {
         GhosttyVt vt;
         // Should not crash with empty data
-        vt.restoreScrollback(QByteArray(), 80, 24);
-        vt.restoreScrollback(buildScrollback(0, 0, {}), 80, 24);
+        vt.restoreScrollback(QByteArray(), 80);
+        vt.restoreScrollback(buildScrollback(0, 0, {}), 80);
     }
 
     void testInvalidHeader()
     {
         GhosttyVt vt;
         // Missing magic
-        vt.restoreScrollback("NOT_VALID\r\n", 80, 24);
+        vt.restoreScrollback("NOT_VALID\r\n", 80);
         // Missing COLS
-        vt.restoreScrollback("GHOSTTY_SCROLLBACK_V1\nROWS=24\n\nhello\r\n", 80, 24);
+        vt.restoreScrollback("GHOSTTY_SCROLLBACK_V1\nROWS=24\n\nhello\r\n", 80);
         // Missing double newline separator
-        vt.restoreScrollback("GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=24\nhello", 80, 24);
+        vt.restoreScrollback("GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=24\nhello", 80);
     }
 
     void testSameColumnCount()
@@ -54,7 +54,7 @@ private slots:
         QStringList lines = {"hello world", "second line", "third line"};
         QByteArray data = buildScrollback(80, 24, lines);
         // Should not crash — same column count, no re-wrap needed
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testColumnMismatchPad()
@@ -63,7 +63,7 @@ private slots:
         // Saved at 40 cols, restoring at 80 — lines should be padded
         QStringList lines = {"short line", "another"};
         QByteArray data = buildScrollback(40, 24, lines);
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testColumnMismatchRewrap()
@@ -73,7 +73,7 @@ private slots:
         QString longLine = QString(80, 'x'); // 80 chars, wider than 40
         QStringList lines = {longLine};
         QByteArray data = buildScrollback(80, 24, lines);
-        vt.restoreScrollback(data, 40, 24);
+        vt.restoreScrollback(data, 40);
     }
 
     void testTrailingSpaceTrimming()
@@ -82,7 +82,7 @@ private slots:
         // Lines with trailing spaces should be trimmed
         QStringList lines = {"hello     ", "world     "};
         QByteArray data = buildScrollback(80, 24, lines);
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testCrLfHandling()
@@ -91,7 +91,7 @@ private slots:
         // Build data with \r\n line endings (as export produces)
         QByteArray data = "GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=24\n\n"
                           "line one\r\nline two\r\nline three";
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testBareLfHandling()
@@ -100,7 +100,7 @@ private slots:
         // Build data with bare \n (old format) — should still work
         QByteArray data = "GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=24\n\n"
                           "line one\nline two\nline three";
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testEmptyLines()
@@ -108,7 +108,7 @@ private slots:
         GhosttyVt vt;
         QStringList lines = {"first", "", "third", "", "fifth"};
         QByteArray data = buildScrollback(80, 24, lines);
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testSingleCharacterLines()
@@ -116,7 +116,7 @@ private slots:
         GhosttyVt vt;
         QStringList lines = {"a", "b", "c"};
         QByteArray data = buildScrollback(80, 24, lines);
-        vt.restoreScrollback(data, 80, 24);
+        vt.restoreScrollback(data, 80);
     }
 
     void testRewrapUtf8()
@@ -129,7 +129,7 @@ private slots:
         QByteArray data = buildScrollback(80, 24, lines);
         // Restore at 5 cols — each CJK char is ~2 cols wide, so 10 chars = 20 cols
         // Should split without corrupting UTF-8
-        vt.restoreScrollback(data, 5, 24);
+        vt.restoreScrollback(data, 5);
     }
 };
 

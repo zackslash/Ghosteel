@@ -1,6 +1,23 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 
+// Compute terminal display width of a QString. CJK and non-ASCII chars
+// count as 2 columns; surrogate pairs (emoji) also count as 2.
+static int computeDisplayWidth(const QString &str) {
+    int width = 0;
+    for (int i = 0; i < str.size(); i++) {
+        QChar ch = str.at(i);
+        if (ch.isHighSurrogate() && i + 1 < str.size()
+                && str.at(i + 1).isLowSurrogate()) {
+            ++i;
+            width += 2;
+        } else {
+            width += (ch.unicode() > 127) ? 2 : 1;
+        }
+    }
+    return width;
+}
+
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
 {
@@ -224,6 +241,26 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     return result;
 }
 
+bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row)
+{
+    if (!terminal)
+        return false;
+    GhosttyPoint point = {};
+    point.tag = GHOSTTY_POINT_TAG_SCREEN;
+    point.value.coordinate.x = col;
+    point.value.coordinate.y = row;
+    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+    if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS)
+        return false;
+    GhosttyCell cell = 0;
+    if (ghostty_grid_ref_cell(&ref, &cell) != GHOSTTY_SUCCESS || cell == 0)
+        return false;
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) != GHOSTTY_SUCCESS)
+        return false;
+    return (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD);
+}
+
 bool GhosttyVt::isMouseTracking() const
 {
     if (!m_terminal)
@@ -357,16 +394,8 @@ QStringList GhosttyVt::extractSearchText()
             }
 
             // Skip wide character spacer cells to avoid phantom spaces in search text
-            GhosttyCell cell = 0;
-            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS && cell != 0) {
-                GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-                if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) == GHOSTTY_SUCCESS) {
-                    if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
-                            || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
-                        continue;
-                    }
-                }
-            }
+            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+                continue;
 
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
@@ -435,16 +464,8 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
             // Skip wide character spacer cells — they have no text content
             // but would otherwise be exported as phantom spaces.
-            GhosttyCell cell = 0;
-            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS && cell != 0) {
-                GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-                if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) == GHOSTTY_SUCCESS) {
-                    if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
-                            || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
-                        continue; // skip spacer — the base wide char already emitted
-                    }
-                }
-            }
+            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+                continue; // skip spacer — the base wide char already emitted
 
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
@@ -536,8 +557,6 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             // Also strip lone \r left when prompt was on a line after blank rows
             while (result.endsWith('\r'))
                 result.chop(1);
-            while (result.endsWith("\r\n"))
-                result.chop(2);
         }
     }
 
@@ -547,7 +566,7 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     return header + result;
 }
 
-void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, uint16_t actualRows)
+void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
 {
     if (!m_terminal || data.isEmpty())
         return;
@@ -631,20 +650,7 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
                 replayData.append(line);
                 // If line fills full column width, pending wrap is set — use \r only.
                 // Compute display width (not byte count) for CJK correctness.
-                int lineDisplayW = 0;
-                {
-                    QString ls = QString::fromUtf8(line);
-                    for (int j = 0; j < ls.size(); j++) {
-                        QChar ch = ls.at(j);
-                        if (ch.isHighSurrogate() && j + 1 < ls.size()
-                                && ls.at(j + 1).isLowSurrogate()) {
-                            ++j;
-                            lineDisplayW += 2;
-                        } else {
-                            lineDisplayW += (ch.unicode() > 127) ? 2 : 1;
-                        }
-                    }
-                }
+                int lineDisplayW = computeDisplayWidth(QString::fromUtf8(line));
                 if (lineDisplayW > 0 && lineDisplayW % targetCols == 0)
                     replayData.append("\r");
                 else

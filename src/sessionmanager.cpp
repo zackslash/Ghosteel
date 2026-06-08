@@ -617,7 +617,6 @@ bool SessionManager::restoreSessions()
                         }
                     }
                 }
-                sbFile.close();
             }
         }
 

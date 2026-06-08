@@ -133,6 +133,7 @@ private:
     void scrollToMatch(int index);
     void drawSearchHighlights(QPainter *painter);
     void buildCellMapping();
+    void scrollViewportToBottom();
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;

@@ -202,16 +202,7 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
         m_pty->writeData(utf8.constData(), utf8.size());
 
         // If scrolled up viewing history, scroll back to bottom
-        if (m_vt && m_vt->terminal()) {
-            bool viewportActive = true;
-            ghostty_terminal_get(m_vt->terminal(),
-                                 GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
-            if (!viewportActive) {
-                GhosttyTerminalScrollViewport scroll = {};
-                scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
-                ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-            }
-        }
+        scrollViewportToBottom();
 
         m_needsRender = true;
         update();
@@ -332,7 +323,7 @@ void TerminalView::setupTerminal()
 
     // Restore scrollback if pending (must be before startShell)
     if (!m_pendingScrollback.isEmpty()) {
-        m_vt->restoreScrollback(m_pendingScrollback, m_cols, m_rows);
+        m_vt->restoreScrollback(m_pendingScrollback, m_cols);
         m_pendingScrollback.clear();
     }
 
@@ -1752,14 +1743,10 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
     GhosttyKey key = KeyMapping::mapQtKey(event->key());
     GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
 
-    // Handle Ctrl+Shift+C = copy, Ctrl+Shift+V = paste
-    if (mods & GHOSTTY_MODS_CTRL && mods & GHOSTTY_MODS_SHIFT) {
+    // Handle Ctrl+Shift+C = copy, Ctrl+Shift+V = paste, Ctrl+Shift+F = search
+    if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
         if (key == GHOSTTY_KEY_C) { copySelection(); event->accept(); return; }
         if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
-    }
-
-    // Handle Ctrl+Shift+F = toggle scrollback search
-    if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
         if (key == GHOSTTY_KEY_F) {
             if (m_searchActive)
                 closeSearch();
@@ -1776,17 +1763,7 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
 
     // If scrolled up viewing history, scroll back to bottom so the user
     // can see what they're typing.
-    if (m_vt && m_vt->terminal()) {
-        bool viewportActive = true;
-        ghostty_terminal_get(m_vt->terminal(),
-                             GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
-        if (!viewportActive) {
-            GhosttyTerminalScrollViewport scroll = {};
-            scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
-            ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-            m_needsRender = true;
-        }
-    }
+    scrollViewportToBottom();
 
     sendKeyEvent(key, action, mods, event->text());
     m_needsRender = true;
@@ -1893,37 +1870,28 @@ void TerminalView::buildCellMapping()
     m_cellMapping.reserve(m_searchCache.size());
     size_t totalRows = 0;
     uint16_t cols = 0;
-    if (m_vt && m_vt->terminal()) {
-        ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
-        ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_COLS, &cols);
+    GhosttyTerminal terminal = m_vt ? m_vt->terminal() : nullptr;
+    if (terminal) {
+        ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+        ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
+    }
+    if (!terminal || cols == 0) {
+        // No terminal or zero columns — fill with empty mappings
+        for (int row = 0; row < m_searchCache.size(); row++)
+            m_cellMapping.append(QVector<int>());
+        return;
     }
     for (int row = 0; row < m_searchCache.size(); row++) {
         QVector<int> mapping;
-        if (row < static_cast<int>(totalRows) && cols > 0) {
+        if (row < static_cast<int>(totalRows)) {
             mapping.resize(static_cast<int>(cols));
             int charIdx = 0;
             const QString &line = m_searchCache[row];
             for (int cell = 0; cell < static_cast<int>(cols); cell++) {
                 mapping[cell] = charIdx;
                 // Check if this is a wide-char spacer (occupies 0 text chars)
-                if (m_vt && m_vt->terminal()) {
-                    GhosttyPoint point = {};
-                    point.tag = GHOSTTY_POINT_TAG_SCREEN;
-                    point.value.coordinate.x = static_cast<uint16_t>(cell);
-                    point.value.coordinate.y = static_cast<uint32_t>(row);
-                    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
-                    if (ghostty_terminal_grid_ref(m_vt->terminal(), point, &ref) == GHOSTTY_SUCCESS) {
-                        GhosttyCell c = 0;
-                        if (ghostty_grid_ref_cell(&ref, &c) == GHOSTTY_SUCCESS && c != 0) {
-                            GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-                            if (ghostty_cell_get(c, GHOSTTY_CELL_DATA_WIDE, &wide) == GHOSTTY_SUCCESS) {
-                                if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
-                                        || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
-                                    continue; // spacer — don't advance charIdx
-                                }
-                            }
-                        }
-                    }
+                if (GhosttyVt::isWideCharSpacer(terminal, static_cast<uint16_t>(cell), static_cast<uint32_t>(row))) {
+                    continue; // spacer — don't advance charIdx
                 }
                 // Non-spacer cell — advance character index (if any chars remain)
                 if (charIdx < line.size())
@@ -2011,7 +1979,7 @@ void TerminalView::performSearch()
             col = idx + 1;
         }
     }
-searchDone:
+searchDone: // exit point for nested row/col search loop (goto breaks both levels)
 
     if (!m_searchMatches.isEmpty())
         m_currentMatchIndex = 0;
@@ -2139,4 +2107,18 @@ void TerminalView::runAutorunCommand()
     QByteArray cmd = m_autorunCommand.toUtf8();
     m_pty->writeData(cmd.constData(), cmd.size());
     m_pty->writeData("\r", 1);
+}
+
+void TerminalView::scrollViewportToBottom()
+{
+    if (!m_vt || !m_vt->terminal())
+        return;
+    bool viewportActive = true;
+    ghostty_terminal_get(m_vt->terminal(),
+                         GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
+    if (!viewportActive) {
+        GhosttyTerminalScrollViewport scroll = {};
+        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+        ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+    }
 }
