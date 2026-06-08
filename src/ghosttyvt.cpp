@@ -566,13 +566,18 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols, u
                         int width = 0;
                         int end = pos;
                         while (end < str.size()) {
-                            int cw = QStringView(str).mid(end, 1)[0].isHighSurrogate() ? 2 : 1;
+                            // Advance past surrogate pairs (emoji, rare CJK)
+                            int charWidth = 1;
+                            QChar ch = str.at(end);
+                            if (ch.isHighSurrogate() && end + 1 < str.size()
+                                    && str.at(end + 1).isLowSurrogate())
+                                charWidth = 2;
                             // Approximate: non-ASCII chars take 2 columns (covers CJK)
-                            int displayW = (str[end].unicode() > 127) ? 2 : 1;
+                            int displayW = (ch.unicode() > 127) ? 2 : 1;
                             if (width + displayW > actualCols)
                                 break;
                             width += displayW;
-                            end += cw;
+                            end += charWidth;
                         }
                         if (end == pos) end = pos + 1; // safety: always advance
                         replayData.append(str.mid(pos, end - pos).toUtf8());

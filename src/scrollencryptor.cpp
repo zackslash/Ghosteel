@@ -71,7 +71,10 @@ ScrollEncryptor::ScrollEncryptor(QObject *parent)
         replenishIVs();
 }
 
-ScrollEncryptor::~ScrollEncryptor() = default;
+ScrollEncryptor::~ScrollEncryptor()
+{
+    delete m_keyReference;
+}
 
 bool ScrollEncryptor::isAvailable() const
 {
@@ -115,9 +118,9 @@ bool ScrollEncryptor::ensureCollection()
     ccr.startRequest();
     ccr.waitForFinished();
 
-    if (ccr.result().code() != Result::Succeeded) {
+    if (ccr.result().code() != Secrets::Result::Succeeded) {
         // CollectionAlreadyExists is not a real error — the collection is ready.
-        if (ccr.result().errorCode() == Result::CollectionAlreadyExistsError)
+        if (ccr.result().errorCode() == Secrets::Result::CollectionAlreadyExistsError)
             return true;
 
         qWarning() << "Ghosteel: CreateCollection failed:"
@@ -148,14 +151,14 @@ bool ScrollEncryptor::ensureKey()
     genKey.startRequest();
     genKey.waitForFinished();
 
-    if (genKey.result().code() != Result::Succeeded) {
+    if (genKey.result().code() != Crypto::Result::Succeeded) {
         qWarning() << "Ghosteel: GenerateStoredKey failed:"
                     << genKey.result().errorCode()
                     << genKey.result().errorMessage();
         return false;
     }
 
-    m_keyReference = new Key(genKey.generatedKeyReference(), this);
+    m_keyReference = new Key(genKey.generatedKeyReference());
     return true;
 }
 
@@ -174,7 +177,7 @@ void ScrollEncryptor::replenishIVs()
         ivReq.startRequest();
         ivReq.waitForFinished();
 
-        if (ivReq.result().code() != Result::Succeeded) {
+        if (ivReq.result().code() != Crypto::Result::Succeeded) {
             qWarning() << "Ghosteel: IV generation failed:"
                         << ivReq.result().errorCode()
                         << ivReq.result().errorMessage();
@@ -217,7 +220,7 @@ QByteArray ScrollEncryptor::encrypt(const QByteArray &plaintext)
     enc.startRequest();
     enc.waitForFinished();
 
-    if (enc.result().code() != Result::Succeeded) {
+    if (enc.result().code() != Crypto::Result::Succeeded) {
         qWarning() << "Ghosteel: Encryption failed:"
                     << enc.result().errorCode()
                     << enc.result().errorMessage();
@@ -260,7 +263,7 @@ QByteArray ScrollEncryptor::decrypt(const QByteArray &ciphertextWithHeader)
     dec.startRequest();
     dec.waitForFinished();
 
-    if (dec.result().code() != Result::Succeeded) {
+    if (dec.result().code() != Crypto::Result::Succeeded) {
         qWarning() << "Ghosteel: Decryption failed:"
                     << dec.result().errorCode()
                     << dec.result().errorMessage();
