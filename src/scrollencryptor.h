@@ -40,6 +40,10 @@ public:
     // Check if data starts with our encrypted file magic header.
     static bool isEncryptedFormat(const QByteArray &data);
 
+    // PKCS7 padding — public for testing.
+    static QByteArray pkcs7Pad(const QByteArray &data);
+    static QByteArray pkcs7Unpad(const QByteArray &data);
+
     // Pre-generate IVs for batch encryption. Call during init to avoid
     // D-Bus round-trips during aboutToQuit. Replenishes if below threshold.
     void replenishIVs();

@@ -1,5 +1,44 @@
 #include "scrollencryptor.h"
 
+#include <cstring>
+
+// Magic header bytes: 'G' 'S' 'B' 0x01
+static const char MAGIC[4] = {'G', 'S', 'B', '\x01'};
+
+// PKCS7 padding — implemented manually to avoid plugin-specific behavior.
+// Some Sailfish Crypto plugins silently ignore EncryptionPaddingPkcs7.
+QByteArray ScrollEncryptor::pkcs7Pad(const QByteArray &data)
+{
+    int padLen = 16 - (data.size() % 16);
+    QByteArray padded = data;
+    padded.append(QByteArray(padLen, static_cast<char>(padLen)));
+    return padded;
+}
+
+QByteArray ScrollEncryptor::pkcs7Unpad(const QByteArray &data)
+{
+    if (data.isEmpty())
+        return data;
+    char last = data.at(data.size() - 1);
+    int padLen = static_cast<unsigned char>(last);
+    if (padLen < 1 || padLen > 16 || padLen > data.size())
+        return QByteArray(); // Invalid padding
+    // Verify all padding bytes are consistent
+    for (int i = data.size() - padLen; i < data.size(); i++) {
+        if (data.at(i) != last)
+            return QByteArray(); // Invalid padding
+    }
+    return data.left(data.size() - padLen);
+}
+
+// static
+bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
+{
+    if (data.size() < 4)
+        return false;
+    return std::memcmp(data.constData(), MAGIC, 4) == 0;
+}
+
 #ifdef SAILFISH_SECRETS
 
 #include <Sailfish/Secrets/secretmanager.h>
@@ -15,16 +54,12 @@
 #include <Sailfish/Crypto/result.h>
 
 #include <QDebug>
-#include <cstring>
 
 using namespace Sailfish::Secrets;
 using namespace Sailfish::Crypto;
 
 static const QString COLLECTION_NAME = QStringLiteral("ghosteel");
 static const QString KEY_NAME = QStringLiteral("ScrollbackKey");
-
-// Magic header bytes: 'G' 'S' 'B' 0x01
-static const char MAGIC[4] = {'G', 'S', 'B', '\x01'};
 
 ScrollEncryptor::ScrollEncryptor(QObject *parent)
     : QObject(parent)
@@ -159,32 +194,6 @@ QByteArray ScrollEncryptor::nextIV()
     return m_ivPool.takeFirst();
 }
 
-// PKCS7 padding — implemented manually to avoid plugin-specific behavior.
-// Some Sailfish Crypto plugins silently ignore EncryptionPaddingPkcs7.
-static QByteArray pkcs7Pad(const QByteArray &data)
-{
-    int padLen = 16 - (data.size() % 16);
-    QByteArray padded = data;
-    padded.append(QByteArray(padLen, static_cast<char>(padLen)));
-    return padded;
-}
-
-static QByteArray pkcs7Unpad(const QByteArray &data)
-{
-    if (data.isEmpty())
-        return data;
-    char last = data.at(data.size() - 1);
-    int padLen = static_cast<unsigned char>(last);
-    if (padLen < 1 || padLen > 16 || padLen > data.size())
-        return QByteArray(); // Invalid padding
-    // Verify all padding bytes are consistent
-    for (int i = data.size() - padLen; i < data.size(); i++) {
-        if (data.at(i) != last)
-            return QByteArray(); // Invalid padding
-    }
-    return data.left(data.size() - padLen);
-}
-
 QByteArray ScrollEncryptor::encrypt(const QByteArray &plaintext)
 {
     if (!m_available || !m_keyReference || plaintext.isEmpty())
@@ -261,25 +270,16 @@ QByteArray ScrollEncryptor::decrypt(const QByteArray &ciphertextWithHeader)
     return pkcs7Unpad(dec.plaintext());
 }
 
-// static
-bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
-{
-    if (data.size() < 4)
-        return false;
-    return std::memcmp(data.constData(), MAGIC, 4) == 0;
-}
-
 #else // !SAILFISH_SECRETS
 
 // Stub implementation for non-Sailfish builds (tests, CI).
-// Encryption is unavailable; callers fall back to plaintext.
+// Encryption is unavailable; callers should skip encryption entirely.
 
 ScrollEncryptor::ScrollEncryptor(QObject *parent) : QObject(parent) {}
 ScrollEncryptor::~ScrollEncryptor() = default;
 bool ScrollEncryptor::isAvailable() const { return false; }
 QByteArray ScrollEncryptor::encrypt(const QByteArray &) { return QByteArray(); }
 QByteArray ScrollEncryptor::decrypt(const QByteArray &) { return QByteArray(); }
-bool ScrollEncryptor::isEncryptedFormat(const QByteArray &) { return false; }
 void ScrollEncryptor::replenishIVs() {}
 
 #endif // SAILFISH_SECRETS

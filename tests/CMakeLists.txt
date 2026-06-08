@@ -114,3 +114,11 @@ target_include_directories(tst_scrollback_format PRIVATE SYSTEM
 )
 target_link_libraries(tst_scrollback_format PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME ScrollbackFormat COMMAND tst_scrollback_format)
+
+# --- ScrollEncryptor (padding + format detection) tests ---
+add_executable(tst_scrollencryptor
+    tst_scrollencryptor.cpp
+    ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
+)
+target_link_libraries(tst_scrollencryptor PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME ScrollEncryptor COMMAND tst_scrollencryptor)
