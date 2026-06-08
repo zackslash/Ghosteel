@@ -187,7 +187,7 @@ void ScrollEncryptor::replenishIVs()
 
 QByteArray ScrollEncryptor::nextIV()
 {
-    if (m_ivPool.isEmpty())
+    if (m_ivPool.size() < IV_POOL_THRESHOLD)
         replenishIVs();
     if (m_ivPool.isEmpty())
         return QByteArray();

@@ -31,7 +31,7 @@ public:
     bool isAvailable() const;
 
     // Encrypt plaintext. Returns binary blob with header, or empty on failure.
-    // Caller should fall back to writing plaintext if this returns empty.
+    // Caller should skip writing (no plaintext fallback).
     QByteArray encrypt(const QByteArray &plaintext);
 
     // Decrypt ciphertext (with header). Returns plaintext, or empty on failure.
