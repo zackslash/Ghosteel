@@ -16,9 +16,8 @@ CONFIG += sailfishapp
 QT += gui quick qml dbus
 
 # Sailfish Secrets + Crypto for scrollback encryption
-CONFIG += link_pkgconfig
-PKGCONFIG += sailfishsecrets sailfishcrypto
 DEFINES += SAILFISH_SECRETS
+LIBS += -lsailfishsecrets -lsailfishcrypto
 
 # Centralized app identity — change these to rename the app
 APP_NAME = $$TARGET
