@@ -116,19 +116,6 @@ GHOSTTY_API GhosttyResult ghostty_grid_ref_graphemes(
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API GhosttyResult ghostty_grid_ref_hyperlink_uri(
-    const GhosttyGridRef*, uint8_t*, size_t, size_t *out_len)
-{
-    if (out_len) *out_len = 0;
-    return GHOSTTY_SUCCESS;
-}
-
-GHOSTTY_API GhosttyResult ghostty_grid_ref_style(
-    const GhosttyGridRef*, GhosttyStyle*)
-{
-    return GHOSTTY_SUCCESS;
-}
-
 // ---- Render state ----
 
 GHOSTTY_API GhosttyResult ghostty_render_state_new(
@@ -404,45 +391,6 @@ GHOSTTY_API void ghostty_color_rgb_get(
 }
 
 // ---- Allocator ----
-
-GHOSTTY_API uint8_t* ghostty_alloc(const GhosttyAllocator*, size_t len)
-{
-    return (uint8_t*)malloc(len);
-}
-
-GHOSTTY_API void ghostty_free(const GhosttyAllocator*, uint8_t* ptr, size_t)
-{
-    free(ptr);
-}
-
-// ---- Formatter ----
-
-GHOSTTY_API GhosttyResult ghostty_formatter_terminal_new(
-    const GhosttyAllocator*, GhosttyFormatter* out, GhosttyTerminal, GhosttyFormatterTerminalOptions)
-{
-    if (out) *out = (GhosttyFormatter)1;
-    return GHOSTTY_SUCCESS;
-}
-
-GHOSTTY_API GhosttyResult ghostty_formatter_format_buf(
-    GhosttyFormatter, uint8_t*, size_t, size_t* out_written)
-{
-    if (out_written) *out_written = 0;
-    return GHOSTTY_SUCCESS;
-}
-
-GHOSTTY_API GhosttyResult ghostty_formatter_format_alloc(
-    GhosttyFormatter, const GhosttyAllocator*, uint8_t** out_ptr, size_t* out_len)
-{
-    // Return empty string (just a newline) for tests
-    if (out_ptr) {
-        *out_ptr = (uint8_t*)strdup("\n");
-    }
-    if (out_len) *out_len = 1;
-    return GHOSTTY_SUCCESS;
-}
-
-GHOSTTY_API void ghostty_formatter_free(GhosttyFormatter) {}
 
 // ---- Type JSON ----
 

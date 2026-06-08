@@ -21,6 +21,8 @@ Page {
                     bellModeCombo.currentIndex = 1
                     schemeCombo.currentIndex = 0
                     opacitySlider.value = 0.6
+                    scrollbackToggle.checked = false
+                    retentionCombo.currentIndex = 1  // 30 days
                 }
             }
         }

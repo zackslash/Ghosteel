@@ -1,7 +1,5 @@
 #include "ghosttyvt.h"
 #include <QDebug>
-#include <QStringList>
-#include <QByteArray>
 
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)

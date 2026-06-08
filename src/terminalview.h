@@ -53,10 +53,6 @@ public:
     Q_INVOKABLE void findPrevious();
     void cleanup();                   // Stop PTY/threads before destruction
 
-    GhosttyVt *vt() const { return m_vt; }
-    uint16_t cols() const { return m_cols; }
-    uint16_t rows() const { return m_rows; }
-
     // Scrollback persistence — wraps GhosttyVt export for SessionManager access
     QByteArray exportScrollback(uint16_t &outCols, uint16_t &outRows) const;
 

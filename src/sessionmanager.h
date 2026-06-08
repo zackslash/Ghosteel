@@ -7,7 +7,6 @@
 #include <QSettings>
 #include <QTimer>
 #include <QLocalServer>
-#include <QByteArray>
 
 class TerminalView;
 

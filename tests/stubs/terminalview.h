@@ -61,9 +61,6 @@ public:
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
     void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
-    void setSearchMatchCount(int c) { m_searchMatchCount = c; Q_EMIT searchMatchCountChanged(); }
-    void setCurrentMatchIndex(int i) { m_currentMatchIndex = i; Q_EMIT currentMatchIndexChanged(); }
-    void setSearchActive(bool a) { m_searchActive = a; Q_EMIT searchActiveChanged(); }
 
 Q_SIGNALS:
     void fontSizeChanged();
