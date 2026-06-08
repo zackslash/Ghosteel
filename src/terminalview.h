@@ -132,6 +132,7 @@ private:
     void performSearch();
     void scrollToMatch(int index);
     void drawSearchHighlights(QPainter *painter);
+    void buildCellMapping();
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -231,10 +232,11 @@ private:
     QByteArray m_pendingScrollback;
 
     // --- Scrollback search ---
-    struct SearchMatch { int row; int col; int length; };
+    struct SearchMatch { int row; int cellCol; int cellWidth; };
     bool m_searchActive = false;
     QString m_searchPattern;
     QStringList m_searchCache;       // Cached terminal text (one string per row)
+    QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
 };

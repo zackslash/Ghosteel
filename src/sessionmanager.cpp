@@ -14,6 +14,7 @@
 #include <QSaveFile>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QElapsedTimer>
 
 #include <unistd.h>
 
@@ -41,8 +42,16 @@ SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
     // unreadable.
     connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
             this, [this]() {
+        QElapsedTimer timer;
+        timer.start();
         saveSessions();
+        qint64 sessionMs = timer.elapsed();
         saveScrollback();
+        qint64 totalMs = timer.elapsed();
+        if (totalMs > 1000)
+            qWarning() << "Ghosteel: Quit save took" << totalMs << "ms"
+                        << "(sessions:" << sessionMs << "ms, scrollback:"
+                        << (totalMs - sessionMs) << "ms)";
         m_savedOnQuit = true;
     });
 }
@@ -490,8 +499,11 @@ void SessionManager::saveScrollback()
         QByteArray output;
         if (m_encryptor && m_encryptor->isAvailable())
             output = m_encryptor->encrypt(data);
-        if (output.isEmpty())
+        if (output.isEmpty()) {
+            qWarning() << "Ghosteel: Scrollback encryption failed for session"
+                       << info.id << ", skipping";
             continue; // Don't write plaintext to disk
+        }
 
         // Atomic write via QSaveFile — commit() is a POSIX rename(),
         // which is atomic on the same filesystem. No window where both

@@ -408,7 +408,8 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     // Use grid_ref API to read all cells (same approach as extractSearchText).
     // The formatter API crashes due to Zig null-unwrap on empty page lists.
     QByteArray result;
-    result.reserve(static_cast<int>(totalRows * outCols));
+    // Reserve ~4 bytes per cell to avoid reallocations for UTF-8 content (CJK, emoji)
+    result.reserve(static_cast<int>(totalRows * outCols * 4));
     uint32_t graphemeBuf[128];
 
     // Accumulate into a logical line buffer. Soft-wrapped continuation rows

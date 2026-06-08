@@ -17,6 +17,7 @@
 #include <QDateTime>
 #include <QLineF>
 #include <cstring>
+#include <algorithm>
 #include <sys/ioctl.h>
 
 static const int TopPadding = 12; // px, visual comfort padding at top of terminal
@@ -1757,8 +1758,8 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
         if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
     }
 
-    // Handle Ctrl+F = toggle scrollback search
-    if ((mods & GHOSTTY_MODS_CTRL) && !(mods & GHOSTTY_MODS_SHIFT)) {
+    // Handle Ctrl+Shift+F = toggle scrollback search
+    if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
         if (key == GHOSTTY_KEY_F) {
             if (m_searchActive)
                 closeSearch();
@@ -1853,8 +1854,10 @@ void TerminalView::openSearch()
     m_searchActive = true;
 
     // Extract text from terminal (scrollback + active area)
-    if (m_vt)
+    if (m_vt) {
         m_searchCache = m_vt->extractSearchText();
+        buildCellMapping();
+    }
 
     // Clear any existing selection to avoid visual confusion
     clearSelection();
@@ -1870,6 +1873,7 @@ void TerminalView::closeSearch()
     m_searchActive = false;
     m_searchPattern.clear();
     m_searchCache.clear();
+    m_cellMapping.clear();
     m_searchMatches.clear();
     m_currentMatchIndex = -1;
     m_needsRender = true;
@@ -1879,6 +1883,58 @@ void TerminalView::closeSearch()
     Q_EMIT currentMatchIndexChanged();
 }
 
+void TerminalView::buildCellMapping()
+{
+    // Build cell-to-character index mapping for CJK/emoji support.
+    // Wide characters (CJK, some emoji) occupy 2 terminal cells but
+    // produce 1 character in the QString. Without this mapping, search
+    // highlight positions would be wrong for non-ASCII text.
+    m_cellMapping.clear();
+    m_cellMapping.reserve(m_searchCache.size());
+    size_t totalRows = 0;
+    uint16_t cols = 0;
+    if (m_vt && m_vt->terminal()) {
+        ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
+        ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_COLS, &cols);
+    }
+    for (int row = 0; row < m_searchCache.size(); row++) {
+        QVector<int> mapping;
+        if (row < static_cast<int>(totalRows) && cols > 0) {
+            mapping.resize(cols, 0);
+            int charIdx = 0;
+            const QString &line = m_searchCache[row];
+            for (int cell = 0; cell < static_cast<int>(cols); cell++) {
+                mapping[cell] = charIdx;
+                // Check if this is a wide-char spacer (occupies 0 text chars)
+                if (m_vt && m_vt->terminal()) {
+                    GhosttyPoint point = {};
+                    point.tag = GHOSTTY_POINT_TAG_SCREEN;
+                    point.value.coordinate.x = static_cast<uint16_t>(cell);
+                    point.value.coordinate.y = static_cast<uint32_t>(row);
+                    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+                    if (ghostty_terminal_grid_ref(m_vt->terminal(), point, &ref) == GHOSTTY_SUCCESS) {
+                        GhosttyCell c = 0;
+                        if (ghostty_grid_ref_cell(&ref, &c) == GHOSTTY_SUCCESS && c != 0) {
+                            GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+                            if (ghostty_cell_get(c, GHOSTTY_CELL_DATA_WIDE, &wide) == GHOSTTY_SUCCESS) {
+                                if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
+                                        || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
+                                    continue; // spacer — don't advance charIdx
+                                }
+                            }
+                        }
+                    }
+                }
+                // Non-spacer cell — advance character index (if any chars remain)
+                if (charIdx < line.size())
+                    charIdx++;
+            }
+        }
+        m_cellMapping.append(mapping);
+    }
+}
+
+
 void TerminalView::setSearchPattern(const QString &pattern)
 {
     if (pattern == m_searchPattern)
@@ -1887,8 +1943,10 @@ void TerminalView::setSearchPattern(const QString &pattern)
     m_searchPattern = pattern;
 
     // Re-extract if cache is empty or terminal received new data since last extract
-    if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty()))
+    if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty())) {
         m_searchCache = m_vt->extractSearchText();
+        buildCellMapping();
+    }
 
     performSearch();
 
@@ -1920,7 +1978,34 @@ void TerminalView::performSearch()
             int idx = line.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
             if (idx < 0)
                 break;
-            m_searchMatches.append({row, idx, m_searchPattern.size()});
+
+            // Map character index to cell column using the cell mapping.
+            // For pure ASCII, cellCol == idx. For CJK/emoji, the mapping
+            // accounts for wide characters occupying 2 cells.
+            int cellCol = idx;
+            int cellWidth = m_searchPattern.size();
+            if (row < m_cellMapping.size() && !m_cellMapping[row].isEmpty()) {
+                const QVector<int> &mapping = m_cellMapping[row];
+                // Find cell column for the start of the match
+                for (int cell = 0; cell < mapping.size(); cell++) {
+                    if (mapping[cell] == idx) {
+                        cellCol = cell;
+                        break;
+                    }
+                }
+                // Find cell width: count cells from cellCol that span the match characters
+                int matchEnd = idx + m_searchPattern.size();
+                cellWidth = 0;
+                for (int cell = cellCol; cell < mapping.size(); cell++) {
+                    if (mapping[cell] >= matchEnd)
+                        break;
+                    cellWidth++;
+                }
+                if (cellWidth == 0)
+                    cellWidth = 1; // safety
+            }
+
+            m_searchMatches.append({row, cellCol, cellWidth});
             if (m_searchMatches.size() >= MaxSearchMatches)
                 goto searchDone;
             col = idx + 1;
@@ -2014,17 +2099,24 @@ void TerminalView::drawSearchHighlights(QPainter *painter)
 
     painter->setPen(Qt::NoPen);
 
-    for (int i = 0; i < m_searchMatches.size(); i++) {
-        const auto &match = m_searchMatches[i];
+    // Binary search: find first match at or after viewTop.
+    // Matches are sorted by row (search iterates row-major), so we can skip
+    // all matches before the viewport in O(log n) instead of O(n).
+    SearchMatch lowerBound = {viewTop, 0, 0};
+    SearchMatch upperBound = {viewTop + viewLen, 0, 0};
+    auto begin = std::lower_bound(m_searchMatches.begin(), m_searchMatches.end(), lowerBound,
+        [](const SearchMatch &a, const SearchMatch &b) { return a.row < b.row; });
+    auto end = std::upper_bound(begin, m_searchMatches.end(), upperBound,
+        [](const SearchMatch &b, const SearchMatch &a) { return b.row < a.row; });
 
-        // Skip matches outside the current viewport
-        if (match.row < viewTop || match.row >= viewTop + viewLen)
-            continue;
+    for (auto it = begin; it != end; ++it) {
+        int i = static_cast<int>(std::distance(m_searchMatches.begin(), it));
+        const auto &match = *it;
 
         int vpRow = match.row - viewTop;
-        int x = match.col * m_cellWidth;
+        int x = match.cellCol * m_cellWidth;
         int y = vpRow * m_cellHeight + TopPadding;
-        int w = match.length * m_cellWidth;
+        int w = match.cellWidth * m_cellWidth;
         int h = m_cellHeight;
 
         // Clamp to terminal width

@@ -2,6 +2,11 @@
 #include <QByteArray>
 #include "ghosttyvt.h"
 
+// NOTE: These tests verify that restoreScrollback() does not crash on various
+// inputs (empty, malformed, UTF-8, resize re-wrap). The Ghostty stubs don't
+// process VT writes, so we cannot assert on the resulting terminal state.
+// The tests provide regression protection against segfaults and parse errors.
+
 class TestScrollbackFormat : public QObject
 {
     Q_OBJECT

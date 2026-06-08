@@ -78,7 +78,6 @@ ScrollEncryptor::ScrollEncryptor(QObject *parent)
 
 ScrollEncryptor::~ScrollEncryptor()
 {
-    delete m_keyReference;
 }
 
 bool ScrollEncryptor::isAvailable() const
@@ -161,7 +160,7 @@ bool ScrollEncryptor::ensureKey()
         // Build a reference from the identifier to use it.
         if (genKey.result().errorCode() == Sailfish::Crypto::Result::StorageError
                 && genKey.result().errorMessage().contains(QStringLiteral("already exists"))) {
-            m_keyReference = new Key(KEY_NAME, COLLECTION_NAME,
+            m_keyReference = std::make_unique<Key>(KEY_NAME, COLLECTION_NAME,
                     CryptoManager::DefaultCryptoStoragePluginName);
             return true;
         }
@@ -171,7 +170,7 @@ bool ScrollEncryptor::ensureKey()
         return false;
     }
 
-    m_keyReference = new Key(genKey.generatedKeyReference());
+    m_keyReference = std::make_unique<Key>(genKey.generatedKeyReference());
     return true;
 }
 
@@ -180,11 +179,17 @@ void ScrollEncryptor::replenishIVs()
     // Generate random IVs locally using /dev/urandom (via std::random_device).
     // Avoids D-Bus round-trips and sidesteps GenerateInitializationVectorRequest
     // not being supported on some crypto plugin configurations.
+    // Extract 4 bytes per rd() call (32-bit output) instead of wasting 24 bits.
     std::random_device rd;
     while (m_ivPool.size() < IV_POOL_TARGET) {
         QByteArray iv(16, '\0');
-        for (int i = 0; i < 16; i++)
-            iv[i] = static_cast<char>(rd() & 0xFF);
+        for (int i = 0; i < 16; i += 4) {
+            uint32_t val = rd();
+            iv[i]     = static_cast<char>((val)       & 0xFF);
+            iv[i + 1] = static_cast<char>((val >> 8)  & 0xFF);
+            iv[i + 2] = static_cast<char>((val >> 16) & 0xFF);
+            iv[i + 3] = static_cast<char>((val >> 24) & 0xFF);
+        }
         m_ivPool.append(iv);
     }
 }

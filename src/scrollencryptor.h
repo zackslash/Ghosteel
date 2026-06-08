@@ -57,7 +57,7 @@ private:
 #ifdef SAILFISH_SECRETS
     std::unique_ptr<Sailfish::Secrets::SecretManager> m_secretManager;
     std::unique_ptr<Sailfish::Crypto::CryptoManager> m_cryptoManager;
-    Sailfish::Crypto::Key *m_keyReference = nullptr;
+    std::unique_ptr<Sailfish::Crypto::Key> m_keyReference;
 #endif
 
     bool m_available = false;
