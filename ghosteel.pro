@@ -17,6 +17,7 @@ QT += gui quick qml dbus
 
 # Sailfish Secrets + Crypto for scrollback encryption
 DEFINES += SAILFISH_SECRETS
+INCLUDEPATH += /usr/include/Sailfish
 LIBS += -lsailfishsecrets -lsailfishcrypto
 
 # Centralized app identity — change these to rename the app
