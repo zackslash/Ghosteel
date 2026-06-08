@@ -15,6 +15,11 @@ CONFIG += sailfishapp
 
 QT += gui quick qml dbus
 
+# Sailfish Secrets + Crypto for scrollback encryption
+CONFIG += link_pkgconfig
+PKGCONFIG += sailfishsecrets sailfishcrypto
+DEFINES += SAILFISH_SECRETS
+
 # Centralized app identity — change these to rename the app
 APP_NAME = $$TARGET
 APP_ORG = com.zackslash
@@ -53,6 +58,7 @@ HEADERS += \
     src/ghosttyvt.h \
     src/keymapping.h \
     src/ptymanager.h \
+    src/scrollencryptor.h \
     src/sessionmanager.h \
     src/settings.h \
     src/terminalview.h \
@@ -64,6 +70,7 @@ SOURCES += \
     src/ghosttyvt.cpp \
     src/keymapping.cpp \
     src/ptymanager.cpp \
+    src/scrollencryptor.cpp \
     src/sessionmanager.cpp \
     src/settings.cpp \
     src/terminalview.cpp \

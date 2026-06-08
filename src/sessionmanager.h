@@ -9,6 +9,7 @@
 #include <QLocalServer>
 
 class TerminalView;
+class ScrollEncryptor;
 
 struct SessionInfo {
     int id;
@@ -120,6 +121,9 @@ private:
 
     // Single-instance socket server
     QLocalServer *m_localServer = nullptr;
+
+    // Scrollback encryption (Sailfish Secrets + Crypto)
+    ScrollEncryptor *m_encryptor = nullptr;
 };
 
 #endif // SESSIONMANAGER_H

@@ -2,6 +2,7 @@
 #include "terminalview.h"
 #include "ptymanager.h"
 #include "settings.h"
+#include "scrollencryptor.h"
 
 #include <QStandardPaths>
 #include <QCoreApplication>
@@ -24,6 +25,9 @@ SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
     : QObject(parent)
     , m_settings(settingsPath, QSettings::IniFormat)
 {
+    // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
+    m_encryptor = new ScrollEncryptor(this);
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
@@ -479,14 +483,27 @@ void SessionManager::saveScrollback()
         if (data.isEmpty())
             continue;
 
+        // Encrypt if secrets daemon is available, fall back to plaintext
+        QByteArray output;
+        if (m_encryptor && m_encryptor->isAvailable())
+            output = m_encryptor->encrypt(data);
+        if (output.isEmpty())
+            output = data; // Plaintext fallback
+
+        // Atomic write: write to .tmp, then rename (prevents truncated files on crash)
         QString path = scrollbackFilePath(info.id);
-        QFile file(path);
+        QString tmpPath = path + QStringLiteral(".tmp");
+        QFile file(tmpPath);
         if (file.open(QIODevice::WriteOnly)) {
-            if (file.write(data) == -1) {
+            if (file.write(output) != -1) {
+                file.close();
+                QFile::remove(path);
+                QFile::rename(tmpPath, path);
+            } else {
                 qWarning() << "Failed to write scrollback:" << file.errorString();
+                file.close();
                 file.remove();
             }
-            file.close();
         }
     }
 }
@@ -563,8 +580,19 @@ bool SessionManager::restoreSessions()
                     qWarning() << "Scrollback file too large, skipping:" << sbPath;
                 } else {
                     QByteArray sbData = sbFile.readAll();
-                    if (!sbData.isEmpty())
-                        view->setPendingScrollback(sbData);
+                    if (!sbData.isEmpty()) {
+                        // Detect encrypted format by magic header, decrypt if possible
+                        QByteArray restored;
+                        if (ScrollEncryptor::isEncryptedFormat(sbData)
+                                && m_encryptor && m_encryptor->isAvailable()) {
+                            restored = m_encryptor->decrypt(sbData);
+                        }
+                        // Use decrypted data, or fall back to plaintext
+                        if (restored.isEmpty())
+                            restored = sbData;
+                        if (!restored.isEmpty())
+                            view->setPendingScrollback(restored);
+                    }
                 }
                 sbFile.close();
             }
