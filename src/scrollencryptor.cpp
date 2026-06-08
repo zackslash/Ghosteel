@@ -158,6 +158,14 @@ bool ScrollEncryptor::ensureKey()
     genKey.waitForFinished();
 
     if (genKey.result().code() != Sailfish::Crypto::Result::Succeeded) {
+        // KeyAlreadyExists — the key was created on a previous launch.
+        // Build a reference from the identifier to use it.
+        if (genKey.result().errorCode() == Sailfish::Crypto::Result::StorageError
+                && genKey.result().errorMessage().contains(QStringLiteral("already exists"))) {
+            m_keyReference = new Key(KEY_NAME, COLLECTION_NAME,
+                    CryptoManager::DefaultCryptoStoragePluginName);
+            return true;
+        }
         qWarning() << "Ghosteel: GenerateStoredKey failed:"
                     << genKey.result().errorCode()
                     << genKey.result().errorMessage();
