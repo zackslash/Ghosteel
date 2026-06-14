@@ -345,14 +345,8 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("New session")
-                onClicked: {
-                    SessionManager.createSession()
-                }
-            }
-            MenuItem {
-                text: qsTr("Sessions")
-                onClicked: pageStack.push(Qt.resolvedUrl("SessionPage.qml"))
+                text: qsTr("Settings")
+                onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
             }
             MenuItem {
                 text: qsTr("Share selection")
@@ -373,8 +367,14 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr("Settings")
-                onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
+                text: qsTr("New session")
+                onClicked: {
+                    SessionManager.createSession()
+                }
+            }
+            MenuItem {
+                text: qsTr("Sessions")
+                onClicked: pageStack.push(Qt.resolvedUrl("SessionPage.qml"))
             }
         }
 
