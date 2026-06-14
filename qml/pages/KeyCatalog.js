@@ -48,7 +48,7 @@ var keys = [
     { id: "f12", label: "F12", description: "F12", category: "function", action: "key", qtKey: 0x0100003b }   // Qt.Key_F12
 ]
 
-var defaults = ["left", "down", "up", "right", "tab", "ctrl", "alt", "keyboard"]
+var defaults = ["left", "down", "up", "right", "tab", "ctrl", "alt", "keyboard", "esc"]
 
 function findById(id) {
     for (var i = 0; i < keys.length; i++) {

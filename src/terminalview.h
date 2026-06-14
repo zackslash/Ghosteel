@@ -22,6 +22,15 @@ class TerminalView : public QQuickPaintedItem
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
     Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
+    Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
+    Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
+    Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
+    Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
+    Q_PROPERTY(QColor searchHighlightColor READ searchHighlightColor WRITE setSearchHighlightColor NOTIFY searchHighlightColorChanged)
+    Q_PROPERTY(QColor searchCurrentColor READ searchCurrentColor WRITE setSearchCurrentColor NOTIFY searchCurrentColorChanged)
+    Q_PROPERTY(QColor shellExitOverlayColor READ shellExitOverlayColor WRITE setShellExitOverlayColor NOTIFY shellExitOverlayColorChanged)
+    Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
+    Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
 public:
     explicit TerminalView(QQuickItem *parent = nullptr);
     ~TerminalView();
@@ -35,6 +44,25 @@ public:
     int searchMatchCount() const { return m_searchMatches.size(); }
     int currentMatchIndex() const { return m_currentMatchIndex; }
     bool searchActive() const { return m_searchActive; }
+    int topPadding() const { return m_topPadding; }
+    void setTopPadding(int padding);
+
+    QColor selectionHighlightColor() const { return m_selectionHighlightColor; }
+    void setSelectionHighlightColor(const QColor &color);
+    QColor selectionHandleColor() const { return m_selectionHandleColor; }
+    void setSelectionHandleColor(const QColor &color);
+    QColor selectionHandleBorderColor() const { return m_selectionHandleBorderColor; }
+    void setSelectionHandleBorderColor(const QColor &color);
+    QColor searchHighlightColor() const { return m_searchHighlightColor; }
+    void setSearchHighlightColor(const QColor &color);
+    QColor searchCurrentColor() const { return m_searchCurrentColor; }
+    void setSearchCurrentColor(const QColor &color);
+    QColor shellExitOverlayColor() const { return m_shellExitOverlayColor; }
+    void setShellExitOverlayColor(const QColor &color);
+    QColor shellExitTextColor() const { return m_shellExitTextColor; }
+    void setShellExitTextColor(const QColor &color);
+    QColor magnifierBorderColor() const { return m_magnifierBorderColor; }
+    void setMagnifierBorderColor(const QColor &color);
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
@@ -66,7 +94,17 @@ Q_SIGNALS:
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
     void searchActiveChanged();
+    void selectionHighlightColorChanged();
+    void selectionHandleColorChanged();
+    void selectionHandleBorderColorChanged();
+    void searchHighlightColorChanged();
+    void searchCurrentColorChanged();
+    void shellExitOverlayColorChanged();
+    void shellExitTextColorChanged();
+    void magnifierBorderColorChanged();
     void navigateSession(int direction);
+    void toggleKeybar();
+    void topPaddingChanged();
 
 protected:
     void paint(QPainter *painter) override;
@@ -241,6 +279,17 @@ private:
     QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
+
+    // --- Theme-bindable UI colors ---
+    QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);
+    QColor m_selectionHandleColor = QColor(255, 255, 255, 200);
+    QColor m_selectionHandleBorderColor = QColor(255, 255, 255, 120);
+    QColor m_searchHighlightColor = QColor(255, 200, 0, 100);
+    QColor m_searchCurrentColor = QColor(255, 100, 0, 140);
+    QColor m_shellExitOverlayColor = QColor(0, 0, 0, 180);
+    QColor m_shellExitTextColor = Qt::white;
+    QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
+    int m_topPadding = 12; // default matches original static const
 };
 
 #endif // TERMINALVIEW_H

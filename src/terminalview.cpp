@@ -20,8 +20,6 @@
 #include <algorithm>
 #include <sys/ioctl.h>
 
-static const int TopPadding = 12; // px, visual comfort padding at top of terminal
-
 TerminalView::TerminalView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
@@ -108,8 +106,8 @@ void TerminalView::recalculateDimensions()
         return;
 
     // Calculate terminal dimensions from available size
-    // TopPadding for visual comfort
-    auto dim = TextUtil::calculateDimensions(width(), height(), m_cellWidth, m_cellHeight, TopPadding);
+    // m_topPadding for visual comfort
+    auto dim = TextUtil::calculateDimensions(width(), height(), m_cellWidth, m_cellHeight, m_topPadding);
     uint16_t newCols = dim.cols;
     uint16_t newRows = dim.rows;
 
@@ -136,7 +134,7 @@ void TerminalView::recalculateDimensions()
                     static_cast<uint32_t>(height()),
                     static_cast<uint32_t>(m_cellWidth),
                     static_cast<uint32_t>(m_cellHeight),
-                    static_cast<uint32_t>(TopPadding));
+                    static_cast<uint32_t>(m_topPadding));
             }
         } else {
             setupTerminal();
@@ -263,7 +261,7 @@ QVariant TerminalView::inputMethodQuery(Qt::InputMethodQuery query) const
         ghostty_render_state_get(state,
                                  GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &cy);
 
-        return QRectF(cx * m_cellWidth, cy * m_cellHeight + TopPadding,
+        return QRectF(cx * m_cellWidth, cy * m_cellHeight + m_topPadding,
                       m_cellWidth, m_cellHeight);
     }
     default:
@@ -333,7 +331,7 @@ void TerminalView::setupTerminal()
         static_cast<uint32_t>(height()),
         static_cast<uint32_t>(m_cellWidth),
         static_cast<uint32_t>(m_cellHeight),
-        static_cast<uint32_t>(TopPadding));
+        static_cast<uint32_t>(m_topPadding));
 
     // Start shell (use configured command if set)
     m_pty->setShellCommand(Settings::instance()->shellCommand());
@@ -591,7 +589,7 @@ void TerminalView::drawCursor(QPainter *painter, GhosttyRenderState state,
                              &cursorStyle);
 
     int px = cx * m_cellWidth;
-    int py = cy * m_cellHeight + TopPadding;
+    int py = cy * m_cellHeight + m_topPadding;
 
     QColor cursorColor = QColor(colors.cursor.r, colors.cursor.g, colors.cursor.b);
     if (!colors.cursor_has_value)
@@ -655,7 +653,7 @@ void TerminalView::renderCellGrid(QPainter *painter, GhosttyRenderState state,
         }
     }
 
-    int y = TopPadding;
+    int y = m_topPadding;
     int rowIdx = 0;
     while (ghostty_render_state_row_iterator_next(iterator)) {
         ghostty_render_state_row_get(iterator,
@@ -769,11 +767,15 @@ void TerminalView::drawShellExitOverlay()
 
     QPainter overlayPainter(&m_image);
     overlayPainter.setPen(Qt::NoPen);
-    overlayPainter.setBrush(QColor(0, 0, 0, 180));
+    overlayPainter.setBrush(m_shellExitOverlayColor);
     overlayPainter.drawRect(m_image.rect());
 
-    overlayPainter.setPen(Qt::white);
-    QFont overlayFont(QStringLiteral("DejaVu Sans Mono"), 14);
+    overlayPainter.setPen(m_shellExitTextColor);
+    QString family = Settings::instance()->fontFamily();
+    if (family.isEmpty())
+        family = QStringLiteral("DejaVu Sans Mono");
+    QFont overlayFont(family, m_fontSize + 4);
+    overlayFont.setStyleHint(QFont::Monospace);
     overlayPainter.setFont(overlayFont);
     QString msg = tr("Shell exited with code %1\n\nTap to restart").arg(m_shellExitCode);
     overlayPainter.drawText(QRectF(0, 0, width(), height()),
@@ -838,7 +840,7 @@ void TerminalView::renderMagnifier(QPainter *painter)
 
     // Draw border (SailfishOS highlight color style)
     painter->setClipping(false);
-    QPen borderPen(QColor(255, 255, 255, 120), 2.0);
+    QPen borderPen(m_magnifierBorderColor, 2.0);
     painter->setPen(borderPen);
     painter->setBrush(Qt::NoBrush);
     painter->drawRoundedRect(destRect.adjusted(1, 1, -1, -1), 8, 8);
@@ -850,7 +852,7 @@ void TerminalView::renderMagnifier(QPainter *painter)
           << QPointF(arrowCenter.x(), arrowCenter.y() + 8)
           << QPointF(arrowCenter.x() + 6, arrowCenter.y());
     painter->setPen(Qt::NoPen);
-    painter->setBrush(QColor(255, 255, 255, 120));
+    painter->setBrush(m_magnifierBorderColor);
     painter->drawPolygon(arrow);
 
     painter->restore();
@@ -1011,6 +1013,94 @@ void TerminalView::setStickyModifiers(int mods)
     Q_EMIT stickyModifiersChanged();
 }
 
+void TerminalView::setSelectionHighlightColor(const QColor &color)
+{
+    if (m_selectionHighlightColor == color)
+        return;
+    m_selectionHighlightColor = color;
+    Q_EMIT selectionHighlightColorChanged();
+    update();
+}
+
+void TerminalView::setSelectionHandleColor(const QColor &color)
+{
+    if (m_selectionHandleColor == color)
+        return;
+    m_selectionHandleColor = color;
+    Q_EMIT selectionHandleColorChanged();
+    update();
+}
+
+void TerminalView::setSelectionHandleBorderColor(const QColor &color)
+{
+    if (m_selectionHandleBorderColor == color)
+        return;
+    m_selectionHandleBorderColor = color;
+    Q_EMIT selectionHandleBorderColorChanged();
+    update();
+}
+
+void TerminalView::setSearchHighlightColor(const QColor &color)
+{
+    if (m_searchHighlightColor == color)
+        return;
+    m_searchHighlightColor = color;
+    Q_EMIT searchHighlightColorChanged();
+    update();
+}
+
+void TerminalView::setSearchCurrentColor(const QColor &color)
+{
+    if (m_searchCurrentColor == color)
+        return;
+    m_searchCurrentColor = color;
+    Q_EMIT searchCurrentColorChanged();
+    update();
+}
+
+void TerminalView::setShellExitOverlayColor(const QColor &color)
+{
+    if (m_shellExitOverlayColor == color)
+        return;
+    m_shellExitOverlayColor = color;
+    Q_EMIT shellExitOverlayColorChanged();
+    m_needsRender = true;  // drawn into cached image by drawShellExitOverlay()
+    update();
+}
+
+void TerminalView::setShellExitTextColor(const QColor &color)
+{
+    if (m_shellExitTextColor == color)
+        return;
+    m_shellExitTextColor = color;
+    Q_EMIT shellExitTextColorChanged();
+    m_needsRender = true;  // drawn into cached image by drawShellExitOverlay()
+    update();
+}
+
+void TerminalView::setMagnifierBorderColor(const QColor &color)
+{
+    if (m_magnifierBorderColor == color)
+        return;
+    m_magnifierBorderColor = color;
+    Q_EMIT magnifierBorderColorChanged();
+    update();
+}
+
+void TerminalView::setTopPadding(int padding)
+{
+    if (m_topPadding == padding)
+        return;
+    m_topPadding = padding;
+    Q_EMIT topPaddingChanged();
+    // Invalidate cached grid image — it was drawn at the old Y offset
+    m_needsRender = true;
+    update();
+    // Recalculate dimensions since padding affects available terminal rows
+    if (width() > 0 && height() > 0)
+        recalculateDimensions();
+}
+
 void TerminalView::updateFontMetrics()
 {
     QString family = Settings::instance()->fontFamily();
@@ -1050,7 +1140,7 @@ void TerminalView::sendKey(int qtKey, int modifiers)
 
 QPointF TerminalView::cellFromPixel(const QPointF &pos) const
 {
-    return TextUtil::cellFromPixel(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, TopPadding);
+    return TextUtil::cellFromPixel(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, m_topPadding);
 }
 
 void TerminalView::clearSelection()
@@ -1175,8 +1265,8 @@ void TerminalView::selectWordAt(const QPointF &pos)
     ghostty_render_state_row_iterator_free(iterator);
 
     // Convert cell boundaries to pixel coordinates
-    m_selStart = QPointF(startCol * m_cellWidth, row * m_cellHeight + TopPadding);
-    m_selEnd = QPointF((endCol + 1) * m_cellWidth - 1, row * m_cellHeight + TopPadding);
+    m_selStart = QPointF(startCol * m_cellWidth, row * m_cellHeight + m_topPadding);
+    m_selEnd = QPointF((endCol + 1) * m_cellWidth - 1, row * m_cellHeight + m_topPadding);
     m_selecting = true;
     m_magnifierVisible = false; // No magnifier for double-tap — instant selection
     m_handlesVisible = true;    // Show drag handles for precise adjustment
@@ -1195,8 +1285,8 @@ void TerminalView::selectLineAt(const QPointF &pos)
     int row = static_cast<int>(cell.y());
 
     // Select entire row from column 0 to last column
-    m_selStart = QPointF(0, row * m_cellHeight + TopPadding);
-    m_selEnd = QPointF(m_cols * m_cellWidth - 1, row * m_cellHeight + TopPadding);
+    m_selStart = QPointF(0, row * m_cellHeight + m_topPadding);
+    m_selEnd = QPointF(m_cols * m_cellWidth - 1, row * m_cellHeight + m_topPadding);
     m_selecting = true;
     m_magnifierVisible = false; // No magnifier for triple-tap — instant selection
     m_handlesVisible = true;    // Show drag handles for precise adjustment
@@ -1222,12 +1312,12 @@ void TerminalView::drawSelectionHighlight(QPainter *painter, qreal offsetX, qrea
         qSwap(sr, er);
     }
 
-    QColor highlightColor(255, 255, 255, 76);
+    const QColor &highlightColor = m_selectionHighlightColor;
     painter->setPen(Qt::NoPen);
     for (int row = sr; row <= er; row++) {
         int cellStartX = (row == sr) ? sc * m_cellWidth : 0;
         int cellEndX = (row == er) ? (ec + 1) * m_cellWidth : m_cols * m_cellWidth;
-        int cellY = row * m_cellHeight + TopPadding;
+        int cellY = row * m_cellHeight + m_topPadding;
         qreal rx = offsetX + cellStartX * scale;
         qreal ry = offsetY + cellY * scale;
         qreal rw = (cellEndX - cellStartX) * scale;
@@ -1250,14 +1340,14 @@ void TerminalView::drawSelectionHandles(QPainter *painter)
 
     // No normalization — handle positions match m_selStart/m_selEnd directly
     // so handle 1 always corresponds to m_selStart and handle 2 to m_selEnd
-    QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + TopPadding);
-    QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + TopPadding);
+    QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + m_topPadding);
+    QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + m_topPadding);
 
     painter->setPen(Qt::NoPen);
 
     // Draw handles as filled circles with highlight color
-    QColor handleColor(255, 255, 255, 200);
-    QColor borderColor(255, 255, 255, 120);
+    const QColor &handleColor = m_selectionHandleColor;
+    const QColor &borderColor = m_selectionHandleBorderColor;
 
     for (const QPointF &pos : {startPos, endPos}) {
         QRectF circle(pos.x() - HandleRadius, pos.y() - HandleRadius,
@@ -1290,8 +1380,8 @@ int TerminalView::handleHitTest(const QPointF &pos) const
 
     // No normalization swap — handle 1 always maps to m_selStart,
     // handle 2 always maps to m_selEnd, regardless of selection direction
-    QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + TopPadding);
-    QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + TopPadding);
+    QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + m_topPadding);
+    QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + m_topPadding);
 
     // Use a generous hit area (HandleRadius + some padding for finger imprecision)
     qreal hitRadius = HandleRadius * 1.5;
@@ -1756,6 +1846,7 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
         }
         if (key == GHOSTTY_KEY_ARROW_LEFT)  { Q_EMIT navigateSession(-1); event->accept(); return; }
         if (key == GHOSTTY_KEY_ARROW_RIGHT) { Q_EMIT navigateSession(1);  event->accept(); return; }
+        if (key == GHOSTTY_KEY_K) { Q_EMIT toggleKeybar(); event->accept(); return; }
     }
 
     // Auto-repeat maps to REPEAT action (enables Kitty protocol repeat)
@@ -2056,8 +2147,8 @@ void TerminalView::drawSearchHighlights(QPainter *painter)
         return;
 
     // Amber/yellow for all matches, brighter orange for current match
-    QColor highlightColor(255, 200, 0, 100);
-    QColor currentColor(255, 100, 0, 140);
+    const QColor &highlightColor = m_searchHighlightColor;
+    const QColor &currentColor = m_searchCurrentColor;
 
     painter->setPen(Qt::NoPen);
 
@@ -2077,7 +2168,7 @@ void TerminalView::drawSearchHighlights(QPainter *painter)
 
         int vpRow = match.row - viewTop;
         int x = match.cellCol * m_cellWidth;
-        int y = vpRow * m_cellHeight + TopPadding;
+        int y = vpRow * m_cellHeight + m_topPadding;
         int w = match.cellWidth * m_cellWidth;
         int h = m_cellHeight;
 

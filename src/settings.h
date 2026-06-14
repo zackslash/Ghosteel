@@ -22,6 +22,7 @@ class Settings : public QObject
     Q_PROPERTY(bool scrollbackPersistence READ scrollbackPersistence WRITE setScrollbackPersistence NOTIFY scrollbackPersistenceChanged)
     Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
     Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
+    Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
 
 public:
     static Settings *instance();
@@ -56,6 +57,9 @@ public:
     QStringList keybarKeys() const { return m_keybarKeys; }
     void setKeybarKeys(const QStringList &keys);
 
+    bool keybarVisible() const { return m_keybarVisible; }
+    void setKeybarVisible(bool visible);
+
 Q_SIGNALS:
     void fontSizeChanged();
     void fontFamilyChanged();
@@ -66,6 +70,7 @@ Q_SIGNALS:
     void scrollbackPersistenceChanged();
     void scrollbackRetentionDaysChanged();
     void keybarKeysChanged();
+    void keybarVisibleChanged();
 
 private:
     explicit Settings(QObject *parent = nullptr);
@@ -84,6 +89,7 @@ private:
     bool m_scrollbackPersistence = false; // default: off (opt-in)
     int m_scrollbackRetentionDays = 30;
     QStringList m_keybarKeys;
+    bool m_keybarVisible = true;
 };
 
 #endif // SETTINGS_H

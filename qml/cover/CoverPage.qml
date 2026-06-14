@@ -43,7 +43,7 @@ CoverBackground {
         }
         font.pixelSize: Theme.fontSizeTiny
         font.family: "DejaVu Sans Mono"
-        color: Theme.primaryColor
+        color: Theme.highlightColor
         verticalAlignment: Text.AlignBottom
         wrapMode: Text.Wrap
         maximumLineCount: 8
