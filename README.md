@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icons/full.png" alt="Ghosteel" width="128">
+</p>
+
 # Ghosteel
 
 Terminal emulator for SailfishOS powered by [Ghostty](https://github.com/ghostty-org/ghostty)'s libghostty-vt engine. Truecolor, multi-session, TUI apps.
