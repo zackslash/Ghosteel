@@ -40,8 +40,9 @@ void Settings::load()
     m_scrollbackRetentionDays = qBound(7, m_settings.value(QStringLiteral("scrollback/retentionDays"), 30).toInt(), 365);
     QStringList defaultKeys = {QStringLiteral("left"), QStringLiteral("down"), QStringLiteral("up"),
                                QStringLiteral("right"), QStringLiteral("tab"), QStringLiteral("ctrl"),
-                               QStringLiteral("alt"), QStringLiteral("keyboard")};
+                               QStringLiteral("alt"), QStringLiteral("keyboard"), QStringLiteral("esc")};
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
+    m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
 }
 
 void Settings::save()
@@ -148,4 +149,14 @@ void Settings::setKeybarKeys(const QStringList &keys)
     m_settings.setValue(QStringLiteral("keybar/keys"), QVariant::fromValue(keys));
     scheduleSave();
     Q_EMIT keybarKeysChanged();
+}
+
+void Settings::setKeybarVisible(bool visible)
+{
+    if (m_keybarVisible == visible)
+        return;
+    m_keybarVisible = visible;
+    m_settings.setValue(QStringLiteral("keybar/visible"), visible);
+    scheduleSave();
+    Q_EMIT keybarVisibleChanged();
 }

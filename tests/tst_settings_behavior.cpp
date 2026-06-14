@@ -246,7 +246,8 @@ private slots:
         QCOMPARE(s.bellMode(), 1);
         QCOMPARE(s.scrollbackPersistence(), false);
         QCOMPARE(s.scrollbackRetentionDays(), 30);
-        QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","keyboard"}));
+        QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","keyboard","esc"}));
+        QCOMPARE(s.keybarVisible(), true);
     }
 
     // --- Scrollback persistence ---
@@ -325,7 +326,8 @@ private slots:
         QStringList expected = {QStringLiteral("left"), QStringLiteral("down"),
                                 QStringLiteral("up"), QStringLiteral("right"),
                                 QStringLiteral("tab"), QStringLiteral("ctrl"),
-                                QStringLiteral("alt"), QStringLiteral("keyboard")};
+                                QStringLiteral("alt"), QStringLiteral("keyboard"),
+                                QStringLiteral("esc")};
         QCOMPARE(s.keybarKeys(), expected);
     }
 
@@ -353,12 +355,13 @@ private slots:
     {
         QTemporaryDir dir;
         Settings s(dir.path() + "/test.conf");
-        // Default is {"left","down","up","right","tab","ctrl","alt","keyboard"}
+        // Default is {"left","down","up","right","tab","ctrl","alt","keyboard","esc"}
         QSignalSpy spy(&s, &Settings::keybarKeysChanged);
         s.setKeybarKeys({QStringLiteral("left"), QStringLiteral("down"),
                          QStringLiteral("up"), QStringLiteral("right"),
                          QStringLiteral("tab"), QStringLiteral("ctrl"),
-                         QStringLiteral("alt"), QStringLiteral("keyboard")});
+                         QStringLiteral("alt"), QStringLiteral("keyboard"),
+                         QStringLiteral("esc")});
         QCOMPARE(spy.count(), 0);
     }
 
@@ -391,6 +394,48 @@ private slots:
         QTest::qWait(DEBOUNCE_WAIT_MS);
         Settings s2(dir.path() + "/test.conf");
         QCOMPARE(s2.keybarKeys(), QStringList());
+    }
+
+    // --- Keybar visible ---
+
+    void testKeybarVisibleNoOpSignalSuppression()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::keybarVisibleChanged);
+        s.setKeybarVisible(true); // same as default
+        QCOMPARE(spy.count(), 0);
+
+        s.setKeybarVisible(false);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.keybarVisible(), false);
+
+        s.setKeybarVisible(false); // no-op
+        QCOMPARE(spy.count(), 1);
+    }
+
+    void testKeybarVisibleSignalOnChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::keybarVisibleChanged);
+        s.setKeybarVisible(false);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.keybarVisible(), false);
+    }
+
+    void testKeybarVisiblePersistence()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            Settings s(path);
+            s.setKeybarVisible(false);
+        }
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        Settings s2(path);
+        QCOMPARE(s2.keybarVisible(), false);
     }
 };
 

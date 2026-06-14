@@ -96,6 +96,20 @@ Page {
             terminal.stickyModifiers = activeModifiers
     }
 
+    // Apply Sailfish Theme colors to terminal UI overlays
+    function applyTerminalTheme(t) {
+        if (!t) return
+        t.selectionHighlightColor = Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
+        t.selectionHandleColor = Theme.rgba(Theme.highlightColor, 0.8)
+        t.selectionHandleBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
+        t.searchHighlightColor = Theme.rgba(Theme.highlightColor, 0.3)
+        t.searchCurrentColor = Theme.rgba(Theme.primaryColor, 0.5)
+        t.shellExitOverlayColor = Qt.rgba(0, 0, 0, 0.7)
+        t.shellExitTextColor = Theme.highlightColor
+        t.magnifierBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
+        t.topPadding = Theme.paddingSmall
+    }
+
     function attachTerminal(t) {
         if (!t) return
         // Parent into container once — never reparent, just toggle visibility
@@ -106,6 +120,7 @@ Page {
         t.visible = true
         t.opacity = 1
         t.fontSize = appWindow.terminalFontSize
+        applyTerminalTheme(t)
         t.forceActiveFocus()
 
         // Connect signals if not already connected
@@ -117,6 +132,8 @@ Page {
         t.terminalBell.connect(onTerminalBell)
         t.navigateSession.disconnect(onNavigateSession)
         t.navigateSession.connect(onNavigateSession)
+        t.toggleKeybar.disconnect(onToggleKeybar)
+        t.toggleKeybar.connect(onToggleKeybar)
         terminal = t
         updateWindowTitle()
     }
@@ -127,6 +144,7 @@ Page {
         t.stickyModifiersChanged.disconnect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
         t.navigateSession.disconnect(onNavigateSession)
+        t.toggleKeybar.disconnect(onToggleKeybar)
         t.visible = false
     }
 
@@ -151,11 +169,27 @@ Page {
             // Ensure keyboard hidden if persisted state says so
             if (!SessionManager.sessionKeyboardVisible(idx))
                 Qt.inputMethod.hide()
-            // Restore keybar state
-            keybar.open = SessionManager.sessionKeybarOpen(idx)
+            // Restore keybar state (global setting takes precedence)
+            keybar.open = Settings.keybarVisible && SessionManager.sessionKeybarOpen(idx)
             // Show session indicator on launch so the user knows which session they're in
             var name = SessionManager.sessionName(idx)
             sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+        }
+    }
+
+    // Listen for global keybar setting changes (e.g. from SettingsPage)
+    Connections {
+        target: Settings
+        onKeybarVisibleChanged: {
+            if (!Settings.keybarVisible) {
+                keybar.open = false
+            } else {
+                // Restore per-session state when re-enabled
+                var state = sessionUIState[currentSessionId]
+                keybar.open = state
+                    ? state.kbbar
+                    : SessionManager.sessionKeybarOpen(currentSessionIndex)
+            }
         }
     }
 
@@ -202,12 +236,12 @@ Page {
             currentSessionIndex = index
             currentSessionId = SessionManager.sessionId(index)
 
-            // Restore incoming session's keybar state
+            // Restore incoming session's keybar state (global setting takes precedence)
             var state = sessionUIState[incomingSid]
             if (state) {
-                keybar.open = state.kbbar
+                keybar.open = Settings.keybarVisible && state.kbbar
             } else {
-                keybar.open = SessionManager.sessionKeybarOpen(index)
+                keybar.open = Settings.keybarVisible && SessionManager.sessionKeybarOpen(index)
             }
             // Ensure keyboard hidden if needed — suppress prevents focus-triggered show,
             // but we also need explicit hide for the case where keyboard was already visible
@@ -290,6 +324,18 @@ Page {
         switchSession(direction)
     }
 
+    function onToggleKeybar() {
+        if (!Settings.keybarVisible) return
+        keybar.open = !keybar.open
+        SessionManager.setSessionKeybarOpen(currentSessionIndex, keybar.open)
+        var state = sessionUIState[currentSessionId] || {
+            kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
+            kbbar: keybar.open
+        }
+        state.kbbar = keybar.open
+        sessionUIState[currentSessionId] = state
+    }
+
     SilicaFlickable {
         anchors.top: parent.top
         anchors.left: parent.left
@@ -324,20 +370,6 @@ Page {
                         searchPanel.open = true
                         searchField.forceActiveFocus()
                     }
-                }
-            }
-            MenuItem {
-                text: keybar.open ? qsTr("Hide extra keys") : qsTr("Show extra keys")
-                onClicked: {
-                    keybar.open = !keybar.open
-                    SessionManager.setSessionKeybarOpen(currentSessionIndex, keybar.open)
-                    // Update runtime map (keyed by session ID)
-                    var state = sessionUIState[currentSessionId] || {
-                        kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
-                        kbbar: keybar.open
-                    }
-                    state.kbbar = keybar.open
-                    sessionUIState[currentSessionId] = state
                 }
             }
             MenuItem {
@@ -488,7 +520,7 @@ Page {
         dock: Dock.Bottom
         width: parent.width
         height: Theme.itemSizeMedium + Theme.paddingSmall
-        open: true
+        open: false  // set by Component.onCompleted with per-session state
 
         SilicaFlickable {
             anchors.fill: parent
@@ -509,8 +541,8 @@ Page {
                         id: keyDelegate
                         property var keyDef: page.keyLookup[modelData]
 
-                        width: Theme.itemSizeSmall
-                        height: Theme.itemSizeSmall
+                        width: Theme.itemSizeMedium
+                        height: Theme.itemSizeMedium
 
                         highlighted: {
                             if (!keyDef) return false

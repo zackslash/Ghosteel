@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QColor>
 
 // Lightweight stub replacing QQuickPaintedItem-based TerminalView for unit tests.
 // Provides the same interface that SessionManager depends on, without requiring
@@ -18,6 +19,15 @@ class TerminalView : public QObject
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
     Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
+    Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
+    Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
+    Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
+    Q_PROPERTY(QColor searchHighlightColor READ searchHighlightColor WRITE setSearchHighlightColor NOTIFY searchHighlightColorChanged)
+    Q_PROPERTY(QColor searchCurrentColor READ searchCurrentColor WRITE setSearchCurrentColor NOTIFY searchCurrentColorChanged)
+    Q_PROPERTY(QColor shellExitOverlayColor READ shellExitOverlayColor WRITE setShellExitOverlayColor NOTIFY shellExitOverlayColorChanged)
+    Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
+    Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
+    Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
 
 public:
     explicit TerminalView(QObject *parent = nullptr) : QObject(parent) {}
@@ -36,6 +46,43 @@ public:
     int searchMatchCount() const { return 0; }
     int currentMatchIndex() const { return m_currentMatchIndex; }
     bool searchActive() const { return m_searchActive; }
+
+    QColor selectionHighlightColor() const { return m_selectionHighlightColor; }
+    void setSelectionHighlightColor(const QColor &color) {
+        if (m_selectionHighlightColor != color) { m_selectionHighlightColor = color; Q_EMIT selectionHighlightColorChanged(); }
+    }
+    QColor selectionHandleColor() const { return m_selectionHandleColor; }
+    void setSelectionHandleColor(const QColor &color) {
+        if (m_selectionHandleColor != color) { m_selectionHandleColor = color; Q_EMIT selectionHandleColorChanged(); }
+    }
+    QColor selectionHandleBorderColor() const { return m_selectionHandleBorderColor; }
+    void setSelectionHandleBorderColor(const QColor &color) {
+        if (m_selectionHandleBorderColor != color) { m_selectionHandleBorderColor = color; Q_EMIT selectionHandleBorderColorChanged(); }
+    }
+    QColor searchHighlightColor() const { return m_searchHighlightColor; }
+    void setSearchHighlightColor(const QColor &color) {
+        if (m_searchHighlightColor != color) { m_searchHighlightColor = color; Q_EMIT searchHighlightColorChanged(); }
+    }
+    QColor searchCurrentColor() const { return m_searchCurrentColor; }
+    void setSearchCurrentColor(const QColor &color) {
+        if (m_searchCurrentColor != color) { m_searchCurrentColor = color; Q_EMIT searchCurrentColorChanged(); }
+    }
+    QColor shellExitOverlayColor() const { return m_shellExitOverlayColor; }
+    void setShellExitOverlayColor(const QColor &color) {
+        if (m_shellExitOverlayColor != color) { m_shellExitOverlayColor = color; Q_EMIT shellExitOverlayColorChanged(); }
+    }
+    QColor shellExitTextColor() const { return m_shellExitTextColor; }
+    void setShellExitTextColor(const QColor &color) {
+        if (m_shellExitTextColor != color) { m_shellExitTextColor = color; Q_EMIT shellExitTextColorChanged(); }
+    }
+    QColor magnifierBorderColor() const { return m_magnifierBorderColor; }
+    void setMagnifierBorderColor(const QColor &color) {
+        if (m_magnifierBorderColor != color) { m_magnifierBorderColor = color; Q_EMIT magnifierBorderColorChanged(); }
+    }
+    int topPadding() const { return m_topPadding; }
+    void setTopPadding(int padding) {
+        if (m_topPadding != padding) { m_topPadding = padding; Q_EMIT topPaddingChanged(); }
+    }
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
@@ -72,7 +119,17 @@ Q_SIGNALS:
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
     void searchActiveChanged();
+    void selectionHighlightColorChanged();
+    void selectionHandleColorChanged();
+    void selectionHandleBorderColorChanged();
+    void searchHighlightColorChanged();
+    void searchCurrentColorChanged();
+    void shellExitOverlayColorChanged();
+    void shellExitTextColorChanged();
+    void magnifierBorderColorChanged();
     void navigateSession(int direction);
+    void toggleKeybar();
+    void topPaddingChanged();
 
 private:
     int m_fontSize = 10;
@@ -84,6 +141,16 @@ private:
 
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;
+
+    QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);
+    QColor m_selectionHandleColor = QColor(255, 255, 255, 200);
+    QColor m_selectionHandleBorderColor = QColor(255, 255, 255, 120);
+    QColor m_searchHighlightColor = QColor(255, 200, 0, 100);
+    QColor m_searchCurrentColor = QColor(255, 100, 0, 140);
+    QColor m_shellExitOverlayColor = QColor(0, 0, 0, 180);
+    QColor m_shellExitTextColor = Qt::white;
+    QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
+    int m_topPadding = 12;
 };
 
 #endif // TERMINALVIEW_H

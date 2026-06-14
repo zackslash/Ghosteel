@@ -25,6 +25,7 @@ Page {
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
+                    Settings.keybarVisible = true
                 }
             }
         }
@@ -106,7 +107,14 @@ Page {
                 maximumValue: 32
                 stepSize: 1
                 value: Settings.fontSize
-                valueText: qsTr("%1 px").arg(value)
+                valueText: {
+                    if (value < 10) return qsTr("Tiny (%1)").arg(value)
+                    if (value < 14) return qsTr("Small (%1)").arg(value)
+                    if (value < 18) return qsTr("Medium (%1)").arg(value)
+                    if (value < 24) return qsTr("Large (%1)").arg(value)
+                    if (value < 30) return qsTr("Extra Large (%1)").arg(value)
+                    return qsTr("Huge (%1)").arg(value)
+                }
 
                 onValueChanged: Settings.fontSize = value
             }
@@ -127,6 +135,14 @@ Page {
             // Extra keys section
             SectionHeader {
                 text: qsTr("Extra keys")
+            }
+
+            TextSwitch {
+                width: parent.width
+                text: qsTr("Show extra keys")
+                description: qsTr("Display the extra keys bar above the keyboard") + "\n" + qsTr("Shortcut: Ctrl+Shift+K")
+                checked: Settings.keybarVisible
+                onCheckedChanged: Settings.keybarVisible = checked
             }
 
             BackgroundItem {

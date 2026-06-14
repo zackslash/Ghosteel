@@ -68,7 +68,12 @@ Page {
 
     SilicaListView {
         id: sessionList
-        anchors.fill: parent
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            bottom: newSessionButton.top
+        }
 
         model: SessionManager.sessionCount
 
