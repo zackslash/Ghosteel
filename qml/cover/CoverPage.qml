@@ -7,6 +7,8 @@ CoverBackground {
     // stale displayToActual() bindings to re-evaluate.
     property int _sortRevision: 0
 
+    readonly property int _visibleCount: Math.min(5, SessionManager.sessionCount)
+
     Label {
         id: titleLabel
         anchors {
@@ -26,6 +28,9 @@ CoverBackground {
         onSortOrderChanged: _sortRevision++
         onActiveSessionIndexChanged: _sortRevision++
         onSessionNameChanged: _sortRevision++
+        // Rebuilds after remove/restore don't emit sortOrderChanged —
+        // catch them via the post-rebuild signal.
+        onSessionsChanged: _sortRevision++
     }
 
     Column {
@@ -41,9 +46,19 @@ CoverBackground {
         }
         spacing: Theme.paddingSmall
 
+        // Session count header
+        Label {
+            width: parent.width
+            text: SessionManager.sessionCount === 1
+                  ? qsTr("1 session")
+                  : qsTr("%1 sessions").arg(SessionManager.sessionCount)
+            color: Theme.secondaryHighlightColor
+            font.pixelSize: Theme.fontSizeExtraSmall
+        }
+
         Repeater {
             id: sessionRepeater
-            model: Math.min(3, SessionManager.sessionCount)
+            model: _visibleCount
 
             Row {
                 property int actualIndex: {
@@ -73,6 +88,16 @@ CoverBackground {
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
+        }
+
+        // Overflow indicator when more than 5 sessions exist
+        Label {
+            width: parent.width
+            visible: SessionManager.sessionCount > _visibleCount
+            text: "..."
+            color: Theme.secondaryColor
+            font.pixelSize: Theme.fontSizeSmall
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 

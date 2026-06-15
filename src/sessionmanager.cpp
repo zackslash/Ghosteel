@@ -87,15 +87,16 @@ void SessionManager::setActiveSessionIndex(int index)
     if (m_activeSessionIndex == index)
         return;
 
-    m_activeSessionIndex = index;
-    Q_EMIT activeSessionIndexChanged();
-
-    // Update last-used timestamp for the switched-to session
+    // Update last-used timestamp and rebuild sort order BEFORE emitting
+    // signals, so QML bindings that call displayToActual() see the
+    // correct mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
         rebuildSortedIndices();
     }
 
+    m_activeSessionIndex = index;
+    Q_EMIT activeSessionIndexChanged();
     Q_EMIT sessionSwitched(index);
 
     scheduleSave();
@@ -149,6 +150,10 @@ TerminalView* SessionManager::createSession()
         Q_EMIT desktopNotification(sessionId, summary, body);
     });
 
+    // Rebuild sorted indices BEFORE emitting signals so that QML bindings
+    // (Repeater delegates calling displayToActual()) see valid mappings.
+    rebuildSortedIndices();
+
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
@@ -166,29 +171,33 @@ void SessionManager::removeSession(int index)
 
     SessionInfo info = m_sessions.takeAt(index);
     bool wasActive = (index == m_activeSessionIndex);
+    bool wasBeforeActive = (index < m_activeSessionIndex);
 
-    // Adjust active session index BEFORE emitting signals, so that
-    // sessionSwitched handlers see a valid active index.
+    // Adjust active session index silently first, then rebuild sort order.
+    // Signals are deferred so that QML bindings calling displayToActual()
+    // see the correct mapping when they re-evaluate.
     if (m_sessions.isEmpty()) {
         m_activeSessionIndex = -1;
-        Q_EMIT activeSessionIndexChanged();
-    } else if (index < m_activeSessionIndex) {
+    } else if (wasBeforeActive) {
         // Removed session was before active — shift index down
         m_activeSessionIndex--;
-        Q_EMIT activeSessionIndexChanged();
     } else if (wasActive) {
         // Removed the active session — clamp to valid range
         if (m_activeSessionIndex >= m_sessions.size())
             m_activeSessionIndex = m_sessions.size() - 1;
-        Q_EMIT activeSessionIndexChanged();
-        // Notify FirstPage to switch to the new active terminal.
-        // This must happen BEFORE deleting the old view, because the
-        // sessionSwitched handler disconnects signals from the old
-        // terminal — accessing a deleted object would be UB.
-        Q_EMIT sessionSwitched(m_activeSessionIndex);
     }
 
     rebuildSortedIndices();
+
+    // Emit signals after sorted indices are ready.
+    // activeSessionIndexChanged must precede sessionSwitched.
+    // sessionSwitched must precede sessionRemoved so that the view
+    // is still alive when handlers react to the switch.
+    if (wasActive || wasBeforeActive || m_sessions.isEmpty())
+        Q_EMIT activeSessionIndexChanged();
+
+    if (wasActive)
+        Q_EMIT sessionSwitched(m_activeSessionIndex);
 
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionsChanged();
@@ -242,9 +251,12 @@ void SessionManager::setSessionName(int index, const QString &name)
         return;
 
     m_sessions[index].name = name;
+
+    // Alphabetical sort depends on name — rebuild before emitting so that
+    // QML bindings see the correct displayToActual() mapping.
+    rebuildSortedIndices();
     Q_EMIT sessionNameChanged(index);
 
-    rebuildSortedIndices(); // Alphabetical sort depends on name
     scheduleSave();
 }
 

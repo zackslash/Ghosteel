@@ -10,6 +10,7 @@
 
 // SessionManager under test
 #include "sessionmanager.h"
+#include "settings.h"
 
 class TestSessionPersistence : public QObject
 {
@@ -1146,8 +1147,12 @@ private slots:
 
     void testSortModeDefault()
     {
-        SessionManager mgr(m_settingsPath);
-        QCOMPARE(mgr.sortMode(), 1); // SortLastUsed is the default
+        // SessionManager::sortMode() delegates to Settings::instance()
+        // (production singleton).  Test the default via Settings directly
+        // using a fresh temp path, since that's where the default is defined.
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/sort_test.conf");
+        QCOMPARE(s.sessionSortMode(), 1); // SortLastUsed is the default
     }
 
     void testDisplayToActualManualMode()
@@ -1304,6 +1309,52 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 2);
         QCOMPARE(mgr.sessionName(mgr.displayToActual(0)), QStringLiteral("B"));
         QCOMPARE(mgr.sessionName(mgr.displayToActual(1)), QStringLiteral("C"));
+    }
+
+    void testSortedIndicesValidDuringSignalHandlers()
+    {
+        // Regression: when signals fire, displayToActual() must return
+        // valid mappings because rebuildSortedIndices() now runs BEFORE
+        // signal emissions.  Verify by reading displayToActual() inside
+        // a signal handler.
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // actual 0
+        mgr.createSession(); // actual 1
+        mgr.createSession(); // actual 2
+
+        mgr.setSessionName(0, "Zebra");
+        mgr.setSessionName(1, "Alpha");
+        mgr.setSessionName(2, "Middle");
+
+        mgr.setSortMode(3); // SortAlphabetical — Alpha(1), Middle(2), Zebra(0)
+
+        // Capture displayToActual(0) from inside a sessionsChanged handler
+        int display0ActualFromSignal = -1;
+        int display0ActualFromSignalOnRemove = -1;
+
+        connect(&mgr, &SessionManager::sessionsChanged, [&]() {
+            // At this point, rebuildSortedIndices() must have already run
+            display0ActualFromSignal = mgr.displayToActual(0);
+        });
+
+        // Switch active session — triggers rebuild + activeSessionIndexChanged
+        // (sessionsChanged is not emitted by setActiveSessionIndex, so test
+        // with setSortMode which does emit it)
+        mgr.setSortMode(0); // SortManual — insertion order
+        QCOMPARE(display0ActualFromSignal, mgr.displayToActual(0));
+
+        // Now test removeSession — emits sessionsChanged after rebuild
+        display0ActualFromSignal = -1;
+        mgr.setSortMode(3); // Back to alphabetical
+        int firstActual = mgr.displayToActual(0); // "Alpha"
+        mgr.removeSession(firstActual);
+
+        // During the sessionsChanged signal, displayToActual(0) should
+        // have returned a valid (non-negative) index
+        QVERIFY(display0ActualFromSignal >= 0);
+        QCOMPARE(display0ActualFromSignal, mgr.displayToActual(0));
     }
 };
 
