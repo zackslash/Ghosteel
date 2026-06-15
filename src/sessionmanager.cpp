@@ -15,6 +15,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QElapsedTimer>
+#include <QtAlgorithms>
 
 #include <unistd.h>
 
@@ -90,6 +91,12 @@ void SessionManager::setActiveSessionIndex(int index)
     Q_EMIT activeSessionIndexChanged();
     Q_EMIT sessionSwitched(index);
 
+    // Update last-used timestamp for the switched-to session
+    if (index >= 0 && index < m_sessions.size()) {
+        m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
+        rebuildSortedIndices();
+    }
+
     scheduleSave();
 }
 
@@ -128,10 +135,13 @@ TerminalView* SessionManager::createSession()
     info.autorunCommand = QString();
     info.keybarOpen = true;
     info.keyboardVisible = true;
+    info.createdAt = QDateTime::currentMSecsSinceEpoch();
+    info.lastUsedAt = info.createdAt;
     info.view = view;
 
     int index = m_sessions.size();
     m_sessions.append(info);
+    rebuildSortedIndices();
 
     // Route this view's notifications through the aggregated signal
     connect(view, &TerminalView::desktopNotification, this,
@@ -194,15 +204,18 @@ void SessionManager::removeSession(int index)
     // toggle — if the session is gone, the file has no reason to exist)
     QFile::remove(scrollbackFilePath(info.id));
 
+    rebuildSortedIndices();
     scheduleSave();
 }
 
 // QML convenience wrapper — setActiveSessionIndex is a Q_PROPERTY setter,
 // not Q_INVOKABLE, so QML cannot call it by name.  C++ code should call
 // setActiveSessionIndex() directly.
-void SessionManager::switchToSession(int index)
+void SessionManager::switchToSession(int displayIndex)
 {
-    setActiveSessionIndex(index);
+    int actual = displayToActual(displayIndex);
+    if (actual >= 0)
+        setActiveSessionIndex(actual);
 }
 
 TerminalView* SessionManager::activeSession() const
@@ -230,6 +243,7 @@ void SessionManager::setSessionName(int index, const QString &name)
     m_sessions[index].name = name;
     Q_EMIT sessionNameChanged(index);
 
+    rebuildSortedIndices(); // Alphabetical sort depends on name
     scheduleSave();
 }
 
@@ -312,6 +326,85 @@ void SessionManager::setSessionKeyboardVisible(int index, bool visible)
     m_sessions[index].keyboardVisible = visible;
     Q_EMIT sessionKeyboardVisibleChanged(index);
     scheduleSave();
+}
+
+int SessionManager::displayToActual(int displayIndex) const
+{
+    if (m_sortedIndices.isEmpty()) {
+        // No sorting active — display index == actual index
+        if (displayIndex < 0 || displayIndex >= m_sessions.size())
+            return -1;
+        return displayIndex;
+    }
+    if (displayIndex < 0 || displayIndex >= m_sortedIndices.size())
+        return -1;
+    return m_sortedIndices.at(displayIndex);
+}
+
+int SessionManager::actualToDisplay(int actualIndex) const
+{
+    if (m_sortedIndices.isEmpty()) {
+        if (actualIndex < 0 || actualIndex >= m_sessions.size())
+            return -1;
+        return actualIndex;
+    }
+    for (int i = 0; i < m_sortedIndices.size(); i++) {
+        if (m_sortedIndices[i] == actualIndex)
+            return i;
+    }
+    return -1;
+}
+
+int SessionManager::sortMode() const
+{
+    return Settings::instance()->sessionSortMode();
+}
+
+void SessionManager::setSortMode(int mode)
+{
+    Settings::instance()->setSessionSortMode(mode);
+    rebuildSortedIndices();
+    Q_EMIT sessionsChanged();
+}
+
+void SessionManager::rebuildSortedIndices()
+{
+    if (m_sessions.isEmpty()) {
+        m_sortedIndices.clear();
+        return;
+    }
+
+    int mode = Settings::instance()->sessionSortMode();
+
+    // Manual mode: keep insertion order
+    if (mode == Settings::SortManual) {
+        m_sortedIndices.resize(m_sessions.size());
+        for (int i = 0; i < m_sessions.size(); i++)
+            m_sortedIndices[i] = i;
+        return;
+    }
+
+    // Build index list and sort
+    m_sortedIndices.resize(m_sessions.size());
+    for (int i = 0; i < m_sessions.size(); i++)
+        m_sortedIndices[i] = i;
+
+    if (mode == Settings::SortLastUsed) {
+        std::sort(m_sortedIndices.begin(), m_sortedIndices.end(),
+                  [this](int a, int b) {
+            return m_sessions[a].lastUsedAt > m_sessions[b].lastUsedAt; // most recent first
+        });
+    } else if (mode == Settings::SortCreated) {
+        std::sort(m_sortedIndices.begin(), m_sortedIndices.end(),
+                  [this](int a, int b) {
+            return m_sessions[a].createdAt > m_sessions[b].createdAt; // newest first
+        });
+    } else if (mode == Settings::SortAlphabetical) {
+        std::sort(m_sortedIndices.begin(), m_sortedIndices.end(),
+                  [this](int a, int b) {
+            return m_sessions[a].name.toLower() < m_sessions[b].name.toLower();
+        });
+    }
 }
 
 void SessionManager::removeSessionById(int id)
@@ -455,6 +548,8 @@ void SessionManager::saveSessions()
         m_settings.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
         m_settings.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
         m_settings.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
+        m_settings.setValue(QStringLiteral("createdAt"), info.createdAt);
+        m_settings.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
         m_settings.endGroup();
     }
 
@@ -579,6 +674,8 @@ bool SessionManager::restoreSessions()
         QString autorun = m_settings.value(QStringLiteral("autorunCommand"), QString()).toString();
         bool keybarOpen = m_settings.value(QStringLiteral("keybarOpen"), true).toBool();
         bool keyboardVisible = m_settings.value(QStringLiteral("keyboardVisible"), true).toBool();
+        qint64 createdAt = m_settings.value(QStringLiteral("createdAt"), 0).toLongLong();
+        qint64 lastUsedAt = m_settings.value(QStringLiteral("lastUsedAt"), 0).toLongLong();
         m_settings.endGroup();
 
         // Validate working directory exists, fallback to home
@@ -623,6 +720,8 @@ bool SessionManager::restoreSessions()
         info.autorunCommand = autorun;
         info.keybarOpen = keybarOpen;
         info.keyboardVisible = keyboardVisible;
+        info.createdAt = createdAt;
+        info.lastUsedAt = lastUsedAt;
         info.view = view;
 
         m_sessions.append(info);
@@ -648,6 +747,7 @@ bool SessionManager::restoreSessions()
         setActiveSessionIndex(0);
 
     m_sessionsLoaded = true;
+    rebuildSortedIndices();
     Q_EMIT sessionsRestored();
     return true;
 }

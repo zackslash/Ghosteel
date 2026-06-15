@@ -79,15 +79,38 @@ Page {
 
         header: PageHeader {
             title: qsTr("Sessions")
+            description: {
+                var mode = SessionManager.sortMode()
+                if (mode === 1) return qsTr("Sorted by last used")
+                if (mode === 2) return qsTr("Sorted by created")
+                if (mode === 3) return qsTr("Sorted by name")
+                return ""
+            }
+        }
+
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("Sort by last used")
+                onClicked: SessionManager.setSortMode(1)
+            }
+            MenuItem {
+                text: qsTr("Sort by name")
+                onClicked: SessionManager.setSortMode(3)
+            }
+            MenuItem {
+                text: qsTr("Sort by created")
+                onClicked: SessionManager.setSortMode(2)
+            }
         }
 
         delegate: ListItem {
             id: sessionDelegate
             contentHeight: delegateContent.height + Theme.paddingSmall * 2
-            highlighted: index === SessionManager.activeSessionIndex
+            highlighted: actualIndex === SessionManager.activeSessionIndex
 
-            property string sessionName: SessionManager.sessionName(index)
-            property string autorunCommand: SessionManager.sessionAutorunCommand(index)
+            property int actualIndex: SessionManager.displayToActual(index)
+            property string sessionName: SessionManager.sessionName(actualIndex)
+            property string autorunCommand: SessionManager.sessionAutorunCommand(actualIndex)
 
             onClicked: {
                 pageStack.pop()
@@ -97,12 +120,12 @@ Page {
             Connections {
                 target: SessionManager
                 onSessionNameChanged: {
-                    if (idx === index)
-                        sessionDelegate.sessionName = SessionManager.sessionName(index)
+                    if (idx === actualIndex)
+                        sessionDelegate.sessionName = SessionManager.sessionName(actualIndex)
                 }
                 onSessionAutorunCommandChanged: {
-                    if (idx === index)
-                        sessionDelegate.autorunCommand = SessionManager.sessionAutorunCommand(index)
+                    if (idx === actualIndex)
+                        sessionDelegate.autorunCommand = SessionManager.sessionAutorunCommand(actualIndex)
                 }
             }
 
@@ -146,7 +169,7 @@ Page {
                 // Working directory subtitle
                 Label {
                     visible: text.length > 0
-                    text: SessionManager.sessionWorkingDirectory(index)
+                    text: SessionManager.sessionWorkingDirectory(actualIndex)
                     color: sessionDelegate.highlighted
                            ? Theme.secondaryHighlightColor
                            : Theme.secondaryColor
@@ -176,7 +199,7 @@ Page {
                     text: qsTr("Rename")
                     onClicked: {
                         var dialog = renameDialogComponent.createObject(sessionPage, {
-                            sessionIndex: index,
+                            sessionIndex: actualIndex,
                             currentName: sessionDelegate.sessionName
                         })
                         pageStack.push(dialog)
@@ -186,8 +209,8 @@ Page {
                     text: qsTr("Autorun command")
                     onClicked: {
                         var dialog = autorunDialogComponent.createObject(sessionPage, {
-                            sessionIndex: index,
-                            currentCommand: SessionManager.sessionAutorunCommand(index)
+                            sessionIndex: actualIndex,
+                            currentCommand: SessionManager.sessionAutorunCommand(actualIndex)
                         })
                         pageStack.push(dialog)
                     }
@@ -196,7 +219,7 @@ Page {
                     text: qsTr("Remove")
                     enabled: SessionManager.sessionCount > 1
                     onClicked: {
-                        var id = SessionManager.sessionId(index)
+                        var id = SessionManager.sessionId(actualIndex)
                         sessionDelegate.remorseAction(
                             qsTr("Removing session"),
                             function() { SessionManager.removeSessionById(id) }

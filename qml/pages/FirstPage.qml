@@ -151,8 +151,9 @@ Page {
     function switchSession(direction) {
         var count = SessionManager.sessionCount
         if (count <= 1) return
-        var idx = SessionManager.activeSessionIndex + direction
-        SessionManager.switchToSession(((idx % count) + count) % count)
+        var displayIdx = SessionManager.actualToDisplay(SessionManager.activeSessionIndex)
+        var nextDisplay = ((displayIdx + direction) % count + count) % count
+        SessionManager.switchToSession(nextDisplay)
     }
 
     Component.onCompleted: {
