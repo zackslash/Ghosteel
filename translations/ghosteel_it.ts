@@ -33,7 +33,7 @@ per SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Nascondi tasti aggiuntivi</translation>
+        <translation type="vanished">Nascondi tasti aggiuntivi</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ per SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Mostra tasti aggiuntivi</translation>
+        <translation type="vanished">Mostra tasti aggiuntivi</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ per SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Passa alla sessione</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Condividi selezione</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Nascondi ricerca</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Cerca nel terminale</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Ripristina valori predefiniti</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Ripristina valori predefiniti</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Rimuovi</translation>
+        <translation>Rimuovi</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Tasti aggiuntivi</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Tasti attivati</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nessun tasto attivato. Aggiungi tasti dalla lista qui sotto.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tasti disponibili</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ per SailfishOS</translation>
         <translation>Sessioni</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Ordinato per ultimo utilizzo</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Ordinato per data di creazione</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Ordinato per nome</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Esecuzione automatica</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Comando da eseguire all&apos;avvio</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>es. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Ordina per ultimo utilizzo</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Ordina per nome</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Ordina per data di creazione</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Comando di esecuzione automatica</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ per SailfishOS</translation>
         <translation>Vibra + Suono</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Minuscolo (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Piccolo (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Medio (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Grande (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Molto grande (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Enorme (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tasti aggiuntivi</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Mostra tasti aggiuntivi</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Mostra la barra dei tasti aggiuntivi sopra la tastiera</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Scorciatoia: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Configura barra tasti</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Scorrimento</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Mantieni lo scorrimento</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva la cronologia del terminale alla chiusura dell&apos;app. Disattivato per impostazione predefinita per la privacy.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Mantieni la cronologia per</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 giorni</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 giorni</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 giorni</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 anno</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminale Ghosteel per SailfishOS
+Alimentato dal motore di terminale libghostty</translation>
     </message>
 </context>
 <context>

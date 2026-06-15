@@ -35,7 +35,7 @@ għal SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Aħbi l-buttuni żejda</translation>
+        <translation type="vanished">Aħbi l-buttuni żejda</translation>
     </message>
     <message>
         <source>New session</source>
@@ -63,7 +63,7 @@ għal SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Uri l-buttuni żejda</translation>
+        <translation type="vanished">Uri l-buttuni żejda</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -71,46 +71,46 @@ għal SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Aqleb għas-sessjoni</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Aqsam l-għażla</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Aħbi t-tfittxija</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Fittex fit-terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Irrestorja għall-issettjar default</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Irrestorja għall-issettjar default</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Neħħi</translation>
+        <translation>Neħħi</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Buttuni żejda</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Buttuni attivi</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>M'hemmx buttuni attivi. Żid buttuni mil-lista t'hawn taħt.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Buttuni disponibbli</translation>
     </message>
 </context>
 <context>
@@ -147,27 +147,51 @@ għal SailfishOS</translation>
         <translation>Sessjonijiet</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Imsortjar skont l-aħħar użu</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Imsortjar skont il-ħolqien</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Imsortjar skont l-isem</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Eżekuzzjoni awtomatika</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Komandament li jitħaddem fil-bidu</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>eż. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sortja skont l-aħħar użu</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sortja skont l-isem</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sortja skont il-ħolqien</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Komandament tal-eżekuzzjoni awtomatika</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -260,49 +284,85 @@ għal SailfishOS</translation>
         <translation>Vibrazzjoni + Ħoss</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Żgħir ħafna (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Żgħir (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Medju (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Kbir (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Kbir ħafna (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Kbira ħafna (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Buttuni żejda</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Uri l-buttuni żejda</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Uri l-bar tal-buttuni żejda fuq it-tastiera</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Shortcut: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfigura l-bar tal-buttuni</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrolljar lura</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Żomm l-iskrolljar lura</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ħżin l-istorja tat-terminal meta l-app tingħalaq. Mixgħul biss meta tintgħażel, għall-privatezza.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Żomm l-istorja għal</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 ijiem</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 jum</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 jum</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>sena</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>sena</translation>
     </message>
 </context>
 <context>

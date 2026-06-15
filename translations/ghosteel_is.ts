@@ -33,7 +33,7 @@ fyrir SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Fela aukalykla</translation>
+        <translation type="vanished">Fela aukalykla</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ fyrir SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Sýna aukalykla</translation>
+        <translation type="vanished">Sýna aukalykla</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ fyrir SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Skipta yfir í setu</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Deila vali</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Fela leit</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Leita í skjáhermi</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Endurstilla í sjálfgefið</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Endurstilla í sjálfgefið</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Fjarlægja</translation>
+        <translation>Fjarlægja</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Aukalyklar</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Virkir lyklar</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Engir lyklar virkir. Bættu lyklum við af listanum hér fyrir neðan.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiltækir lyklar</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ fyrir SailfishOS</translation>
         <translation>Setur</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Raðað eftir síðustu notkun</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Raðað eftir stofndegi</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Raðað eftir nafni</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Sjálfræsing</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Skipun til að keyra við ræsingu</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>t.d. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Raða eftir síðustu notkun</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Raða eftir nafni</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Raða eftir stofndegi</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Sjálfræsingarskipun</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ fyrir SailfishOS</translation>
         <translation>Hrista + Hljóð</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Smátt (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Lítið (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Miðlungs (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Stórt (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Extra stórt (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Risavaxið (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Aukalyklar</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Sýna aukalykla</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Sýna aukalyklaslá yfir lyklaborðinu</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Flýtileið: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Stilla lyklaslá</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrunbak</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Varðveita skrunbak</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vista sögu skjáhermis þegar app lokast. Slökkt sjálfgefið vegna friðhelgis.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Geyma sögu í</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dagar</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dagar</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dagar</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 ár</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel skjáhermir fyrir SailfishOS
+Keyrt af libghostty skjáhermisvél</translation>
     </message>
 </context>
 <context>

@@ -33,7 +33,7 @@ per a SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Amagar tecles addicionals</translation>
+        <translation type="vanished">Amagar tecles addicionals</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ per a SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Mostrar tecles addicionals</translation>
+        <translation type="vanished">Mostrar tecles addicionals</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ per a SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Canviar a sessió</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Compartir selecció</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Amagar cerca</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Cercar al terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Restablir valors predeterminats</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Restablir valors predeterminats</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Eliminar</translation>
+        <translation>Eliminar</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Tecles addicionals</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Tecles activades</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>No hi ha tecles activades. Afegiu tecles de la llista de sota.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tecles disponibles</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ per a SailfishOS</translation>
         <translation>Sessions</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Ordenat per últim ús</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Ordenat per creació</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Ordenat per nom</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Execució automàtica</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordre a executar en iniciar</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>p. ex. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Ordenar per últim ús</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Ordenar per nom</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Ordenar per creació</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordre d&apos;execució automàtica</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ per a SailfishOS</translation>
         <translation>Vibrar + So</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Molt petit (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Petit (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Mitjà (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Gran (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Molt gran (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Enorme (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tecles addicionals</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Mostrar tecles addicionals</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Mostrar la barra de tecles addicionals sobre el teclat</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Drecera: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Configurar barra de tecles</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplaçament enrere</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Conservar el desplaçament enrere</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Desar l&apos;historial del terminal en tancar l&apos;aplicació. Desactivat per defecte per privadesa.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Conservar l&apos;historial durant</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dies</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dies</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dies</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 any</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminal Ghosteel per a SailfishOS
+Impulsat pel motor de terminal libghostty</translation>
     </message>
 </context>
 <context>

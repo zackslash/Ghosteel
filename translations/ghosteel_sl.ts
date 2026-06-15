@@ -35,7 +35,7 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Skrij dodatne tipke</translation>
+        <translation type="vanished">Skrij dodatne tipke</translation>
     </message>
     <message>
         <source>New session</source>
@@ -63,7 +63,7 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Prikaži dodatne tipke</translation>
+        <translation type="vanished">Prikaži dodatne tipke</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -71,46 +71,46 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Preklopi na sejo</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Deli izbor</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrij iskanje</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Išči v terminalu</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Ponastavi na privzeto</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Ponastavi na privzeto</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Odstrani</translation>
+        <translation>Odstrani</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Dodatne tipke</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Omogočene tipke</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ni omogočenih tipk. Dodajte tipke s seznama spodaj.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Razpoložljive tipke</translation>
     </message>
 </context>
 <context>
@@ -147,27 +147,51 @@ za SailfishOS</translation>
         <translation>Seje</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Razvrščeno po zadnji uporabi</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Razvrščeno po datumu ustvarjanja</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Razvrščeno po imenu</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Samodejni zagon</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukaz za zagon ob zagonu sistema</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>npr. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Razvrsti po zadnji uporabi</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Razvrsti po imenu</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Razvrsti po datumu ustvarjanja</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukaz samodejnega zagona</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -260,49 +284,86 @@ za SailfishOS</translation>
         <translation>Vibriranje + zvok</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Drobceno (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Majhno (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Srednje (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Veliko (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Zelo veliko (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Ogromno (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatne tipke</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Prikaži dodatne tipke</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Prikaži vrstico dodatnih tipk nad tipkovnico</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Bližnjica: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Nastavi vrstico tipk</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomikanje nazaj</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Ohrani pomikanje nazaj</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Shrani zgodovino terminala ob zaprtju aplikacije. Privzeto onemogočeno zaradi zasebnosti.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Shrani zgodovino za</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dni</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dni</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dni</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 leto</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel terminal za SailfishOS
+Poganja pogon terminala libghostty</translation>
     </message>
 </context>
 <context>

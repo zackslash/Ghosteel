@@ -437,6 +437,70 @@ private slots:
         Settings s2(path);
         QCOMPARE(s2.keybarVisible(), false);
     }
+
+    // --- Session sort mode ---
+
+    void testSessionSortModeDefault()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QCOMPARE(s.sessionSortMode(), 1); // SortLastUsed
+    }
+
+    void testSessionSortModeClamping()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setSessionSortMode(-1);
+        QCOMPARE(s.sessionSortMode(), 0);
+        s.setSessionSortMode(99);
+        QCOMPARE(s.sessionSortMode(), 3);
+        s.setSessionSortMode(2);
+        QCOMPARE(s.sessionSortMode(), 2);
+    }
+
+    void testSessionSortModeNoOpSignalSuppression()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::sessionSortModeChanged);
+        s.setSessionSortMode(1); // same as default (SortLastUsed)
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testSessionSortModeSignalOnChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::sessionSortModeChanged);
+        s.setSessionSortMode(3); // SortAlphabetical
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.sessionSortMode(), 3);
+    }
+
+    void testSessionSortModePersistence()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            Settings s(path);
+            s.setSessionSortMode(2); // SortCreated
+        }
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        Settings s2(path);
+        QCOMPARE(s2.sessionSortMode(), 2);
+    }
+
+    void testSessionSortModeInvalidClamp()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setSessionSortMode(-5);
+        QCOMPARE(s.sessionSortMode(), 0);
+        s.setSessionSortMode(100);
+        QCOMPARE(s.sessionSortMode(), 3);
+    }
 };
 
 QTEST_MAIN(TestSettingsBehavior)

@@ -43,6 +43,7 @@ void Settings::load()
                                QStringLiteral("alt"), QStringLiteral("keyboard"), QStringLiteral("esc")};
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
+    m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
 }
 
 void Settings::save()
@@ -159,4 +160,16 @@ void Settings::setKeybarVisible(bool visible)
     m_settings.setValue(QStringLiteral("keybar/visible"), visible);
     scheduleSave();
     Q_EMIT keybarVisibleChanged();
+}
+
+void Settings::setSessionSortMode(int mode)
+{
+    if (mode < 0) mode = 0;
+    if (mode > 3) mode = 3;
+    if (m_sessionSortMode == mode)
+        return;
+    m_sessionSortMode = mode;
+    m_settings.setValue(QStringLiteral("sessions/sortMode"), mode);
+    scheduleSave();
+    Q_EMIT sessionSortModeChanged();
 }

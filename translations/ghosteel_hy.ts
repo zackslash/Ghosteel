@@ -33,7 +33,7 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Տաչել Լավական Ջամեր</translation>
+        <translation type="vanished">Տաչել Լավական Ջամեր</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Արագութել Լավական Ջամեր</translation>
+        <translation type="vanished">Արագութել Լավական Ջամեր</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Անցնել նիստին</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Կիսվել ընտրությամբ</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Թաքցնել որոնումը</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Որոնել տերմինալում</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Վերակառնել ռակեմային արաջ</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Վերականգնել լռակյացը</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Հեռացնել</translation>
+        <translation>Հեռացնել</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Լրացուցիչ ստեղներ</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Միացված ստեղներ</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Միացված ստեղներ չկան: Ավելացրեք ստեղներ ներքևի ցանկից:</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Հասանելի ստեղներ</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ SailfishOS-ի համար</translation>
         <translation>Նիստեր</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Տեսակավորված ըստ վերջին օգտագործման</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Տեսակավորված ըստ ստեղծման</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Տեսակավորված ըստ անվան</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Ինքնագործարկում</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Գործարկման հրաման</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>օր. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Տեսակավորել ըստ վերջին օգտագործման</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Տեսակավորել ըստ անվան</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Տեսակավորել ըստ ստեղծման</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Ինքնագործարկման հրաման</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -177,11 +201,11 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Appearance</source>
-        <translation>Տեղաքատվություն</translation>
+        <translation>Տեղակատվուտյուն</translation>
     </message>
     <message>
         <source>Background opacity</source>
-        <translation>Ենդհանուրի անտրացարկություն</translation>
+        <translation>Ենդհանուրի անտրածարկուտյուն</translation>
     </message>
     <message>
         <source>Bell</source>
@@ -189,7 +213,7 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Color scheme</source>
-        <translation>Գույնի շեմա</translation>
+        <translation>Գույնի սհեմա</translation>
     </message>
     <message>
         <source>Dark</source>
@@ -197,11 +221,11 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Default: /bin/sh</source>
-        <translation>Լառակայում: /bin/sh</translation>
+        <translation>Լարակայում: /bin/sh</translation>
     </message>
     <message>
         <source>Font size</source>
-        <translation>Տարի փապ</translation>
+        <translation>Տարի փար</translation>
     </message>
     <message>
         <source>Ghosteel terminal
@@ -211,7 +235,7 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation>Լույս</translation>
+        <translation>Լոոյս</translation>
     </message>
     <message>
         <source>Monokai</source>
@@ -223,7 +247,7 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>Վերակառնել ռակեմային արաջ</translation>
+        <translation>Վերակարնել րակեմային արազ</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -243,7 +267,7 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Sound</source>
-        <translation>Ընգ</translation>
+        <translation>Ձայն</translation>
     </message>
     <message>
         <source>Terminal</source>
@@ -251,56 +275,93 @@ SailfishOS-ի համար</translation>
     </message>
     <message>
         <source>Vibrate</source>
-        <translation>Անթրում</translation>
+        <translation>Թրտրում</translation>
     </message>
     <message>
         <source>Vibrate + Sound</source>
-        <translation>Անթրում + Ընգ</translation>
+        <translation>Թրտրոոմ + Ձայն</translation>
+    </message>
+    <message>
+        <source>Tiny (%1)</source>
+        <translation>Չնչին (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Փոքր (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Միջին (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Մեգ (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Շատ մեգ (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Հսկայական (%1)</translation>
     </message>
     <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Լրածոոտսիտս ստեղներ</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Ցոոյց տալ լրածոոտսիտս ստեղները</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Ցոոյց տալ լրածոոտսիտս ստեղների վահանակը ստեղնաշարի վրա</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Կարտս ճանապարհ: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Կարգավորել ստեղների վահանակը</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Թերտում</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Պահպանել ոլորումը</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Պահպանել տերմինալի պատմոոտյունը հավելվալդը փակելիս: Լրակյացով անջատված ե գաղտնիոոտյան համար:</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Պահպանել պատմոոտյունը</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 օր</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 օր</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 օր</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 տարի</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel տերմինալ SailfishOS-ի համար
+Աշխատոոմ ե libghostty տերմինալ շարժիտսով</translation>
     </message>
 </context>
 <context>
@@ -309,9 +370,9 @@ Powered by libghostty terminal engine</source>
         <source>Shell exited with code %1
 
 Tap to restart</source>
-        <translation>Shell-ը դուրսացել կոդով %1
+        <translation>Shell-ը դոորսագես կոդով %1
 
-Հեստեք վերաթառմանելու համար</translation>
+Հեստեկ վերատարմանելոո համար</translation>
     </message>
 </context>
 </TS>

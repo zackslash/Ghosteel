@@ -33,7 +33,7 @@ SailfishOSrako</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Ezkutatu tekla gehigarriak</translation>
+        <translation type="vanished">Ezkutatu tekla gehigarriak</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ SailfishOSrako</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Erakutsi tekla gehigarriak</translation>
+        <translation type="vanished">Erakutsi tekla gehigarriak</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ SailfishOSrako</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Aldatu saiora</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Partekatu hautapena</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Ezkutatu bilaketa</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilatu terminalean</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Leheneratu lehenetsira</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Leheneratu lehenetsira</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Kendu</translation>
+        <translation>Kendu</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Tekla gehigarriak</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Gaitutako teklak</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ez dago teklarik gaituta. Gehitu teklak azpiko zerrendatik.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekla eskuragarriak</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ SailfishOSrako</translation>
         <translation>Saioak</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Azkenera erabilitakoaren arabera ordenatuta</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sorkuntzaren arabera ordenatuta</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Izenaren arabera ordenatuta</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Exekuzio automatikoa</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Abioan exekutatzeko komandoa</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>adib. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Ordenatu azkenera erabilitakoaren arabera</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Ordenatu izenaren arabera</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Ordenatu sorkuntzaren arabera</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Exekuzio automatikoko komandoa</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ SailfishOSrako</translation>
         <translation>Bibrazioa + Soinua</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Oso txikia (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Txikia (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Ertaina (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Handia (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Oso handia (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Erraldoia (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekla gehigarriak</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Erakutsi tekla gehigarriak</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Erakutsi tekla gehigarrien barra teklatuaren gainean</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Lasterbidea: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfiguratu tekla-barra</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Korritze-atzerapena</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Mantendu korritze-atzerapena</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Gorde terminalaren historiala aplikazioa ixtean. Lehenespenez desgaituta pribatutasunerako.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Mantendu historiala</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 egun</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 egun</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 egun</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>Urte 1</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel terminala SailfishOSrako
+libghostty terminal motorrak bultzatuta</translation>
     </message>
 </context>
 <context>

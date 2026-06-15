@@ -32,7 +32,7 @@ Ghosteel terminal</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Ekstra tuşları gizle</translation>
+        <translation type="vanished">Ekstra tuşları gizle</translation>
     </message>
     <message>
         <source>New session</source>
@@ -60,7 +60,7 @@ Ghosteel terminal</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Ekstra tuşları göster</translation>
+        <translation type="vanished">Ekstra tuşları göster</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -68,46 +68,46 @@ Ghosteel terminal</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Oturuma geç</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Seçimi paylaş</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Aramayı gizle</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminalde ara</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Varsayılana sıfırla</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Varsayılana sıfırla</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Kaldır</translation>
+        <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Ekstra tuşlar</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Etkin tuşlar</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Etkin tuş yok. Aşağıdaki listeden tuş ekleyin.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Mevcut tuşlar</translation>
     </message>
 </context>
 <context>
@@ -144,27 +144,51 @@ Ghosteel terminal</translation>
         <translation>Oturumlar</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Son kullanıma göre sıralandı</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Oluşturma tarihine göre sıralandı</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Ada göre sıralandı</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Otomatik çalıştır</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Başlangıçta çalıştırılacak komut</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>ör. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Son kullanıma göre sırala</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Ada göre sırala</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Oluşturma tarihine göre sırala</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Otomatik çalıştırma komutu</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -257,49 +281,85 @@ Ghosteel terminal</translation>
         <translation>Titreşim + Ses</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Çok küçük (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Küçük (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Orta (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Büyük (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Çok büyük (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Devasa (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Ekstra tuşlar</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Ekstra tuşları göster</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Klavyenin üzerinde ekstra tuş çubuğunu göster</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Kısayol: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Tuş çubuğunu yapılandır</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Geri kaydırma</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Geri kaydırmayı sürdür</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Uygulama kapatıldığında terminal geçmişini kaydet. Gizlilik için varsayılan olarak devre dışıdır.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Geçmişi şu kadar süre sakla</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 gün</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 gün</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 gün</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 yıl</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 yıl</translation>
     </message>
 </context>
 <context>

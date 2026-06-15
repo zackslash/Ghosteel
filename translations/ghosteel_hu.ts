@@ -32,7 +32,7 @@ SailfishOS-hoz</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Extra billentyűk elrejtése</translation>
+        <translation type="vanished">Extra billentyűk elrejtése</translation>
     </message>
     <message>
         <source>New session</source>
@@ -60,7 +60,7 @@ SailfishOS-hoz</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Extra billentyűk megjelenítése</translation>
+        <translation type="vanished">Extra billentyűk megjelenítése</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -68,46 +68,46 @@ SailfishOS-hoz</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Váltás munkamenetre</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Kijelölés megosztása</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Keresés elrejtése</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Keresés a terminálban</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Alapértelmezés visszaállítása</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Alapértelmezés visszaállítása</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Eltávolítás</translation>
+        <translation>Eltávolítás</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Extra billentyűk</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Engedélyezett billentyűk</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nincsenek engedélyezett billentyűk. Adjon hozzá billentyűket az alábbi listából.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Elérhető billentyűk</translation>
     </message>
 </context>
 <context>
@@ -144,27 +144,51 @@ SailfishOS-hoz</translation>
         <translation>Munkamenetek</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Rendezve utolsó használat szerint</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Rendezve létrehozás szerint</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Rendezve név szerint</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatikus futtatás</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Indításkor futtatandó parancs</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>pl. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Rendezés utolsó használat szerint</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Rendezés név szerint</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Rendezés létrehozás szerint</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatikus futtatás parancsa</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -257,49 +281,86 @@ SailfishOS-hoz</translation>
         <translation>Rezgés + Hang</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Pici (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Kicsi (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Közepes (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Nagy (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Extra nagy (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Hatalmas (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Extra billentyűk</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Extra billentyűk megjelenítése</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Extra billentyűk sáv megjelenítése a billentyűzet felett</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Gyorsbillentyű: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Billentyűsáv beállítása</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Görgetési előzmény</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Görgetés megőrzése</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminál előzményeinek mentése az alkalmazás bezárásakor. Alapértelmezetten letiltva az adatvédelem érdekében.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Előzmények megőrzése</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 nap</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 nap</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 nap</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 év</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel terminál SailfishOS-hoz
+A libghostty terminálmotor hajtja</translation>
     </message>
 </context>
 <context>

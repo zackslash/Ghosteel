@@ -18,6 +18,8 @@ struct SessionInfo {
     QString autorunCommand;  // Command to run when session starts
     bool keybarOpen = true;           // Whether the extra keys panel is open
     bool keyboardVisible = true;      // Whether the software keyboard is visible
+    qint64 createdAt = 0;             // Epoch ms when session was created
+    qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
     TerminalView *view;
 };
 
@@ -48,7 +50,7 @@ public:
     Q_INVOKABLE void removeSession(int index);
     // QML convenience: setActiveSessionIndex is a Q_PROPERTY setter, not
     // Q_INVOKABLE, so QML needs this to call it by name.
-    Q_INVOKABLE void switchToSession(int index);
+    Q_INVOKABLE void switchToSession(int displayIndex);
     Q_INVOKABLE TerminalView* activeSession() const;
     Q_INVOKABLE QString sessionName(int index) const;
     Q_INVOKABLE void setSessionName(int index, const QString &name);
@@ -63,6 +65,12 @@ public:
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
     Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
     Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
+
+    // Session ordering — maps display index (sorted) to actual m_sessions index
+    Q_INVOKABLE int displayToActual(int displayIndex) const;
+    Q_INVOKABLE int actualToDisplay(int actualIndex) const;
+    Q_INVOKABLE int sortMode() const;
+    Q_INVOKABLE void setSortMode(int mode);
 
     // Single-instance guard: returns true if another instance is already running.
     // Call before creating SessionManager. If true, a "raise" message was sent
@@ -89,6 +97,7 @@ Q_SIGNALS:
     // Aggregated notification signal — emitted for any session, not just the active one.
     // QML connects once to this instead of per-view.
     void desktopNotification(int sessionId, const QString &summary, const QString &body);
+    void sortOrderChanged();
 
 private:
     static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
@@ -97,6 +106,7 @@ private:
 
     void saveSessions();
     void scheduleSave();
+    void rebuildSortedIndices();
 
     // Scrollback persistence
     void saveScrollback();
@@ -109,6 +119,7 @@ private Q_SLOTS:
 
 private:
     QVector<SessionInfo> m_sessions;
+    QVector<int> m_sortedIndices; // display index → actual m_sessions index
     int m_activeSessionIndex = -1;
     int m_nextSessionId = 1;
 

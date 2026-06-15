@@ -33,7 +33,7 @@ voor SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Extra toetsen verbergen</translation>
+        <translation type="vanished">Extra toetsen verbergen</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ voor SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Extra toetsen tonen</translation>
+        <translation type="vanished">Extra toetsen tonen</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ voor SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Naar sessie overschakelen</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Selectie delen</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Zoekopdracht verbergen</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminal doorzoeken</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Standaardwaarden herstellen</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Standaardwaarden herstellen</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Verwijderen</translation>
+        <translation>Verwijderen</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Extra toetsen</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Ingeschakelde toetsen</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geen toetsen ingeschakeld. Voeg toetsen toe uit de onderstaande lijst.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Beschikbare toetsen</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ voor SailfishOS</translation>
         <translation>Sessies</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Gesorteerd op laatst gebruikt</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Gesorteerd op aanmaakdatum</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Gesorteerd op naam</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatisch uitvoeren</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Opdracht om bij het opstarten uit te voeren</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>bijv. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sorteren op laatst gebruikt</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sorteren op naam</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sorteren op aanmaakdatum</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Opdracht voor automatisch uitvoeren</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ voor SailfishOS</translation>
         <translation>Trillen + Geluid</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Miniatuur (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Klein (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Gemiddeld (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Groot (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Zeer groot (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Reusachtig (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Extra toetsen</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Extra toetsen tonen</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Toon de extra toetsenbalk boven het toetsenbord</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Sneltoets: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Toetsenbalk configureren</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Terugscrollen</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Terugscrollen behouden</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminalgeschiedenis opslaan bij het sluiten van de app. Standaard uitgeschakeld vanwege privacy.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Geschiedenis bewaren gedurende</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dagen</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dagen</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dagen</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 jaar</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel-terminal voor SailfishOS
+Aangedreven door de libghostty terminal-engine</translation>
     </message>
 </context>
 <context>

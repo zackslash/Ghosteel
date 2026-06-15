@@ -34,7 +34,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Схаваць дадатковыя клавішы</translation>
+        <translation type="vanished">Схаваць дадатковыя клавішы</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Паказаць дадатковыя клавішы</translation>
+        <translation type="vanished">Паказаць дадатковыя клавішы</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Перайсці да сеанса</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Падзяліцца вылучаным</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Схаваць пошук</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Пошук у тэрмінале</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Скінуць да стандартных</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Скінуць да стандартных</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Выдаліць</translation>
+        <translation>Выдаліць</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Дадатковыя клавішы</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Уключаныя клавішы</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Няма ўключаных клавіш. Дадайце клавішы са спісу ніжэй.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Даступныя клавішы</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ for SailfishOS</source>
         <translation>Сеансы</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Адсартавана па апошнім выкарыстанні</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Адсартавана па даце стварэння</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Адсартавана па назве</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Аўтазапуск</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Каманда для запуску пры старце</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>напр. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Сартаваць па апошнім выкарыстанні</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Сартаваць па назве</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Сартаваць па даце стварэння</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Каманда аўтазапуску</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,86 @@ for SailfishOS</source>
         <translation>Вібрацыя + гук</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Крыхітны (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Малы (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Сярэдні (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Вялікі (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Вельмі вялікі (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Велізарны (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Дадатковыя клавішы</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Паказаць дадатковыя клавішы</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Паказваць панэль дадатковых клавіш над клавіятурай</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Хуткая клавіша: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Наладзіць панэль клавіш</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Пракрутка</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Захоўваць пракрутку</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Захоўваць гісторыю тэрмінала пры закрыцці прыкладання. Па змаўчанні адключана для прыватнасці.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Захоўваць гісторыю на працягу</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 дзён</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 дзён</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 дзён</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 год</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Тэрмінал Ghosteel для SailfishOS
+Працуе на рухавіку тэрмінала libghostty</translation>
     </message>
 </context>
 <context>

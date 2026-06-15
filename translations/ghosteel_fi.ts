@@ -33,7 +33,7 @@ SailfishOS:lle</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Piilota lisänapit</translation>
+        <translation type="vanished">Piilota lisänapit</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ SailfishOS:lle</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Näytä lisänapit</translation>
+        <translation type="vanished">Näytä lisänapit</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ SailfishOS:lle</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Vaihda istuntoon</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Jaa valinta</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Piilota haku</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Hae päätteestä</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Palauta oletusarvot</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Palauta oletusarvot</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Poista</translation>
+        <translation>Poista</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Lisänapit</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Käytössä olevat napit</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ei nappeja käytössä. Lisää nappeja alta olevasta listasta.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Käytettävissä olevat napit</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ SailfishOS:lle</translation>
         <translation>Istunnot</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Lajiteltu viimeksi käytetyn mukaan</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Lajiteltu luontipäivän mukaan</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Lajiteltu nimen mukaan</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automaattinen käynnistys</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Käynnistettävä komento</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>esim. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Lajittele viimeksi käytetyn mukaan</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Lajittele nimen mukaan</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Lajittele luontipäivän mukaan</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Automaattisen käynnistyksen komento</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ SailfishOS:lle</translation>
         <translation>Värinä + Ääni</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Hyvin pieni (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Pieni (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Keskitaso (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Suuri (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Erittäin suuri (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Valtava (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Lisänapit</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Näytä lisänapit</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Näytä lisänapit-palkki näppäimistön yläpuolella</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Pikanäppäin: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Määritä näppäinpalkki</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Takaisinpäin vieritys</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Säilytä takaisinpäin vieritys</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tallenna päätteen historia sovelluksen sulkeutuessa. Oletuksena pois käytöstä yksityisyyden vuoksi.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Säilytä historia</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 päivää</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 päivää</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 päivää</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 vuosi</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel-pääte SailfishOS:lle
+Käyttää libghostty-pääteohjelmaa</translation>
     </message>
 </context>
 <context>

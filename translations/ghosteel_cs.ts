@@ -34,7 +34,7 @@ pro SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Skrýt další klávesy</translation>
+        <translation type="vanished">Skrýt další klávesy</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ pro SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Zobrazit další klávesy</translation>
+        <translation type="vanished">Zobrazit další klávesy</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ pro SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Přepnout na relaci</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Sdílet výběr</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrýt hledání</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Hledat v terminálu</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Obnovit výchozí</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Obnovit výchozí</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Odstranit</translation>
+        <translation>Odstranit</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Další klávesy</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Povolené klávesy</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Žádné klávesy nejsou povoleny. Přidejte klávesy ze seznamu níže.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostupné klávesy</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ pro SailfishOS</translation>
         <translation>Relace</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Řazeno podle posledního použití</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Řazeno podle data vytvoření</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Řazeno podle názvu</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatické spuštění</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Příkaz ke spuštění při startu</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>např. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Řadit podle posledního použití</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Řadit podle názvu</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Řadit podle data vytvoření</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Příkaz automatického spuštění</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,86 @@ pro SailfishOS</translation>
         <translation>Vibrace + zvuk</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Drobné (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Malé (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Střední (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Velké (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Extra velké (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Obrovské (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Další klávesy</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Zobrazit další klávesy</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Zobrazit lištu dalších kláves nad klávesnicí</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Zkratka: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Nastavit lištu kláves</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Historie posouvání</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachovat historii posouvání</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Uložit historii terminálu při zavření aplikace. Ve výchozím nastavení vypnuto z důvodu soukromí.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Uchovávat historii po dobu</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dní</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dní</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dní</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 rok</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminál Ghosteel pro SailfishOS
+Poháněno terminálovým enginem libghostty</translation>
     </message>
 </context>
 <context>

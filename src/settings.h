@@ -23,6 +23,12 @@ class Settings : public QObject
     Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
     Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
+    Q_PROPERTY(int sessionSortMode READ sessionSortMode WRITE setSessionSortMode NOTIFY sessionSortModeChanged)
+
+public:
+    // Session sort modes — values must match SessionPage.qml
+    enum SessionSort { SortManual = 0, SortLastUsed = 1, SortCreated = 2, SortAlphabetical = 3 };
+    Q_ENUM(SessionSort)
 
 public:
     static Settings *instance();
@@ -60,6 +66,9 @@ public:
     bool keybarVisible() const { return m_keybarVisible; }
     void setKeybarVisible(bool visible);
 
+    int sessionSortMode() const { return m_sessionSortMode; }
+    void setSessionSortMode(int mode);
+
 Q_SIGNALS:
     void fontSizeChanged();
     void fontFamilyChanged();
@@ -71,6 +80,7 @@ Q_SIGNALS:
     void scrollbackRetentionDaysChanged();
     void keybarKeysChanged();
     void keybarVisibleChanged();
+    void sessionSortModeChanged();
 
 private:
     explicit Settings(QObject *parent = nullptr);
@@ -90,6 +100,7 @@ private:
     int m_scrollbackRetentionDays = 30;
     QStringList m_keybarKeys;
     bool m_keybarVisible = true;
+    int m_sessionSortMode = SortLastUsed; // default: sort by last used
 };
 
 #endif // SETTINGS_H
