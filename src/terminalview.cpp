@@ -2410,6 +2410,30 @@ void TerminalView::refreshLinks()
 
     m_currentLinks = TextUtil::findUrls(flatText, charMap);
 
+    // Filter out URLs on the cursor's viewport row — the cursor row is
+    // where user input appears, and typed URLs should not be clickable.
+    // Only output (non-input) rows should have interactive links.
+    // Note: OSC 8 hyperlinks (application-emitted) on the cursor row are
+    // intentionally NOT filtered — they carry explicit metadata, unlike
+    // regex-detected URLs which are a heuristic.
+    bool cursorInView = false;
+    uint16_t cursorViewportY = 0;
+    ghostty_render_state_get(state,
+                             GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE,
+                             &cursorInView);
+    if (cursorInView) {
+        ghostty_render_state_get(state,
+                                 GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y,
+                                 &cursorViewportY);
+        m_currentLinks.erase(
+            std::remove_if(m_currentLinks.begin(), m_currentLinks.end(),
+                           [cursorViewportY](const TextUtil::LinkSpan &span) {
+                               return span.startRow == cursorViewportY
+                                      || span.endRow == cursorViewportY;
+                           }),
+            m_currentLinks.end());
+    }
+
     m_linkScanDirty = false;
 }
 
