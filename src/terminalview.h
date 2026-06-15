@@ -296,11 +296,9 @@ private:
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started
-    static const int LinkScanDelayMs = 0; // Deferred via QTimer::singleShot
-
     void refreshLinks();               // Run regex scan on visible viewport
     QString findRegexLinkAt(int col, int row) const; // Check cached regex links
-    QString findLinkAt(int col, int row); // Check regex first, then OSC 8
+    QString findLinkAt(int col, int row); // Check OSC 8 first, then regex
 
     // --- Theme-bindable UI colors ---
     QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);

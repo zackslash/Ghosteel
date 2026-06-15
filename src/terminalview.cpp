@@ -42,9 +42,12 @@ TerminalView::TerminalView(QQuickItem *parent)
     // rooted/relative paths (./  ../  ~/  $VAR/  /), and bare relative paths with dots.
     m_urlRegex = QRegularExpression(
         QStringLiteral(
-            R"((?:(?:https?://|mailto:|ftp://|file:|ssh:|git://|ssh://|tel:|magnet:|ipfs://|ipns://|gemini://|gopher://|news:)(?:(?:\[[:0-9a-fA-F]+(?:[:0-9a-fA-F]*)+\](?::[0-9]+)?)|[\w\-.~:/?#@!$&*+,;=%]+(?:[\(\[]\w*[\)\]])?)+(?<![,.])|(?:\.\.\/|\.\/|(?<!\w)~\/|(?:[\w][\w\-.]*\/)*(?<!\w)\$[A-Za-z_]\w*\/|\.[\w][\w\-.]*\/|(?<![\w~\/])\/(?!\/))(?:(?=[\w\-.~:\/?#@!$&*+;=%]*\.)[\w\-.~:\/?#@!$&*+;=%]+(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]*[\/.])*|(?![\w\-.~:\/?#@!$&*+;=%]*\.)(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]+)*)*(?<!:)(?: +(?= *$))?|(?=[\w\-.~:\/?#@!$&*+;=%]*\.)(?<!\$*\d*)(?<!\w)[\w][\w\-.]*\/[\w\-.~:\/?#@!$&*+;=%]+(?<!:)(?: +(?= *$))?)"
+            R"((?:(?:https?://|mailto:|ftp://|file:|ssh:|git://|ssh://|tel:|magnet:|ipfs://|ipns://|gemini://|gopher://|news:)(?:(?:\[[:0-9a-fA-F]+(?:[:0-9a-fA-F]*)+\](?::[0-9]+)?)|[\w\-.~:/?#@!$&*+,;=%]+(?:[\(\[]\w*[\)\]])?)+(?<![,.])|(?:\.\.\/|\.\/|(?<!\w)~\/|(?:[\w][\w\-.]*\/)*(?<!\w)\$[A-Za-z_]\w*\/|\.[\w][\w\-.]*\/|(?<![\w~\/])\/(?!\/))(?:(?=[\w\-.~:\/?#@!$&*+;=%]*\.)[\w\-.~:\/?#@!$&*+;=%]+(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]*[\/.])*|(?![\w\-.~:\/?#@!$&*+;=%]*\.)(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]+)*)*(?<!:)(?: +(?= *$))?|(?=[\w\-.~:\/?#@!$&*+;=%]*\.)(?<!\$\d*)(?<!\w)[\w][\w\-.]*\/[\w\-.~:\/?#@!$&*+;=%]+(?<!:)(?: +(?= *$))?)"
         )
     );
+    if (!m_urlRegex.isValid()) {
+        qWarning() << "URL regex failed to compile:" << m_urlRegex.errorString();
+    }
 
     m_vt = new GhosttyVt(this);
     m_pty = new PtyManager(this);
@@ -1533,6 +1536,7 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
                     m_pendingLinkTap = true;
                     m_tappedLinkUri = uri;
                     m_linkTapStartPos = event->pos();
+                    setKeepMouseGrab(true);
                     event->accept();
                     return;
                 }
@@ -1661,6 +1665,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     if (m_pendingLinkTap) {
         qreal dragDist = QLineF(m_linkTapStartPos, event->pos()).length();
         m_pendingLinkTap = false;
+        setKeepMouseGrab(false);
         if (dragDist < TapDistancePx && !m_tappedLinkUri.isEmpty()) {
             QDesktopServices::openUrl(QUrl(m_tappedLinkUri));
             m_tappedLinkUri.clear();
@@ -2304,19 +2309,22 @@ void TerminalView::refreshLinks()
 
     m_currentLinks.clear();
 
-    // Serialize visible viewport to flat string + byte→cell coordinate map.
+    // Serialize visible viewport to flat text + QChar→cell coordinate map.
     // This mirrors Ghostty's renderer/link.zig approach: build a contiguous
     // string from the visible cells, then run the regex on it, and map match
     // offsets back to cell coordinates.
+    //
+    // Uses codepoint-based approach (GRAPHEMES_BUF) to build a QString directly,
+    // avoiding the GRAPHEMES_UTF8 two-call pattern and ensuring QChar indices
+    // from QRegularExpression match charMap positions exactly.
 
-    QByteArray flatString;
-    // Reserve ~3 bytes per cell average (CJK = 3-4 bytes, ASCII = 1 byte)
-    flatString.reserve(static_cast<int>(m_rows * m_cols * 3));
+    QString flatText;
+    flatText.reserve(static_cast<int>(m_rows * m_cols));
 
-    // byteMap[i] = {col, row} for byte offset i in flatString
+    // charMap[i] = {col, row} for QChar position i in flatText
     struct CellCoord { uint16_t col; uint16_t row; };
-    QVector<CellCoord> byteMap;
-    byteMap.reserve(static_cast<int>(m_rows * m_cols * 3));
+    QVector<CellCoord> charMap;
+    charMap.reserve(static_cast<int>(m_rows * m_cols));
 
     // Iterate visible viewport using the render state row iterator
     GhosttyRenderStateRowIterator iterator;
@@ -2343,35 +2351,59 @@ void TerminalView::refreshLinks()
 
         uint16_t colIdx = 0;
         while (ghostty_render_state_row_cells_next(cells)) {
-            // Skip wide char spacer cells
-            if (GhosttyVt::isWideCharSpacer(m_vt->terminal(), colIdx, rowIdx)) {
-                colIdx++;
-                continue;
+            // Check wide char spacer via render state (not grid_ref)
+            GhosttyCell rawCell = 0;
+            if (ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                    &rawCell) == GHOSTTY_SUCCESS && rawCell != 0) {
+                GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+                ghostty_cell_get(rawCell, GHOSTTY_CELL_DATA_WIDE, &wide);
+                if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
+                    colIdx++;
+                    continue;
+                }
             }
 
-            // Get UTF-8 text for this cell
-            GhosttyBuffer utf8Buf = {};
-            utf8Buf.ptr = nullptr;
-            utf8Buf.cap = 0;
+            // Get codepoints for this cell via GRAPHEMES_BUF
+            uint32_t graphemeLen = 0;
             if (ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_UTF8,
-                    &utf8Buf) == GHOSTTY_SUCCESS && utf8Buf.len > 0 && utf8Buf.ptr) {
-                const char *str = reinterpret_cast<const char*>(utf8Buf.ptr);
-                for (size_t b = 0; b < utf8Buf.len; b++) {
-                    flatString.append(str[b]);
-                    byteMap.append({colIdx, rowIdx});
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
+                    &graphemeLen) == GHOSTTY_SUCCESS && graphemeLen > 0
+                    && graphemeLen <= 128) {
+                uint32_t graphemes[128] = {};
+                if (ghostty_render_state_row_cells_get(
+                        cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
+                        graphemes) == GHOSTTY_SUCCESS) {
+                    for (uint32_t g = 0; g < graphemeLen; ++g) {
+                        uint32_t cp = graphemes[g];
+                        if (cp > 0xFFFF) {
+                            // Supplementary plane — surrogate pair (2 QChars)
+                            flatText.append(QChar(static_cast<char16_t>(
+                                0xD800 + ((cp - 0x10000) >> 10))));
+                            charMap.append({colIdx, rowIdx});
+                            flatText.append(QChar(static_cast<char16_t>(
+                                0xDC00 + ((cp - 0x10000) & 0x3FF))));
+                            charMap.append({colIdx, rowIdx});
+                        } else {
+                            flatText.append(QChar(static_cast<char16_t>(cp)));
+                            charMap.append({colIdx, rowIdx});
+                        }
+                    }
+                } else {
+                    flatText.append(QChar(' '));
+                    charMap.append({colIdx, rowIdx});
                 }
             } else {
-                flatString.append(' ');
-                byteMap.append({colIdx, rowIdx});
+                flatText.append(QChar(' '));
+                charMap.append({colIdx, rowIdx});
             }
             colIdx++;
         }
 
         // Insert newline between rows (unless soft-wrapped)
         if (!isWrapped && rowIdx + 1 < m_rows) {
-            flatString.append('\n');
-            byteMap.append({static_cast<uint16_t>(m_cols), rowIdx}); // sentinel
+            flatText.append(QChar('\n'));
+            charMap.append({static_cast<uint16_t>(m_cols), rowIdx}); // sentinel
         }
 
         rowIdx++;
@@ -2380,24 +2412,24 @@ void TerminalView::refreshLinks()
     ghostty_render_state_row_cells_free(cells);
     ghostty_render_state_row_iterator_free(iterator);
 
-    // Run regex on the flat string
-    if (flatString.isEmpty())
+    // Run regex on the flat text — match.capturedStart()/capturedEnd() are
+    // QChar indices that directly index into charMap.
+    if (flatText.isEmpty())
         return;
 
-    QString text = QString::fromUtf8(flatString);
-    QRegularExpressionMatchIterator it = m_urlRegex.globalMatch(text);
+    QRegularExpressionMatchIterator it = m_urlRegex.globalMatch(flatText);
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
-        int startByte = match.capturedStart();
-        int endByte = match.capturedEnd(); // exclusive
+        int startIdx = match.capturedStart();
+        int endIdx = match.capturedEnd(); // exclusive
 
-        if (startByte < 0 || endByte <= startByte)
+        if (startIdx < 0 || endIdx <= startIdx)
             continue;
-        if (startByte >= byteMap.size() || endByte > byteMap.size())
+        if (startIdx >= charMap.size() || endIdx > charMap.size())
             continue;
 
-        CellCoord start = byteMap[startByte];
-        CellCoord end = byteMap[endByte - 1];
+        CellCoord start = charMap[startIdx];
+        CellCoord end = charMap[endIdx - 1];
 
         LinkSpan span;
         span.startCol = start.col;
@@ -2428,14 +2460,13 @@ QString TerminalView::findRegexLinkAt(int col, int row) const
 
 QString TerminalView::findLinkAt(int col, int row)
 {
-    // Check regex-detected URLs first (cached, fast)
-    QString uri = findRegexLinkAt(col, row);
-    if (!uri.isEmpty())
-        return uri;
-
-    // Fall back to OSC 8 hyperlink via grid_ref API
-    if (m_vt)
-        uri = m_vt->getHyperlinkAt(static_cast<uint16_t>(col),
-                                    static_cast<uint32_t>(row));
-    return uri;
+    // OSC 8 hyperlinks take priority (explicit application metadata)
+    if (m_vt) {
+        QString uri = m_vt->getHyperlinkAt(static_cast<uint16_t>(col),
+                                            static_cast<uint32_t>(row));
+        if (!uri.isEmpty())
+            return uri;
+    }
+    // Fall back to regex-detected URLs
+    return findRegexLinkAt(col, row);
 }
