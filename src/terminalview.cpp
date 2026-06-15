@@ -143,6 +143,7 @@ void TerminalView::recalculateDimensions()
         }
 
         m_needsRender = true;
+        m_linkScanDirty = true; // Viewport geometry changed — re-scan links
         update();
     }
 }
@@ -190,9 +191,8 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
                              static_cast<GhosttyMods>(m_stickyModifiers),
                              event->commitString());
                 setStickyModifiers(0);
-        m_needsRender = true;
-        m_linkScanDirty = true; // Viewport geometry changed — re-scan links
-        update();
+                m_needsRender = true;
+                update();
                 event->accept();
                 return;
             }
@@ -764,16 +764,13 @@ void TerminalView::renderCellGrid(QPainter *painter, GhosttyRenderState state,
                             }
                             // Fall back to regex-detected URL spans
                             if (!isLink)
-                                isLink = !findRegexLinkAt(colIdx, rowIdx).isEmpty();
+                                isLink = isRegexLinkAt(colIdx, rowIdx);
 
                             if (isLink) {
-                                int linkY = y + m_cellHeight - 2;
-                                QPen linkPen(QColor(100, 180, 255, 200));
-                                linkPen.setWidth(1);
+                                static const QPen linkPen(QColor(100, 180, 255, 200), 1);
                                 painter->setPen(linkPen);
-                                painter->drawLine(x, linkY, x + m_cellWidth, linkY);
-                                // Restore pen for subsequent text drawing
-                                painter->setPen(cellFgColor);
+                                painter->drawLine(x, y + m_cellHeight - 2,
+                                                  x + m_cellWidth, y + m_cellHeight - 2);
                             }
                         }
                     }
@@ -1655,13 +1652,13 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         qreal dragDist = QLineF(m_linkTapStartPos, event->pos()).length();
         m_pendingLinkTap = false;
         setKeepMouseGrab(false);
-        if (dragDist < TapDistancePx && !m_tappedLinkUri.isEmpty()) {
-            QDesktopServices::openUrl(QUrl(m_tappedLinkUri));
-            m_tappedLinkUri.clear();
+        QString uri = m_tappedLinkUri;
+        m_tappedLinkUri.clear();
+        if (dragDist < TapDistancePx && !uri.isEmpty()) {
+            QDesktopServices::openUrl(QUrl(uri));
             event->accept();
             return;
         }
-        m_tappedLinkUri.clear();
         // Fall through to normal release handling if finger moved
     }
 
@@ -2412,6 +2409,21 @@ void TerminalView::refreshLinks()
     m_currentLinks = TextUtil::findUrls(flatText, charMap);
 
     m_linkScanDirty = false;
+}
+
+bool TerminalView::isRegexLinkAt(int col, int row) const
+{
+    for (int i = 0; i < m_currentLinks.size(); ++i) {
+        const TextUtil::LinkSpan &span = m_currentLinks[i];
+        if (row < span.startRow || row > span.endRow)
+            continue;
+        if (row == span.startRow && col < span.startCol)
+            continue;
+        if (row == span.endRow && col >= span.endCol)
+            continue;
+        return true;
+    }
+    return false;
 }
 
 QString TerminalView::findRegexLinkAt(int col, int row) const

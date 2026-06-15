@@ -289,7 +289,8 @@ private:
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started
     void refreshLinks();               // Run regex scan on visible viewport
-    QString findRegexLinkAt(int col, int row) const; // Check cached regex links
+    bool isRegexLinkAt(int col, int row) const; // Fast check (no URI copy)
+    QString findRegexLinkAt(int col, int row) const; // Returns URI string
     QString findLinkAt(int col, int row); // Check OSC 8 first, then regex
 
     // --- Theme-bindable UI colors ---
