@@ -202,8 +202,9 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
                              static_cast<GhosttyMods>(m_stickyModifiers),
                              event->commitString());
                 setStickyModifiers(0);
-                m_needsRender = true;
-                update();
+        m_needsRender = true;
+        m_linkScanDirty = true; // Viewport geometry changed — re-scan links
+        update();
                 event->accept();
                 return;
             }
@@ -2300,12 +2301,16 @@ void TerminalView::scrollViewportToBottom()
 
 void TerminalView::refreshLinks()
 {
-    if (!m_vt || !m_vt->terminal() || m_cols == 0 || m_rows == 0)
+    if (!m_vt || !m_vt->terminal() || m_cols == 0 || m_rows == 0) {
+        m_linkScanDirty = false;
         return;
+    }
 
     GhosttyRenderState state = m_vt->renderState();
-    if (!state)
+    if (!state) {
+        m_linkScanDirty = false;
         return;
+    }
 
     m_currentLinks.clear();
 
