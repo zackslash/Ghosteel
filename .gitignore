@@ -70,3 +70,10 @@ Thumbs.db
 
 # CTest
 Testing/
+tests/CMakeCache.txt
+tests/CMakeFiles/
+tests/CTestTestfile.cmake
+tests/cmake_install.cmake
+tests/tst_*
+tests/*_autogen/
+moc_predefs.h
