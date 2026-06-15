@@ -78,6 +78,10 @@ public:
     // and same-dimension resize (setupTerminal does this correctly).
     void restoreScrollback(const QByteArray &data, uint16_t actualCols);
 
+    // Returns the hyperlink URI for the cell at viewport (col, row).
+    // Returns empty string if no hyperlink. Uses GHOSTTY_POINT_TAG_VIEWPORT.
+    QString getHyperlinkAt(uint16_t col, uint32_t row) const;
+
     // Returns true if the cell at (col, row) is a wide-character spacer
     // (the invisible second half of a CJK/emoji character).
     static bool isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row);

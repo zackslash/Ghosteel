@@ -7,8 +7,10 @@
 #include <QImage>
 #include <QFont>
 #include <QElapsedTimer>
+#include <QVector>
 
 #include "ghosttyvt.h"
+#include "textutil.h"
 
 class PtyManager;
 
@@ -279,6 +281,17 @@ private:
     QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
+
+    // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
+    QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
+    bool m_linkScanDirty = true;       // Set when PTY data arrives, cleared after scan
+    bool m_pendingLinkTap = false;     // True between press and release on a link
+    QString m_tappedLinkUri;           // URI of the tapped link
+    QPointF m_linkTapStartPos;         // Position where link tap started
+    void refreshLinks();               // Run regex scan on visible viewport
+    bool isRegexLinkAt(int col, int row) const; // Fast check (no URI copy)
+    QString findRegexLinkAt(int col, int row) const; // Returns URI string
+    QString findLinkAt(int col, int row); // Check OSC 8 first, then regex
 
     // --- Theme-bindable UI colors ---
     QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);

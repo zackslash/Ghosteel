@@ -239,7 +239,7 @@ private slots:
         QTemporaryDir dir;
         Settings s(dir.path() + "/test.conf");
         QCOMPARE(s.fontSize(), 18);
-        QCOMPARE(s.fontFamily(), QStringLiteral("DejaVu Sans Mono"));
+        QCOMPARE(s.fontFamily(), QStringLiteral("monospace"));
         QCOMPARE(s.shellCommand(), QString());
         QCOMPARE(s.colorScheme(), QStringLiteral("dark"));
         QCOMPARE(s.backgroundOpacity(), 0.6f);

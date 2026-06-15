@@ -122,3 +122,11 @@ add_executable(tst_scrollencryptor
 )
 target_link_libraries(tst_scrollencryptor PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME ScrollEncryptor COMMAND tst_scrollencryptor)
+
+# --- URL detection tests ---
+add_executable(tst_url_detection
+    tst_url_detection.cpp
+    ${CMAKE_SOURCE_DIR}/../src/textutil.cpp
+)
+target_link_libraries(tst_url_detection PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME UrlDetection COMMAND tst_url_detection)

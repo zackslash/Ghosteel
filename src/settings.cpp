@@ -30,7 +30,7 @@ void Settings::load()
 {
     m_fontSize = m_settings.value(QStringLiteral("font/size"), 18).toInt();
     m_fontFamily = m_settings.value(QStringLiteral("font/family"),
-                                    QStringLiteral("DejaVu Sans Mono")).toString();
+                                    QStringLiteral("monospace")).toString();
     m_shellCommand = m_settings.value(QStringLiteral("terminal/shell"), QString()).toString();
     m_colorScheme = m_settings.value(QStringLiteral("terminal/colorScheme"),
                                      QStringLiteral("dark")).toString();
