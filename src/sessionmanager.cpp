@@ -15,7 +15,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QElapsedTimer>
-#include <QtAlgorithms>
+#include <algorithm>
 
 #include <unistd.h>
 
@@ -89,13 +89,14 @@ void SessionManager::setActiveSessionIndex(int index)
 
     m_activeSessionIndex = index;
     Q_EMIT activeSessionIndexChanged();
-    Q_EMIT sessionSwitched(index);
 
     // Update last-used timestamp for the switched-to session
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
         rebuildSortedIndices();
     }
+
+    Q_EMIT sessionSwitched(index);
 
     scheduleSave();
 }
@@ -141,7 +142,6 @@ TerminalView* SessionManager::createSession()
 
     int index = m_sessions.size();
     m_sessions.append(info);
-    rebuildSortedIndices();
 
     // Route this view's notifications through the aggregated signal
     connect(view, &TerminalView::desktopNotification, this,
@@ -188,6 +188,8 @@ void SessionManager::removeSession(int index)
         Q_EMIT sessionSwitched(m_activeSessionIndex);
     }
 
+    rebuildSortedIndices();
+
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionsChanged();
     Q_EMIT sessionRemoved(index, info.id);
@@ -204,7 +206,6 @@ void SessionManager::removeSession(int index)
     // toggle — if the session is gone, the file has no reason to exist)
     QFile::remove(scrollbackFilePath(info.id));
 
-    rebuildSortedIndices();
     scheduleSave();
 }
 
@@ -365,6 +366,7 @@ void SessionManager::setSortMode(int mode)
     Settings::instance()->setSessionSortMode(mode);
     rebuildSortedIndices();
     Q_EMIT sessionsChanged();
+    Q_EMIT sortOrderChanged();
 }
 
 void SessionManager::rebuildSortedIndices()
@@ -390,17 +392,17 @@ void SessionManager::rebuildSortedIndices()
         m_sortedIndices[i] = i;
 
     if (mode == Settings::SortLastUsed) {
-        std::sort(m_sortedIndices.begin(), m_sortedIndices.end(),
+        std::stable_sort(m_sortedIndices.begin(), m_sortedIndices.end(),
                   [this](int a, int b) {
             return m_sessions[a].lastUsedAt > m_sessions[b].lastUsedAt; // most recent first
         });
     } else if (mode == Settings::SortCreated) {
-        std::sort(m_sortedIndices.begin(), m_sortedIndices.end(),
+        std::stable_sort(m_sortedIndices.begin(), m_sortedIndices.end(),
                   [this](int a, int b) {
             return m_sessions[a].createdAt > m_sessions[b].createdAt; // newest first
         });
     } else if (mode == Settings::SortAlphabetical) {
-        std::sort(m_sortedIndices.begin(), m_sortedIndices.end(),
+        std::stable_sort(m_sortedIndices.begin(), m_sortedIndices.end(),
                   [this](int a, int b) {
             return m_sessions[a].name.toLower() < m_sessions[b].name.toLower();
         });

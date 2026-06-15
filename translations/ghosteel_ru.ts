@@ -34,7 +34,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Скрыть доп. клавиши</translation>
+        <translation type="vanished">Скрыть доп. клавиши</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Показать доп. клавиши</translation>
+        <translation type="vanished">Показать доп. клавиши</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Перейти к сеансу</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Поделиться выделенным</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Скрыть поиск</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Поиск в терминале</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Сбросить настройки</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Сбросить настройки</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Удалить</translation>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Доп. клавиши</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Включённые клавиши</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет включённых клавиш. Добавьте клавиши из списка ниже.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Доступные клавиши</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ for SailfishOS</source>
         <translation>Сеансы</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Отсортировано по последнему использованию</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Отсортировано по дате создания</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Отсортировано по имени</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Автозапуск</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Команда для запуска при старте</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>напр. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Сортировать по последнему использованию</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Сортировать по имени</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Сортировать по дате создания</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Команда автозапуска</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,86 @@ for SailfishOS</source>
         <translation>Вибрация + звук</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Крошечный (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Маленький (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Средний (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Большой (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Очень большой (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Огромный (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Доп. клавиши</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Показать доп. клавиши</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Показывать панель доп. клавиш над клавиатурой</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Горячая клавиша: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Настроить панель клавиш</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Прокрутка</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранять прокрутку</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранять историю терминала при закрытии приложения. По умолчанию отключено для приватности.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Хранить историю</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 дней</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 дней</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 дней</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 год</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Терминал Ghosteel для SailfishOS
+Работает на движке терминала libghostty</translation>
     </message>
 </context>
 <context>

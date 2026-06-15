@@ -33,7 +33,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Скрий допълнителни клавиши</translation>
+        <translation type="vanished">Скрий допълнителни клавиши</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Покажи допълнителни клавиши</translation>
+        <translation type="vanished">Покажи допълнителни клавиши</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Превключи към сесия</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Споделяне на избраното</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Скрий търсенето</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Търсене в терминала</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Възстанови по подразбиране</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Възстанови по подразбиране</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Премахни</translation>
+        <translation>Премахни</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Допълнителни клавиши</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Активирани клавиши</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Няма активирани клавиши. Добавете клавиши от списъка по-долу.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Налични клавиши</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ for SailfishOS</source>
         <translation>Сесии</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Сортирано по последна употреба</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Сортирано по дата на създаване</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Сортирано по име</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Автоматично стартиране</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Команда за стартиране при пускане</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>напр. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Сортирай по последна употреба</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Сортирай по име</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Сортирай по дата на създаване</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Команда за автоматично стартиране</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ for SailfishOS</source>
         <translation>Вибрация + звук</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Миниатюрен (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Малък (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Среден (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Голям (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Много голям (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Огромен (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Допълнителни клавиши</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Покажи допълнителни клавиши</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Покажи лентата с допълнителни клавиши над клавиатурата</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Бърз клавиш: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Конфигуриране на лентата с клавиши</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Превъртане назад</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Запази превъртането назад</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Запази историята на терминала при затваряне на приложението. По подразбиране е изключено заради поверителност.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Запази историята за</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 дни</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 дни</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 дни</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 година</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel терминал за SailfishOS
+Задвижван от libghostty терминален двигател</translation>
     </message>
 </context>
 <context>

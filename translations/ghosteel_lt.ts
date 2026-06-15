@@ -34,7 +34,7 @@ SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Slėpti papildomus klavišus</translation>
+        <translation type="vanished">Slėpti papildomus klavišus</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Rodyti papildomus klavišus</translation>
+        <translation type="vanished">Rodyti papildomus klavišus</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Perjungti į sesiją</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Bendrinti pasirinkimą</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Slėpti paiešką</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Ieškoti terminale</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Atstatyti numatytuosius</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Atstatyti numatytuosius</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Pašalinti</translation>
+        <translation>Pašalinti</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Papildomi klavišai</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Įjungti klavišai</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nėra įjungtų klavišų. Pridėkite klavišus iš žemiau esančio sąrašo.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Galimi klavišai</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ SailfishOS</translation>
         <translation>Sesijos</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Rikiuota pagal paskutinį naudojimą</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Rikiuota pagal sukūrimą</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Rikiuota pagal pavadinimą</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatinis paleidimas</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Komanda, vykdoma paleidimo metu</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>pvz., htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Rikiuoti pagal paskutinį naudojimą</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Rikiuoti pagal pavadinimą</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Rikiuoti pagal sukūrimą</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatinio paleidimo komanda</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,85 @@ SailfishOS</translation>
         <translation>Vibracija + Garsas</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Labai mažas (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Mažas (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Vidutinis (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Didelis (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Labai didelis (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Milžiniškas (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Papildomi klavišai</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Rodyti papildomus klavišus</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Rodyti papildomų klavišų juostą virš klaviatūros</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Spartusis klavišas: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfigūruoti klavišų juostą</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Slinkties istorija</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Išsaugoti slinkties istoriją</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Išsaugoti terminalo istoriją uždarant programą. Numatytuoju būdu išjungta dėl privatumo.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Saugoti istoriją</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dienas</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dienų</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dienų</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 metus</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 metus</translation>
     </message>
 </context>
 <context>

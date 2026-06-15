@@ -1023,6 +1023,288 @@ private slots:
         QCOMPARE(spy.count(), 2);
         QCOMPARE(spy.at(1).at(0).toInt(), 1);
     }
+
+    // --- Timestamp tests ---
+
+    void testCreateSessionSetsTimestamps()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession();
+
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessionData/session_0");
+        qint64 createdAt = s.value("createdAt").toLongLong();
+        qint64 lastUsedAt = s.value("lastUsedAt").toLongLong();
+        s.endGroup();
+
+        QVERIFY(createdAt > 0);
+        QVERIFY(lastUsedAt > 0);
+        QCOMPARE(createdAt, lastUsedAt); // set at the same time
+    }
+
+    void testTimestampsPersistAndRestore()
+    {
+        // Create a session and save
+        qint64 savedCreatedAt = 0;
+        qint64 savedLastUsedAt = 0;
+        {
+            SessionManager mgr(m_settingsPath);
+            mgr.restoreSessions();
+            mgr.createSession();
+            QTest::qWait(DEBOUNCE_WAIT_MS);
+
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            savedCreatedAt = s.value("createdAt").toLongLong();
+            savedLastUsedAt = s.value("lastUsedAt").toLongLong();
+            s.endGroup();
+        }
+
+        QVERIFY(savedCreatedAt > 0);
+        QVERIFY(savedLastUsedAt > 0);
+
+        // Create new manager and restore
+        SessionManager mgr2(m_settingsPath);
+        mgr2.restoreSessions();
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Read back and verify timestamps match
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessionData/session_0");
+        qint64 restoredCreatedAt = s.value("createdAt").toLongLong();
+        qint64 restoredLastUsedAt = s.value("lastUsedAt").toLongLong();
+        s.endGroup();
+
+        QCOMPARE(restoredCreatedAt, savedCreatedAt);
+        QCOMPARE(restoredLastUsedAt, savedLastUsedAt);
+    }
+
+    void testTimestampsDefaultZeroForLegacySessions()
+    {
+        // writeRawSessions doesn't write timestamps — simulates legacy data
+        writeRawSessions({{"Legacy", "/tmp"}});
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessionData/session_0");
+        qint64 createdAt = s.value("createdAt").toLongLong();
+        qint64 lastUsedAt = s.value("lastUsedAt").toLongLong();
+        s.endGroup();
+
+        QCOMPARE(createdAt, static_cast<qint64>(0));
+        QCOMPARE(lastUsedAt, static_cast<qint64>(0));
+    }
+
+    void testSwitchToSessionUpdatesLastUsedAt()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create 2 sessions with a small delay between them
+        mgr.createSession(); // session 0
+        QTest::qWait(20);
+        mgr.createSession(); // session 1 — has higher lastUsedAt
+
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Read initial timestamps
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessionData/session_0");
+        qint64 session0LastUsedBefore = s.value("lastUsedAt").toLongLong();
+        s.endGroup();
+        s.beginGroup("sessionData/session_1");
+        qint64 session1LastUsedBefore = s.value("lastUsedAt").toLongLong();
+        s.endGroup();
+
+        QVERIFY(session1LastUsedBefore >= session0LastUsedBefore);
+
+        // Switch to session 0
+        mgr.setActiveSessionIndex(0);
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Read updated timestamps
+        QSettings s2(m_settingsPath, QSettings::IniFormat);
+        s2.beginGroup("sessionData/session_0");
+        qint64 session0LastUsedAfter = s2.value("lastUsedAt").toLongLong();
+        s2.endGroup();
+        s2.beginGroup("sessionData/session_1");
+        qint64 session1LastUsedAfter = s2.value("lastUsedAt").toLongLong();
+        s2.endGroup();
+
+        // Session 0's lastUsedAt should now be >= session 1's (we just switched to it)
+        QVERIFY(session0LastUsedAfter >= session1LastUsedAfter);
+    }
+
+    // --- Sort mode tests ---
+
+    void testSortModeDefault()
+    {
+        SessionManager mgr(m_settingsPath);
+        QCOMPARE(mgr.sortMode(), 1); // SortLastUsed is the default
+    }
+
+    void testDisplayToActualManualMode()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession();
+        mgr.createSession();
+        mgr.createSession();
+
+        mgr.setSortMode(0); // SortManual
+
+        QCOMPARE(mgr.displayToActual(0), 0);
+        QCOMPARE(mgr.displayToActual(1), 1);
+        QCOMPARE(mgr.displayToActual(2), 2);
+    }
+
+    void testDisplayToActualAlphabeticalSort()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // actual 0
+        mgr.createSession(); // actual 1
+        mgr.createSession(); // actual 2
+
+        mgr.setSessionName(0, "Charlie");
+        mgr.setSessionName(1, "Alpha");
+        mgr.setSessionName(2, "Bravo");
+
+        mgr.setSortMode(3); // SortAlphabetical
+
+        // Alphabetical order: Alpha, Bravo, Charlie
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(0)), QStringLiteral("Alpha"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(1)), QStringLiteral("Bravo"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(2)), QStringLiteral("Charlie"));
+    }
+
+    void testDisplayToActualLastUsedSort()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // actual 0 — least recent
+        QTest::qWait(20);
+        mgr.createSession(); // actual 1
+        QTest::qWait(20);
+        mgr.createSession(); // actual 2 — most recent
+
+        mgr.setSortMode(1); // SortLastUsed
+
+        // LastUsed descending: most recent first
+        QCOMPARE(mgr.displayToActual(0), 2); // most recent
+        QCOMPARE(mgr.displayToActual(2), 0); // least recent
+    }
+
+    void testActualToDisplayRoundTrip()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession();
+        mgr.createSession();
+        mgr.createSession();
+
+        mgr.setSessionName(0, "Charlie");
+        mgr.setSessionName(1, "Alpha");
+        mgr.setSessionName(2, "Bravo");
+
+        mgr.setSortMode(3); // SortAlphabetical
+
+        // For each display index, round-trip through actual and back
+        for (int i = 0; i < 3; i++) {
+            int actual = mgr.displayToActual(i);
+            QCOMPARE(mgr.actualToDisplay(actual), i);
+        }
+    }
+
+    void testSwitchToSessionByDisplayIndex()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession();
+        mgr.createSession();
+
+        mgr.setSessionName(0, "Bravo");
+        mgr.setSessionName(1, "Alpha");
+
+        mgr.setSortMode(3); // SortAlphabetical
+
+        // Display 0 maps to "Alpha" (actual index 1)
+        int expectedActual = mgr.displayToActual(0);
+
+        mgr.switchToSession(0); // switch via display index
+        QCOMPARE(mgr.activeSessionIndex(), expectedActual);
+    }
+
+    void testSortRebuildsOnNameChange()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // actual 0 — "C"
+        mgr.createSession(); // actual 1 — "A"
+        mgr.createSession(); // actual 2 — "B"
+
+        mgr.setSessionName(0, "C");
+        mgr.setSessionName(1, "A");
+        mgr.setSessionName(2, "B");
+
+        mgr.setSortMode(3); // SortAlphabetical
+
+        // Initial alphabetical order: A(1), B(2), C(0)
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(0)), QStringLiteral("A"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(1)), QStringLiteral("B"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(2)), QStringLiteral("C"));
+
+        // Rename "A" (actual 1) to "Z" — should trigger rebuild
+        mgr.setSessionName(1, "Z");
+
+        // New alphabetical order: B(2), C(0), Z(1)
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(0)), QStringLiteral("B"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(1)), QStringLiteral("C"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(2)), QStringLiteral("Z"));
+    }
+
+    void testSortRebuildsOnRemove()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // actual 0 — "C"
+        mgr.createSession(); // actual 1 — "A"
+        mgr.createSession(); // actual 2 — "B"
+
+        mgr.setSessionName(0, "C");
+        mgr.setSessionName(1, "A");
+        mgr.setSessionName(2, "B");
+
+        mgr.setSortMode(3); // SortAlphabetical
+
+        // Initial alphabetical order: A(1), B(2), C(0)
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(0)), QStringLiteral("A"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(1)), QStringLiteral("B"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(2)), QStringLiteral("C"));
+
+        // Remove the first-displayed session ("A" at actual index 1)
+        int firstActual = mgr.displayToActual(0);
+        mgr.removeSession(firstActual);
+
+        // Remaining sessions should still be alphabetically sorted
+        QCOMPARE(mgr.sessionCount(), 2);
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(0)), QStringLiteral("B"));
+        QCOMPARE(mgr.sessionName(mgr.displayToActual(1)), QStringLiteral("C"));
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)

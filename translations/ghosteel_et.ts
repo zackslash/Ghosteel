@@ -33,7 +33,7 @@ SailfishOS-ile</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Peida lisaklahvid</translation>
+        <translation type="vanished">Peida lisaklahvid</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ SailfishOS-ile</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Näita lisaklahve</translation>
+        <translation type="vanished">Näita lisaklahve</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ SailfishOS-ile</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Lülitu seansile</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Jaga valikut</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Peida otsing</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Otsi terminalist</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Lähtesta vaikeväärtustele</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Lähtesta vaikeväärtustele</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Eemalda</translation>
+        <translation>Eemalda</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Lisaklahvid</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Lubatud klahvid</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Klahve pole lubatud. Lisage klahvid allolevast loendist.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Saadaolevad klahvid</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ SailfishOS-ile</translation>
         <translation>Seansid</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Sorteeritud viimase kasutuse järgi</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sorteeritud loomise järgi</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Sorteeritud nime järgi</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automaatkäivitus</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Käsk käivitamisel</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>nt. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sorteeri viimase kasutuse järgi</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sorteeri nime järgi</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sorteeri loomise järgi</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Automaatkäivituse käsk</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,85 @@ SailfishOS-ile</translation>
         <translation>Vibratsioon + Heli</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Pisike (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Väike (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Keskmine (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Suur (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Väga suur (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Hiiglaslik (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Lisaklahvid</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Näita lisaklahve</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Kuva lisaklahvide riba klaviatuuri kohal</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Otsetee: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Seadista klahviriba</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Kerimisajalugu</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Säilita kerimisajalugu</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Salvesta terminali ajalugu rakenduse sulgemisel. Vaikimisi keelatud privaatsuse huvides.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Säilita ajalugu</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 päeva</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 päeva</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 päeva</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 aasta</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 aasta</translation>
     </message>
 </context>
 <context>

@@ -34,7 +34,7 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Sakrij dodatne tipke</translation>
+        <translation type="vanished">Sakrij dodatne tipke</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Prikaži dodatne tipke</translation>
+        <translation type="vanished">Prikaži dodatne tipke</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Prebaci na sesiju</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Dijeli odabir</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Sakrij pretraživanje</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Pretraži terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Vrati zadane postavke</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Vrati zadane postavke</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Ukloni</translation>
+        <translation>Ukloni</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Dodatne tipke</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Omogućene tipke</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nema omogućenih tipki. Dodajte tipke s donjeg popisa.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostupne tipke</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ za SailfishOS</translation>
         <translation>Sesije</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Sortirano po zadnjoj upotrebi</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sortirano po datumu stvaranja</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Sortirano po nazivu</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatsko pokretanje</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Naredba za pokretanje pri uključivanju</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>npr. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sortiraj po zadnjoj upotrebi</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sortiraj po nazivu</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sortiraj po datumu stvaranja</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Naredba automatskog pokretanja</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,86 @@ za SailfishOS</translation>
         <translation>Vibracija + zvuk</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Sitno (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Malo (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Srednje (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Veliko (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Vrlo veliko (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Ogromno (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatne tipke</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Prikaži dodatne tipke</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Prikaži traku dodatnih tipki iznad tipkovnice</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Prečac: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfiguriraj traku tipki</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomicanje unatrag</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Sačuvaj pomicanje unatrag</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Spremi povijest terminala pri zatvaranju aplikacije. Zadano isključeno zbog privatnosti.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Čuvaj povijest za</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dana</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dana</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dana</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 godina</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel terminal za SailfishOS
+Pokreće libghostty terminalni pogon</translation>
     </message>
 </context>
 <context>

@@ -36,7 +36,7 @@ ar gyfer SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Cuddio allweddi ychwanegol</translation>
+        <translation type="vanished">Cuddio allweddi ychwanegol</translation>
     </message>
     <message>
         <source>New session</source>
@@ -64,7 +64,7 @@ ar gyfer SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Dangos allweddi ychwanegol</translation>
+        <translation type="vanished">Dangos allweddi ychwanegol</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -72,46 +72,46 @@ ar gyfer SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Newid i sesiwn</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Rhannu&apos;r dewis</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Cuddio chwilio</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Chwilio&apos;r derfynell</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Ailosod i&apos;r rhagosodiadau</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Ailosod i&apos;r rhagosodiadau</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Tynnu</translation>
+        <translation>Tynnu</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Allweddi ychwanegol</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Allweddi wedi&apos;u galluogi</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dim allweddi wedi&apos;u galluogi. Ychwanegwch allweddi o&apos;r rhestr isod.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Allweddi ar gael</translation>
     </message>
 </context>
 <context>
@@ -148,27 +148,51 @@ ar gyfer SailfishOS</translation>
         <translation>Sesiynau</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Wedi&apos;i drefnu yn ôl defnydd diwethaf</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Wedi&apos;i drefnu yn ôl dyddiad creu</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Wedi&apos;i drefnu yn ôl enw</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Awto-redeg</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Gorchymyn i&apos;w redeg wrth gychwyn</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>e.e. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Trefnu yn ôl defnydd diwethaf</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Trefnu yn ôl enw</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Trefnu yn ôl dyddiad creu</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Gorchymyn awto-redeg</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -261,49 +285,86 @@ ar gyfer SailfishOS</translation>
         <translation>Dirgryniad + Sain</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Bach Iawn (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Bach (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Canolig (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Mawr (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Mawr Iawn (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Enfawr (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Allweddi ychwanegol</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Dangos allweddi ychwanegol</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Dangos y bar allweddi ychwanegol uwchlaw&apos;r bysellfwrdd</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Byrlwybr: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Ffurfweddu&apos;r bar allweddi</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Sgrolio&apos;n ôl</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Cadw sgrolio&apos;n ôl</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Cadw hanes y derfynell pan gaiff yr ap ei gau. Analluogedig yn ddiofyn er preifatrwydd.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Cadw hanes am</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 diwrnod</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 diwrnod</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 diwrnod</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 flwyddyn</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Terfynell Ghosteel ar gyfer SailfishOS
+Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     </message>
 </context>
 <context>

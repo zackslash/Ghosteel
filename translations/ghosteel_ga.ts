@@ -34,7 +34,7 @@ doSailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Folaigh eochracha breise</translation>
+        <translation type="vanished">Folaigh eochracha breise</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ doSailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Taispeáin eochracha breise</translation>
+        <translation type="vanished">Taispeáin eochracha breise</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ doSailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Athraigh go seisiún</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Comhroghnaigh an roghnúchán</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Folaigh an cuardach</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Cuardaigh sa teirminéal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Athshocraigh go réamhshocruithe</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Athshocraigh go réamhshocruithe</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Bain</translation>
+        <translation>Bain</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Eochracha breise</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Eochracha cumasaithe</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Níl aon eochracha cumasaithe. Cuir eochracha leis ón liosta thíos.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Eochracha ar fáil</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ doSailfishOS</translation>
         <translation>Seisiúin</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Sórtáilte de réir an úsáid is déanaí</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sórtáilte de réir an chruthaithe</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Sórtáilte de réir ainm</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Uathritheadh</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordú le rith ag am tosaithe</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>m.sh. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sórtáil de réir an úsáid is déanaí</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sórtáil de réir ainm</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sórtáil de réir an chruthaithe</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordú uathritheadh</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,85 @@ doSailfishOS</translation>
         <translation>Creathadh + Fuaim</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>An-bheag (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Beag (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Meánach (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Mór (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>An-mhór (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Ollmhór (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Eochracha breise</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Taispeáin eochracha breise</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Taispeáin barra na n-eochracha breise os cionn an mhéarchláir</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Aicearra: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Cumraigh barra na n-eochracha</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Scrollbhac</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Caomhnaigh an scrollbhac</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sábháil stair an teirminéil nuair a dhúnann an aip. Díchumasaithe de réir réamhshocraithe ar mhaithe le príobháideacht.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Caomhnaigh stair ar feadh</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 lá</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 lá</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 lá</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 bhliain</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 bhliain</translation>
     </message>
 </context>
 <context>

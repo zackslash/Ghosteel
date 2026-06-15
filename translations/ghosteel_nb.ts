@@ -33,7 +33,7 @@ for SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Skjul ekstra taster</translation>
+        <translation type="vanished">Skjul ekstra taster</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ for SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Vis ekstra taster</translation>
+        <translation type="vanished">Vis ekstra taster</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ for SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Bytt til økt</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Del markering</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Skjul søk</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Søk i terminalen</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Tilbakestill til standard</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tilbakestill til standard</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Fjern</translation>
+        <translation>Fjern</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Ekstra taster</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Aktiverte taster</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingen taster aktivert. Legg til taster fra listen nedenfor.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Tilgjengelige taster</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ for SailfishOS</translation>
         <translation>Økter</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Sortert etter sist brukt</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sortert etter opprettelsesdato</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Sortert etter navn</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatisk kjøring</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Kommando som skal kjøres ved oppstart</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>f.eks. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sorter etter sist brukt</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sorter etter navn</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sorter etter opprettelsesdato</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Kommando for automatisk kjøring</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ for SailfishOS</translation>
         <translation>Vibrer + Lyd</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Ekstra liten (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Liten (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Medium (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Stor (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Ekstra stor (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Enorm (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Ekstra taster</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Vis ekstra taster</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Vis den ekstra tastaturet over tastaturet</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Snarvei: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfigurer tastaturlinje</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Tilbakerulling</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Behold tilbakerulling</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lagre terminalhistorikk når appen lukkes. Deaktivert som standard av personvernhensyn.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Behold historikk i</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dager</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dager</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dager</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 år</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel-terminal for SailfishOS
+Drevet av libghostty terminalmotor</translation>
     </message>
 </context>
 <context>

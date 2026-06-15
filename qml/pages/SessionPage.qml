@@ -6,6 +6,20 @@ Page {
     id: sessionPage
     allowedOrientations: Orientation.All
 
+    // Revision counter — bumped on sort/session changes to force
+    // stale displayToActual() bindings to re-evaluate.
+    property int _sortRevision: 0
+
+    property string sortDescription: ""
+    Component.onCompleted: updateSortDescription()
+    function updateSortDescription() {
+        var mode = SessionManager.sortMode()
+        if (mode === 1) sortDescription = qsTr("Sorted by last used")
+        else if (mode === 2) sortDescription = qsTr("Sorted by created")
+        else if (mode === 3) sortDescription = qsTr("Sorted by name")
+        else sortDescription = ""
+    }
+
     // Rename dialog
     Component {
         id: renameDialogComponent
@@ -77,15 +91,19 @@ Page {
 
         model: SessionManager.sessionCount
 
+        Connections {
+            target: SessionManager
+            onSortOrderChanged: {
+                _sortRevision++
+                sessionPage.updateSortDescription()
+            }
+            onActiveSessionIndexChanged: _sortRevision++
+            onSessionNameChanged: _sortRevision++
+        }
+
         header: PageHeader {
             title: qsTr("Sessions")
-            description: {
-                var mode = SessionManager.sortMode()
-                if (mode === 1) return qsTr("Sorted by last used")
-                if (mode === 2) return qsTr("Sorted by created")
-                if (mode === 3) return qsTr("Sorted by name")
-                return ""
-            }
+            description: sessionPage.sortDescription
         }
 
         PullDownMenu {
@@ -108,7 +126,10 @@ Page {
             contentHeight: delegateContent.height + Theme.paddingSmall * 2
             highlighted: actualIndex === SessionManager.activeSessionIndex
 
-            property int actualIndex: SessionManager.displayToActual(index)
+            property int actualIndex: {
+                var _ = _sortRevision // force re-evaluation on sort change
+                return SessionManager.displayToActual(index)
+            }
             property string sessionName: SessionManager.sessionName(actualIndex)
             property string autorunCommand: SessionManager.sessionAutorunCommand(actualIndex)
 

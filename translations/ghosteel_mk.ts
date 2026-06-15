@@ -34,7 +34,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Скриј дополнителни копчиња</translation>
+        <translation type="vanished">Скриј дополнителни копчиња</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Прикажи дополнителни копчиња</translation>
+        <translation type="vanished">Прикажи дополнителни копчиња</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ for SailfishOS</source>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Префрли на сесија</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Сподели избор</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Скриј пребарување</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Пребарај во терминал</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Ресетирај на стандардни</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Ресетирај на стандардни</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Отстрани</translation>
+        <translation>Отстрани</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Дополнителни копчиња</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Овозможени копчиња</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нема овозможени копчиња. Додадете копчиња од листата подолу.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Достапни копчиња</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ for SailfishOS</source>
         <translation>Сесии</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Подредено по последна употреба</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Подредено по датум на креирање</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Подредено по име</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Автоматско извршување</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Команда за извршување при стартување</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>пр. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Подреди по последна употреба</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Подреди по име</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Подреди по датум на креирање</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Команда за автоматско извршување</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,85 @@ for SailfishOS</source>
         <translation>Вибрација + Звук</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Многу мало (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Мало (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Средно (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Големо (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Многу големо (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Огромно (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Дополнителни копчиња</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Прикажи дополнителни копчиња</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Прикажи лента со дополнителни копчиња над тастатурата</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Кратенка: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Конфигурирај лента со копчиња</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Историја на движење</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Зачувај историја на движење</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Зачувај ја историјата на терминалот при затворање на апликацијата. Стандардно оневозможено заради приватност.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Зачувај историја за</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 дена</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 дена</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 дена</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 година</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 година</translation>
     </message>
 </context>
 <context>

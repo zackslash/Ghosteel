@@ -33,7 +33,7 @@ për SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Fshihtë çelësat shtesë</translation>
+        <translation type="vanished">Fshihtë çelësat shtesë</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ për SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Shfaq çelësat shtesë</translation>
+        <translation type="vanished">Shfaq çelësat shtesë</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ për SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Kalo te seanca</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Ndaj përzgjedhjen</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Fshihtë kërkimin</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Kërko në terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Rivendos parazgjedhjet</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Rivendos parazgjedhjet</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Hiq</translation>
+        <translation>Hiq</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Çelësat shtesë</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Çelësat e aktivizuar</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nuk ka çelësa të aktivizuar. Shtoni çelësa nga lista më poshtë.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Çelësat në dispozicion</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ për SailfishOS</translation>
         <translation>Sesione</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Renditur sipas përdorimit të fundit</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Renditur sipas krijimit</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Renditur sipas emrit</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Vetë-ekzekutim</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Komanda për t'u ekzekutuar në nisje</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>p.sh. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Rendit sipas përdorimit të fundit</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Rendit sipas emrit</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Rendit sipas krijimit</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Komanda e vetë-ekzekutimit</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,85 @@ për SailfishOS</translation>
         <translation>Dridhje + Zë</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Shumë i vogël (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>I vogël (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Mesatar (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>I madh (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Shumë i madh (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>I stërmadh (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Çelësat shtesë</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Shfaq çelësat shtesë</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Shfaq shiritin e çelësave shtesë mbi tastierë</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Shkurtore: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfiguro shiritin e çelësave</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Rrotullimi prapa</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruaj rrotullimin prapa</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruaj historikun e terminalit kur mbyllet aplikacioni. Çaktivizuar si parazgjedhje për privatësi.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruaj historikun për</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 ditë</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 ditë</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 ditë</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 vit</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 vit</translation>
     </message>
 </context>
 <context>

@@ -33,7 +33,7 @@ para SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Ocultar teclas adicionais</translation>
+        <translation type="vanished">Ocultar teclas adicionais</translation>
     </message>
     <message>
         <source>New session</source>
@@ -61,7 +61,7 @@ para SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Mostrar teclas adicionais</translation>
+        <translation type="vanished">Mostrar teclas adicionais</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -69,46 +69,46 @@ para SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Mudar para sessão</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Partilhar seleção</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Ocultar pesquisa</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Pesquisar no terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Repor predefinições</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Repor predefinições</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Remover</translation>
+        <translation>Remover</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Teclas adicionais</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Teclas ativadas</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nenhuma tecla ativada. Adicione teclas da lista abaixo.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Teclas disponíveis</translation>
     </message>
 </context>
 <context>
@@ -145,27 +145,51 @@ para SailfishOS</translation>
         <translation>Sessões</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Ordenado por último uso</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Ordenado por data de criação</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Ordenado por nome</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Execução automática</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Comando a executar ao iniciar</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>ex. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Ordenar por último uso</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Ordenar por nome</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Ordenar por data de criação</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Comando de execução automática</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -258,49 +282,86 @@ para SailfishOS</translation>
         <translation>Vibrar + Som</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Mínimo (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Pequeno (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Médio (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Grande (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Muito grande (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Enorme (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Teclas adicionais</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Mostrar teclas adicionais</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Mostrar a barra de teclas adicionais acima do teclado</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Atalho: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Configurar barra de teclas</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Deslocamento</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Manter deslocamento</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar o histórico do terminal ao fechar a aplicação. Desativado por predefinição por privacidade.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Manter histórico durante</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dias</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dias</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dias</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 ano</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminal Ghosteel para SailfishOS
+Alimentado pelo motor de terminal libghostty</translation>
     </message>
 </context>
 <context>

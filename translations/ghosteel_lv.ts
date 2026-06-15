@@ -34,7 +34,7 @@ SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Slēpt papildu taustiņus</translation>
+        <translation type="vanished">Slēpt papildu taustiņus</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Rādīt papildu taustiņus</translation>
+        <translation type="vanished">Rādīt papildu taustiņus</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Pārslēgties uz sesiju</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopīgot atlasi</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Slēpt meklēšanu</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Meklēt terminālī</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Atiestatīt uz noklusējumu</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Atiestatīt uz noklusējumu</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Noņemt</translation>
+        <translation>Noņemt</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Papildu taustiņi</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Iespējotie taustiņi</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nav iespējotu taustiņu. Pievienojiet taustiņus no zemāk esošā saraksta.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Pieejamie taustiņi</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ SailfishOS</translation>
         <translation>Sesijas</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Kārtots pēc pēdējās lietošanas</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Kārtots pēc izveides</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Kārtots pēc nosaukuma</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automātiskā palaišana</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Komanda, kas jāpalaiž startējot</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>piem., htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Kārtot pēc pēdējās lietošanas</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Kārtot pēc nosaukuma</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Kārtot pēc izveides</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Automātiskās palaišanas komanda</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,85 @@ SailfishOS</translation>
         <translation>Vibrācija + Skaņa</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Sīks (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Mazs (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Vidējs (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Liels (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Ļoti liels (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Milzīgs (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Papildu taustiņi</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Rādīt papildu taustiņus</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Rādīt papildu taustiņu joslu virs tastatūras</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Saīsne: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfigurēt taustiņu joslu</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Ritināšanas vēsture</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Saglabāt ritināšanas vēsturi</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Saglabāt termināļa vēsturi, kad lietotne aizveras. Pēc noklusējuma atspējots privātuma nolūkos.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Saglabāt vēsturi</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dienas</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dienas</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dienas</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 gadu</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>1 gadu</translation>
     </message>
 </context>
 <context>

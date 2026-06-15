@@ -34,7 +34,7 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Sakrij dodatne tastere</translation>
+        <translation type="vanished">Sakrij dodatne tastere</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Prikaži dodatne tastere</translation>
+        <translation type="vanished">Prikaži dodatne tastere</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ za SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Prebaci na sesiju</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Podeli selekciju</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Sakrij pretragu</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Pretraži terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Vrati podrazumevane vrednosti</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Vrati podrazumevane vrednosti</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Ukloni</translation>
+        <translation>Ukloni</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Dodatni tasteri</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Omogućeni tasteri</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nema omogućenih tastera. Dodajte tastere sa liste ispod.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostupni tasteri</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ za SailfishOS</translation>
         <translation>Sesije</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Sortirano po poslednjoj upotrebi</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sortirano po datumu kreiranja</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Sortirano po nazivu</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatsko pokretanje</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Komanda za pokretanje pri uključivanju</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>npr. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sortiraj po poslednjoj upotrebi</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sortiraj po nazivu</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sortiraj po datumu kreiranja</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Komanda automatskog pokretanja</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,86 @@ za SailfishOS</translation>
         <translation>Vibracija + zvuk</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Sićušno (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Malo (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Srednje (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Veliko (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Vrlo veliko (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Ogromno (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatni tasteri</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Prikaži dodatne tastere</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Prikaži traku dodatnih tastera iznad tastature</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Prečica: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Podesi traku tastera</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Klizanje unazad</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Sačuvaj klizanje unazad</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sačuvaj istoriju terminala pri zatvaranju aplikacije. Podrazumevano isključeno zbog privatnosti.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Čuvaj istoriju za</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 dana</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 dana</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 dana</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 godina</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Ghosteel terminal za SailfishOS
+Pokreće libghostty terminalski motor</translation>
     </message>
 </context>
 <context>

@@ -34,7 +34,7 @@ pentru SailfishOS</translation>
     </message>
     <message>
         <source>Hide extra keys</source>
-        <translation>Ascunde tastele suplimentare</translation>
+        <translation type="vanished">Ascunde tastele suplimentare</translation>
     </message>
     <message>
         <source>New session</source>
@@ -62,7 +62,7 @@ pentru SailfishOS</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Afișează tastele suplimentare</translation>
+        <translation type="vanished">Afișează tastele suplimentare</translation>
     </message>
     <message>
         <source>Tab</source>
@@ -70,46 +70,46 @@ pentru SailfishOS</translation>
     </message>
     <message>
         <source>Switch to session</source>
-        <translation type="unfinished"></translation>
+        <translation>Comută la sesiune</translation>
     </message>
     <message>
         <source>Share selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Partajează selecția</translation>
     </message>
     <message>
         <source>Hide search</source>
-        <translation type="unfinished"></translation>
+        <translation>Ascunde căutarea</translation>
     </message>
     <message>
         <source>Search terminal</source>
-        <translation type="unfinished"></translation>
+        <translation>Caută în terminal</translation>
     </message>
 </context>
 <context>
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation type="unfinished">Resetează la valorile implicite</translation>
-    </message>
-    <message>
-        <source>Extra keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Resetează la valorile implicite</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Elimină</translation>
+        <translation>Elimină</translation>
+    </message>
+    <message>
+        <source>Extra keys</source>
+        <translation>Taste suplimentare</translation>
+    </message>
+    <message>
+        <source>Enabled keys</source>
+        <translation>Taste activate</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nicio tastă activată. Adăugați taste din lista de mai jos.</translation>
     </message>
     <message>
         <source>Available keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Taste disponibile</translation>
     </message>
 </context>
 <context>
@@ -146,27 +146,51 @@ pentru SailfishOS</translation>
         <translation>Sesiuni</translation>
     </message>
     <message>
+        <source>Sorted by last used</source>
+        <translation>Sortat după ultima utilizare</translation>
+    </message>
+    <message>
+        <source>Sorted by created</source>
+        <translation>Sortat după data creării</translation>
+    </message>
+    <message>
+        <source>Sorted by name</source>
+        <translation>Sortat după nume</translation>
+    </message>
+    <message>
         <source>Autorun</source>
-        <translation type="unfinished"></translation>
+        <translation>Rulare automată</translation>
     </message>
     <message>
         <source>Command to run on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Comandă de rulat la pornire</translation>
     </message>
     <message>
         <source>e.g. htop</source>
-        <translation type="unfinished"></translation>
+        <translation>de ex. htop</translation>
+    </message>
+    <message>
+        <source>Sort by last used</source>
+        <translation>Sortează după ultima utilizare</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation>Sortează după nume</translation>
+    </message>
+    <message>
+        <source>Sort by created</source>
+        <translation>Sortează după data creării</translation>
     </message>
     <message>
         <source>Autorun command</source>
-        <translation type="unfinished"></translation>
+        <translation>Comandă de rulare automată</translation>
     </message>
 </context>
 <context>
     <name>SettingsPage</name>
     <message>
         <source>%1 px</source>
-        <translation>%1 px</translation>
+        <translation type="vanished">%1 px</translation>
     </message>
     <message>
         <source>%1%</source>
@@ -259,49 +283,86 @@ pentru SailfishOS</translation>
         <translation>Vibrație + Sunet</translation>
     </message>
     <message>
+        <source>Tiny (%1)</source>
+        <translation>Foarte mic (%1)</translation>
+    </message>
+    <message>
+        <source>Small (%1)</source>
+        <translation>Mic (%1)</translation>
+    </message>
+    <message>
+        <source>Medium (%1)</source>
+        <translation>Mediu (%1)</translation>
+    </message>
+    <message>
+        <source>Large (%1)</source>
+        <translation>Mare (%1)</translation>
+    </message>
+    <message>
+        <source>Extra Large (%1)</source>
+        <translation>Extra mare (%1)</translation>
+    </message>
+    <message>
+        <source>Huge (%1)</source>
+        <translation>Enorm (%1)</translation>
+    </message>
+    <message>
         <source>Extra keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Taste suplimentare</translation>
+    </message>
+    <message>
+        <source>Show extra keys</source>
+        <translation>Afișează tastele suplimentare</translation>
+    </message>
+    <message>
+        <source>Display the extra keys bar above the keyboard</source>
+        <translation>Afișează bara de taste suplimentare deasupra tastaturii</translation>
+    </message>
+    <message>
+        <source>Shortcut: Ctrl+Shift+K</source>
+        <translation>Scurtătură: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
-        <translation type="unfinished"></translation>
+        <translation>Configurare bară de taste</translation>
     </message>
     <message>
         <source>Scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Derulare înapoi</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation type="unfinished"></translation>
+        <translation>Păstrează derularea</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Salvează istoricul terminalului la închiderea aplicației. Dezactivat implicit pentru confidențialitate.</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation type="unfinished"></translation>
+        <translation>Păstrează istoricul pentru</translation>
     </message>
     <message>
         <source>7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>7 zile</translation>
     </message>
     <message>
         <source>30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>30 de zile</translation>
     </message>
     <message>
         <source>90 days</source>
-        <translation type="unfinished"></translation>
+        <translation>90 de zile</translation>
     </message>
     <message>
         <source>1 year</source>
-        <translation type="unfinished"></translation>
+        <translation>1 an</translation>
     </message>
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Terminal Ghosteel pentru SailfishOS
+Propulsat de motorul de terminal libghostty</translation>
     </message>
 </context>
 <context>
