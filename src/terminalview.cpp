@@ -2403,8 +2403,10 @@ void TerminalView::refreshLinks()
 
     // Run regex on the flat text — match.capturedStart()/capturedEnd() are
     // QChar indices that directly index into charMap.
-    if (flatText.isEmpty())
+    if (flatText.isEmpty()) {
+        m_linkScanDirty = false;
         return;
+    }
 
     m_currentLinks = TextUtil::findUrls(flatText, charMap);
 
