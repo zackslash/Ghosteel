@@ -7,10 +7,10 @@
 #include <QImage>
 #include <QFont>
 #include <QElapsedTimer>
-#include <QRegularExpression>
 #include <QVector>
 
 #include "ghosttyvt.h"
+#include "textutil.h"
 
 class PtyManager;
 
@@ -283,15 +283,7 @@ private:
     int m_currentMatchIndex = -1;
 
     // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
-    struct LinkSpan {
-        int startCol;
-        int startRow;
-        int endCol;   // exclusive
-        int endRow;
-        QString uri;
-    };
-    QRegularExpression m_urlRegex;
-    QVector<LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
+    QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
     bool m_linkScanDirty = true;       // Set when PTY data arrives, cleared after scan
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link

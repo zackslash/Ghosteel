@@ -1,5 +1,6 @@
 #include "textutil.h"
 #include <QStringList>
+#include <QRegularExpression>
 #include <QtMath>
 #include <cctype>
 
@@ -85,6 +86,55 @@ bool isWordChar(uint32_t codepoint)
     }
     unsigned char c = static_cast<unsigned char>(codepoint);
     return std::isalnum(c) || c == '_';
+}
+
+const QRegularExpression &urlRegex()
+{
+    // Thread-safe: initialized once on first call.
+    static QRegularExpression re(
+        QStringLiteral(
+            R"url((?:(?:https?://|mailto:|ftp://|file:|ssh:|git://|ssh://|tel:|magnet:|ipfs://|ipns://|gemini://|gopher://|news:)(?:(?:\[[0-9a-fA-F:]+(?:[0-9a-fA-F:]*)+\](?::[0-9]+)?)|[\w\-.~:/?#@!$&*+,;=%]+(?:[\(\[]\w*[\)\]])?)+(?<![,.])|(?:\.\.\/|\.\/|(?<!\w)~\/|(?:[\w][\w\-.]*\/)*(?<!\w)\$[A-Za-z_]\w*\/|\.[\w][\w\-.]*\/|(?<![\w~\/])\/(?!\/))(?:(?=[\w\-.~:\/?#@!$&*+;=%]*\.)[\w\-.~:\/?#@!$&*+;=%]+(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]*[\/.])*|(?![\w\-.~:\/?#@!$&*+;=%]*\.)(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]+)*)*(?<!:)(?: +(?= *$))?|(?=[\w\-.~:\/?#@!$&*+;=%]*\.)(?<!\w)[\w][\w\-.]*\/[\w\-.~:\/?#@!$&*+;=%]+(?<!:)(?: +(?= *$))?))url"
+        )
+    );
+    return re;
+}
+
+QVector<LinkSpan> findUrls(const QString &flatText,
+                           const QVector<CellCoord> &charMap)
+{
+    QVector<LinkSpan> results;
+    if (flatText.isEmpty() || charMap.isEmpty())
+        return results;
+
+    const QRegularExpression &re = urlRegex();
+    if (!re.isValid())
+        return results;
+
+    QRegularExpressionMatchIterator it = re.globalMatch(flatText);
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        int startIdx = match.capturedStart();
+        int endIdx = match.capturedEnd(); // exclusive
+
+        if (startIdx < 0 || endIdx <= startIdx)
+            continue;
+        if (startIdx >= charMap.size() || endIdx > charMap.size())
+            continue;
+
+        CellCoord start = charMap[startIdx];
+        CellCoord end = charMap[endIdx - 1];
+
+        LinkSpan span;
+        span.startCol = start.col;
+        span.startRow = start.row;
+        span.endCol = end.col + 1; // inclusive → exclusive
+        span.endRow = end.row;
+        span.uri = match.captured();
+
+        results.append(span);
+    }
+
+    return results;
 }
 
 } // namespace TextUtil

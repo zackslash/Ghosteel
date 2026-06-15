@@ -37,18 +37,6 @@ TerminalView::TerminalView(QQuickItem *parent)
     m_font.setFixedPitch(true);
     updateFontMetrics();
 
-    // URL detection regex — ported from Ghostty's config/url.zig
-    // Detects: scheme URLs (http/https/mailto/ftp/ssh/git/tel/magnet/ipfs/etc),
-    // rooted/relative paths (./  ../  ~/  $VAR/  /), and bare relative paths with dots.
-    m_urlRegex = QRegularExpression(
-        QStringLiteral(
-            R"((?:(?:https?://|mailto:|ftp://|file:|ssh:|git://|ssh://|tel:|magnet:|ipfs://|ipns://|gemini://|gopher://|news:)(?:(?:\[[:0-9a-fA-F]+(?:[:0-9a-fA-F]*)+\](?::[0-9]+)?)|[\w\-.~:/?#@!$&*+,;=%]+(?:[\(\[]\w*[\)\]])?)+(?<![,.])|(?:\.\.\/|\.\/|(?<!\w)~\/|(?:[\w][\w\-.]*\/)*(?<!\w)\$[A-Za-z_]\w*\/|\.[\w][\w\-.]*\/|(?<![\w~\/])\/(?!\/))(?:(?=[\w\-.~:\/?#@!$&*+;=%]*\.)[\w\-.~:\/?#@!$&*+;=%]+(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]*[\/.])*|(?![\w\-.~:\/?#@!$&*+;=%]*\.)(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]+)*)*(?<!:)(?: +(?= *$))?|(?=[\w\-.~:\/?#@!$&*+;=%]*\.)(?<!\w)[\w][\w\-.]*\/[\w\-.~:\/?#@!$&*+;=%]+(?<!:)(?: +(?= *$))?)"
-        )
-    );
-    if (!m_urlRegex.isValid()) {
-        qWarning() << "URL regex failed to compile:" << m_urlRegex.errorString();
-    }
-
     m_vt = new GhosttyVt(this);
     m_pty = new PtyManager(this);
 
@@ -2327,8 +2315,7 @@ void TerminalView::refreshLinks()
     flatText.reserve(static_cast<int>(m_rows * m_cols));
 
     // charMap[i] = {col, row} for QChar position i in flatText
-    struct CellCoord { uint16_t col; uint16_t row; };
-    QVector<CellCoord> charMap;
+    QVector<TextUtil::CellCoord> charMap;
     charMap.reserve(static_cast<int>(m_rows * m_cols));
 
     // Iterate visible viewport using the render state row iterator
@@ -2422,36 +2409,15 @@ void TerminalView::refreshLinks()
     if (flatText.isEmpty())
         return;
 
-    QRegularExpressionMatchIterator it = m_urlRegex.globalMatch(flatText);
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-        int startIdx = match.capturedStart();
-        int endIdx = match.capturedEnd(); // exclusive
-
-        if (startIdx < 0 || endIdx <= startIdx)
-            continue;
-        if (startIdx >= charMap.size() || endIdx > charMap.size())
-            continue;
-
-        CellCoord start = charMap[startIdx];
-        CellCoord end = charMap[endIdx - 1];
-
-        LinkSpan span;
-        span.startCol = start.col;
-        span.startRow = start.row;
-        span.endCol = end.col + 1; // inclusive → exclusive
-        span.endRow = end.row;
-        span.uri = match.captured();
-
-        m_currentLinks.append(span);
-    }
+    m_currentLinks = TextUtil::findUrls(flatText, charMap);
 
     m_linkScanDirty = false;
 }
 
 QString TerminalView::findRegexLinkAt(int col, int row) const
 {
-    for (const LinkSpan &span : m_currentLinks) {
+    for (int i = 0; i < m_currentLinks.size(); ++i) {
+        const TextUtil::LinkSpan &span = m_currentLinks[i];
         if (row < span.startRow || row > span.endRow)
             continue;
         if (row == span.startRow && col < span.startCol)

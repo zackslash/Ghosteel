@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <QPointF>
+#include <QRegularExpression>
+#include <QVector>
 
 namespace TextUtil {
 
@@ -38,6 +40,27 @@ Dimensions calculateDimensions(int width, int height, int cellWidth, int cellHei
 // Word characters are alphanumeric, underscore, or non-ASCII (CJK, etc.).
 // This is intentionally broad so that CJK and other scripts are treated as words.
 bool isWordChar(uint32_t codepoint);
+
+// URL detection — matches scheme URLs, file paths, and bare relative paths.
+// Ported from Ghostty's config/url.zig (Oniguruma regex).
+struct LinkSpan {
+    int startCol;
+    int startRow;
+    int endCol;   // exclusive
+    int endRow;
+    QString uri;
+};
+
+// Returns the compiled URL regex. Thread-safe (constructed once via static local).
+const QRegularExpression &urlRegex();
+
+// Find all URL matches in a flat text string, mapping match offsets back to
+// cell coordinates via charMap (indexed by QChar position).
+// flatText + charMap are produced by the caller (e.g. TerminalView::refreshLinks).
+// charMap[i] = {col, row} for QChar position i in flatText.
+struct CellCoord { uint16_t col; uint16_t row; };
+QVector<LinkSpan> findUrls(const QString &flatText,
+                           const QVector<CellCoord> &charMap);
 
 } // namespace TextUtil
 
