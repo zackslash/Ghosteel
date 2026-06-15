@@ -36,8 +36,8 @@ private slots:
         QSettings s(m_settingsPath, QSettings::IniFormat);
 
         QCOMPARE(s.value("font/size", 18).toInt(), 18);
-        QCOMPARE(s.value("font/family", "DejaVu Sans Mono").toString(),
-                 QStringLiteral("DejaVu Sans Mono"));
+        QCOMPARE(s.value("font/family", "monospace").toString(),
+                 QStringLiteral("monospace"));
         QCOMPARE(s.value("terminal/shell", "").toString(), QString());
         QCOMPARE(s.value("terminal/colorScheme", "dark").toString(),
                  QStringLiteral("dark"));

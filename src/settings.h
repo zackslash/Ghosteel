@@ -81,7 +81,7 @@ private:
     QSettings m_settings;
     QTimer *m_saveTimer;
     int m_fontSize = 18;
-    QString m_fontFamily = QStringLiteral("DejaVu Sans Mono");
+    QString m_fontFamily = QStringLiteral("monospace");
     QString m_shellCommand;
     QString m_colorScheme = QStringLiteral("dark");
     float m_backgroundOpacity = 0.6f;

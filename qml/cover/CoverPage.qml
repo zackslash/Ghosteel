@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import com.zackslash.ghosteel 1.0
 
 CoverBackground {
     Label {
@@ -42,7 +43,7 @@ CoverBackground {
             margins: Theme.paddingSmall
         }
         font.pixelSize: Theme.fontSizeTiny
-        font.family: "DejaVu Sans Mono"
+        font.family: Settings.fontFamily
         color: Theme.highlightColor
         verticalAlignment: Text.AlignBottom
         wrapMode: Text.Wrap
