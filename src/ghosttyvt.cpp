@@ -261,6 +261,46 @@ bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_
     return (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD);
 }
 
+QString GhosttyVt::getHyperlinkAt(uint16_t col, uint32_t row) const
+{
+    if (!m_terminal)
+        return {};
+
+    GhosttyPoint point = {};
+    point.tag = GHOSTTY_POINT_TAG_VIEWPORT;
+    point.value.coordinate.x = col;
+    point.value.coordinate.y = row;
+
+    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+    if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS)
+        return {};
+
+    // Fast boolean check first
+    GhosttyCell cell = 0;
+    if (ghostty_grid_ref_cell(&ref, &cell) != GHOSTTY_SUCCESS || cell == 0)
+        return {};
+    bool hasLink = false;
+    ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_HYPERLINK, &hasLink);
+    if (!hasLink)
+        return {};
+
+    // Query required buffer size
+    size_t requiredLen = 0;
+    GhosttyResult rc = ghostty_grid_ref_hyperlink_uri(&ref, nullptr, 0, &requiredLen);
+    if (rc != GHOSTTY_SUCCESS || requiredLen == 0)
+        return {};
+
+    // Read URI
+    QByteArray buf(static_cast<int>(requiredLen), '\0');
+    size_t outLen = 0;
+    rc = ghostty_grid_ref_hyperlink_uri(&ref, reinterpret_cast<uint8_t*>(buf.data()),
+                                         buf.size(), &outLen);
+    if (rc != GHOSTTY_SUCCESS)
+        return {};
+
+    return QString::fromUtf8(buf.left(static_cast<int>(outLen)));
+}
+
 bool GhosttyVt::isMouseTracking() const
 {
     if (!m_terminal)

@@ -16,6 +16,8 @@
 #include <QDir>
 #include <QDateTime>
 #include <QLineF>
+#include <QDesktopServices>
+#include <QUrl>
 #include <cstring>
 #include <algorithm>
 #include <sys/ioctl.h>
@@ -34,6 +36,15 @@ TerminalView::TerminalView(QQuickItem *parent)
     m_font.setStyleHint(QFont::Monospace);
     m_font.setFixedPitch(true);
     updateFontMetrics();
+
+    // URL detection regex — ported from Ghostty's config/url.zig
+    // Detects: scheme URLs (http/https/mailto/ftp/ssh/git/tel/magnet/ipfs/etc),
+    // rooted/relative paths (./  ../  ~/  $VAR/  /), and bare relative paths with dots.
+    m_urlRegex = QRegularExpression(
+        QStringLiteral(
+            R"((?:(?:https?://|mailto:|ftp://|file:|ssh:|git://|ssh://|tel:|magnet:|ipfs://|ipns://|gemini://|gopher://|news:)(?:(?:\[[:0-9a-fA-F]+(?:[:0-9a-fA-F]*)+\](?::[0-9]+)?)|[\w\-.~:/?#@!$&*+,;=%]+(?:[\(\[]\w*[\)\]])?)+(?<![,.])|(?:\.\.\/|\.\/|(?<!\w)~\/|(?:[\w][\w\-.]*\/)*(?<!\w)\$[A-Za-z_]\w*\/|\.[\w][\w\-.]*\/|(?<![\w~\/])\/(?!\/))(?:(?=[\w\-.~:\/?#@!$&*+;=%]*\.)[\w\-.~:\/?#@!$&*+;=%]+(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]*[\/.])*|(?![\w\-.~:\/?#@!$&*+;=%]*\.)(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]+)*)*(?<!:)(?: +(?= *$))?|(?=[\w\-.~:\/?#@!$&*+;=%]*\.)(?<!\$*\d*)(?<!\w)[\w][\w\-.]*\/[\w\-.~:\/?#@!$&*+;=%]+(?<!:)(?: +(?= *$))?)"
+        )
+    );
 
     m_vt = new GhosttyVt(this);
     m_pty = new PtyManager(this);
@@ -352,6 +363,7 @@ void TerminalView::onPtyData(const QByteArray &data)
     m_vt->vtWrite(reinterpret_cast<const uint8_t *>(data.constData()),
                    data.size());
     m_needsRender = true;
+    m_linkScanDirty = true; // Re-scan links when terminal content changes
     // Coalesce rapid updates — start timer if not already running.
     // This batches multiple PTY data events into a single repaint at ~60fps.
     // Keypresses call update() directly for immediate response.
@@ -442,6 +454,10 @@ void TerminalView::renderCells(QPainter *painter)
 
     // Update render state (single-threaded — all calls are from main thread)
     m_vt->updateRenderState();
+
+    // Refresh link detection cache when content changes
+    if (m_linkScanDirty)
+        refreshLinks();
 
     GhosttyRenderState state = m_vt->renderState();
     if (!state) {
@@ -734,6 +750,40 @@ void TerminalView::renderCellGrid(QPainter *painter, GhosttyRenderState state,
                     if (style.strikethrough) {
                         int strikeY = y + m_cellHeight / 2;
                         painter->drawLine(x, strikeY, x + m_cellWidth, strikeY);
+                    }
+
+                    // Draw link underline (OSC 8 hyperlinks + regex-detected URLs)
+                    // Selection takes priority — skip link underline for selected cells
+                    if (!style.underline) {
+                        bool isSelected = false;
+                        ghostty_render_state_row_cells_get(
+                            cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_SELECTED,
+                            &isSelected);
+                        if (!isSelected) {
+                            bool isLink = false;
+                            // Check OSC 8 hyperlink via raw cell data
+                            GhosttyCell rawCell = 0;
+                            if (ghostty_render_state_row_cells_get(
+                                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                                    &rawCell) == GHOSTTY_SUCCESS && rawCell != 0) {
+                                ghostty_cell_get(rawCell,
+                                                 GHOSTTY_CELL_DATA_HAS_HYPERLINK,
+                                                 &isLink);
+                            }
+                            // Fall back to regex-detected URL spans
+                            if (!isLink)
+                                isLink = !findRegexLinkAt(colIdx, rowIdx).isEmpty();
+
+                            if (isLink) {
+                                int linkY = y + m_cellHeight - 2;
+                                QPen linkPen(QColor(100, 180, 255, 200));
+                                linkPen.setWidth(1);
+                                painter->setPen(linkPen);
+                                painter->drawLine(x, linkY, x + m_cellWidth, linkY);
+                                // Restore pen for subsequent text drawing
+                                painter->setPen(cellFgColor);
+                            }
+                        }
                     }
                 } else {
                     // Grapheme cluster too complex for buffer — render placeholder
@@ -1473,6 +1523,22 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             return;
         }
 
+        // Check if tapping a link — defer opening to release for clean interaction
+        {
+            QPointF cell = cellFromPixel(event->pos());
+            if (cell.x() >= 0 && cell.y() >= 0) {
+                QString uri = findLinkAt(static_cast<int>(cell.x()),
+                                         static_cast<int>(cell.y()));
+                if (!uri.isEmpty()) {
+                    m_pendingLinkTap = true;
+                    m_tappedLinkUri = uri;
+                    m_linkTapStartPos = event->pos();
+                    event->accept();
+                    return;
+                }
+            }
+        }
+
         // No mouse tracking — detect double/triple tap for word/line selection
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         qreal dist = QLineF(event->pos(), m_lastTapPos).length();
@@ -1591,6 +1657,20 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
 
+    // Open link on clean tap-release (no significant drag)
+    if (m_pendingLinkTap) {
+        qreal dragDist = QLineF(m_linkTapStartPos, event->pos()).length();
+        m_pendingLinkTap = false;
+        if (dragDist < TapDistancePx && !m_tappedLinkUri.isEmpty()) {
+            QDesktopServices::openUrl(QUrl(m_tappedLinkUri));
+            m_tappedLinkUri.clear();
+            event->accept();
+            return;
+        }
+        m_tappedLinkUri.clear();
+        // Fall through to normal release handling if finger moved
+    }
+
     // Finalize handle drag
     if (m_draggingHandle != 0) {
         if (m_draggingHandle == 1)
@@ -1667,6 +1747,7 @@ void TerminalView::wheelEvent(QWheelEvent *event)
         scroll.value.delta = -lines;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
         m_needsRender = true;
+        m_linkScanDirty = true; // Viewport changed — re-scan links
         update();
     }
 
@@ -1723,6 +1804,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
                 scroll.value.delta = lines;
                 ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
                 m_needsRender = true;
+                m_linkScanDirty = true; // Viewport changed — re-scan links
                 update();
             }
             event->accept();
@@ -2205,4 +2287,155 @@ void TerminalView::scrollViewportToBottom()
         scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
     }
+}
+
+// ---------------------------------------------------------------------------
+// Link detection — OSC 8 hyperlinks + regex URL scanning
+// ---------------------------------------------------------------------------
+
+void TerminalView::refreshLinks()
+{
+    if (!m_vt || !m_vt->terminal() || m_cols == 0 || m_rows == 0)
+        return;
+
+    GhosttyRenderState state = m_vt->renderState();
+    if (!state)
+        return;
+
+    m_currentLinks.clear();
+
+    // Serialize visible viewport to flat string + byte→cell coordinate map.
+    // This mirrors Ghostty's renderer/link.zig approach: build a contiguous
+    // string from the visible cells, then run the regex on it, and map match
+    // offsets back to cell coordinates.
+
+    QByteArray flatString;
+    // Reserve ~3 bytes per cell average (CJK = 3-4 bytes, ASCII = 1 byte)
+    flatString.reserve(static_cast<int>(m_rows * m_cols * 3));
+
+    // byteMap[i] = {col, row} for byte offset i in flatString
+    struct CellCoord { uint16_t col; uint16_t row; };
+    QVector<CellCoord> byteMap;
+    byteMap.reserve(static_cast<int>(m_rows * m_cols * 3));
+
+    // Iterate visible viewport using the render state row iterator
+    GhosttyRenderStateRowIterator iterator;
+    ghostty_render_state_row_iterator_new(nullptr, &iterator);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
+
+    GhosttyRenderStateRowCells cells;
+    ghostty_render_state_row_cells_new(nullptr, &cells);
+
+    uint16_t rowIdx = 0;
+    while (ghostty_render_state_row_iterator_next(iterator)) {
+        ghostty_render_state_row_get(iterator,
+                                     GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
+                                     &cells);
+
+        // Check if this row is soft-wrapped (don't insert \n for wrapped rows)
+        GhosttyRow rawRow = 0;
+        bool isWrapped = false;
+        if (ghostty_render_state_row_get(iterator,
+                                         GHOSTTY_RENDER_STATE_ROW_DATA_RAW,
+                                         &rawRow) == GHOSTTY_SUCCESS) {
+            ghostty_row_get(rawRow, GHOSTTY_ROW_DATA_WRAP, &isWrapped);
+        }
+
+        uint16_t colIdx = 0;
+        while (ghostty_render_state_row_cells_next(cells)) {
+            // Skip wide char spacer cells
+            if (GhosttyVt::isWideCharSpacer(m_vt->terminal(), colIdx, rowIdx)) {
+                colIdx++;
+                continue;
+            }
+
+            // Get UTF-8 text for this cell
+            GhosttyBuffer utf8Buf = {};
+            utf8Buf.ptr = nullptr;
+            utf8Buf.cap = 0;
+            if (ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_UTF8,
+                    &utf8Buf) == GHOSTTY_SUCCESS && utf8Buf.len > 0 && utf8Buf.ptr) {
+                const char *str = reinterpret_cast<const char*>(utf8Buf.ptr);
+                for (size_t b = 0; b < utf8Buf.len; b++) {
+                    flatString.append(str[b]);
+                    byteMap.append({colIdx, rowIdx});
+                }
+            } else {
+                flatString.append(' ');
+                byteMap.append({colIdx, rowIdx});
+            }
+            colIdx++;
+        }
+
+        // Insert newline between rows (unless soft-wrapped)
+        if (!isWrapped && rowIdx + 1 < m_rows) {
+            flatString.append('\n');
+            byteMap.append({static_cast<uint16_t>(m_cols), rowIdx}); // sentinel
+        }
+
+        rowIdx++;
+    }
+
+    ghostty_render_state_row_cells_free(cells);
+    ghostty_render_state_row_iterator_free(iterator);
+
+    // Run regex on the flat string
+    if (flatString.isEmpty())
+        return;
+
+    QString text = QString::fromUtf8(flatString);
+    QRegularExpressionMatchIterator it = m_urlRegex.globalMatch(text);
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        int startByte = match.capturedStart();
+        int endByte = match.capturedEnd(); // exclusive
+
+        if (startByte < 0 || endByte <= startByte)
+            continue;
+        if (startByte >= byteMap.size() || endByte > byteMap.size())
+            continue;
+
+        CellCoord start = byteMap[startByte];
+        CellCoord end = byteMap[endByte - 1];
+
+        LinkSpan span;
+        span.startCol = start.col;
+        span.startRow = start.row;
+        span.endCol = end.col + 1; // inclusive → exclusive
+        span.endRow = end.row;
+        span.uri = match.captured();
+
+        m_currentLinks.append(span);
+    }
+
+    m_linkScanDirty = false;
+}
+
+QString TerminalView::findRegexLinkAt(int col, int row) const
+{
+    for (const LinkSpan &span : m_currentLinks) {
+        if (row < span.startRow || row > span.endRow)
+            continue;
+        if (row == span.startRow && col < span.startCol)
+            continue;
+        if (row == span.endRow && col >= span.endCol)
+            continue;
+        return span.uri;
+    }
+    return {};
+}
+
+QString TerminalView::findLinkAt(int col, int row)
+{
+    // Check regex-detected URLs first (cached, fast)
+    QString uri = findRegexLinkAt(col, row);
+    if (!uri.isEmpty())
+        return uri;
+
+    // Fall back to OSC 8 hyperlink via grid_ref API
+    if (m_vt)
+        uri = m_vt->getHyperlinkAt(static_cast<uint16_t>(col),
+                                    static_cast<uint32_t>(row));
+    return uri;
 }

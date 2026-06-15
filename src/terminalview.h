@@ -7,6 +7,8 @@
 #include <QImage>
 #include <QFont>
 #include <QElapsedTimer>
+#include <QRegularExpression>
+#include <QVector>
 
 #include "ghosttyvt.h"
 
@@ -279,6 +281,26 @@ private:
     QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
+
+    // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
+    struct LinkSpan {
+        int startCol;
+        int startRow;
+        int endCol;   // exclusive
+        int endRow;
+        QString uri;
+    };
+    QRegularExpression m_urlRegex;
+    QVector<LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
+    bool m_linkScanDirty = true;       // Set when PTY data arrives, cleared after scan
+    bool m_pendingLinkTap = false;     // True between press and release on a link
+    QString m_tappedLinkUri;           // URI of the tapped link
+    QPointF m_linkTapStartPos;         // Position where link tap started
+    static const int LinkScanDelayMs = 0; // Deferred via QTimer::singleShot
+
+    void refreshLinks();               // Run regex scan on visible viewport
+    QString findRegexLinkAt(int col, int row) const; // Check cached regex links
+    QString findLinkAt(int col, int row); // Check regex first, then OSC 8
 
     // --- Theme-bindable UI colors ---
     QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);
