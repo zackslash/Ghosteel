@@ -29,8 +29,8 @@ TerminalView::TerminalView(QQuickItem *parent)
     setActiveFocusOnTab(true);
     setOpaquePainting(false); // Support transparent backgrounds
 
-    // Monospace font — DejaVu Sans Mono is standard on Sailfish OS
-    m_font = QFont(QStringLiteral("DejaVu Sans Mono"), static_cast<int>(m_fontSize));
+    // Monospace font — "monospace" is a fontconfig alias resolved by Qt
+    m_font = QFont(QStringLiteral("monospace"), static_cast<int>(m_fontSize));
     m_font.setStyleHint(QFont::Monospace);
     m_font.setFixedPitch(true);
     updateFontMetrics();
@@ -773,7 +773,7 @@ void TerminalView::drawShellExitOverlay()
     overlayPainter.setPen(m_shellExitTextColor);
     QString family = Settings::instance()->fontFamily();
     if (family.isEmpty())
-        family = QStringLiteral("DejaVu Sans Mono");
+        family = QStringLiteral("monospace");
     QFont overlayFont(family, m_fontSize + 4);
     overlayFont.setStyleHint(QFont::Monospace);
     overlayPainter.setFont(overlayFont);
@@ -1105,7 +1105,7 @@ void TerminalView::updateFontMetrics()
 {
     QString family = Settings::instance()->fontFamily();
     if (family.isEmpty())
-        family = QStringLiteral("DejaVu Sans Mono");
+        family = QStringLiteral("monospace");
     m_font = QFont(family, static_cast<int>(m_fontSize));
     m_font.setStyleHint(QFont::Monospace);
     m_font.setFixedPitch(true);
