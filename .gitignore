@@ -77,4 +77,3 @@ tests/cmake_install.cmake
 tests/tst_*
 tests/*_autogen/
 moc_predefs.h
-plan.md
