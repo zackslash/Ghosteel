@@ -146,6 +146,7 @@ private:
         void loadPostShader(const QString &path);
         void uploadPostShaderUniforms(PostShader &shader, int fboW, int fboH);
         void runPostProcessPass(PostShader &shader, GLuint inputTex, GLuint outputFbo, int w, int h);
+        void renderMagnifier(const QMatrix4x4 &proj, int fboW, int fboH);
 
         QOpenGLShaderProgram *m_program = nullptr;
         QOpenGLBuffer m_vbo;
@@ -183,7 +184,7 @@ private:
         float m_cursorY = kCursorUnset;
         bool m_cursorVisible = false;
         int m_cursorStyle = 0; // 0=none, 1=block, 2=bar, 3=underline, 4=hollow
-        int m_prevCursorX = -1;
+        int m_prevCursorX = -1; // matches kCursorUnset sentinel
         int m_prevCursorY = -1;
         float m_cursorChangeTime = 0.0f;
         bool m_cursorMoved = false;
@@ -276,7 +277,7 @@ private:
         float m_postTime = 0.0f;
         float m_postTimeDelta = 0.0f;
         float m_postFrameRate = 0.0f;
-        int m_postFrame = 0;
+        unsigned int m_postFrame = 0;
 
         // Terminal color state for post shader uniforms (populated in synchronize)
         float m_postPaletteData[kPaletteFloats]; // 256 * vec3

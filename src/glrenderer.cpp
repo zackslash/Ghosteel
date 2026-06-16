@@ -724,7 +724,6 @@ void GLRenderer::Renderer::runPostProcessPass(PostShader &shader, GLuint inputTe
     glBindFramebuffer(GL_FRAMEBUFFER, outputFbo);
     glViewport(0, 0, w, h);
     glDisable(GL_BLEND);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, inputTex);
@@ -851,7 +850,7 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW
     if (loc.iFrameRate >= 0)
         shader.program->setUniformValue(loc.iFrameRate, m_postFrameRate);
     if (loc.iFrame >= 0)
-        shader.program->setUniformValue(loc.iFrame, m_postFrame);
+        shader.program->setUniformValue(loc.iFrame, static_cast<int>(m_postFrame));
     if (loc.iChannelTime >= 0) {
         float chTime[4] = {m_postTime, 0.0f, 0.0f, 0.0f};
         glUniform1fv(loc.iChannelTime, 4, chTime);
@@ -1520,6 +1519,8 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
+        destroyPipelineFbo();
+        destroyPingPongFbo();
     }
 
     GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
@@ -1530,6 +1531,78 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     m_gridDirty = true;
     buildCellVertices(state);
     m_dirty = true;
+}
+
+void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int fboH)
+{
+    if (!m_magnifierVisible || !m_selecting || m_selStart == m_selEnd
+        || !m_magProgram || !m_magProgram->isLinked() || !m_magnifierTex)
+        return;
+
+    int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
+    int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
+    int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
+    int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
+    if (fboW > srcW && fboH > srcH) {
+        srcX = qBound(0, srcX, fboW - srcW);
+        srcY = qBound(0, srcY, fboH - srcH);
+    } else {
+        srcX = qMax(0, srcX);
+        srcY = qMax(0, srcY);
+    }
+
+    glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    buildMagnifierVertices(fboW, fboH);
+
+    if (m_magVertexCount > 0) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+        m_magProgram->bind();
+        m_magProgram->setUniformValue(m_magMatrixUniform, proj);
+        m_magProgram->setUniformValue(m_magTexUniform, 0);
+
+        int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
+        int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
+        if (destY < 0)
+            destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
+        destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);
+        destY = qBound(0, destY, fboH - TerminalView::MagnifierHeight);
+
+        m_magProgram->setUniformValue(m_magDestRectUniform,
+            static_cast<float>(destX), static_cast<float>(destY),
+            static_cast<float>(TerminalView::MagnifierWidth),
+            static_cast<float>(TerminalView::MagnifierHeight));
+        m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
+
+        float ba = m_magnifierBorderColor.alphaF();
+        float br = m_magnifierBorderColor.redF() * ba;
+        float bg = m_magnifierBorderColor.greenF() * ba;
+        float bb = m_magnifierBorderColor.blueF() * ba;
+        m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
+        m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+
+        const int magStride = 4 * sizeof(float);
+        glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
+                              m_magVertices.constData());
+        glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
+                              m_magVertices.constData() + 2);
+        glEnableVertexAttribArray(m_magPositionAttr);
+        glEnableVertexAttribArray(m_magTexcoordAttr);
+        glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
+        glDisableVertexAttribArray(m_magPositionAttr);
+        glDisableVertexAttribArray(m_magTexcoordAttr);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        m_magProgram->release();
+        glDisable(GL_BLEND);
+    }
 }
 
 bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *fbo)
@@ -1667,74 +1740,7 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         }
 
         // Magnifier
-        if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
-            && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
-
-            int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
-            int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
-            int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
-            int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
-            if (fbo->width() > srcW && fbo->height() > srcH) {
-                srcX = qBound(0, srcX, fbo->width() - srcW);
-                srcY = qBound(0, srcY, fbo->height() - srcH);
-            } else {
-                srcX = qMax(0, srcX);
-                srcY = qMax(0, srcY);
-            }
-
-            glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            buildMagnifierVertices(fbo->width(), fbo->height());
-
-            if (m_magVertexCount > 0) {
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-                m_magProgram->bind();
-                m_magProgram->setUniformValue(m_magMatrixUniform, proj);
-                m_magProgram->setUniformValue(m_magTexUniform, 0);
-
-                int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
-                int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-                if (destY < 0)
-                    destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
-                destX = qBound(0, destX, fbo->width() - TerminalView::MagnifierWidth);
-                destY = qBound(0, destY, fbo->height() - TerminalView::MagnifierHeight);
-
-                m_magProgram->setUniformValue(m_magDestRectUniform,
-                    static_cast<float>(destX), static_cast<float>(destY),
-                    static_cast<float>(TerminalView::MagnifierWidth),
-                    static_cast<float>(TerminalView::MagnifierHeight));
-                m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
-
-                float ba = m_magnifierBorderColor.alphaF();
-                float br = m_magnifierBorderColor.redF() * ba;
-                float bg = m_magnifierBorderColor.greenF() * ba;
-                float bb = m_magnifierBorderColor.blueF() * ba;
-                m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
-                m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-
-                const int magStride = 4 * sizeof(float);
-                glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                      m_magVertices.constData());
-                glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                      m_magVertices.constData() + 2);
-                glEnableVertexAttribArray(m_magPositionAttr);
-                glEnableVertexAttribArray(m_magTexcoordAttr);
-                glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
-                glDisableVertexAttribArray(m_magPositionAttr);
-                glDisableVertexAttribArray(m_magTexcoordAttr);
-
-                glBindTexture(GL_TEXTURE_2D, 0);
-                m_magProgram->release();
-                glDisable(GL_BLEND);
-            }
-        }
+        renderMagnifier(proj, fbo->width(), fbo->height());
 
         glDisable(GL_BLEND);
     }
@@ -1846,74 +1852,7 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
         m_flatProgram->release();
     }
 
-    if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
-        && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
-
-        int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
-        int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
-        int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
-        int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
-        if (fbo->width() > srcW && fbo->height() > srcH) {
-            srcX = qBound(0, srcX, fbo->width() - srcW);
-            srcY = qBound(0, srcY, fbo->height() - srcH);
-        } else {
-            srcX = qMax(0, srcX);
-            srcY = qMax(0, srcY);
-        }
-
-        glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        buildMagnifierVertices(fbo->width(), fbo->height());
-
-        if (m_magVertexCount > 0) {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-            m_magProgram->bind();
-            m_magProgram->setUniformValue(m_magMatrixUniform, proj);
-            m_magProgram->setUniformValue(m_magTexUniform, 0);
-
-            int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
-            int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-            if (destY < 0)
-                destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
-            destX = qBound(0, destX, fbo->width() - TerminalView::MagnifierWidth);
-            destY = qBound(0, destY, fbo->height() - TerminalView::MagnifierHeight);
-
-            m_magProgram->setUniformValue(m_magDestRectUniform,
-                static_cast<float>(destX), static_cast<float>(destY),
-                static_cast<float>(TerminalView::MagnifierWidth),
-                static_cast<float>(TerminalView::MagnifierHeight));
-            m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
-
-            float ba = m_magnifierBorderColor.alphaF();
-            float br = m_magnifierBorderColor.redF() * ba;
-            float bg = m_magnifierBorderColor.greenF() * ba;
-            float bb = m_magnifierBorderColor.blueF() * ba;
-            m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
-            m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-
-            const int magStride = 4 * sizeof(float);
-            glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                  m_magVertices.constData());
-            glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                  m_magVertices.constData() + 2);
-            glEnableVertexAttribArray(m_magPositionAttr);
-            glEnableVertexAttribArray(m_magTexcoordAttr);
-            glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
-            glDisableVertexAttribArray(m_magPositionAttr);
-            glDisableVertexAttribArray(m_magTexcoordAttr);
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-            m_magProgram->release();
-            glDisable(GL_BLEND);
-        }
-    }
+    renderMagnifier(proj, fbo->width(), fbo->height());
 
     glDisable(GL_BLEND);
 }
