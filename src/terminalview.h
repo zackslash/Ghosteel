@@ -280,7 +280,6 @@ private:
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started
-    bool isRegexLinkAt(int col, int row) const; // Fast check (no URI copy)
     QString findRegexLinkAt(int col, int row) const; // Returns URI string
     QString findLinkAt(int col, int row); // Check OSC 8 first, then regex
 

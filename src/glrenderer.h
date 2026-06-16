@@ -243,7 +243,6 @@ private:
         // Phase 5B: ES 3.0 post-processing pipeline
         bool m_es300 = false;
         bool m_postShaderActive = false;
-        QString m_shaderError;
 
         // Pipeline FBO (render-to-texture)
         GLuint m_pipelineTex = 0;

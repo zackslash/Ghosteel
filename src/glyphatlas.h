@@ -6,7 +6,6 @@
 #include <QFontMetrics>
 #include <QImage>
 #include <QHash>
-#include <QVector2D>
 #include <memory>
 
 // Glyph key: codepoint + font variant

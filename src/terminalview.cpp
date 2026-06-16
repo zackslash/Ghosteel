@@ -615,7 +615,7 @@ void TerminalView::setTopPadding(int padding)
         return;
     m_topPadding = padding;
     Q_EMIT topPaddingChanged();
-    // Invalidate cached grid image — it was drawn at the old Y offset
+    // Invalidate cached render state
     update();
     // Recalculate dimensions since padding affects available terminal rows
     if (width() > 0 && height() > 0)
@@ -1767,21 +1767,6 @@ void TerminalView::refreshLinks()
     }
 
     m_linkScanDirty = false;
-}
-
-bool TerminalView::isRegexLinkAt(int col, int row) const
-{
-    for (int i = 0; i < m_currentLinks.size(); ++i) {
-        const TextUtil::LinkSpan &span = m_currentLinks[i];
-        if (row < span.startRow || row > span.endRow)
-            continue;
-        if (row == span.startRow && col < span.startCol)
-            continue;
-        if (row == span.endRow && col >= span.endCol)
-            continue;
-        return true;
-    }
-    return false;
 }
 
 QString TerminalView::findRegexLinkAt(int col, int row) const

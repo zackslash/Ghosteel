@@ -117,7 +117,7 @@ private:
     QStringList m_keybarKeys;
     bool m_keybarVisible = true;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
-    bool m_cursorTrails = false; // default: OFF — user enables if device supports ES 3.0
+    bool m_cursorTrails = true; // default: ON — matches load() default
     QString m_customShaderPath;
     bool m_shaderPipelineAvailable = false; // set by GLRenderer after ES 3.0 probe
 };

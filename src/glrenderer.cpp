@@ -731,8 +731,6 @@ void GLRenderer::Renderer::runPostProcessPass(PostShader &shader, GLuint inputTe
     glBindFramebuffer(GL_FRAMEBUFFER, outputFbo);
     glViewport(0, 0, w, h);
     glDisable(GL_BLEND);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     // Bind input texture as iChannel0
     glActiveTexture(GL_TEXTURE0);
@@ -761,7 +759,6 @@ void GLRenderer::Renderer::createPostShaders()
     m_postShader.program = new QOpenGLShaderProgram;
     if (!m_postShader.program->addShaderFromSourceCode(QOpenGLShader::Vertex, postVertexShaderSource)) {
         qWarning() << "GLRenderer: post vertex shader compilation failed:" << m_postShader.program->log();
-        m_shaderError = m_postShader.program->log();
         delete m_postShader.program;
         m_postShader.program = nullptr;
         return;
@@ -784,7 +781,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "GLRenderer: cannot open post shader file:" << path;
-        m_shaderError = QStringLiteral("Cannot open file: ") + path;
         m_postShaderActive = false;
         return;
     }
@@ -804,7 +800,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     // Vertex shader
     if (!m_postShader.program->addShaderFromSourceCode(QOpenGLShader::Vertex, postVertexShaderSource)) {
         qWarning() << "GLRenderer: post vertex shader failed:" << m_postShader.program->log();
-        m_shaderError = m_postShader.program->log();
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
@@ -815,7 +810,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     QByteArray fragSrc = QByteArray(shadertoyPrefixES300) + "\n" + userShaderSrc;
     if (!m_postShader.program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragSrc.constData())) {
         qWarning() << "GLRenderer: post fragment shader compilation failed:" << m_postShader.program->log();
-        m_shaderError = m_postShader.program->log();
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
@@ -824,7 +818,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
 
     if (!m_postShader.program->link()) {
         qWarning() << "GLRenderer: post shader linking failed:" << m_postShader.program->log();
-        m_shaderError = m_postShader.program->log();
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
@@ -862,7 +855,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     m_postShader.loc.iChannel0 = m_postShader.program->uniformLocation("iChannel0");
 
     m_postShaderActive = true;
-    m_shaderError.clear();
     qDebug() << "GLRenderer: post shader loaded from" << path;
 }
 

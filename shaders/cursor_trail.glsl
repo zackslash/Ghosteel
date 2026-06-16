@@ -59,14 +59,7 @@ const float MIN_MOVE_DISTANCE = 0.0;          // Minimum movement to trigger sme
 
 // === RENDERING PARAMETERS ===
 const float BLUR = 2.0;
-const float DURATION = 0.2;
 const float THRESHOLD_MIN_DISTANCE = 0.0;
-
-// Original warp trail parameters (fallback)
-const float TRAIL_THICKNESS = 1.0;
-const float TRAIL_THICKNESS_X = 0.9;
-const float FADE_ENABLED = 0.0;
-const float FADE_EXPONENT = 5.0;
 
 // --- CONSTANTS ---
 const float PI = 3.14159265359;
@@ -82,17 +75,6 @@ float easeInOut(float t) {
         return 1.0 - 0.5 * pow(2.0 * (1.0 - t), EASE_POWER);
     }
 }
-
-// // Ease-out (alternative - uncomment to use later)
-// float easeOut(float t) {
-//     t = clamp(t, 0.0, 1.0);
-//     return 1.0 - pow(1.0 - t, EASE_POWER);
-// }
-
-// // Linear (alternative - uncomment to use later)
-// float easeLinear(float t) {
-//     return clamp(t, 0.0, 1.0);
-// }
 
 // Get cursor corner positions from center and half-size
 vec2 getTopLeft(vec2 center, vec2 halfSize) {
@@ -156,15 +138,6 @@ float antialising(float distance, float blurAmount) {
   return 1. - smoothstep(0., toNorm(vec2(blurAmount, blurAmount), 0.).x, distance);
 }
 
-// Determines animation duration based on a corner's alignment with the move direction (dot product)
-float getDurationFromDot(float dot_val, float DURATION_LEAD, float DURATION_SIDE, float DURATION_TRAIL) {
-    float isLead = step(0.5, dot_val);
-    float isSide = step(-0.5, dot_val) * (1.0 - isLead);
-    float duration = mix(DURATION_TRAIL, DURATION_SIDE, isSide);
-    duration = mix(duration, DURATION_LEAD, isLead);
-    return duration;
-}
-
 // Alpha gradient: 100% at lead (cursor) → 0% at trail (lagging end)
 float calculateSmearAlphaGradient(in vec2 fragPos, in vec2 trailEdge, in vec2 leadEdge, in vec2 moveDir) {
     float legLength = distance(leadEdge, trailEdge);
@@ -195,9 +168,7 @@ float calculateSmearAlphaGradient(in vec2 fragPos, in vec2 trailEdge, in vec2 le
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord){
-    #if !defined(WEB)
     fragColor = texture(iChannel0, fragCoord.xy / iResolution.xy);
-    #endif
     float terminalAlpha = fragColor.a; // preserve terminal transparency for compositor
 
     vec4 TRAIL_COLOR = iCurrentCursorColor;
@@ -357,106 +328,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
                     newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.0));
                 }
             }
-        } 
-        // === ORIGINAL WARP TRAIL MODE (fallback) ===
-        else {
-            float cc_half_height = currentCursor.w * 0.5;
-            float cc_center_y = currentCursor.y - cc_half_height;
-            float cc_new_half_height = cc_half_height * TRAIL_THICKNESS;
-            float cc_new_top_y = cc_center_y + cc_new_half_height;
-            float cc_new_bottom_y = cc_center_y - cc_new_half_height;
-
-            float cc_half_width = currentCursor.z * 0.5;
-            float cc_center_x = currentCursor.x + cc_half_width;
-            float cc_new_half_width = cc_half_width * TRAIL_THICKNESS_X;
-            float cc_new_left_x = cc_center_x - cc_new_half_width;
-            float cc_new_right_x = cc_center_x + cc_new_half_width;
-
-            vec2 cc_tl = vec2(cc_new_left_x, cc_new_top_y);
-            vec2 cc_tr = vec2(cc_new_right_x, cc_new_top_y);
-            vec2 cc_bl = vec2(cc_new_left_x, cc_new_bottom_y);
-            vec2 cc_br = vec2(cc_new_right_x, cc_new_bottom_y);
-
-            float cp_half_height = previousCursor.w * 0.5;
-            float cp_center_y = previousCursor.y - cp_half_height;
-            float cp_new_half_height = cp_half_height * TRAIL_THICKNESS;
-            float cp_new_top_y = cp_center_y + cp_new_half_height;
-            float cp_new_bottom_y = cp_center_y - cp_half_height;
-
-            float cp_half_width = previousCursor.z * 0.5;
-            float cp_center_x = previousCursor.x + cp_half_width;
-            float cp_new_half_width = cp_half_width * TRAIL_THICKNESS_X;
-            float cp_new_left_x = cp_center_x - cp_new_half_width;
-            float cp_new_right_x = cp_center_x + cp_new_half_width;
-
-            vec2 cp_tl = vec2(cp_new_left_x, cp_new_top_y);
-            vec2 cp_tr = vec2(cp_new_right_x, cp_new_top_y);
-            vec2 cp_bl = vec2(cp_new_left_x, cp_new_bottom_y);
-            vec2 cp_br = vec2(cp_new_right_x, cp_new_bottom_y);
-
-            const float DURATION_TRAIL = DURATION;
-            const float DURATION_LEAD = DURATION * (1.0 - TRAIL_SIZE);
-            const float DURATION_SIDE = (DURATION_LEAD + DURATION_TRAIL) / 2.0;
-
-            vec2 moveVec = centerCC - centerCP;
-            vec2 s = sign(moveVec);
-
-            float dot_tl = dot(vec2(-1., 1.), s);
-            float dot_tr = dot(vec2( 1., 1.), s);
-            float dot_bl = dot(vec2(-1.,-1.), s);
-            float dot_br = dot(vec2( 1.,-1.), s);
-
-            float dur_tl = getDurationFromDot(dot_tl, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-            float dur_tr = getDurationFromDot(dot_tr, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-            float dur_bl = getDurationFromDot(dot_bl, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-            float dur_br = getDurationFromDot(dot_br, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-
-            float isMovingRight = step(0.5, s.x);
-            float isMovingLeft  = step(0.5, -s.x);
-
-            float dot_right_edge = (dot_tr + dot_br) * 0.5;
-            float dur_right_rail = getDurationFromDot(dot_right_edge, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-            
-            float dot_left_edge = (dot_tl + dot_bl) * 0.5;
-            float dur_left_rail = getDurationFromDot(dot_left_edge, DURATION_LEAD, DURATION_SIDE, DURATION_TRAIL);
-
-            float final_dur_tl = mix(dur_tl, dur_left_rail, isMovingLeft);
-            float final_dur_bl = mix(dur_bl, dur_left_rail, isMovingLeft);
-            
-            float final_dur_tr = mix(dur_tr, dur_right_rail, isMovingRight);
-            float final_dur_br = mix(dur_br, dur_right_rail, isMovingRight);
-
-            float prog_tl = easeInOut(clamp(baseProgress / final_dur_tl, 0.0, 1.0));
-            float prog_tr = easeInOut(clamp(baseProgress / final_dur_tr, 0.0, 1.0));
-            float prog_bl = easeInOut(clamp(baseProgress / final_dur_bl, 0.0, 1.0));
-            float prog_br = easeInOut(clamp(baseProgress / final_dur_br, 0.0, 1.0));
-
-            vec2 v_tl = mix(cp_tl, cc_tl, prog_tl);
-            vec2 v_tr = mix(cp_tr, cc_tr, prog_tr);
-            vec2 v_br = mix(cp_br, cc_br, prog_br);
-            vec2 v_bl = mix(cp_bl, cc_bl, prog_bl);
-
-            float sdfTrail = getSdfConvexQuad(vu, v_tl, v_tr, v_br, v_bl);
-
-            vec2 fragVec = vu - centerCP;
-            float fadeProgress = clamp(dot(fragVec, moveVec) / (dot(moveVec, moveVec) + 1e-6), 0.0, 1.0);
-
-            vec4 trail = TRAIL_COLOR;
-            
-            float effectiveBlur = BLUR;
-            if (BLUR < 2.5) {
-              float isDiagonal = abs(s.x) * abs(s.y);
-              float effectiveBlur = mix(0.0, BLUR, isDiagonal);
-            }
-            float shapeAlpha = antialising(sdfTrail, effectiveBlur);
-
-            if (FADE_ENABLED > 0.5) {
-                float easedProgress = pow(fadeProgress, FADE_EXPONENT);
-                trail.a *= easedProgress;
-            }
-
-            float finalAlpha = trail.a * shapeAlpha;
-            newColor = mix(newColor, vec4(trail.rgb, newColor.a), finalAlpha);
         }
 
         if (animationActive) {
