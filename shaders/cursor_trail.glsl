@@ -101,6 +101,9 @@ float getSdfRectangle(in vec2 p, in vec2 xy, in vec2 b)
 
 // Based on Inigo Quilez's 2D distance functions article: https://iquilezles.org/articles/distfunctions2d/
 // Potentially optimized by eliminating conditionals and loops to enhance performance and reduce branching
+// Accumulates winding number (s) for point-in-polygon test.
+// Returns squared distance to segment (a→b).
+// s starts at 1.0, flipped to -1.0 if point is inside the polygon.
 float seg(in vec2 p, in vec2 a, in vec2 b, inout float s, float d) {
     vec2 e = b - a;
     vec2 w = p - a;

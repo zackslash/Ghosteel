@@ -1485,7 +1485,8 @@ void TerminalView::performSearch()
 
     // Case-insensitive search across all rows (capped to prevent OOM)
     static const int MaxSearchMatches = 10000;
-    for (int row = 0; row < m_searchCache.size(); row++) {
+    bool searchDone = false;
+    for (int row = 0; row < m_searchCache.size() && !searchDone; row++) {
         int col = 0;
         const QString &line = m_searchCache[row];
         while (col < line.size()) {
@@ -1520,12 +1521,13 @@ void TerminalView::performSearch()
             }
 
             m_searchMatches.append({row, cellCol, cellWidth});
-            if (m_searchMatches.size() >= MaxSearchMatches)
-                goto searchDone;
+            if (m_searchMatches.size() >= MaxSearchMatches) {
+                searchDone = true;
+                break;
+            }
             col = idx + 1;
         }
     }
-searchDone: // exit point for nested row/col search loop (goto breaks both levels)
 
     if (!m_searchMatches.isEmpty())
         m_currentMatchIndex = 0;

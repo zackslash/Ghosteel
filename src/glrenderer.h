@@ -113,6 +113,11 @@ private:
         QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override;
 
     private:
+        static constexpr float kCursorUnset = -1.0f;
+        static constexpr float kAnimationSettleDelay = 0.5f; // Must exceed shader animation window (~0.49s)
+        static const int kPaletteSize = 256;
+        static const int kPaletteFloats = kPaletteSize * 3; // vec3 per entry
+
         void initialize();
         void createShaders();
         void createVBO();
@@ -133,7 +138,7 @@ private:
         void destroyPingPongFbo();
         void createPostShaders();
         void loadPostShader(const QString &path);
-        void uploadPostShaderUniforms(int fboW, int fboH);
+        void uploadPostShaderUniforms(PostShader &shader, int fboW, int fboH);
         void runPostProcessPass(PostShader &shader, GLuint inputTex, GLuint outputFbo, int w, int h);
 
         QOpenGLShaderProgram *m_program = nullptr;
@@ -169,8 +174,8 @@ private:
         int m_cachedFontSize = 18;
         int m_lastMetricsGeneration = -1;
         // Cursor state (updated via uniforms, not vertex data)
-        float m_cursorX = -1;
-        float m_cursorY = -1;
+        float m_cursorX = kCursorUnset;
+        float m_cursorY = kCursorUnset;
         bool m_cursorVisible = false;
         int m_cursorStyle = 0; // 0=none, 1=block, 2=bar, 3=underline, 4=hollow
         int m_prevCursorX = -1;
@@ -259,7 +264,8 @@ private:
         // Post shader program + uniform locations
         PostShader m_postShader;
 
-        // Multi-pass shader list (unused currently)
+        // Multi-pass shader list — infrastructure for future bloom/blur effects.
+        // Currently unused; ping-pong FBO is only created when this list has >1 entry.
         QList<PostShader> m_postShaders;
 
         // Timing for post shader uniforms
@@ -272,7 +278,7 @@ private:
         int m_postFrame = 0;
 
         // Terminal color state for post shader uniforms (populated in synchronize)
-        float m_postPaletteData[768]; // 256 * vec3
+        float m_postPaletteData[kPaletteFloats]; // 256 * vec3
         float m_postBgR = 0.0f, m_postBgG = 0.0f, m_postBgB = 0.0f;
         float m_postFgR = 1.0f, m_postFgG = 1.0f, m_postFgB = 1.0f;
         float m_postCursorR = 1.0f, m_postCursorG = 1.0f, m_postCursorB = 1.0f;

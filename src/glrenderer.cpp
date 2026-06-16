@@ -731,22 +731,16 @@ void GLRenderer::Renderer::runPostProcessPass(PostShader &shader, GLuint inputTe
     glBindFramebuffer(GL_FRAMEBUFFER, outputFbo);
     glViewport(0, 0, w, h);
     glDisable(GL_BLEND);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    // Bind input texture as iChannel0
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, inputTex);
 
-    // Bind shader and upload uniforms
     shader.program->bind();
-    PostShader savedShader = m_postShader;
-    m_postShader = shader; // temporarily alias for uploadPostShaderUniforms
-    uploadPostShaderUniforms(w, h);
-    m_postShader = savedShader; // restore
+    uploadPostShaderUniforms(shader, w, h);
 
-    // Draw full-screen triangle (no VBO — gl_VertexID trick)
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
-    // Cleanup
     shader.program->release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -858,21 +852,21 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     qDebug() << "GLRenderer: post shader loaded from" << path;
 }
 
-void GLRenderer::Renderer::uploadPostShaderUniforms(int fboW, int fboH)
+void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW, int fboH)
 {
-    const PostShaderUniforms &loc = m_postShader.loc;
+    const PostShaderUniforms &loc = shader.loc;
 
     if (loc.iResolution >= 0)
-        m_postShader.program->setUniformValue(loc.iResolution,
+        shader.program->setUniformValue(loc.iResolution,
             static_cast<float>(fboW), static_cast<float>(fboH), 1.0f);
     if (loc.iTime >= 0)
-        m_postShader.program->setUniformValue(loc.iTime, m_postTime);
+        shader.program->setUniformValue(loc.iTime, m_postTime);
     if (loc.iTimeDelta >= 0)
-        m_postShader.program->setUniformValue(loc.iTimeDelta, m_postTimeDelta);
+        shader.program->setUniformValue(loc.iTimeDelta, m_postTimeDelta);
     if (loc.iFrameRate >= 0)
-        m_postShader.program->setUniformValue(loc.iFrameRate, m_postFrameRate);
+        shader.program->setUniformValue(loc.iFrameRate, m_postFrameRate);
     if (loc.iFrame >= 0)
-        m_postShader.program->setUniformValue(loc.iFrame, m_postFrame);
+        shader.program->setUniformValue(loc.iFrame, m_postFrame);
     if (loc.iChannelTime >= 0) {
         float chTime[4] = {m_postTime, 0.0f, 0.0f, 0.0f};
         glUniform1fv(loc.iChannelTime, 4, chTime);
@@ -885,19 +879,19 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(int fboW, int fboH)
         glUniform3fv(loc.iChannelResolution, 4, chRes);
     }
     if (loc.iMouse >= 0)
-        m_postShader.program->setUniformValue(loc.iMouse, 0.0f, 0.0f, 0.0f, 0.0f);
+        shader.program->setUniformValue(loc.iMouse, 0.0f, 0.0f, 0.0f, 0.0f);
     if (loc.iDate >= 0) {
         QDateTime now = QDateTime::currentDateTime();
         float secs = now.time().hour() * 3600.0f + now.time().minute() * 60.0f
                      + now.time().second() + now.time().msec() / 1000.0f;
-        m_postShader.program->setUniformValue(loc.iDate,
+        shader.program->setUniformValue(loc.iDate,
             static_cast<float>(now.date().year()),
             static_cast<float>(now.date().month()),
             static_cast<float>(now.date().day()),
             secs);
     }
     if (loc.iSampleRate >= 0)
-        m_postShader.program->setUniformValue(loc.iSampleRate, 0.0f);
+        shader.program->setUniformValue(loc.iSampleRate, 0.0f);
 
     // Cursor uniforms — Ghostty shader expects (x, y_top, w, h)
     // In our Y-up ortho, cy = row*cellHeight + topPadding is the bottom edge.
@@ -905,7 +899,7 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(int fboW, int fboH)
     if (loc.iCurrentCursor >= 0) {
         float cx = m_cursorX * m_cellWidth;
         float cy = m_cursorY * m_cellHeight + m_topPadding + static_cast<float>(m_cellHeight);
-        m_postShader.program->setUniformValue(loc.iCurrentCursor,
+        shader.program->setUniformValue(loc.iCurrentCursor,
             cx, cy,
             static_cast<float>(m_cellWidth),
             static_cast<float>(m_cellHeight));
@@ -913,33 +907,33 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(int fboW, int fboH)
     if (loc.iPreviousCursor >= 0) {
         float px = m_prevCursorX * m_cellWidth;
         float py = m_prevCursorY * m_cellHeight + m_topPadding + static_cast<float>(m_cellHeight);
-        m_postShader.program->setUniformValue(loc.iPreviousCursor,
+        shader.program->setUniformValue(loc.iPreviousCursor,
             px, py,
             static_cast<float>(m_cellWidth),
             static_cast<float>(m_cellHeight));
     }
     if (loc.iCurrentCursorColor >= 0) {
         if (m_postCursorColorHasValue)
-            m_postShader.program->setUniformValue(loc.iCurrentCursorColor,
+            shader.program->setUniformValue(loc.iCurrentCursorColor,
                 m_postCursorR, m_postCursorG, m_postCursorB, 1.0f);
         else
-            m_postShader.program->setUniformValue(loc.iCurrentCursorColor,
+            shader.program->setUniformValue(loc.iCurrentCursorColor,
                 m_postFgR, m_postFgG, m_postFgB, 1.0f);
     }
     if (loc.iPreviousCursorColor >= 0)
-        m_postShader.program->setUniformValue(loc.iPreviousCursorColor, 0.0f, 0.0f, 0.0f, 0.0f);
+        shader.program->setUniformValue(loc.iPreviousCursorColor, 0.0f, 0.0f, 0.0f, 0.0f);
     if (loc.iCurrentCursorStyle >= 0)
-        m_postShader.program->setUniformValue(loc.iCurrentCursorStyle, m_cursorStyle);
+        shader.program->setUniformValue(loc.iCurrentCursorStyle, m_cursorStyle);
     if (loc.iPreviousCursorStyle >= 0)
-        m_postShader.program->setUniformValue(loc.iPreviousCursorStyle, 0);
+        shader.program->setUniformValue(loc.iPreviousCursorStyle, 0);
     if (loc.iCursorVisible >= 0)
-        m_postShader.program->setUniformValue(loc.iCursorVisible, m_cursorVisible ? 1 : 0);
+        shader.program->setUniformValue(loc.iCursorVisible, m_cursorVisible ? 1 : 0);
     if (loc.iTimeCursorChange >= 0)
-        m_postShader.program->setUniformValue(loc.iTimeCursorChange, m_cursorChangeTime);
+        shader.program->setUniformValue(loc.iTimeCursorChange, m_cursorChangeTime);
     if (loc.iTimeFocus >= 0)
-        m_postShader.program->setUniformValue(loc.iTimeFocus, 0.0f);
+        shader.program->setUniformValue(loc.iTimeFocus, 0.0f);
     if (loc.iFocus >= 0)
-        m_postShader.program->setUniformValue(loc.iFocus, 1);
+        shader.program->setUniformValue(loc.iFocus, 1);
 
     // Palette (256 colors, vec3 each = 768 floats)
     if (loc.iPalette >= 0)
@@ -947,32 +941,32 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(int fboW, int fboH)
 
     // Terminal colors
     if (loc.iBackgroundColor >= 0)
-        m_postShader.program->setUniformValue(loc.iBackgroundColor,
+        shader.program->setUniformValue(loc.iBackgroundColor,
             m_postBgR, m_postBgG, m_postBgB);
     if (loc.iForegroundColor >= 0)
-        m_postShader.program->setUniformValue(loc.iForegroundColor,
+        shader.program->setUniformValue(loc.iForegroundColor,
             m_postFgR, m_postFgG, m_postFgB);
     if (loc.iCursorColor >= 0) {
         if (m_postCursorColorHasValue)
-            m_postShader.program->setUniformValue(loc.iCursorColor,
+            shader.program->setUniformValue(loc.iCursorColor,
                 m_postCursorR, m_postCursorG, m_postCursorB);
         else
-            m_postShader.program->setUniformValue(loc.iCursorColor,
+            shader.program->setUniformValue(loc.iCursorColor,
                 m_postFgR, m_postFgG, m_postFgB);
     }
     if (loc.iCursorText >= 0)
-        m_postShader.program->setUniformValue(loc.iCursorText,
+        shader.program->setUniformValue(loc.iCursorText,
             m_postBgR, m_postBgG, m_postBgB);
 
     // Selection colors — use reasonable defaults (not exposed by render state API)
     if (loc.iSelectionForegroundColor >= 0)
-        m_postShader.program->setUniformValue(loc.iSelectionForegroundColor, 0.0f, 0.0f, 0.0f);
+        shader.program->setUniformValue(loc.iSelectionForegroundColor, 0.0f, 0.0f, 0.0f);
     if (loc.iSelectionBackgroundColor >= 0)
-        m_postShader.program->setUniformValue(loc.iSelectionBackgroundColor, 0.4f, 0.6f, 1.0f);
+        shader.program->setUniformValue(loc.iSelectionBackgroundColor, 0.4f, 0.6f, 1.0f);
 
     // iChannel0 = pipeline texture on unit 0
     if (loc.iChannel0 >= 0)
-        m_postShader.program->setUniformValue(loc.iChannel0, 0);
+        shader.program->setUniformValue(loc.iChannel0, 0);
 }
 
 void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
@@ -1325,8 +1319,8 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     // This is cheap — no vertex rebuild, just updating uniform values.
     int newCursorX = static_cast<int>(cursorX);
     int newCursorY = static_cast<int>(cursorY);
-    // Guard: m_cursorX starts at -1, skip first-frame spurious move
-    if (m_cursorX >= 0 && (newCursorX != static_cast<int>(m_cursorX) || newCursorY != static_cast<int>(m_cursorY))) {
+    // Guard: m_cursorX starts at kCursorUnset, skip first-frame spurious move
+    if (m_cursorX != kCursorUnset && (newCursorX != static_cast<int>(m_cursorX) || newCursorY != static_cast<int>(m_cursorY))) {
         m_prevCursorX = static_cast<int>(m_cursorX);
         m_prevCursorY = static_cast<int>(m_cursorY);
         m_cursorMoved = true;
@@ -1635,7 +1629,7 @@ void GLRenderer::Renderer::render()
         }
 
         // Check if cursor trail animation has settled
-        if (!m_animationSettled && m_postTime - m_cursorChangeTime > 0.5f) {
+        if (!m_animationSettled && m_postTime - m_cursorChangeTime > kAnimationSettleDelay) {
             m_animationSettled = true;
         }
 

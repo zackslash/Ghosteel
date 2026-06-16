@@ -45,8 +45,8 @@ void GlyphAtlas::initialize()
     m_initialized = true;
 
     // Reserve pixel (0,0) as transparent — empty cells will sample this
-    m_cursorX = 1;
-    m_cursorY = 0;
+    m_packX = 1;
+    m_packY = 0;
     m_rowHeight = 0;
 
     qDebug() << "GlyphAtlas: initialized" << m_atlasWidth << "x" << m_atlasHeight;
@@ -85,8 +85,8 @@ void GlyphAtlas::setFont(const QFont &font, int cellWidth, int cellHeight)
 
     // Clear cache when font changes
     m_cache.clear();
-    m_cursorX = 1; // Reserve pixel (0,0) as transparent for empty cells
-    m_cursorY = 0;
+    m_packX = 1; // Reserve pixel (0,0) as transparent for empty cells
+    m_packY = 0;
     m_rowHeight = 0;
 
     // Re-clear atlas
@@ -168,6 +168,7 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
     info.height = glyphHeight;
 
     // Upload the dirty region to GPU using reusable buffer (avoids QImage::copy allocation)
+    Q_ASSERT(x + glyphWidth <= m_atlasWidth && y + glyphHeight <= m_atlasHeight);
     int bpp = 4; // RGBA8888
     int bytesPerLine = glyphWidth * bpp;
     m_uploadBuf.resize(bytesPerLine * glyphHeight);
@@ -183,22 +184,22 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
 bool GlyphAtlas::allocateSlot(int glyphWidth, int glyphHeight, int &x, int &y)
 {
     // Simple shelf packing: advance cursor, wrap to next row when needed
-    if (m_cursorX + glyphWidth > m_atlasWidth) {
+    if (m_packX + glyphWidth > m_atlasWidth) {
         // Move to next row
-        m_cursorX = 0;
-        m_cursorY += m_rowHeight + 1; // 1px gap
+        m_packX = 0;
+        m_packY += m_rowHeight + 1; // 1px gap
         m_rowHeight = 0;
     }
 
-    if (m_cursorY + glyphHeight > m_atlasHeight) {
+    if (m_packY + glyphHeight > m_atlasHeight) {
         // Atlas full
         qWarning() << "GlyphAtlas: atlas full, cannot allocate" << glyphWidth << "x" << glyphHeight;
         return false;
     }
 
-    x = m_cursorX;
-    y = m_cursorY;
-    m_cursorX += glyphWidth + 1; // 1px gap
+    x = m_packX;
+    y = m_packY;
+    m_packX += glyphWidth + 1; // 1px gap
     if (glyphHeight > m_rowHeight)
         m_rowHeight = glyphHeight;
 
@@ -213,8 +214,8 @@ void GlyphAtlas::bind()
 void GlyphAtlas::clearAtlas()
 {
     m_cache.clear();
-    m_cursorX = 1;
-    m_cursorY = 0;
+    m_packX = 1;
+    m_packY = 0;
     m_rowHeight = 0;
     m_staging.fill(Qt::transparent);
     glBindTexture(GL_TEXTURE_2D, m_texture);

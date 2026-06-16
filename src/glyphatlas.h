@@ -80,8 +80,8 @@ private:
     int m_ascent = 0;
 
     // Packing state (simple shelf algorithm)
-    int m_cursorX = 0;
-    int m_cursorY = 0;
+    int m_packX = 0;
+    int m_packY = 0;
     int m_rowHeight = 0;
 
     // Cache
