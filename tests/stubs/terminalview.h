@@ -5,7 +5,7 @@
 #include <QString>
 #include <QColor>
 
-// Lightweight stub replacing QQuickPaintedItem-based TerminalView for unit tests.
+// Lightweight stub replacing QQuickItem-based TerminalView for unit tests.
 // Provides the same interface that SessionManager depends on, without requiring
 // Qt Quick or the Sailfish SDK.
 

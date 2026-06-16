@@ -3,8 +3,7 @@
 #ifndef TERMINALVIEW_H
 #define TERMINALVIEW_H
 
-#include <QQuickPaintedItem>
-#include <QImage>
+#include <QQuickItem>
 #include <QFont>
 #include <QElapsedTimer>
 #include <QVector>
@@ -14,7 +13,7 @@
 
 class PtyManager;
 
-class TerminalView : public QQuickPaintedItem
+class TerminalView : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
@@ -33,7 +32,11 @@ class TerminalView : public QQuickPaintedItem
     Q_PROPERTY(QColor shellExitOverlayColor READ shellExitOverlayColor WRITE setShellExitOverlayColor NOTIFY shellExitOverlayColorChanged)
     Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
+
 public:
+    // Scrollback search match
+    struct SearchMatch { int row; int cellCol; int cellWidth; };
+
     explicit TerminalView(QQuickItem *parent = nullptr);
     ~TerminalView();
 
@@ -48,6 +51,8 @@ public:
     bool searchActive() const { return m_searchActive; }
     int topPadding() const { return m_topPadding; }
     void setTopPadding(int padding);
+    int cellWidth() const { return m_cellWidth; }
+    int cellHeight() const { return m_cellHeight; }
 
     QColor selectionHighlightColor() const { return m_selectionHighlightColor; }
     void setSelectionHighlightColor(const QColor &color);
@@ -83,6 +88,35 @@ public:
     Q_INVOKABLE void findPrevious();
     void cleanup();                   // Stop PTY/threads before destruction
 
+    // Link detection — exposed for GLRenderer to trigger scans in synchronize()
+    void refreshLinks();               // Run regex scan on visible viewport
+    bool isLinkScanDirty() const { return m_linkScanDirty; }
+
+    // Expose GhosttyVt for GL renderer access
+    GhosttyVt *vt() const { return m_vt; }
+
+    // Expose cursor blink state for GL renderer (single source of truth)
+    bool cursorBlinkVisible() const { return m_cursorBlinkVisible; }
+
+    // Shared constants for selection handles and magnifier
+    static const int HandleRadius = 14; // px — touch-friendly target size
+    static const int MagnifierZoom = 2;
+    static const int MagnifierWidth = 180;  // px
+    static const int MagnifierHeight = 100; // px
+    static const int MagnifierOffset = 20;  // px above finger
+
+    // Overlay state getters for GLRenderer
+    bool isSelecting() const { return m_selecting; }
+    QPointF selectionStart() const { return m_selStart; }
+    QPointF selectionEnd() const { return m_selEnd; }
+    bool handlesVisible() const { return m_handlesVisible; }
+    const QVector<SearchMatch>& searchMatches() const { return m_searchMatches; }
+    bool shellExited() const { return m_shellExited; }
+    int shellExitCode() const { return m_shellExitCode; }
+    bool magnifierVisible() const { return m_magnifierVisible; }
+    int draggingHandle() const { return m_draggingHandle; }
+    const QVector<TextUtil::LinkSpan>& currentLinks() const { return m_currentLinks; }
+
     // Scrollback persistence — wraps GhosttyVt export for SessionManager access
     QByteArray exportScrollback(uint16_t &outCols, uint16_t &outRows) const;
 
@@ -107,9 +141,10 @@ Q_SIGNALS:
     void navigateSession(int direction);
     void toggleKeybar();
     void topPaddingChanged();
+    void contentChanged(); // Emitted on every repaint — GL overlay trigger
 
 protected:
-    void paint(QPainter *painter) override;
+    void update(); // Override to emit contentChanged()
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void inputMethodEvent(QInputMethodEvent *event) override;
@@ -132,64 +167,35 @@ private:
     void setupTerminal();
     void applyColorScheme();
     void recalculateDimensions();
-    void renderCells(QPainter *painter);
     void sendKeyEvent(GhosttyKey key, GhosttyKeyAction action,
                       GhosttyMods mods, const QString &text);
     void sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
                         const QPointF &pos, GhosttyMods mods);
     void resetBlinkOnInput();
     void runAutorunCommand();
-    const QFont &fontForStyle(const GhosttyStyle &style) const;
 
-    // Cell data extracted from the render state for a single grid position.
-    // Used by drawBlockCursorText() to avoid duplicating the cell-reading logic.
-    struct CellData {
-        uint32_t graphemes[128];
-        uint32_t graphemesLen = 0;
-        GhosttyStyle style;
-        QColor bgColor;
-        bool valid = false;
-    };
-    bool readCellAt(GhosttyRenderState state, int col, int row,
-                    const QColor &defaultBg, CellData &out) const;
-    void drawBlockCursorText(QPainter *painter, int px, int py,
-                             GhosttyRenderState state, const QColor &bgColor,
-                             const QColor &fgColor);
-    void drawCursor(QPainter *painter, GhosttyRenderState state,
-                    const GhosttyRenderStateColors &colors,
-                    const QColor &fgColor);
-    void renderCellGrid(QPainter *painter, GhosttyRenderState state,
-                        const QColor &bgColor, const QColor &fgColor);
-    void drawShellExitOverlay();
     void updateFontMetrics();
     QPointF cellFromPixel(const QPointF &pos) const;
     void clearSelection();
-    void drawSelectionHighlight(QPainter *painter, qreal offsetX, qreal offsetY, qreal scale);
     void selectWordAt(const QPointF &pos);
     void selectLineAt(const QPointF &pos);
-    void drawSelectionHandles(QPainter *painter);
     int handleHitTest(const QPointF &pos) const; // 0=none, 1=start, 2=end
     bool updateMagnifierVelocity(const QPointF &pos); // returns true if magnifier should be visible
     void performSearch();
     void scrollToMatch(int index);
-    void drawSearchHighlights(QPainter *painter);
     void buildCellMapping();
     void scrollViewportToBottom();
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
     PtyManager *m_pty = nullptr;
-    QImage m_image;
     uint16_t m_cols = 0;
     uint16_t m_rows = 0;
     int m_cellWidth = 0;
     int m_cellHeight = 0;
 
-    // --- Font (pre-cached variants to avoid per-cell QFont allocation) ---
+    // --- Font ---
     QFont m_font;
-    QFont m_fontBold;
-    QFont m_fontItalic;
-    QFont m_fontBoldItalic;
     int m_fontSize = 10;
     int m_stickyModifiers = 0;
 
@@ -224,14 +230,9 @@ private:
     // Selection handles (SailfishOS-style draggable endpoints)
     bool m_handlesVisible = false;
     int m_draggingHandle = 0; // 0=none, 1=start, 2=end
-    static const int HandleRadius = 14; // px — touch-friendly target size
 
     // Selection magnifier (SailfishOS-style zoom bubble)
-    void renderMagnifier(QPainter *painter);
-    static const int MagnifierZoom = 2;       // 2x zoom
-    static const int MagnifierWidth = 180;    // px
-    static const int MagnifierHeight = 100;   // px
-    static const int MagnifierOffset = 20;    // px above finger
+    // Constants are public — see HandleRadius, MagnifierZoom, etc. above
 
     // --- Mouse tracking for TUI apps (tmux, neovim, htop) ---
     bool m_mouseTrackingActive = false;
@@ -243,14 +244,6 @@ private:
     qreal m_twoFingerLastY = 0;
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
-
-    // Cached cursor cell for block cursor rendering (avoids O(rows) fallback)
-    CellData m_cachedCursor;
-
-    // --- Render batching (~60fps coalescing for rapid PTY data) ---
-    bool m_needsRender = true;
-    int m_renderTimerId = 0;
-    static const int RenderInterval = 16; // ms
 
     // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;
@@ -274,7 +267,6 @@ private:
     QByteArray m_pendingScrollback;
 
     // --- Scrollback search ---
-    struct SearchMatch { int row; int cellCol; int cellWidth; };
     bool m_searchActive = false;
     QString m_searchPattern;
     QStringList m_searchCache;       // Cached terminal text (one string per row)
@@ -288,7 +280,6 @@ private:
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started
-    void refreshLinks();               // Run regex scan on visible viewport
     bool isRegexLinkAt(int col, int row) const; // Fast check (no URI copy)
     QString findRegexLinkAt(int col, int row) const; // Returns URI string
     QString findLinkAt(int col, int row); // Check OSC 8 first, then regex
