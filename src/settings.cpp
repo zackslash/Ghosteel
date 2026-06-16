@@ -44,6 +44,8 @@ void Settings::load()
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
+    m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
+    m_customShaderPath = m_settings.value(QStringLiteral("terminal/customShaderPath")).toString();
 }
 
 void Settings::save()
@@ -173,3 +175,32 @@ void Settings::setSessionSortMode(int mode)
     scheduleSave();
     Q_EMIT sessionSortModeChanged();
 }
+
+void Settings::setCursorTrails(bool enabled)
+{
+    if (m_cursorTrails == enabled)
+        return;
+    m_cursorTrails = enabled;
+    m_settings.setValue(QStringLiteral("terminal/cursorTrails"), enabled);
+    scheduleSave();
+    Q_EMIT cursorTrailsChanged();
+}
+
+void Settings::setCustomShaderPath(const QString &path)
+{
+    if (m_customShaderPath == path)
+        return;
+    m_customShaderPath = path;
+    m_settings.setValue(QStringLiteral("terminal/customShaderPath"), path);
+    scheduleSave();
+    Q_EMIT customShaderPathChanged();
+}
+
+void Settings::setShaderPipelineAvailable(bool available)
+{
+    if (m_shaderPipelineAvailable == available)
+        return;
+    m_shaderPipelineAvailable = available;
+    Q_EMIT shaderPipelineAvailableChanged();
+}
+
