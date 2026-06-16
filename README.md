@@ -4,7 +4,12 @@
 
 # Ghosteel
 
-Terminal emulator for SailfishOS powered by [Ghostty](https://github.com/ghostty-org/ghostty)'s libghostty-vt engine. Truecolor, multi-session, TUI apps.
+Desktop-class terminal for SailfishOS, powered by [Ghostty](https://github.com/ghostty-org/ghostty)'s VT engine. Truecolor, GPU-rendered, multi-session, TUI apps, encrypted scrollback.
+
+Ghosteel brings a modern terminal engine to SailfishOS. Most mobile terminals use
+legacy VT parsers with known limitations. Ghosteel uses the same engine that powers
+[Ghostty](https://github.com/ghostty-org/ghostty), giving you accurate rendering for
+`tmux`, `neovim`, `htop`, and other TUI applications.
 
 ## Install
 
@@ -31,9 +36,22 @@ ln -sf ~/.local/zig-x86_64-linux-0.15.2/zig ~/.local/bin/zig
 mb2 build
 ```
 
+## Features
+
+- **Ghostty VT engine**: full escape sequence support, 24-bit color, alternate screen buffer
+- **GPU rendering**: OpenGL ES 2.0/3.0 renderer with cursor trails shader support
+- **Multi-session**: create, name, switch, and persist sessions with per-session working directories
+- **Encrypted scrollback**: AES-256 encryption via Sailfish Secrets, configurable retention (7 to 365 days)
+- **Link detection**: OSC 8 hyperlinks and automatic URL detection, tap to open in browser
+- **Touch text selection**: long-press with Sailfish-style magnifier, velocity-aware hiding, double/triple tap
+- **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
+- **CJK-aware**: proper wide-character handling in selection, search, and scrollback
+- **2 color schemes**: Dark and Light, adjustable opacity
+- **35+ translations**
+
 ## Architecture
 
-C++ host app with QML/Silica UI. Terminal engine is Ghostty's `libghostty-vt` (Zig, built as a static C library). Rendering via QPainter. Built for aarch64, armv7hl, and i486.
+Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-vt` (Zig, static C library). Rendering via OpenGL ES. Supports Ghostty-compatible post-processing shaders on ES 3.0+. Native cover page, single-instance via D-Bus. Built for aarch64, armv7hl, and i486.
 
 ## Development
 
