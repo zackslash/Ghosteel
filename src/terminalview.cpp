@@ -66,7 +66,6 @@ TerminalView::TerminalView(QQuickItem *parent)
         update();
     });
 
-    // Start cursor blink timer
     m_blinkTimerId = startTimer(BlinkInterval);
 }
 
@@ -108,8 +107,6 @@ void TerminalView::recalculateDimensions()
     if (width() <= 0 || height() <= 0)
         return;
 
-    // Calculate terminal dimensions from available size
-    // m_topPadding for visual comfort
     auto dim = TextUtil::calculateDimensions(width(), height(), m_cellWidth, m_cellHeight, m_topPadding);
     uint16_t newCols = dim.cols;
     uint16_t newRows = dim.rows;
@@ -120,13 +117,11 @@ void TerminalView::recalculateDimensions()
         m_rows = newRows;
 
         if (wasStarted && m_pty->childPid() > 0) {
-            // Resize existing terminal
             struct winsize ws = {};
             ws.ws_col = m_cols;
             ws.ws_row = m_rows;
             ioctl(m_pty->ptyFd(), TIOCSWINSZ, &ws);
 
-            // Resize ghostty terminal state
             if (m_vt->terminal()) {
                 ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
                                         m_cellWidth, m_cellHeight);
@@ -152,7 +147,6 @@ void TerminalView::focusInEvent(QFocusEvent *event)
 {
     QQuickItem::focusInEvent(event);
 
-    // Show the software keyboard when terminal gains focus
     QInputMethod *im = QGuiApplication::inputMethod();
     if (im && !m_suppressKeyboardAutoShow)
         im->show();
@@ -165,7 +159,6 @@ void TerminalView::focusOutEvent(QFocusEvent *event)
 {
     QQuickItem::focusOutEvent(event);
 
-    // Reset input method state when losing focus
     QInputMethod *im = QGuiApplication::inputMethod();
     if (im)
         im->reset();
@@ -201,7 +194,6 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
 
         m_pty->writeData(utf8.constData(), utf8.size());
 
-        // If scrolled up viewing history, scroll back to bottom
         scrollViewportToBottom();
 
         update();
@@ -221,7 +213,6 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
     // If the event carries a key action (e.g. from virtual keyboard
     // special keys like Backspace via IME), handle it
     if (event->replacementStart() != 0 || event->replacementLength() != 0) {
-        // Handle text editing operations from IME
         event->accept();
         return;
     }
@@ -301,7 +292,6 @@ void TerminalView::setupTerminal()
     if (m_cols == 0 || m_rows == 0)
         return;
 
-    // Create terminal
     if (!m_vt->create(m_cols, m_rows, [this](const char *data, size_t len) {
             m_pty->writeData(data, len);
         })) {
@@ -309,10 +299,8 @@ void TerminalView::setupTerminal()
         return;
     }
 
-    // Apply color scheme from settings
     applyColorScheme();
 
-    // Resize terminal with pixel dimensions
     ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
                             m_cellWidth, m_cellHeight);
 
@@ -322,7 +310,6 @@ void TerminalView::setupTerminal()
         m_pendingScrollback.clear();
     }
 
-    // Configure mouse encoder geometry
     m_vt->updateMouseEncoderSize(
         static_cast<uint32_t>(width()),
         static_cast<uint32_t>(height()),
@@ -330,7 +317,6 @@ void TerminalView::setupTerminal()
         static_cast<uint32_t>(m_cellHeight),
         static_cast<uint32_t>(m_topPadding));
 
-    // Start shell (use configured command if set)
     m_pty->setShellCommand(Settings::instance()->shellCommand());
     if (!m_pty->startShell(m_cols, m_rows)) {
         qWarning() << "Failed to start shell";
@@ -338,7 +324,6 @@ void TerminalView::setupTerminal()
         return;
     }
 
-    // Run autorun command after shell initializes
     if (!m_autorunCommand.isEmpty()) {
         QTimer::singleShot(AutorunDelayMs, this, &TerminalView::runAutorunCommand);
     }
@@ -348,7 +333,7 @@ void TerminalView::onPtyData(const QByteArray &data)
 {
     m_vt->vtWrite(reinterpret_cast<const uint8_t *>(data.constData()),
                    data.size());
-    m_linkScanDirty = true; // Re-scan links when terminal content changes
+    m_linkScanDirty = true;
 
     // GL is the only renderer — update immediately. Qt's scene graph
     // coalesces multiple update() calls into a single frame.
@@ -441,7 +426,6 @@ void TerminalView::copySelection()
     if (startCell.x() < 0 || endCell.x() < 0)
         return;
 
-    // Normalize: ensure start <= end
     int startCol = static_cast<int>(startCell.x());
     int startRow = static_cast<int>(startCell.y());
     int endCol = static_cast<int>(endCell.x());
@@ -504,7 +488,6 @@ void TerminalView::copySelection()
         clipboard->setText(result, QClipboard::Clipboard);
     }
 
-    // Update selectedText property for QML share action
     if (m_selectedText != result) {
         m_selectedText = result;
         Q_EMIT selectedTextChanged();
@@ -615,7 +598,6 @@ void TerminalView::setTopPadding(int padding)
         return;
     m_topPadding = padding;
     Q_EMIT topPaddingChanged();
-    // Invalidate cached render state
     update();
     // Recalculate dimensions since padding affects available terminal rows
     if (width() > 0 && height() > 0)
@@ -668,7 +650,6 @@ void TerminalView::clearSelection()
             m_longPressTimerId = 0;
         }
         m_velocityInitialized = false;
-        // Clear selected text and notify QML
         if (!m_selectedText.isEmpty()) {
             m_selectedText.clear();
             Q_EMIT selectedTextChanged();
@@ -752,10 +733,7 @@ void TerminalView::selectWordAt(const QPointF &pos)
             endCol++;
         }
     } else {
-        // Non-word character: select just this character (whitespace/punctuation)
-        // Expand left/right over contiguous non-word, non-space characters
-        // Actually, for non-word chars like punctuation, select just the single char.
-        // For spaces, select the run of spaces.
+        // Non-word character: empty cells select a contiguous run; everything else selects a single char.
         if (tappedChar == 0) {
             // Empty cell — select a run of empty cells
             while (startCol > 0) {
@@ -779,8 +757,8 @@ void TerminalView::selectWordAt(const QPointF &pos)
     m_selStart = QPointF(startCol * m_cellWidth, row * m_cellHeight + m_topPadding);
     m_selEnd = QPointF((endCol + 1) * m_cellWidth - 1, row * m_cellHeight + m_topPadding);
     m_selecting = true;
-    m_magnifierVisible = false; // No magnifier for double-tap — instant selection
-    m_handlesVisible = true;    // Show drag handles for precise adjustment
+    m_magnifierVisible = false;
+    m_handlesVisible = true;
 
     copySelection();
     update();
@@ -798,8 +776,8 @@ void TerminalView::selectLineAt(const QPointF &pos)
     m_selStart = QPointF(0, row * m_cellHeight + m_topPadding);
     m_selEnd = QPointF(m_cols * m_cellWidth - 1, row * m_cellHeight + m_topPadding);
     m_selecting = true;
-    m_magnifierVisible = false; // No magnifier for triple-tap — instant selection
-    m_handlesVisible = true;    // Show drag handles for precise adjustment
+    m_magnifierVisible = false;
+    m_handlesVisible = true;
 
     copySelection();
     update();
@@ -872,7 +850,6 @@ bool TerminalView::updateMagnifierVelocity(const QPointF &pos)
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
 {
-    // If shell has exited, tap to restart
     if (m_shellExited) {
         restartShell();
         event->accept();
@@ -883,12 +860,10 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         m_cursorBlinkVisible = true;
         m_lastInputTime.start();
 
-        // Check if the terminal has mouse tracking enabled (TUI app mode)
         m_mouseTrackingActive = m_vt->isMouseTracking();
         m_touchStartPos = event->pos();
 
         if (m_mouseTrackingActive) {
-            // Forward mouse press to the terminal as an escape sequence
             sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, GHOSTTY_MOUSE_BUTTON_LEFT,
                            event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
 
@@ -906,7 +881,7 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         int handle = handleHitTest(event->pos());
         if (handle != 0) {
             m_draggingHandle = handle;
-            m_handlesVisible = false; // Hide handles while dragging
+            m_handlesVisible = false;
             m_magnifierVisible = true;
             m_velocityInitialized = false;
             m_tapCount = 0; // Prevent phantom triple-tap after handle drag
@@ -932,7 +907,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             }
         }
 
-        // No mouse tracking — detect double/triple tap for word/line selection
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         qreal dist = QLineF(event->pos(), m_lastTapPos).length();
         bool withinWindow = (m_tapCount > 0)
@@ -948,21 +922,18 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         m_lastTapPos = event->pos();
 
         if (m_tapCount == 2) {
-            // Double-tap → select word
             clearSelection();
             selectWordAt(event->pos());
             event->accept();
             return;
         }
         if (m_tapCount == 3) {
-            // Triple-tap → select line
             clearSelection();
             selectLineAt(event->pos());
             event->accept();
             return;
         }
 
-        // Single tap — start long-press timer for manual selection
         clearSelection();
         m_selStart = event->pos();
         m_selEnd = event->pos();
@@ -975,7 +946,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
 
 void TerminalView::mouseMoveEvent(QMouseEvent *event)
 {
-    // Handle dragging a selection handle
     if (m_draggingHandle != 0) {
         if (m_draggingHandle == 1)
             m_selStart = event->pos();
@@ -985,7 +955,6 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
         // Magnifier stays visible during handle drags — no velocity-based hiding.
         // It was set visible on mousePress and should remain so until release.
 
-        // Keep cursor blink paused during handle drag
         m_lastInputTime.start();
 
         update();
@@ -1000,21 +969,18 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
             m_selEnd = event->pos();
         }
 
-        // Velocity-based magnifier hiding: hide during fast swipes
         m_magnifierVisible = updateMagnifierVelocity(event->pos());
 
         // Keep cursor blink paused during active selection to prevent
         // full redraws that cause magnifier flicker
         m_lastInputTime.start();
 
-        // Trigger a repaint so the magnifier follows the finger.
         update();
         event->accept();
         return;
     }
 
     if (m_mouseTrackingActive) {
-        // Forward mouse motion to the terminal (including hover without button)
         GhosttyMouseButton btn = m_mouseButtonPressed
             ? GHOSTTY_MOUSE_BUTTON_LEFT : GHOSTTY_MOUSE_BUTTON_UNKNOWN;
         sendMouseEvent(GHOSTTY_MOUSE_ACTION_MOTION, btn,
@@ -1034,11 +1000,9 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     }
 
     if (m_mouseTrackingActive) {
-        // Forward mouse release to the terminal
         sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
                        event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
 
-        // No more buttons pressed
         m_mouseButtonPressed = false;
         m_vt->setMouseButtonPressed(false);
         m_mouseTrackingActive = false;
@@ -1063,7 +1027,6 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         // Fall through to normal release handling if finger moved
     }
 
-    // Finalize handle drag
     if (m_draggingHandle != 0) {
         if (m_draggingHandle == 1)
             m_selStart = event->pos();
@@ -1071,7 +1034,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
             m_selEnd = event->pos();
         m_draggingHandle = 0;
         m_magnifierVisible = false;
-        m_handlesVisible = true; // Show handles again after adjustment
+        m_handlesVisible = true;
         setKeepMouseGrab(false);
         copySelection();
         update();
@@ -1093,7 +1056,6 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
             }
             copySelection();
         }
-        // Hide magnifier on finger lift, but keep highlight and show handles
         m_magnifierVisible = false;
         m_handlesVisible = true;
         update();
@@ -1138,7 +1100,7 @@ void TerminalView::wheelEvent(QWheelEvent *event)
         scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
         scroll.value.delta = -lines;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-        m_linkScanDirty = true; // Viewport changed — re-scan links
+        m_linkScanDirty = true;
         update();
     }
 
@@ -1154,7 +1116,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     const auto points = event->touchPoints();
 
-    // Two-finger vertical swipe = scroll terminal viewport
     if (points.size() >= 2) {
         if (event->type() == QEvent::TouchBegin) {
             m_twoFingerScrolling = true;
@@ -1162,7 +1123,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
                 killTimer(m_longPressTimerId);
                 m_longPressTimerId = 0;
             }
-            // Cancel any active handle drag
             if (m_draggingHandle != 0) {
                 m_draggingHandle = 0;
                 m_magnifierVisible = false;
@@ -1172,7 +1132,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
             // Clear any active selection — pixel coordinates become stale after scroll
             if (m_selecting)
                 clearSelection();
-            // Average Y of both fingers as starting point
             m_twoFingerLastY = (points[0].pos().y() + points[1].pos().y()) / 2.0;
             event->accept();
             return;
@@ -1183,7 +1142,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
             qreal deltaY = avgY - m_twoFingerLastY;
             m_twoFingerLastY = avgY;
 
-            // Accumulate fractional scroll lines so sub-line deltas aren't lost
             qreal newDelta = -deltaY / m_cellHeight;
             auto touchScrollResult = TextUtil::accumulateScroll(m_touchScrollAccumulator, newDelta);
             m_touchScrollAccumulator = touchScrollResult.accumulator;
@@ -1194,7 +1152,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
                 scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
                 scroll.value.delta = lines;
                 ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-                m_linkScanDirty = true; // Viewport changed — re-scan links
+                m_linkScanDirty = true;
                 update();
             }
             event->accept();
@@ -1209,7 +1167,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
         }
     }
 
-    // Single finger — not scrolling, pass through
     if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
         m_twoFingerScrolling = false;
         m_touchScrollAccumulator = 0;
@@ -1233,7 +1190,6 @@ void TerminalView::timerEvent(QTimerEvent *event)
         return;
     }
     if (event->timerId() == m_blinkTimerId) {
-        // Pause blinking for BlinkPauseMs after any input activity
         if (m_lastInputTime.isValid() &&
             m_lastInputTime.elapsed() < BlinkPauseMs) {
             m_cursorBlinkVisible = true;
@@ -1388,7 +1344,6 @@ void TerminalView::openSearch()
         buildCellMapping();
     }
 
-    // Clear any existing selection to avoid visual confusion
     clearSelection();
 
     Q_EMIT searchActiveChanged();
@@ -1427,7 +1382,6 @@ void TerminalView::buildCellMapping()
         ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
     }
     if (!terminal || cols == 0) {
-        // No terminal or zero columns — fill with empty mappings
         for (int row = 0; row < m_searchCache.size(); row++)
             m_cellMapping.append(QVector<int>());
         return;
@@ -1687,7 +1641,6 @@ void TerminalView::refreshLinks()
                 }
             }
 
-            // Get codepoints for this cell via GRAPHEMES_BUF
             uint32_t graphemeLen = 0;
             if (ghostty_render_state_row_cells_get(
                     cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
@@ -1723,7 +1676,6 @@ void TerminalView::refreshLinks()
             colIdx++;
         }
 
-        // Insert newline between rows (unless soft-wrapped)
         if (!isWrapped && rowIdx + 1 < m_rows) {
             flatText.append(QChar('\n'));
             charMap.append({static_cast<uint16_t>(m_cols), rowIdx}); // sentinel

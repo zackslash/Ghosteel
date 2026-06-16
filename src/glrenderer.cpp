@@ -342,7 +342,6 @@ GLRenderer::Renderer::~Renderer()
             glDeleteTextures(1, &m_magnifierTex);
             m_magnifierTex = 0;
         }
-        // Phase 5B: cleanup post-processing resources
         destroyPipelineFbo();
         destroyPingPongFbo();
     }
@@ -361,7 +360,6 @@ void GLRenderer::Renderer::initialize()
     createMagShaders();
     createMagTexture();
 
-    // Phase 5B: detect ES 3.0 and set up post-processing pipeline
     detectES300();
     if (m_es300)
         createPostShaders();
@@ -628,14 +626,11 @@ void GLRenderer::Renderer::detectES300()
 
 void GLRenderer::Renderer::createPipelineFbo(int w, int h)
 {
-    // Skip if already correct size
     if (m_pipelineFbo && m_pipelineTexW == w && m_pipelineTexH == h)
         return;
 
-    // Destroy old if resizing
     destroyPipelineFbo();
 
-    // Create color texture
     glGenTextures(1, &m_pipelineTex);
     glBindTexture(GL_TEXTURE_2D, m_pipelineTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -660,7 +655,6 @@ void GLRenderer::Renderer::createPipelineFbo(int w, int h)
         qDebug() << "GLRenderer: pipeline FBO created" << w << "x" << h;
     }
 
-    // Unbind — caller will rebind as needed
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -680,7 +674,6 @@ void GLRenderer::Renderer::destroyPipelineFbo()
 
 void GLRenderer::Renderer::createPingPongFbo(int w, int h)
 {
-    // Skip if already correct size
     if (m_pingPongFbo && m_pingPongTexW == w && m_pingPongTexH == h)
         return;
 
@@ -758,9 +751,7 @@ void GLRenderer::Renderer::createPostShaders()
         return;
     }
 
-    // Try loading a custom post shader from Settings
-    // For now, just verify the prefix compiles on its own (no actual effect shader yet)
-    // loadPostShader() will be called when a shader path is configured
+    // Compile vertex shader. Fragment shader is loaded on demand via loadPostShader().
     qDebug() << "GLRenderer: post shader infrastructure ready (ES 3.0, vertex shader compiled)";
 }
 
@@ -771,7 +762,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
         return;
     }
 
-    // Read shader source file
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "GLRenderer: cannot open post shader file:" << path;
@@ -781,17 +771,14 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     QByteArray userShaderSrc = file.readAll();
     file.close();
 
-    // Clean up previous post shader program if any
     if (m_postShader.program) {
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
     }
 
-    // Build full program: vertex shader + prefix + user fragment shader
     m_postShader.program = new QOpenGLShaderProgram;
 
-    // Vertex shader
     if (!m_postShader.program->addShaderFromSourceCode(QOpenGLShader::Vertex, postVertexShaderSource)) {
         qWarning() << "GLRenderer: post vertex shader failed:" << m_postShader.program->log();
         delete m_postShader.program;
@@ -800,7 +787,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
         return;
     }
 
-    // Fragment: prefix + user code
     QByteArray fragSrc = QByteArray(shadertoyPrefixES300) + "\n" + userShaderSrc;
     if (!m_postShader.program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragSrc.constData())) {
         qWarning() << "GLRenderer: post fragment shader compilation failed:" << m_postShader.program->log();
@@ -818,7 +804,6 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
         return;
     }
 
-    // Cache all uniform locations
     m_postShader.loc.iResolution = m_postShader.program->uniformLocation("iResolution");
     m_postShader.loc.iTime = m_postShader.program->uniformLocation("iTime");
     m_postShader.loc.iTimeDelta = m_postShader.program->uniformLocation("iTimeDelta");
@@ -939,7 +924,6 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW
     if (loc.iPalette >= 0)
         glUniform3fv(loc.iPalette, 256, m_postPaletteData);
 
-    // Terminal colors
     if (loc.iBackgroundColor >= 0)
         shader.program->setUniformValue(loc.iBackgroundColor,
             m_postBgR, m_postBgG, m_postBgB);
@@ -1180,8 +1164,7 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         m_flatVertices << (arrowCenterX + 6.0f) << arrowBase << r << g << b << a;
     }
 
-    // Upload to VBO
-    m_flatVertexCount = m_flatVertices.size() / 6; // 6 floats per vertex
+    m_flatVertexCount = m_flatVertices.size() / 6;
     if (m_flatVertexCount > 0) {
         m_flatVbo.bind();
         m_flatVbo.allocate(m_flatVertices.constData(),
@@ -1236,12 +1219,10 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_cellWidth = 0; // force re-init below
     }
 
-    // Get grid dimensions
     uint16_t cols = 0, rows = 0;
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_COLS, &cols);
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROWS, &rows);
 
-    // Get default colors
     GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
     ghostty_render_state_colors_get(state, &colors);
 
@@ -1268,7 +1249,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_postPaletteData[i * 3 + 2] = colors.palette[i].b / 255.0f;
     }
 
-    // Get cursor info
     bool cursorVisible = false, cursorInViewport = false;
     bool cursorBlinking = true;
     uint16_t cursorX = 0, cursorY = 0;
@@ -1293,7 +1273,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_bgOpacity = q->m_cachedMetrics.backgroundOpacity;
         m_cachedFontSize = q->m_cachedMetrics.fontSize;
 
-        // Build font for atlas rasterization
         QString family = q->m_cachedMetrics.fontFamily;
         if (family.isEmpty())
             family = QStringLiteral("monospace");
@@ -1301,7 +1280,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         font.setStyleHint(QFont::Monospace);
         font.setFixedPitch(true);
 
-        // Initialize atlas with font
         if (!m_atlasInitialized) {
             m_atlas.initialize();
             m_atlasInitialized = true;
@@ -1408,9 +1386,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_scrollOffset = scrollbar.offset;
     }
 
-    // Check if terminal content actually changed (PTY data, resize, etc.)
-    // Cursor blink does NOT require a vertex rebuild — it's handled by shader uniforms.
-
     // Load/unload cursor trail shader based on setting
     // Custom shader path takes priority over cursor trails
     bool wantCustom = !q->m_customShaderPath.isEmpty() && m_es300;
@@ -1454,14 +1429,11 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 
     m_gridDirty = true;
 
-    // Build cell vertices
     m_cellVertices.clear();
     m_cellVertices.reserve(cols * rows * 6); // 6 vertices per cell
 
-    // Background opacity for premultiplied alpha
     float bgAlpha = m_bgOpacity;
 
-    // Iterate rows
     GhosttyRenderStateRowIterator iterator;
     ghostty_render_state_row_iterator_new(nullptr, &iterator);
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
@@ -1479,7 +1451,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         int x = 0;
         int colIdx = 0;
         while (ghostty_render_state_row_cells_next(cells)) {
-            // Cell background color
             GhosttyColorRgb cellBg;
             float cBgR = bgR, cBgG = bgG, cBgB = bgB;
             if (ghostty_render_state_row_cells_get(
@@ -1490,7 +1461,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
                 cBgB = cellBg.b / 255.0f;
             }
 
-            // Cell foreground color
             GhosttyColorRgb cellFg;
             float cFgR = fgR, cFgG = fgG, cFgB = fgB;
             if (ghostty_render_state_row_cells_get(
@@ -1501,7 +1471,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
                 cFgB = cellFg.b / 255.0f;
             }
 
-            // Read style for decoration type
             GhosttyStyle cellStyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
             ghostty_render_state_row_cells_get(
                 cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
@@ -1514,7 +1483,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
             float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
             float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
 
-            // Cell text — get glyph UVs
             uint32_t graphemesLen = 0;
             ghostty_render_state_row_cells_get(
                 cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
@@ -1535,7 +1503,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
                 v1 = gi.v1;
             }
 
-            // Build quad (2 triangles, 6 vertices)
             float x0 = static_cast<float>(x);
             float y0 = static_cast<float>(y);
             float x1 = static_cast<float>(x + m_cellWidth);
@@ -1575,7 +1542,6 @@ void GLRenderer::Renderer::render()
         return;
     }
 
-    // Rebuild VBO if dirty
     if (m_dirty) {
         rebuildVBO();
         m_dirty = false;
@@ -1844,14 +1810,12 @@ void GLRenderer::Renderer::render()
         QMatrix4x4 m;
         m.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
 
-        // Bind atlas texture to unit 0
         glActiveTexture(GL_TEXTURE0);
         m_atlas.bind();
 
-        // Bind shader and set uniforms
         m_program->bind();
         m_program->setUniformValue(m_matrixUniform, m);
-        m_program->setUniformValue(m_atlasUniform, 0); // texture unit 0
+        m_program->setUniformValue(m_atlasUniform, 0);
 
         // Cursor uniforms — updated every frame, no vertex rebuild needed for blink
         m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
@@ -1892,7 +1856,6 @@ void GLRenderer::Renderer::render()
 
         glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
 
-        // Cleanup attribute state
         if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
         if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
         if (m_fgColorAttr >= 0) glDisableVertexAttribArray(m_fgColorAttr);
@@ -1900,7 +1863,6 @@ void GLRenderer::Renderer::render()
         if (m_decoAttr >= 0) glDisableVertexAttribArray(m_decoAttr);
         m_vbo.release();
 
-        // Cleanup cell shader
         m_program->release();
 
         // --- GL overlay draw (flat-color shader for selection, search, links) ---
@@ -1930,8 +1892,7 @@ void GLRenderer::Renderer::render()
         if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
             && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
 
-            // Copy source region from FBO to magnifier texture
-            int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;  // 90
+                    int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;  // 90
             int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom; // 50
             int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
             int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
@@ -1947,7 +1908,6 @@ void GLRenderer::Renderer::render()
             glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
             glBindTexture(GL_TEXTURE_2D, 0);
 
-            // Build magnifier quad vertices
             buildMagnifierVertices(fbo->width(), fbo->height());
 
             if (m_magVertexCount > 0) {
@@ -1958,7 +1918,6 @@ void GLRenderer::Renderer::render()
                 m_magProgram->setUniformValue(m_magMatrixUniform, m);
                 m_magProgram->setUniformValue(m_magTexUniform, 0); // texture unit 0
 
-                // Compute dest rect for SDF uniforms
                 int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
                 int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
                 if (destY < 0)
@@ -1979,7 +1938,6 @@ void GLRenderer::Renderer::render()
                 m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
                 m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
 
-                // Bind magnifier texture
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
 

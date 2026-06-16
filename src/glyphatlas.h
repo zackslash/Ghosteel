@@ -23,10 +23,10 @@ inline uint qHash(const GlyphKey &key, uint seed = 0) {
 
 // Packed glyph info in atlas
 struct GlyphInfo {
-    float u0, v0, u1, v1; // texture coordinates
-    int advance;           // pixel width
-    int ascent;            // baseline offset
-    int width, height;     // pixel dimensions
+    float u0, v0, u1, v1;
+    int advance;
+    int ascent;
+    int width, height;
 };
 
 class GlyphAtlas : protected QOpenGLFunctions
@@ -44,10 +44,8 @@ public:
     // Get or rasterize a glyph. Returns texture coordinates.
     const GlyphInfo &glyph(uint codepoint, bool bold = false, bool italic = false);
 
-    // Bind the atlas texture for rendering
     void bind();
 
-    // Atlas dimensions
     int width() const { return m_atlasWidth; }
     int height() const { return m_atlasHeight; }
 
@@ -66,7 +64,6 @@ private:
     GLuint m_texture = 0;
     bool m_initialized = false;
 
-    // Font
     QFont m_font;
     QFont m_fontBold;
     QFont m_fontItalic;
@@ -84,7 +81,6 @@ private:
     int m_packY = 0;
     int m_rowHeight = 0;
 
-    // Cache
     QHash<GlyphKey, GlyphInfo> m_cache;
 
     // Staging image for uploading

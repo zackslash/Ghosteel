@@ -55,7 +55,7 @@ void Settings::save()
 
 void Settings::scheduleSave()
 {
-    m_saveTimer->start(); // restarts timer on each call (debounce)
+    m_saveTimer->start();
 }
 
 void Settings::setFontSize(int size)

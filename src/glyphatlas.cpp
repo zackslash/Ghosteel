@@ -13,8 +13,6 @@ GlyphAtlas::GlyphAtlas(int atlasWidth, int atlasHeight)
 
 GlyphAtlas::~GlyphAtlas()
 {
-    // unique_ptr handles font metrics cleanup automatically
-
     if (QOpenGLContext::currentContext())
         destroy();
     else
@@ -28,7 +26,6 @@ void GlyphAtlas::initialize()
 
     initializeOpenGLFunctions();
 
-    // Create atlas texture
     glGenTextures(1, &m_texture);
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -36,7 +33,6 @@ void GlyphAtlas::initialize()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    // Allocate empty atlas (RGBA)
     m_staging = QImage(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
     m_staging.fill(Qt::transparent);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_atlasWidth, m_atlasHeight,
@@ -83,13 +79,11 @@ void GlyphAtlas::setFont(const QFont &font, int cellWidth, int cellHeight)
     m_fmBoldItalic.reset(new QFontMetrics(m_fontBoldItalic));
     m_ascent = m_fm->ascent();
 
-    // Clear cache when font changes
     m_cache.clear();
-    m_packX = 1; // Reserve pixel (0,0) as transparent for empty cells
+    m_packX = 1;
     m_packY = 0;
     m_rowHeight = 0;
 
-    // Re-clear atlas
     if (m_initialized) {
         m_staging.fill(Qt::transparent);
         glBindTexture(GL_TEXTURE_2D, m_texture);
@@ -105,7 +99,6 @@ const GlyphInfo &GlyphAtlas::glyph(uint codepoint, bool bold, bool italic)
     if (it != m_cache.end())
         return it.value();
 
-    // Cache miss — rasterize
     GlyphInfo info;
     rasterizeGlyph(codepoint, bold, italic, info);
     m_cache.insert(key, info);
@@ -114,7 +107,6 @@ const GlyphInfo &GlyphAtlas::glyph(uint codepoint, bool bold, bool italic)
 
 void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInfo &info)
 {
-    // Select font variant and cached metrics
     const QFont &font = (bold && italic) ? m_fontBoldItalic
                       : bold ? m_fontBold
                       : italic ? m_fontItalic
@@ -124,7 +116,6 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
                            : italic ? *m_fmItalic
                            : *m_fm;
 
-    // Measure glyph
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
     int glyphWidth = fm.horizontalAdvance(QChar(codepoint));
 #else
@@ -132,11 +123,9 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
 #endif
     int glyphHeight = fm.height();
 
-    // Minimum 1x1
     if (glyphWidth < 1) glyphWidth = 1;
     if (glyphHeight < 1) glyphHeight = 1;
 
-    // Allocate slot in atlas
     int x, y;
     if (!allocateSlot(glyphWidth, glyphHeight, x, y)) {
         // Atlas full — clear and re-rasterize lazily
@@ -149,7 +138,6 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
         }
     }
 
-    // Rasterize glyph into staging image
     QPainter painter(&m_staging);
     painter.setFont(font);
     painter.setPen(Qt::white);
@@ -157,7 +145,6 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
     painter.drawText(x, y + fm.ascent(), QChar(codepoint));
     painter.end();
 
-    // Calculate texture coordinates
     info.u0 = static_cast<float>(x) / m_atlasWidth;
     info.v0 = static_cast<float>(y) / m_atlasHeight;
     info.u1 = static_cast<float>(x + glyphWidth) / m_atlasWidth;
@@ -185,14 +172,12 @@ bool GlyphAtlas::allocateSlot(int glyphWidth, int glyphHeight, int &x, int &y)
 {
     // Simple shelf packing: advance cursor, wrap to next row when needed
     if (m_packX + glyphWidth > m_atlasWidth) {
-        // Move to next row
         m_packX = 0;
         m_packY += m_rowHeight + 1; // 1px gap
         m_rowHeight = 0;
     }
 
     if (m_packY + glyphHeight > m_atlasHeight) {
-        // Atlas full
         qWarning() << "GlyphAtlas: atlas full, cannot allocate" << glyphWidth << "x" << glyphHeight;
         return false;
     }

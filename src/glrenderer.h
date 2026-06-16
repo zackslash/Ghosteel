@@ -157,7 +157,6 @@ private:
         int m_bgColorAttr = -1;
         int m_decoAttr = -1;
 
-        // Glyph atlas
         GlyphAtlas m_atlas;
         bool m_atlasInitialized = false;
 
@@ -192,7 +191,6 @@ private:
 
         TerminalView *m_terminalView = nullptr;
 
-        // Overlay state (populated in synchronize())
         bool m_selecting = false;
         QPointF m_selStart;
         QPointF m_selEnd;
@@ -249,7 +247,6 @@ private:
         bool m_es300 = false;
         bool m_postShaderActive = false;
 
-        // Pipeline FBO (render-to-texture)
         GLuint m_pipelineTex = 0;
         GLuint m_pipelineFbo = 0;
         int m_pipelineTexW = 0;
@@ -261,14 +258,12 @@ private:
         int m_pingPongTexW = 0;
         int m_pingPongTexH = 0;
 
-        // Post shader program + uniform locations
         PostShader m_postShader;
 
         // Multi-pass shader list — infrastructure for future bloom/blur effects.
         // Currently unused; ping-pong FBO is only created when this list has >1 entry.
         QList<PostShader> m_postShaders;
 
-        // Timing for post shader uniforms
         QElapsedTimer m_elapsedTimer;
         bool m_timerStarted = false;
         qint64 m_lastFrameNs = 0;
