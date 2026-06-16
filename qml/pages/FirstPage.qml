@@ -385,6 +385,14 @@ Page {
             anchors.fill: parent
         }
 
+        // GL Renderer overlay
+        GLRenderer {
+            id: glOverlay
+            anchors.fill: terminalContainer
+            source: terminal
+            z: 1
+        }
+
         // Transparent overlay that captures taps to dismiss search panel.
         // Only enabled when search is open; passes the tap through to the terminal.
         MouseArea {
