@@ -1531,6 +1531,411 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     m_dirty = true;
 }
 
+bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *fbo)
+{
+    // Update timing uniforms
+    if (!m_timerStarted) {
+        m_elapsedTimer.start();
+        m_lastFrameNs = 0;
+        m_postTime = 0.0f;
+        m_postTimeDelta = 0.0f;
+        m_postFrameRate = 0.0f;
+        m_postFrame = 0;
+        m_timerStarted = true;
+    }
+    qint64 nowNs = m_elapsedTimer.nsecsElapsed();
+    if (m_lastFrameNs > 0) {
+        m_postTimeDelta = static_cast<float>((nowNs - m_lastFrameNs) / 1000000000.0);
+        if (m_postTimeDelta > 0.0f)
+            m_postFrameRate = 1.0f / m_postTimeDelta;
+    }
+    m_lastFrameNs = nowNs;
+    m_postTime = static_cast<float>(nowNs / 1000000000.0);
+    m_postFrame++;
+
+    if (m_cursorMoved) {
+        m_cursorChangeTime = m_postTime;
+        m_cursorMoved = false;
+        m_animationSettled = false;
+    }
+
+    if (!m_animationSettled && m_postTime - m_cursorChangeTime > kAnimationSettleDelay) {
+        m_animationSettled = true;
+    }
+
+    bool overlayActive = m_selecting || m_searchActive || m_magnifierVisible || m_shellExited;
+    bool canSkipPipeline = m_animationSettled && !m_gridDirty && !overlayActive;
+    m_gridDirty = false;
+
+    // Create/resize pipeline FBO
+    int oldPipeW = m_pipelineTexW, oldPipeH = m_pipelineTexH;
+    createPipelineFbo(fbo->width(), fbo->height());
+    if (m_postShaders.size() > 1)
+        createPingPongFbo(fbo->width(), fbo->height());
+    if (m_pipelineTexW != oldPipeW || m_pipelineTexH != oldPipeH)
+        canSkipPipeline = false;
+
+    if (!m_pipelineFbo)
+        return false;
+
+    if (!canSkipPipeline) {
+        // Render terminal to pipeline FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, m_pipelineFbo);
+        glViewport(0, 0, fbo->width(), fbo->height());
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+        QMatrix4x4 proj;
+        proj.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
+
+        // Cell grid
+        glActiveTexture(GL_TEXTURE0);
+        m_atlas.bind();
+
+        m_program->bind();
+        m_program->setUniformValue(m_matrixUniform, proj);
+        m_program->setUniformValue(m_atlasUniform, 0);
+        m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
+        m_program->setUniformValue(m_cellSizeUniform,
+                                   static_cast<float>(m_cellWidth),
+                                   static_cast<float>(m_cellHeight));
+        m_program->setUniformValue(m_cursorBlinkUniform, m_cursorVisible ? 1.0f : 0.0f);
+        m_program->setUniformValue(m_cursorStyleUniform, static_cast<float>(m_cursorStyle));
+        m_program->setUniformValue(m_topPaddingUniform, static_cast<float>(m_topPadding));
+
+        m_vbo.bind();
+        const int stride = 13 * sizeof(float);
+        if (m_positionAttr >= 0) {
+            glEnableVertexAttribArray(m_positionAttr);
+            glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
+        }
+        if (m_texcoordAttr >= 0) {
+            glEnableVertexAttribArray(m_texcoordAttr);
+            glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
+                                  reinterpret_cast<void*>(2 * sizeof(float)));
+        }
+        if (m_fgColorAttr >= 0) {
+            glEnableVertexAttribArray(m_fgColorAttr);
+            glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                                  reinterpret_cast<void*>(4 * sizeof(float)));
+        }
+        if (m_bgColorAttr >= 0) {
+            glEnableVertexAttribArray(m_bgColorAttr);
+            glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                                  reinterpret_cast<void*>(8 * sizeof(float)));
+        }
+        if (m_decoAttr >= 0) {
+            glEnableVertexAttribArray(m_decoAttr);
+            glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
+                                  reinterpret_cast<void*>(12 * sizeof(float)));
+        }
+        glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+
+        if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
+        if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
+        if (m_fgColorAttr >= 0) glDisableVertexAttribArray(m_fgColorAttr);
+        if (m_bgColorAttr >= 0) glDisableVertexAttribArray(m_bgColorAttr);
+        if (m_decoAttr >= 0) glDisableVertexAttribArray(m_decoAttr);
+        m_vbo.release();
+        m_program->release();
+
+        // Flat overlay
+        buildOverlayVertices(fbo->width(), fbo->height());
+        if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
+            m_flatProgram->bind();
+            m_flatProgram->setUniformValue(m_flatMatrixUniform, proj);
+            m_flatVbo.bind();
+            const int flatStride = 6 * sizeof(float);
+            if (m_flatPositionAttr >= 0) {
+                glEnableVertexAttribArray(m_flatPositionAttr);
+                glVertexAttribPointer(m_flatPositionAttr, 2, GL_FLOAT, GL_FALSE, flatStride, nullptr);
+            }
+            if (m_flatColorAttr >= 0) {
+                glEnableVertexAttribArray(m_flatColorAttr);
+                glVertexAttribPointer(m_flatColorAttr, 4, GL_FLOAT, GL_FALSE, flatStride,
+                                      reinterpret_cast<void*>(2 * sizeof(float)));
+            }
+            glDrawArrays(GL_TRIANGLES, 0, m_flatVertexCount);
+            if (m_flatPositionAttr >= 0) glDisableVertexAttribArray(m_flatPositionAttr);
+            if (m_flatColorAttr >= 0) glDisableVertexAttribArray(m_flatColorAttr);
+            m_flatVbo.release();
+            m_flatProgram->release();
+        }
+
+        // Magnifier
+        if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
+            && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
+
+            int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
+            int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
+            int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
+            int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
+            if (fbo->width() > srcW && fbo->height() > srcH) {
+                srcX = qBound(0, srcX, fbo->width() - srcW);
+                srcY = qBound(0, srcY, fbo->height() - srcH);
+            } else {
+                srcX = qMax(0, srcX);
+                srcY = qMax(0, srcY);
+            }
+
+            glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            buildMagnifierVertices(fbo->width(), fbo->height());
+
+            if (m_magVertexCount > 0) {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+                m_magProgram->bind();
+                m_magProgram->setUniformValue(m_magMatrixUniform, proj);
+                m_magProgram->setUniformValue(m_magTexUniform, 0);
+
+                int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
+                int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
+                if (destY < 0)
+                    destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
+                destX = qBound(0, destX, fbo->width() - TerminalView::MagnifierWidth);
+                destY = qBound(0, destY, fbo->height() - TerminalView::MagnifierHeight);
+
+                m_magProgram->setUniformValue(m_magDestRectUniform,
+                    static_cast<float>(destX), static_cast<float>(destY),
+                    static_cast<float>(TerminalView::MagnifierWidth),
+                    static_cast<float>(TerminalView::MagnifierHeight));
+                m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
+
+                float ba = m_magnifierBorderColor.alphaF();
+                float br = m_magnifierBorderColor.redF() * ba;
+                float bg = m_magnifierBorderColor.greenF() * ba;
+                float bb = m_magnifierBorderColor.blueF() * ba;
+                m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
+                m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+
+                const int magStride = 4 * sizeof(float);
+                glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
+                                      m_magVertices.constData());
+                glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
+                                      m_magVertices.constData() + 2);
+                glEnableVertexAttribArray(m_magPositionAttr);
+                glEnableVertexAttribArray(m_magTexcoordAttr);
+                glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
+                glDisableVertexAttribArray(m_magPositionAttr);
+                glDisableVertexAttribArray(m_magTexcoordAttr);
+
+                glBindTexture(GL_TEXTURE_2D, 0);
+                m_magProgram->release();
+                glDisable(GL_BLEND);
+            }
+        }
+
+        glDisable(GL_BLEND);
+    }
+
+    // Post-process to Qt's default FBO
+    if (m_postShaders.size() > 1 && m_pingPongFbo) {
+        GLuint textures[2] = { m_pipelineTex, m_pingPongTex };
+        GLuint fbos[2] = { m_pipelineFbo, m_pingPongFbo };
+        int readIdx = 0;
+
+        for (int i = 0; i < m_postShaders.size(); i++) {
+            bool lastPass = (i == m_postShaders.size() - 1);
+            int writeIdx = 1 - readIdx;
+            GLuint inTex = textures[readIdx];
+            GLuint outFbo = lastPass ? fbo->handle() : fbos[writeIdx];
+
+            runPostProcessPass(m_postShaders[i], inTex, outFbo, fbo->width(), fbo->height());
+            readIdx = writeIdx;
+        }
+    } else {
+        runPostProcessPass(m_postShader, m_pipelineTex, fbo->handle(), fbo->width(), fbo->height());
+    }
+
+    return true;
+}
+
+void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
+{
+    glViewport(0, 0, fbo->width(), fbo->height());
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    QMatrix4x4 proj;
+    proj.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
+
+    glActiveTexture(GL_TEXTURE0);
+    m_atlas.bind();
+
+    m_program->bind();
+    m_program->setUniformValue(m_matrixUniform, proj);
+    m_program->setUniformValue(m_atlasUniform, 0);
+    m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
+    m_program->setUniformValue(m_cellSizeUniform,
+                               static_cast<float>(m_cellWidth),
+                               static_cast<float>(m_cellHeight));
+    m_program->setUniformValue(m_cursorBlinkUniform, m_cursorVisible ? 1.0f : 0.0f);
+    m_program->setUniformValue(m_cursorStyleUniform, static_cast<float>(m_cursorStyle));
+    m_program->setUniformValue(m_topPaddingUniform, static_cast<float>(m_topPadding));
+
+    m_vbo.bind();
+    const int stride = 13 * sizeof(float);
+    if (m_positionAttr >= 0) {
+        glEnableVertexAttribArray(m_positionAttr);
+        glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
+    }
+    if (m_texcoordAttr >= 0) {
+        glEnableVertexAttribArray(m_texcoordAttr);
+        glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(2 * sizeof(float)));
+    }
+    if (m_fgColorAttr >= 0) {
+        glEnableVertexAttribArray(m_fgColorAttr);
+        glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(4 * sizeof(float)));
+    }
+    if (m_bgColorAttr >= 0) {
+        glEnableVertexAttribArray(m_bgColorAttr);
+        glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(8 * sizeof(float)));
+    }
+    if (m_decoAttr >= 0) {
+        glEnableVertexAttribArray(m_decoAttr);
+        glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(12 * sizeof(float)));
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+
+    if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
+    if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
+    if (m_fgColorAttr >= 0) glDisableVertexAttribArray(m_fgColorAttr);
+    if (m_bgColorAttr >= 0) glDisableVertexAttribArray(m_bgColorAttr);
+    if (m_decoAttr >= 0) glDisableVertexAttribArray(m_decoAttr);
+    m_vbo.release();
+    m_program->release();
+
+    buildOverlayVertices(fbo->width(), fbo->height());
+    if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
+        m_flatProgram->bind();
+        m_flatProgram->setUniformValue(m_flatMatrixUniform, proj);
+        m_flatVbo.bind();
+        const int flatStride = 6 * sizeof(float);
+        if (m_flatPositionAttr >= 0) {
+            glEnableVertexAttribArray(m_flatPositionAttr);
+            glVertexAttribPointer(m_flatPositionAttr, 2, GL_FLOAT, GL_FALSE, flatStride, nullptr);
+        }
+        if (m_flatColorAttr >= 0) {
+            glEnableVertexAttribArray(m_flatColorAttr);
+            glVertexAttribPointer(m_flatColorAttr, 4, GL_FLOAT, GL_FALSE, flatStride,
+                                  reinterpret_cast<void*>(2 * sizeof(float)));
+        }
+        glDrawArrays(GL_TRIANGLES, 0, m_flatVertexCount);
+        if (m_flatPositionAttr >= 0) glDisableVertexAttribArray(m_flatPositionAttr);
+        if (m_flatColorAttr >= 0) glDisableVertexAttribArray(m_flatColorAttr);
+        m_flatVbo.release();
+        m_flatProgram->release();
+    }
+
+    if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
+        && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
+
+        int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
+        int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
+        int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
+        int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
+        if (fbo->width() > srcW && fbo->height() > srcH) {
+            srcX = qBound(0, srcX, fbo->width() - srcW);
+            srcY = qBound(0, srcY, fbo->height() - srcH);
+        } else {
+            srcX = qMax(0, srcX);
+            srcY = qMax(0, srcY);
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        buildMagnifierVertices(fbo->width(), fbo->height());
+
+        if (m_magVertexCount > 0) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+            m_magProgram->bind();
+            m_magProgram->setUniformValue(m_magMatrixUniform, proj);
+            m_magProgram->setUniformValue(m_magTexUniform, 0);
+
+            int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
+            int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
+            if (destY < 0)
+                destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
+            destX = qBound(0, destX, fbo->width() - TerminalView::MagnifierWidth);
+            destY = qBound(0, destY, fbo->height() - TerminalView::MagnifierHeight);
+
+            m_magProgram->setUniformValue(m_magDestRectUniform,
+                static_cast<float>(destX), static_cast<float>(destY),
+                static_cast<float>(TerminalView::MagnifierWidth),
+                static_cast<float>(TerminalView::MagnifierHeight));
+            m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
+
+            float ba = m_magnifierBorderColor.alphaF();
+            float br = m_magnifierBorderColor.redF() * ba;
+            float bg = m_magnifierBorderColor.greenF() * ba;
+            float bb = m_magnifierBorderColor.blueF() * ba;
+            m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
+            m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+
+            const int magStride = 4 * sizeof(float);
+            glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
+                                  m_magVertices.constData());
+            glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
+                                  m_magVertices.constData() + 2);
+            glEnableVertexAttribArray(m_magPositionAttr);
+            glEnableVertexAttribArray(m_magTexcoordAttr);
+            glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
+            glDisableVertexAttribArray(m_magPositionAttr);
+            glDisableVertexAttribArray(m_magTexcoordAttr);
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+            m_magProgram->release();
+            glDisable(GL_BLEND);
+        }
+    }
+
+    glDisable(GL_BLEND);
+}
+
+void GLRenderer::Renderer::renderShellExitText(QOpenGLFramebufferObject *fbo)
+{
+    QOpenGLPaintDevice device(fbo->size());
+    device.setPaintFlipped(true);
+    QPainter painter(&device);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    painter.setPen(m_shellExitTextColor);
+    QFont font = painter.font();
+    font.setPointSize(m_cachedFontSize + 4);
+    font.setBold(true);
+    painter.setFont(font);
+    painter.drawText(QRectF(0, 0, fbo->width(), fbo->height()),
+                     Qt::AlignCenter,
+                     QString("Shell exited with code %1").arg(m_shellExitCode));
+
+    painter.end();
+}
+
 void GLRenderer::Renderer::render()
 {
     if (!m_initialized)
@@ -1562,424 +1967,16 @@ void GLRenderer::Renderer::render()
 
     QOpenGLFramebufferObject *fbo = framebufferObject();
 
-    // --- Phase 5B: post-processing pipeline ---
     bool didPostProcess = false;
-    bool gridWasDirty = m_gridDirty;
-    m_gridDirty = false;
     if (m_postShaderActive && m_es300 && m_postShader.program) {
-        // --- Step 1: Update timing uniforms ---
-        if (!m_timerStarted) {
-            m_elapsedTimer.start();
-            m_lastFrameNs = 0;
-            m_postTime = 0.0f;
-            m_postTimeDelta = 0.0f;
-            m_postFrameRate = 0.0f;
-            m_postFrame = 0;
-            m_timerStarted = true;
-        }
-        qint64 nowNs = m_elapsedTimer.nsecsElapsed();
-        if (m_lastFrameNs > 0) {
-            m_postTimeDelta = static_cast<float>((nowNs - m_lastFrameNs) / 1000000000.0);
-            if (m_postTimeDelta > 0.0f)
-                m_postFrameRate = 1.0f / m_postTimeDelta;
-        }
-        m_lastFrameNs = nowNs;
-        m_postTime = static_cast<float>(nowNs / 1000000000.0);
-        m_postFrame++;
-
-        // Update cursor change time when cursor has moved
-        if (m_cursorMoved) {
-            m_cursorChangeTime = m_postTime;
-            m_cursorMoved = false;
-            m_animationSettled = false;
-        }
-
-        // Check if cursor trail animation has settled
-        if (!m_animationSettled && m_postTime - m_cursorChangeTime > kAnimationSettleDelay) {
-            m_animationSettled = true;
-        }
-
-        // Skip pipeline when animation settled AND grid not changed AND no active overlays
-        bool overlayActive = m_selecting || m_searchActive || m_magnifierVisible || m_shellExited;
-        bool canSkipPipeline = m_animationSettled && !gridWasDirty && !overlayActive;
-
-        // --- Step 2: Create/resize pipeline FBO ---
-        int oldPipeW = m_pipelineTexW, oldPipeH = m_pipelineTexH;
-        createPipelineFbo(fbo->width(), fbo->height());
-        if (m_postShaders.size() > 1)
-            createPingPongFbo(fbo->width(), fbo->height());
-        if (m_pipelineTexW != oldPipeW || m_pipelineTexH != oldPipeH)
-            canSkipPipeline = false; // FBO recreated — must draw
-        if (m_pipelineFbo) {
-
-            if (!canSkipPipeline) {
-                // --- Step 3: Render terminal to pipeline FBO ---
-                glBindFramebuffer(GL_FRAMEBUFFER, m_pipelineFbo);
-                glViewport(0, 0, fbo->width(), fbo->height());
-                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-                QMatrix4x4 proj;
-                proj.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
-
-                // --- Cell grid ---
-                glActiveTexture(GL_TEXTURE0);
-                m_atlas.bind();
-
-                m_program->bind();
-                m_program->setUniformValue(m_matrixUniform, proj);
-                m_program->setUniformValue(m_atlasUniform, 0);
-                m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
-                m_program->setUniformValue(m_cellSizeUniform,
-                                           static_cast<float>(m_cellWidth),
-                                           static_cast<float>(m_cellHeight));
-                m_program->setUniformValue(m_cursorBlinkUniform, m_cursorVisible ? 1.0f : 0.0f);
-                m_program->setUniformValue(m_cursorStyleUniform, static_cast<float>(m_cursorStyle));
-                m_program->setUniformValue(m_topPaddingUniform, static_cast<float>(m_topPadding));
-
-                m_vbo.bind();
-                const int stride = 13 * sizeof(float);
-                if (m_positionAttr >= 0) {
-                    glEnableVertexAttribArray(m_positionAttr);
-                    glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
-                }
-                if (m_texcoordAttr >= 0) {
-                    glEnableVertexAttribArray(m_texcoordAttr);
-                    glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
-                                          reinterpret_cast<void*>(2 * sizeof(float)));
-                }
-                if (m_fgColorAttr >= 0) {
-                    glEnableVertexAttribArray(m_fgColorAttr);
-                    glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                                          reinterpret_cast<void*>(4 * sizeof(float)));
-                }
-                if (m_bgColorAttr >= 0) {
-                    glEnableVertexAttribArray(m_bgColorAttr);
-                    glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                                          reinterpret_cast<void*>(8 * sizeof(float)));
-                }
-                if (m_decoAttr >= 0) {
-                    glEnableVertexAttribArray(m_decoAttr);
-                    glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
-                                          reinterpret_cast<void*>(12 * sizeof(float)));
-                }
-                glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-
-                if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
-                if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
-                if (m_fgColorAttr >= 0) glDisableVertexAttribArray(m_fgColorAttr);
-                if (m_bgColorAttr >= 0) glDisableVertexAttribArray(m_bgColorAttr);
-                if (m_decoAttr >= 0) glDisableVertexAttribArray(m_decoAttr);
-                m_vbo.release();
-                m_program->release();
-
-                // --- Flat overlay (selection, search, links) ---
-                buildOverlayVertices(fbo->width(), fbo->height());
-                if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
-                    m_flatProgram->bind();
-                    m_flatProgram->setUniformValue(m_flatMatrixUniform, proj);
-                    m_flatVbo.bind();
-                    const int flatStride = 6 * sizeof(float);
-                    if (m_flatPositionAttr >= 0) {
-                        glEnableVertexAttribArray(m_flatPositionAttr);
-                        glVertexAttribPointer(m_flatPositionAttr, 2, GL_FLOAT, GL_FALSE, flatStride, nullptr);
-                    }
-                    if (m_flatColorAttr >= 0) {
-                        glEnableVertexAttribArray(m_flatColorAttr);
-                        glVertexAttribPointer(m_flatColorAttr, 4, GL_FLOAT, GL_FALSE, flatStride,
-                                              reinterpret_cast<void*>(2 * sizeof(float)));
-                    }
-                    glDrawArrays(GL_TRIANGLES, 0, m_flatVertexCount);
-                    if (m_flatPositionAttr >= 0) glDisableVertexAttribArray(m_flatPositionAttr);
-                    if (m_flatColorAttr >= 0) glDisableVertexAttribArray(m_flatColorAttr);
-                    m_flatVbo.release();
-                    m_flatProgram->release();
-                }
-
-                // --- Magnifier ---
-                if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
-                    && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
-
-                    int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
-                    int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
-                    int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
-                    int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
-                    if (fbo->width() > srcW && fbo->height() > srcH) {
-                        srcX = qBound(0, srcX, fbo->width() - srcW);
-                        srcY = qBound(0, srcY, fbo->height() - srcH);
-                    } else {
-                        srcX = qMax(0, srcX);
-                        srcY = qMax(0, srcY);
-                    }
-
-                    glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-                    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
-                    glBindTexture(GL_TEXTURE_2D, 0);
-
-                    buildMagnifierVertices(fbo->width(), fbo->height());
-
-                    if (m_magVertexCount > 0) {
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-                        m_magProgram->bind();
-                        m_magProgram->setUniformValue(m_magMatrixUniform, proj);
-                        m_magProgram->setUniformValue(m_magTexUniform, 0);
-
-                        int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
-                        int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-                        if (destY < 0)
-                            destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
-                        destX = qBound(0, destX, fbo->width() - TerminalView::MagnifierWidth);
-                        destY = qBound(0, destY, fbo->height() - TerminalView::MagnifierHeight);
-
-                        m_magProgram->setUniformValue(m_magDestRectUniform,
-                            static_cast<float>(destX), static_cast<float>(destY),
-                            static_cast<float>(TerminalView::MagnifierWidth),
-                            static_cast<float>(TerminalView::MagnifierHeight));
-                        m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
-
-                        float ba = m_magnifierBorderColor.alphaF();
-                        float br = m_magnifierBorderColor.redF() * ba;
-                        float bg = m_magnifierBorderColor.greenF() * ba;
-                        float bb = m_magnifierBorderColor.blueF() * ba;
-                        m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
-                        m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
-
-                        glActiveTexture(GL_TEXTURE0);
-                        glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-
-                        const int magStride = 4 * sizeof(float);
-                        glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                              m_magVertices.constData());
-                        glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                              m_magVertices.constData() + 2);
-                        glEnableVertexAttribArray(m_magPositionAttr);
-                        glEnableVertexAttribArray(m_magTexcoordAttr);
-                        glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
-                        glDisableVertexAttribArray(m_magPositionAttr);
-                        glDisableVertexAttribArray(m_magTexcoordAttr);
-
-                        glBindTexture(GL_TEXTURE_2D, 0);
-                        m_magProgram->release();
-                        glDisable(GL_BLEND);
-                    }
-                }
-
-                glDisable(GL_BLEND);
-
-            } // end canSkipPipeline
-
-            // --- Step 4-7: Post-process to Qt's default FBO ---
-            if (m_postShaders.size() > 1 && m_pingPongFbo) {
-                // Multi-pass ping-pong
-                GLuint textures[2] = { m_pipelineTex, m_pingPongTex };
-                GLuint fbos[2] = { m_pipelineFbo, m_pingPongFbo };
-                int readIdx = 0; // start reading from pipeline
-
-                for (int i = 0; i < m_postShaders.size(); i++) {
-                    bool lastPass = (i == m_postShaders.size() - 1);
-                    int writeIdx = 1 - readIdx;
-                    GLuint inTex = textures[readIdx];
-                    GLuint outFbo = lastPass ? fbo->handle() : fbos[writeIdx];
-
-                    runPostProcessPass(m_postShaders[i], inTex, outFbo, fbo->width(), fbo->height());
-                    readIdx = writeIdx; // next pass reads what we just wrote
-                }
-                didPostProcess = true;
-            } else if (m_postShaderActive && m_postShader.program) {
-                // Single-pass (existing behavior)
-                runPostProcessPass(m_postShader, m_pipelineTex, fbo->handle(), fbo->width(), fbo->height());
-                didPostProcess = true;
-            }
-        } // end if (m_pipelineFbo)
-    } // end post-processing check
-
-    if (!didPostProcess) {
-        // --- Existing direct-to-FBO path (no post-processing) ---
-        glViewport(0, 0, fbo->width(), fbo->height());
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-        QMatrix4x4 m;
-        m.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
-
-        glActiveTexture(GL_TEXTURE0);
-        m_atlas.bind();
-
-        m_program->bind();
-        m_program->setUniformValue(m_matrixUniform, m);
-        m_program->setUniformValue(m_atlasUniform, 0);
-
-        // Cursor uniforms — updated every frame, no vertex rebuild needed for blink
-        m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
-        m_program->setUniformValue(m_cellSizeUniform,
-                                   static_cast<float>(m_cellWidth),
-                                   static_cast<float>(m_cellHeight));
-        m_program->setUniformValue(m_cursorBlinkUniform, m_cursorVisible ? 1.0f : 0.0f);
-        m_program->setUniformValue(m_cursorStyleUniform, static_cast<float>(m_cursorStyle));
-        m_program->setUniformValue(m_topPaddingUniform, static_cast<float>(m_topPadding));
-
-        // Bind VBO and set up vertex attributes (no VAO — ES 2.0 safe)
-        m_vbo.bind();
-        const int stride = 13 * sizeof(float);
-        if (m_positionAttr >= 0) {
-            glEnableVertexAttribArray(m_positionAttr);
-            glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
-        }
-        if (m_texcoordAttr >= 0) {
-            glEnableVertexAttribArray(m_texcoordAttr);
-            glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(2 * sizeof(float)));
-        }
-        if (m_fgColorAttr >= 0) {
-            glEnableVertexAttribArray(m_fgColorAttr);
-            glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(4 * sizeof(float)));
-        }
-        if (m_bgColorAttr >= 0) {
-            glEnableVertexAttribArray(m_bgColorAttr);
-            glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(8 * sizeof(float)));
-        }
-        if (m_decoAttr >= 0) {
-            glEnableVertexAttribArray(m_decoAttr);
-            glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(12 * sizeof(float)));
-        }
-
-        glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-
-        if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
-        if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
-        if (m_fgColorAttr >= 0) glDisableVertexAttribArray(m_fgColorAttr);
-        if (m_bgColorAttr >= 0) glDisableVertexAttribArray(m_bgColorAttr);
-        if (m_decoAttr >= 0) glDisableVertexAttribArray(m_decoAttr);
-        m_vbo.release();
-
-        m_program->release();
-
-        // --- GL overlay draw (flat-color shader for selection, search, links) ---
-        buildOverlayVertices(fbo->width(), fbo->height());
-        if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
-            m_flatProgram->bind();
-            m_flatProgram->setUniformValue(m_flatMatrixUniform, m);
-            m_flatVbo.bind();
-            const int flatStride = 6 * sizeof(float); // pos2 + color4
-            if (m_flatPositionAttr >= 0) {
-                glEnableVertexAttribArray(m_flatPositionAttr);
-                glVertexAttribPointer(m_flatPositionAttr, 2, GL_FLOAT, GL_FALSE, flatStride, nullptr);
-            }
-            if (m_flatColorAttr >= 0) {
-                glEnableVertexAttribArray(m_flatColorAttr);
-                glVertexAttribPointer(m_flatColorAttr, 4, GL_FLOAT, GL_FALSE, flatStride,
-                                      reinterpret_cast<void*>(2 * sizeof(float)));
-            }
-            glDrawArrays(GL_TRIANGLES, 0, m_flatVertexCount);
-            if (m_flatPositionAttr >= 0) glDisableVertexAttribArray(m_flatPositionAttr);
-            if (m_flatColorAttr >= 0) glDisableVertexAttribArray(m_flatColorAttr);
-            m_flatVbo.release();
-            m_flatProgram->release();
-        }
-
-        // --- GL magnifier (pure GL, no QPainter) ---
-        if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd
-            && m_magProgram && m_magProgram->isLinked() && m_magnifierTex) {
-
-                    int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;  // 90
-            int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom; // 50
-            int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
-            int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
-            if (fbo->width() > srcW && fbo->height() > srcH) {
-                srcX = qBound(0, srcX, fbo->width() - srcW);
-                srcY = qBound(0, srcY, fbo->height() - srcH);
-            } else {
-                srcX = qMax(0, srcX);
-                srcY = qMax(0, srcY);
-            }
-
-            glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            buildMagnifierVertices(fbo->width(), fbo->height());
-
-            if (m_magVertexCount > 0) {
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-                m_magProgram->bind();
-                m_magProgram->setUniformValue(m_magMatrixUniform, m);
-                m_magProgram->setUniformValue(m_magTexUniform, 0); // texture unit 0
-
-                int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
-                int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-                if (destY < 0)
-                    destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
-                destX = qBound(0, destX, fbo->width() - TerminalView::MagnifierWidth);
-                destY = qBound(0, destY, fbo->height() - TerminalView::MagnifierHeight);
-
-                m_magProgram->setUniformValue(m_magDestRectUniform,
-                    static_cast<float>(destX), static_cast<float>(destY),
-                    static_cast<float>(TerminalView::MagnifierWidth),
-                    static_cast<float>(TerminalView::MagnifierHeight));
-                m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
-
-                float ba = m_magnifierBorderColor.alphaF();
-                float br = m_magnifierBorderColor.redF() * ba;
-                float bg = m_magnifierBorderColor.greenF() * ba;
-                float bb = m_magnifierBorderColor.blueF() * ba;
-                m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
-                m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-
-                // Upload and draw magnifier quad (dynamic, no persistent VBO)
-                const int magStride = 4 * sizeof(float); // pos2 + texcoord2
-                glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                      m_magVertices.constData());
-                glVertexAttribPointer(m_magTexcoordAttr, 2, GL_FLOAT, GL_FALSE, magStride,
-                                      m_magVertices.constData() + 2);
-                glEnableVertexAttribArray(m_magPositionAttr);
-                glEnableVertexAttribArray(m_magTexcoordAttr);
-                glDrawArrays(GL_TRIANGLES, 0, m_magVertexCount);
-                glDisableVertexAttribArray(m_magPositionAttr);
-                glDisableVertexAttribArray(m_magTexcoordAttr);
-
-                glBindTexture(GL_TEXTURE_2D, 0);
-                m_magProgram->release();
-                glDisable(GL_BLEND);
-            }
-        }
-
-        glDisable(GL_BLEND);
+        didPostProcess = renderPostProcessPipeline(fbo);
     }
 
-    // --- QPainter overlay pass (gated: only for shell exit text) ---
-    // Always draws on the Qt FBO (after post-processing if active)
+    if (!didPostProcess) {
+        renderDirectToFbo(fbo);
+    }
+
     if (m_shellExited) {
-        QOpenGLPaintDevice device(fbo->size());
-        device.setPaintFlipped(true);
-        QPainter painter(&device);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        // Shell exit overlay text (rect is drawn by flat shader in buildOverlayVertices)
-        painter.setPen(m_shellExitTextColor);
-        QFont font = painter.font();
-        font.setPointSize(m_cachedFontSize + 4);
-        font.setBold(true);
-        painter.setFont(font);
-        painter.drawText(QRectF(0, 0, fbo->width(), fbo->height()),
-                         Qt::AlignCenter,
-                         QString("Shell exited with code %1").arg(m_shellExitCode));
-
-        painter.end();
+        renderShellExitText(fbo);
     }
 }

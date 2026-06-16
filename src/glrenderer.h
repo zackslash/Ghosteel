@@ -130,6 +130,11 @@ private:
         void createMagTexture();
         void buildMagnifierVertices(int fboW, int fboH);
 
+        // Refactored render sub-methods
+        bool renderPostProcessPipeline(QOpenGLFramebufferObject *fbo);
+        void renderDirectToFbo(QOpenGLFramebufferObject *fbo);
+        void renderShellExitText(QOpenGLFramebufferObject *fbo);
+
         // Phase 5B: post-processing pipeline
         void detectES300();
         void createPipelineFbo(int w, int h);
