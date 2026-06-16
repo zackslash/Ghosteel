@@ -1173,6 +1173,106 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
     }
 }
 
+void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
+{
+    m_cellVertices.clear();
+    m_cellVertices.reserve(m_cols * m_rows * 6);
+
+    float bgAlpha = m_bgOpacity;
+    float bgR = m_postBgR, bgG = m_postBgG, bgB = m_postBgB;
+    float fgR = m_postFgR, fgG = m_postFgG, fgB = m_postFgB;
+
+    GhosttyRenderStateRowIterator iterator;
+    ghostty_render_state_row_iterator_new(nullptr, &iterator);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
+
+    GhosttyRenderStateRowCells cells;
+    ghostty_render_state_row_cells_new(nullptr, &cells);
+
+    int y = m_topPadding;
+    int rowIdx = 0;
+    while (ghostty_render_state_row_iterator_next(iterator)) {
+        ghostty_render_state_row_get(iterator,
+                                     GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
+                                     &cells);
+
+        int x = 0;
+        int colIdx = 0;
+        while (ghostty_render_state_row_cells_next(cells)) {
+            GhosttyColorRgb cellBg;
+            float cBgR = bgR, cBgG = bgG, cBgB = bgB;
+            if (ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR,
+                    &cellBg) == GHOSTTY_SUCCESS) {
+                cBgR = cellBg.r / 255.0f;
+                cBgG = cellBg.g / 255.0f;
+                cBgB = cellBg.b / 255.0f;
+            }
+
+            GhosttyColorRgb cellFg;
+            float cFgR = fgR, cFgG = fgG, cFgB = fgB;
+            if (ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR,
+                    &cellFg) == GHOSTTY_SUCCESS) {
+                cFgR = cellFg.r / 255.0f;
+                cFgG = cellFg.g / 255.0f;
+                cFgB = cellFg.b / 255.0f;
+            }
+
+            GhosttyStyle cellStyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
+            ghostty_render_state_row_cells_get(
+                cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
+                &cellStyle);
+            float deco = 0.0f;
+            if (cellStyle.underline > 0) deco = 1.0f;
+            else if (cellStyle.strikethrough) deco = 2.0f;
+
+            float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
+            float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
+
+            uint32_t graphemesLen = 0;
+            ghostty_render_state_row_cells_get(
+                cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
+                &graphemesLen);
+
+            float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
+            if (graphemesLen > 0 && graphemesLen <= 128) {
+                uint32_t buf[128];
+                ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
+                    buf);
+
+                const GlyphInfo &gi = m_atlas.glyph(buf[0], cellStyle.bold, cellStyle.italic);
+                u0 = gi.u0;
+                v0 = gi.v0;
+                u1 = gi.u1;
+                v1 = gi.v1;
+            }
+
+            float x0 = static_cast<float>(x);
+            float y0 = static_cast<float>(y);
+            float x1 = static_cast<float>(x + m_cellWidth);
+            float y1 = static_cast<float>(y + m_cellHeight);
+
+            m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+            m_cellVertices.append({x1, y0, u1, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+            m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+            m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+            m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+            m_cellVertices.append({x0, y1, u0, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+
+            x += m_cellWidth;
+            colIdx++;
+        }
+
+        y += m_cellHeight;
+        rowIdx++;
+    }
+
+    ghostty_render_state_row_cells_free(cells);
+    ghostty_render_state_row_iterator_free(iterator);
+}
+
 void GLRenderer::Renderer::rebuildVBO()
 {
     m_vertexCount = m_cellVertices.size();
@@ -1428,106 +1528,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         return;
 
     m_gridDirty = true;
-
-    m_cellVertices.clear();
-    m_cellVertices.reserve(cols * rows * 6); // 6 vertices per cell
-
-    float bgAlpha = m_bgOpacity;
-
-    GhosttyRenderStateRowIterator iterator;
-    ghostty_render_state_row_iterator_new(nullptr, &iterator);
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
-
-    GhosttyRenderStateRowCells cells;
-    ghostty_render_state_row_cells_new(nullptr, &cells);
-
-    int y = m_topPadding;
-    int rowIdx = 0;
-    while (ghostty_render_state_row_iterator_next(iterator)) {
-        ghostty_render_state_row_get(iterator,
-                                     GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
-                                     &cells);
-
-        int x = 0;
-        int colIdx = 0;
-        while (ghostty_render_state_row_cells_next(cells)) {
-            GhosttyColorRgb cellBg;
-            float cBgR = bgR, cBgG = bgG, cBgB = bgB;
-            if (ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR,
-                    &cellBg) == GHOSTTY_SUCCESS) {
-                cBgR = cellBg.r / 255.0f;
-                cBgG = cellBg.g / 255.0f;
-                cBgB = cellBg.b / 255.0f;
-            }
-
-            GhosttyColorRgb cellFg;
-            float cFgR = fgR, cFgG = fgG, cFgB = fgB;
-            if (ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR,
-                    &cellFg) == GHOSTTY_SUCCESS) {
-                cFgR = cellFg.r / 255.0f;
-                cFgG = cellFg.g / 255.0f;
-                cFgB = cellFg.b / 255.0f;
-            }
-
-            GhosttyStyle cellStyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
-            ghostty_render_state_row_cells_get(
-                cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
-                &cellStyle);
-            float deco = 0.0f;
-            if (cellStyle.underline > 0) deco = 1.0f;
-            else if (cellStyle.strikethrough) deco = 2.0f;
-
-            // Premultiply alpha (fgA is always 1.0 for opaque text)
-            float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
-            float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
-
-            uint32_t graphemesLen = 0;
-            ghostty_render_state_row_cells_get(
-                cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
-                &graphemesLen);
-
-            float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
-            if (graphemesLen > 0 && graphemesLen <= 128) {
-                uint32_t buf[128];
-                ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
-                    buf);
-
-                // Look up glyph in atlas (first codepoint of grapheme cluster)
-                const GlyphInfo &gi = m_atlas.glyph(buf[0], cellStyle.bold, cellStyle.italic);
-                u0 = gi.u0;
-                v0 = gi.v0;
-                u1 = gi.u1;
-                v1 = gi.v1;
-            }
-
-            float x0 = static_cast<float>(x);
-            float y0 = static_cast<float>(y);
-            float x1 = static_cast<float>(x + m_cellWidth);
-            float y1 = static_cast<float>(y + m_cellHeight);
-
-            // Triangle 1: top-left, top-right, bottom-right
-            m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x1, y0, u1, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            // Triangle 2: top-left, bottom-right, bottom-left
-            m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x0, y1, u0, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-
-            x += m_cellWidth;
-            colIdx++;
-        }
-
-        y += m_cellHeight;
-        rowIdx++;
-    }
-
-    ghostty_render_state_row_cells_free(cells);
-    ghostty_render_state_row_iterator_free(iterator);
-
+    buildCellVertices(state);
     m_dirty = true;
 }
 

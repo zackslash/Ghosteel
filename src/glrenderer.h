@@ -134,6 +134,7 @@ private:
         bool renderPostProcessPipeline(QOpenGLFramebufferObject *fbo);
         void renderDirectToFbo(QOpenGLFramebufferObject *fbo);
         void renderShellExitText(QOpenGLFramebufferObject *fbo);
+        void buildCellVertices(GhosttyRenderState state);
 
         // Phase 5B: post-processing pipeline
         void detectES300();
