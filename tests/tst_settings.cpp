@@ -44,6 +44,8 @@ private slots:
         QCOMPARE(s.value("terminal/backgroundOpacity", 0.6).toFloat(),
                  0.6f);
         QCOMPARE(s.value("terminal/bellMode", 1).toInt(), 1);
+        QCOMPARE(s.value("terminal/cursorTrails", true).toBool(), true);
+        QCOMPARE(s.value("terminal/customShaderPath").toString(), QString());
     }
 
     void testWriteAndReadBack()

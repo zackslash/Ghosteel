@@ -194,6 +194,8 @@ private slots:
             s.setFontFamily(QStringLiteral("Fira Code"));
             s.setBackgroundOpacity(0.8f);
             s.setBellMode(2);
+            s.setCursorTrails(false);
+            s.setCustomShaderPath(QStringLiteral("/test/path.glsl"));
         }
         // Wait for debounce
         QTest::qWait(DEBOUNCE_WAIT_MS);
@@ -204,6 +206,8 @@ private slots:
             QCOMPARE(s.fontFamily(), QStringLiteral("Fira Code"));
             QCOMPARE(s.backgroundOpacity(), 0.8f);
             QCOMPARE(s.bellMode(), 2);
+            QCOMPARE(s.cursorTrails(), false);
+            QCOMPARE(s.customShaderPath(), QStringLiteral("/test/path.glsl"));
         }
     }
 
@@ -248,6 +252,9 @@ private slots:
         QCOMPARE(s.scrollbackRetentionDays(), 30);
         QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","keyboard","esc"}));
         QCOMPARE(s.keybarVisible(), true);
+        QCOMPARE(s.cursorTrails(), true);  // load() default is true
+        QCOMPARE(s.customShaderPath(), QString());
+        QCOMPARE(s.shaderPipelineAvailable(), false);
     }
 
     // --- Scrollback persistence ---
@@ -500,6 +507,62 @@ private slots:
         QCOMPARE(s.sessionSortMode(), 0);
         s.setSessionSortMode(100);
         QCOMPARE(s.sessionSortMode(), 3);
+    }
+
+    // --- Cursor trails ---
+
+    void testCursorTrailsNoOp()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setCursorTrails(true);  // load() default is true
+        QSignalSpy spy(&s, &Settings::cursorTrailsChanged);
+        s.setCursorTrails(true);  // same value — no-op
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testCursorTrailsChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::cursorTrailsChanged);
+        s.setCursorTrails(false);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.cursorTrails(), false);
+    }
+
+    // --- Custom shader path ---
+
+    void testCustomShaderPathNoOp()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::customShaderPathChanged);
+        s.setCustomShaderPath(QString());  // empty is default — no-op
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testCustomShaderPathChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::customShaderPathChanged);
+        s.setCustomShaderPath(QStringLiteral("/path/to/shader.glsl"));
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.customShaderPath(), QStringLiteral("/path/to/shader.glsl"));
+    }
+
+    // --- Shader pipeline available (runtime-only) ---
+
+    void testShaderPipelineAvailableChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QCOMPARE(s.shaderPipelineAvailable(), false);
+        QSignalSpy spy(&s, &Settings::shaderPipelineAvailableChanged);
+        s.setShaderPipelineAvailable(true);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.shaderPipelineAvailable(), true);
     }
 };
 
