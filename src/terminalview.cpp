@@ -14,8 +14,6 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QLineF>
-#include <QDesktopServices>
-#include <QUrl>
 #include <algorithm>
 #include <sys/ioctl.h>
 
@@ -63,6 +61,10 @@ TerminalView::TerminalView(QQuickItem *parent)
         updateFontMetrics();
         if (width() > 0 && height() > 0)
             recalculateDimensions();
+        update();
+    });
+    connect(Settings::instance(), &Settings::urlAutoDetectChanged, this, [this]() {
+        m_linkScanDirty = true;
         update();
     });
 
@@ -1020,7 +1022,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         QString uri = m_tappedLinkUri;
         m_tappedLinkUri.clear();
         if (dragDist < TapDistancePx && !uri.isEmpty()) {
-            QDesktopServices::openUrl(QUrl(uri));
+            Q_EMIT linkActivated(uri);
             event->accept();
             return;
         }
@@ -1575,6 +1577,15 @@ void TerminalView::scrollViewportToBottom()
 void TerminalView::refreshLinks()
 {
     if (!m_vt || !m_vt->terminal() || m_cols == 0 || m_rows == 0) {
+        m_linkScanDirty = false;
+        return;
+    }
+
+    // When URL auto-detection is disabled, skip regex scanning.
+    // OSC 8 hyperlinks still work — they're resolved independently
+    // via getHyperlinkAt() in findLinkAt().
+    if (!Settings::instance()->urlAutoDetect()) {
+        m_currentLinks.clear();
         m_linkScanDirty = false;
         return;
     }

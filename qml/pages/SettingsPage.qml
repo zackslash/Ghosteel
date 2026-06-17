@@ -23,6 +23,7 @@ Page {
                     schemeCombo.currentIndex = 0
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
+                    urlAutoDetectToggle.checked = true
                     Settings.customShaderPath = ""
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
@@ -152,6 +153,15 @@ Page {
                 color: Theme.secondaryColor
                 wrapMode: Text.Wrap
                 text: qsTr("Shader effects require OpenGL ES 3.0, which is not available on this device.")
+            }
+
+            TextSwitch {
+                id: urlAutoDetectToggle
+                width: parent.width
+                text: qsTr("Auto-detect URLs")
+                description: qsTr("Highlight URLs in terminal output for tap-to-open")
+                checked: Settings.urlAutoDetect
+                onCheckedChanged: Settings.urlAutoDetect = checked
             }
 
             // Extra keys section
