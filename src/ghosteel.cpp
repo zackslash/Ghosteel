@@ -2,6 +2,7 @@
 // are parsed before Qt defines the `emit` macro (which conflicts with
 // Ghostty's use of 'emit' as a struct field name).
 #include "terminalview.h"
+#include "glrenderer.h"
 #include "sessionmanager.h"
 #include "settings.h"
 
@@ -49,6 +50,7 @@ static void loadTranslations(QCoreApplication *app)
 int main(int argc, char *argv[])
 {
     qmlRegisterType<TerminalView>(APP_QML_MODULE, 1, 0, "TerminalView");
+    qmlRegisterType<GLRenderer>(APP_QML_MODULE, 1, 0, "GLRenderer");
 
     // Single-instance guard: if another instance is running, tell it to raise
     // its window and exit.  This handles D-Bus activation launching a duplicate

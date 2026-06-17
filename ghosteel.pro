@@ -13,7 +13,7 @@ TARGET = ghosteel
 
 CONFIG += sailfishapp
 
-QT += gui quick qml dbus
+QT += gui quick qml dbus opengl
 
 # Sailfish Secrets + Crypto for scrollback encryption
 DEFINES += SAILFISH_SECRETS
@@ -51,11 +51,15 @@ equals(QT_ARCH, arm64) {
     LIBS += -L$$PWD/lib/i486 -lghostty-vt
 }
 
-LIBS += -lpthread -lm -ldl -lutil -lrt
+LIBS += -lpthread -lm -ldl -lutil -lrt -lGLESv2 -lEGL
+
+RESOURCES += shaders/shaders.qrc
 
 HEADERS += \
     src/ghosteeladapter.h \
     src/ghosttyvt.h \
+    src/glrenderer.h \
+    src/glyphatlas.h \
     src/keymapping.h \
     src/ptymanager.h \
     src/scrollencryptor.h \
@@ -68,6 +72,8 @@ SOURCES += \
     src/ghosteel.cpp \
     src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \
+    src/glrenderer.cpp \
+    src/glyphatlas.cpp \
     src/keymapping.cpp \
     src/ptymanager.cpp \
     src/scrollencryptor.cpp \
@@ -82,6 +88,7 @@ DISTFILES += qml/ghosteel.qml \
     qml/pages/FirstPage.qml \
     qml/pages/SessionPage.qml \
     qml/pages/SettingsPage.qml \
+    qml/pages/LicensesPage.qml \
     rpm/ghosteel.changes.in \
     rpm/ghosteel.changes.run.in \
     rpm/ghosteel.spec \

@@ -7,7 +7,7 @@ Page {
     id: settingsPage
     allowedOrientations: Orientation.All
 
-    property var colorSchemes: ["dark", "light", "solarized-dark", "solarized-light", "monokai"]
+    property var colorSchemes: ["dark", "light"]
 
     SilicaFlickable {
         anchors.fill: parent
@@ -22,6 +22,8 @@ Page {
                     bellModeCombo.currentIndex = 1
                     schemeCombo.currentIndex = 0
                     opacitySlider.value = 0.6
+                    cursorTrailsToggle.checked = true
+                    Settings.customShaderPath = ""
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
@@ -89,9 +91,6 @@ Page {
                 menu: ContextMenu {
                     MenuItem { text: qsTr("Dark") }
                     MenuItem { text: qsTr("Light") }
-                    MenuItem { text: qsTr("Solarized Dark") }
-                    MenuItem { text: qsTr("Solarized Light") }
-                    MenuItem { text: qsTr("Monokai") }
                 }
 
                 onCurrentIndexChanged: {
@@ -130,6 +129,29 @@ Page {
                 valueText: qsTr("%1%").arg(Math.round(value * 100))
 
                 onValueChanged: Settings.backgroundOpacity = value
+            }
+
+            TextSwitch {
+                id: cursorTrailsToggle
+                width: parent.width
+                enabled: Settings.shaderPipelineAvailable
+                opacity: enabled ? 1.0 : 0.4
+                text: qsTr("Cursor trails")
+                description: Settings.shaderPipelineAvailable
+                    ? qsTr("Animated trail effect when the cursor moves")
+                    : qsTr("Requires OpenGL ES 3.0 — not available on this device")
+                checked: Settings.cursorTrails && Settings.shaderPipelineAvailable
+                onCheckedChanged: Settings.cursorTrails = checked
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: !Settings.shaderPipelineAvailable
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+                text: qsTr("Shader effects require OpenGL ES 3.0, which is not available on this device.")
             }
 
             // Extra keys section
@@ -221,6 +243,18 @@ Page {
                 color: Theme.secondaryColor
                 wrapMode: Text.Wrap
                 text: appName + " " + appVersion + "\nlibghostty " + ghosttyVersion
+            }
+
+            BackgroundItem {
+                width: parent.width
+                onClicked: pageStack.push(Qt.resolvedUrl("LicensesPage.qml"))
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Licenses")
+                    color: parent.highlighted ? Theme.highlightColor : Theme.primaryColor
+                }
             }
         }
 

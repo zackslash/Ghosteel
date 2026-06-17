@@ -24,6 +24,9 @@ class Settings : public QObject
     Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
     Q_PROPERTY(int sessionSortMode READ sessionSortMode WRITE setSessionSortMode NOTIFY sessionSortModeChanged)
+    Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
+    Q_PROPERTY(QString customShaderPath READ customShaderPath WRITE setCustomShaderPath NOTIFY customShaderPathChanged)
+    Q_PROPERTY(bool shaderPipelineAvailable READ shaderPipelineAvailable NOTIFY shaderPipelineAvailableChanged)
 
 public:
     // Session sort modes — values must match SessionPage.qml
@@ -69,6 +72,16 @@ public:
     int sessionSortMode() const { return m_sessionSortMode; }
     void setSessionSortMode(int mode);
 
+    bool cursorTrails() const { return m_cursorTrails; }
+    void setCursorTrails(bool enabled);
+
+    QString customShaderPath() const { return m_customShaderPath; }
+    void setCustomShaderPath(const QString &path);
+
+    bool shaderPipelineAvailable() const { return m_shaderPipelineAvailable; }
+    void setShaderPipelineAvailable(bool available);
+
+
 Q_SIGNALS:
     void fontSizeChanged();
     void fontFamilyChanged();
@@ -81,6 +94,9 @@ Q_SIGNALS:
     void keybarKeysChanged();
     void keybarVisibleChanged();
     void sessionSortModeChanged();
+    void cursorTrailsChanged();
+    void customShaderPathChanged();
+    void shaderPipelineAvailableChanged();
 
 private:
     explicit Settings(QObject *parent = nullptr);
@@ -101,6 +117,9 @@ private:
     QStringList m_keybarKeys;
     bool m_keybarVisible = true;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
+    bool m_cursorTrails = true; // default: ON — matches load() default
+    QString m_customShaderPath;
+    bool m_shaderPipelineAvailable = false; // set by GLRenderer after ES 3.0 probe
 };
 
 #endif // SETTINGS_H

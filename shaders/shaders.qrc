@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file alias="cursor_trail.glsl">cursor_trail.glsl</file>
+    </qresource>
+</RCC>
