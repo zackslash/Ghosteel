@@ -19,7 +19,7 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 - **Touch text selection**: long-press with Sailfish-style magnifier, velocity-aware hiding, double/triple tap
 - **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
 - **Link detection**: OSC 8 hyperlinks and automatic URL detection, tap to open in browser
-- **Encrypted scrollback**: AES-256 encryption via Sailfish Secrets, configurable retention (7 to 365 days)
+- **Encrypted scrollback**: AES-256 encryption via Sailfish Secrets, configurable retention (7–365 days or disabled)
 - **2 color schemes**: Dark and Light, adjustable opacity
 - **35+ translations**
 
