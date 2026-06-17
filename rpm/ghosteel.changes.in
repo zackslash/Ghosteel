@@ -5,12 +5,5 @@
 # Add newest entries to the top of the list.
 # Separate entries from eachother with a blank line.
 
-* Tue Jun 17 2025
-- Initial beta release
-- OpenGL ES renderer with shader pipeline
-- Cursor trail effects
-- Kitty Graphics Protocol for inline images
-- URL auto-detect and tap-to-open
-- Multi-session support with session ordering
-- Scrollback encryption via Sailfish Secrets
-- 39 locale translations with proper plural forms
+* Sun Apr 13 2025
+- Initial release
