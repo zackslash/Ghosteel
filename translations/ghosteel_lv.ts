@@ -3,50 +3,24 @@
 <TS version="2.1" language="lv">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sesija(s)</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel terminālis
-SailfishOS</translation>
+        <source>1 session</source>
+        <translation>1 sesija</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 sesijas</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Slēpt papildu taustiņus</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Jauna sesija</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Nākamā sesija</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Iepriekšējā sesija</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -59,14 +33,6 @@ SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Iestatījumi</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Rādīt papildu taustiņus</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -83,6 +49,29 @@ SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Meklēt terminālī</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Atvērt saiti</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Atvērt</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Atcelt</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Atvērsies pārlūkprogrammā</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell beidzās ar kodu %1</translation>
     </message>
 </context>
 <context>
@@ -110,6 +99,109 @@ SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Pieejamie taustiņi</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigācija</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modifikatori</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Rīki</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Sesijas navigācija</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funkciju taustiņi</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Pa kreisi</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Lejup</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Augšup</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Pa labi</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl modifikators</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt modifikators</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Rādīt/slēpt tastatūru</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Iepriekšējā sesija</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Nākamā sesija</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licences</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Kursora pēdas šeideris</translation>
     </message>
 </context>
 <context>
@@ -189,10 +281,6 @@ SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -229,18 +317,8 @@ SailfishOS</translation>
         <translation>Fonta lielums</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel terminālis
-SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Gaišs</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -257,14 +335,6 @@ SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell komanda</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +433,41 @@ SailfishOS</translation>
 Powered by libghostty terminal engine</source>
         <translation>1 gadu</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell izgāja ar kodu %1
-
-Pieskarieties, lai restartētu</translation>
+        <source>Cursor trails</source>
+        <translation>Kursora pēdas</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animēts pēdas efekts, pārvietojot kursoru</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Nepieciešams OpenGL ES 3.0 — nav pieejams šajā ierīcē</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Iekļauti attēli</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Rādīt attēlus, kas nosūtīti, izmantojot Kitty Graphics protokolu</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Ģeneratora efektiem nepieciešams OpenGL ES 3.0, kas nav pieejams šajā ierīcē.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Automātiski atpazīt URL</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Iezīmēt URL termināļa izvadē, lai atvērtu ar pieskārienu</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licences</translation>
     </message>
 </context>
 </TS>

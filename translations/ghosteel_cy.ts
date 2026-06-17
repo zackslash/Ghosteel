@@ -3,52 +3,24 @@
 <TS version="2.1" language="cy">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sesiwn</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Terfynell Ghosteel
-ar gyfer SailfishOS</translation>
+        <source>1 session</source>
+        <translation>1 sesiwn</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 sesiwn</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Cuddio allweddi ychwanegol</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Sesiwn newydd</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Sesiwn nesaf</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Sesiwn blaenorol</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -61,14 +33,6 @@ ar gyfer SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Gosodiadau</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Dangos allweddi ychwanegol</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -85,6 +49,29 @@ ar gyfer SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Chwilio&apos;r derfynell</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Agor dolen</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Agor</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Canslo</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Bydd yn agor yn y porwr</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell wedi gorffen gyda chod %1</translation>
     </message>
 </context>
 <context>
@@ -112,6 +99,109 @@ ar gyfer SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Allweddi ar gael</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Llywio</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Addasyddion</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Offer</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Llywio sesiwn</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Allweddi swyddogaeth</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Chwith</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>I lawr</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>I fyny</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>De</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Addasydd Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Addasydd Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Dangos/cuddio bysellfwrdd</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Sesiwn flaenorol</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Sesiwn nesaf</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Trwyddedau</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Cysgodol ol y cyrchydd</translation>
     </message>
 </context>
 <context>
@@ -191,10 +281,6 @@ ar gyfer SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -231,18 +317,8 @@ ar gyfer SailfishOS</translation>
         <translation>Maint ffont</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Terfynell Ghosteel
-ar gyfer SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Golau</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -259,14 +335,6 @@ ar gyfer SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Gorchymyn plisgyn</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -366,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Terfynell Ghosteel ar gyfer SailfishOS
 Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Daeth y plisgyn allan gyda chod %1
-
-Tapiwch i ailgychwyn</translation>
+        <source>Cursor trails</source>
+        <translation>Olion y cyrchydd</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Effaith ol animeiddiedig pan fydd y cyrchydd yn symud</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Angen OpenGL ES 3.0 — ddim ar gael ar y ddyfais hon</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Delweddau mewnlin</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Dangos delweddau a anfonwyd drwy brotocol Kitty Graphics</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Mae effeithiau cysgodol yn gofyn am OpenGL ES 3.0, sydd ddim ar gael ar y ddyfais hon.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Canfod URLau yn awtomatig</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Amlygu URLau allbwn terfynell i agor gyda thap</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Trwyddedau</translation>
     </message>
 </context>
 </TS>

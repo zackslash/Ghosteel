@@ -16,6 +16,40 @@ Page {
         return set
     }
 
+    // Translation helpers for KeyCatalog.js strings (pragma library can't use qsTr)
+    function translateCategory(label) {
+        var map = {
+            "Navigation": qsTr("Navigation"),
+            "Modifiers": qsTr("Modifiers"),
+            "Utility": qsTr("Utility"),
+            "Session Navigation": qsTr("Session Navigation"),
+            "Function keys": qsTr("Function keys")
+        }
+        return map[label] || label
+    }
+
+    function translateDescription(description) {
+        var map = {
+            "Left": qsTr("Left"),
+            "Down": qsTr("Down"),
+            "Up": qsTr("Up"),
+            "Right": qsTr("Right"),
+            "Tab": qsTr("Tab"),
+            "Escape": qsTr("Escape"),
+            "Page Up": qsTr("Page Up"),
+            "Page Down": qsTr("Page Down"),
+            "Home": qsTr("Home"),
+            "End": qsTr("End"),
+            "Delete": qsTr("Delete"),
+            "Control modifier": qsTr("Control modifier"),
+            "Alt modifier": qsTr("Alt modifier"),
+            "Toggle keyboard": qsTr("Toggle keyboard"),
+            "Previous session": qsTr("Previous session"),
+            "Next session": qsTr("Next session")
+        }
+        return map[description] || description
+    }
+
     function toggleKey(keyId, enabled) {
         var keys = Settings.keybarKeys.slice()
         var idx = keys.indexOf(keyId)
@@ -102,7 +136,7 @@ Page {
                                 var def = KeyCatalog.findById(modelData)
                                 if (!def) return modelData
                                 if (def.description && def.description !== def.label)
-                                    return def.label + " (" + def.description + ")"
+                                    return def.label + " (" + translateDescription(def.description) + ")"
                                 return def.label
                             }
                             color: enabledItem.highlighted ? Theme.highlightColor : Theme.primaryColor
@@ -153,7 +187,7 @@ Page {
                     width: parent.width
 
                     SectionHeader {
-                        text: modelData.label
+                        text: translateCategory(modelData.label)
                     }
 
                     Grid {

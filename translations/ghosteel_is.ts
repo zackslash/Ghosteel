@@ -3,49 +3,24 @@
 <TS version="2.1" language="is">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n seta/setur</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel skjáhermir
-fyrir SailfishOS</translation>
+        <source>1 session</source>
+        <translation>1 seta</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 setur</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Fela aukalykla</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Ný seta</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Næsta seta</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Fyrri seta</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ fyrir SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Stillingar</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Sýna aukalykla</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ fyrir SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Leita í skjáhermi</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Opna tengil</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Opna</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Hætta við</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Opnast í vafra</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell hætti með kóða %1</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ fyrir SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Tiltækir lyklar</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Flakk</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Breytar</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Hjálpartól</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Setuflakk</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Virknihamlar</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Vinstri</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Niður</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Upp</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Hægri</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl-breytir</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt-breytir</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Sýna/fela lyklaborð</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Fyrri seta</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Næsta seta</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Leyfi</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Bendilskuggaforrit</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ fyrir SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ fyrir SailfishOS</translation>
         <translation>Leturstærð</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel skjáhermir
-fyrir SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Ljóst</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ fyrir SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Skel-skipun</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel skjáhermir fyrir SailfishOS
 Keyrt af libghostty skjáhermisvél</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Skel lauk með kóða %1
-
-Ýttu til að endurræsa</translation>
+        <source>Cursor trails</source>
+        <translation>Bendilskuggar</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Hreyfiskuggaáhrif þegar bendillinn hreyfist</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Krefst OpenGL ES 3.0 — ekki tiltækt á þessu tæki</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Inndregnar myndir</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Sýna myndir sendar með Kitty Graphics Protocol</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Skuggaáhrif krefjast OpenGL ES 3.0, sem ekki er tiltækt á þessu tæki.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Greina sjálfkrafa slóðir</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Áherslumerkja slóðir í úttaki skjáhermis til að opna með snertingu</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Leyfi</translation>
     </message>
 </context>
 </TS>

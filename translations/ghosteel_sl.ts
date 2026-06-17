@@ -3,51 +3,24 @@
 <TS version="2.1" language="sl">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sej</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel terminal
-za SailfishOS</translation>
+        <source>1 session</source>
+        <translation>1 seja</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 sej</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Skrij dodatne tipke</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Nova seja</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Naslednja seja</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Prejšnja seja</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -60,14 +33,6 @@ za SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Nastavitve</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Prikaži dodatne tipke</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -84,6 +49,29 @@ za SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Išči v terminalu</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Odpri povezavo</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Odpri</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Prekliči</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Odprlo se bo v brskalniku</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell končan s kodo %1</translation>
     </message>
 </context>
 <context>
@@ -111,6 +99,109 @@ za SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Razpoložljive tipke</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigacija</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modifikatorji</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Pripomočki</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Navigacija seje</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funkcijske tipke</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Levo</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Dol</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Gor</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Desno</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Modifikator Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Modifikator Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Prikaži/skrij tipkovnico</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Prejšnja seja</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Naslednja seja</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licence</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Shader sledi kazalca</translation>
     </message>
 </context>
 <context>
@@ -190,10 +281,6 @@ za SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -230,18 +317,8 @@ za SailfishOS</translation>
         <translation>Velikost pisave</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel terminal
-za SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Svetla</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -258,14 +335,6 @@ za SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Ukaz lupine</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -365,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel terminal za SailfishOS
 Poganja pogon terminala libghostty</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Lupina se je končala s kodo %1
-
-Tapnite za ponovni zagon</translation>
+        <source>Cursor trails</source>
+        <translation>Sledi kazalca</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animirani učinek sledi pri premikanju kazalca</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Zahteva OpenGL ES 3.0 — ni na voljo na tej napravi</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Vstavljene slike</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Prikaži slike poslane prek protokola Kitty Graphics</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Učinki senčenja zahtevajo OpenGL ES 3.0, ki ni na voljo na tej napravi.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Samodejno zaznaj URL-je</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Označi URL-je v izhodu terminala za odpiranje s dotikom</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licence</translation>
     </message>
 </context>
 </TS>

@@ -3,49 +3,24 @@
 <TS version="2.1" language="bg">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n сесии</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel терминал
-за SailfishOS</translation>
+        <source>1 session</source>
+        <translation>1 сесия</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 сесии</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Скрий допълнителни клавиши</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Нова сесия</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Следваща сесия</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Предишна сесия</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ for SailfishOS</source>
     <message>
         <source>Settings</source>
         <translation>Настройки</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Покажи допълнителни клавиши</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ for SailfishOS</source>
     <message>
         <source>Search terminal</source>
         <translation>Търсене в терминала</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Отвори връзката</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Отвори</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отказ</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Ще се отвори в браузъра</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell завърши с код %1</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ for SailfishOS</source>
     <message>
         <source>Available keys</source>
         <translation>Налични клавиши</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Навигация</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Модификатори</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Помощни инструменти</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Навигация на сесия</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Функционални клавиши</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Ляво</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Долу</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Горе</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Дясно</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Модификатор Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Модификатор Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Покажи/скрий клавиатурата</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Предишна сесия</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Следваща сесия</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Лицензи</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Шейдър за следа на курсора</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ for SailfishOS</source>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ for SailfishOS</source>
         <translation>Размер на шрифта</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel терминал
-за SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Светла</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ for SailfishOS</source>
     <message>
         <source>Shell command</source>
         <translation>Команда на обвивката</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel терминал за SailfishOS
 Задвижван от libghostty терминален двигател</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Обвивката приключи с код %1
-
-Докоснете за рестартиране</translation>
+        <source>Cursor trails</source>
+        <translation>Следи на курсора</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Анимиран ефект на следата при движение на курсора</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Изисква OpenGL ES 3.0 — не е налично на това устройство</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Вградени изображения</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Покажи изображения, изпратени чрез протокола Kitty Graphics</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Шейдър ефектите изискват OpenGL ES 3.0, който не е наличен на това устройство.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Автоматично разпознаване на URL адреси</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Маркирай URL адреси в изхода на терминала за отваряне с докосване</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Лицензи</translation>
     </message>
 </context>
 </TS>

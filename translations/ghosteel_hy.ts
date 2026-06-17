@@ -3,49 +3,24 @@
 <TS version="2.1" language="hy">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n նիստ</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel տերմինալ
-SailfishOS-ի համար</translation>
+        <source>1 session</source>
+        <translation>1 նիստ</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 նիստ</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Տաչել Լավական Ջամեր</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Նոր Նիստ</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Հաջորդ Նիստ</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Նախորդ Նիստ</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ SailfishOS-ի համար</translation>
     <message>
         <source>Settings</source>
         <translation>Կարգավորումներ</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Արագութել Լավական Ջամեր</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ SailfishOS-ի համար</translation>
     <message>
         <source>Search terminal</source>
         <translation>Որոնել տերմինալում</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Բացել հղումը</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Բացել</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Չեղարկել</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Կբացվի զննարկիչում</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell-ը ավարտվել է %1 կոդով</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ SailfishOS-ի համար</translation>
     <message>
         <source>Available keys</source>
         <translation>Հասանելի ստեղներ</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Նավիգացիա</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Ձևափոխիչներ</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Գործիքներ</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Նիստի նավիգացիա</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Ֆունկցիոնալ ստեղներ</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Ձախ</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Ներքև</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Վերև</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Աջ</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl ձևափոխիչ</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt ձևափոխիչ</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Ցուցադրել/թաքցնել ստեղնաշարը</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Նախորդ նիստ</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Հաջորդ նիստ</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Լիցենզիաներ</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Կուրսորի հետքի շեյդեր</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ SailfishOS-ի համար</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ SailfishOS-ի համար</translation>
         <translation>Տարի փար</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel տերմինալ
-SailfishOS-ի համար</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Լոոյս</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ SailfishOS-ի համար</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell հրաման</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel տերմինալ SailfishOS-ի համար
 Աշխատոոմ ե libghostty տերմինալ շարժիտսով</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell-ը դոորսագես կոդով %1
-
-Հեստեկ վերատարմանելոո համար</translation>
+        <source>Cursor trails</source>
+        <translation>Կուրսորի հետքեր</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Անիմացված հետքի էֆֆեկտ կուրսորը շարժվելիս</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Պահանջում է OpenGL ES 3.0 — հասանելի չէ այս սարքում</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Ներդրված պատկերներ</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Ցուցադրել Kitty Graphics արձանագրությամբ ուղարկված պատկերները</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Շեյդերի էֆֆեկտները պահանջում են OpenGL ES 3.0, որը հասանելի չէ այս սարքում:</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Ինքնաբար հայտնաբերել URL-ները</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Ընդգծել URL-ները տերմինալի ելքում բացելու համար հպումով</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Լիցենզիաներ</translation>
     </message>
 </context>
 </TS>

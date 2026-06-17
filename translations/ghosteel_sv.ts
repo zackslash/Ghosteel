@@ -3,49 +3,24 @@
 <TS version="2.1" language="sv">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n session(er)</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel-terminal
-för SailfishOS</translation>
+        <source>1 session</source>
+        <translation>1 session</translation>
+    </message>
+    <message>
+        <source>%1 sessions</source>
+        <translation>%1 sessioner</translation>
     </message>
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Dölj extra tangenter</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Ny session</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Nästa session</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Föregående session</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ för SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Inställningar</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Visa extra tangenter</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ för SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Sök i terminalen</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Öppna länk</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Öppna</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Avbryt</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Öppnas i webbläsaren</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell avslutades med kod %1</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ för SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Tillgängliga tangenter</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigation</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modifierare</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Verktyg</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Sessionsnavigation</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funktionstangenter</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Vänster</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Ner</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Upp</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Höger</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl-modifierare</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt-modifierare</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Visa/dölj tangentbord</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Föregående session</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Nästa session</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licenser</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Markörtrailshader</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ för SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ för SailfishOS</translation>
         <translation>Teckenstorlek</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel-terminal
-för SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Ljus</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ för SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell-kommando</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel-terminal för SailfishOS
 Drivs av libghostty terminalmotor</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell avslutades med kod %1
-
-Tryck för att starta om</translation>
+        <source>Cursor trails</source>
+        <translation>Markörtrails</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animerad trail-effekt vid markörförflyttning</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Kräver OpenGL ES 3.0 — inte tillgängligt på den här enheten</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Inline-bilder</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Visa bilder skickade via Kitty Graphics Protocol</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Shadereffekter kräver OpenGL ES 3.0, som inte är tillgängligt på den här enheten.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Upptäck URLer automatiskt</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Markera URLer i terminalutmatning för öppning med tryck</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licenser</translation>
     </message>
 </context>
 </TS>

@@ -2230,7 +2230,7 @@ void GLRenderer::Renderer::renderShellExitText(QOpenGLFramebufferObject *fbo)
     painter.setFont(font);
     painter.drawText(QRectF(0, 0, fbo->width(), fbo->height()),
                      Qt::AlignCenter,
-                     QString("Shell exited with code %1").arg(m_shellExitCode));
+                     GLRenderer::tr("Shell exited with code %1").arg(m_shellExitCode));
 
     painter.end();
 }
