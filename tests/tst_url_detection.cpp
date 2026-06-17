@@ -218,7 +218,7 @@ private slots:
 
     void urlInParentheses()
     {
-        // Opening/closing parens should be stripped from the match
+        // Closing ) is excluded from URL body by [^()\[\],.;\s], so it's stripped.
         QString flat; QVector<TextUtil::CellCoord> map;
         buildSingleLine("(https://example.com)", 21, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
@@ -228,7 +228,7 @@ private slots:
 
     void urlInBrackets()
     {
-        // Square brackets should be stripped from the match
+        // Closing ] is excluded from URL body by [^()\[\],.;\s], so it's stripped.
         QString flat; QVector<TextUtil::CellCoord> map;
         buildSingleLine("see [https://example.com] for info", 34, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
@@ -330,6 +330,65 @@ private slots:
         buildSingleLine("https:/", 7, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 0);
+    }
+
+    // --- Domain requirement for http/https/ftp ---
+
+    void schemeRequiresDomain()
+    {
+        // https://goog has no dot in hostname — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://goog", 12, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void bareHostnameNoMatch()
+    {
+        // http://foobar has no dot — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("http://foobar", 13, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void ftpRequiresDomain()
+    {
+        // ftp://files has no dot — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("ftp://files", 11, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void localhostRejected()
+    {
+        // http://localhost:3000 — no dot in hostname, won't match.
+        // This is a known trade-off of requiring a dot for http/https/ftp.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("http://localhost:3000", 20, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void ipAddressAccepted()
+    {
+        // https://192.168.1.1 — has dots, should match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://192.168.1.1", 19, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://192.168.1.1"));
+    }
+
+    void schemeContentNoSpaces()
+    {
+        // URL stops at whitespace
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://example.com/path with spaces", 35, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://example.com/path"));
     }
 
     // --- Multi-line ---
