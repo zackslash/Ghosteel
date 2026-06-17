@@ -328,6 +328,16 @@ private slots:
         QCOMPARE(spans[0].uri, QStringLiteral(".hidden/"));
     }
 
+    void incompleteSchemeSlash()
+    {
+        // "Https:/" — colon-slash without the second slash.
+        // The absolute path prefix must not match "/" after ":".
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("Https:/", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
     // --- Multi-line ---
 
     void urlOnSecondLine()
