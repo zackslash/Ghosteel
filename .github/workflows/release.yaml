@@ -9,10 +9,16 @@ jobs:
   validate:
     name: Validate tag
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
+      release_notes: ${{ steps.notes.outputs.release_notes }}
+      rpm_changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - id: version
         run: |
           TAG="${GITHUB_REF_NAME#v}"
@@ -21,6 +27,29 @@ jobs:
             exit 1
           fi
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
+      - id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES=$(gh api repos/${{ github.repository }}/releases/generate-notes \
+            -f tag_name="${{ github.ref_name }}" \
+            --jq '.body')
+          DELIMITER=$(openssl rand -hex 12)
+          echo "release_notes<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
+      - id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          else
+            CHANGES=$(git log --pretty=format:"- %s" --no-merges -20)
+          fi
+          DELIMITER=$(openssl rand -hex 12)
+          echo "changelog<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "$CHANGES" >> "$GITHUB_OUTPUT"
+          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
 
   test:
     name: Unit Tests
@@ -109,6 +138,13 @@ jobs:
       - name: Build libghostty-vt
         run: bash scripts/build-libs.sh ${{ matrix.arch }}
 
+      - name: Generate changelog
+        env:
+          CHANGELOG: ${{ needs.validate.outputs.rpm_changelog }}
+        run: |
+          DATE=$(date "+%a %b %d %Y")
+          printf '* %s\n%s\n' "$DATE" "$CHANGELOG" > rpm/ghosteel.changes
+
       - name: Build RPM
         uses: coderus/github-sfos-build@sfos5
         with:
@@ -139,5 +175,5 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: Ghosteel v${{ needs.validate.outputs.version }}
+          body: ${{ needs.validate.outputs.release_notes }}
           files: release-rpms/**/*.rpm
-          generate_release_notes: true
