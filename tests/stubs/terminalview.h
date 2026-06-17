@@ -129,6 +129,7 @@ Q_SIGNALS:
     void magnifierBorderColorChanged();
     void navigateSession(int direction);
     void toggleKeybar();
+    void linkActivated(const QString &uri);
     void topPaddingChanged();
 
 private:

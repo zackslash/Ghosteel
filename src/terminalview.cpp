@@ -63,6 +63,10 @@ TerminalView::TerminalView(QQuickItem *parent)
             recalculateDimensions();
         update();
     });
+    connect(Settings::instance(), &Settings::urlAutoDetectChanged, this, [this]() {
+        m_linkScanDirty = true;
+        update();
+    });
 
     m_blinkTimerId = startTimer(BlinkInterval);
 }
