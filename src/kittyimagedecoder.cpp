@@ -32,9 +32,7 @@ static bool decodePngCallback(void* /*userdata*/,
     const size_t pixelBytes = static_cast<size_t>(w) * static_cast<size_t>(h) * 4;
 
     // Allocate via Ghostty's allocator
-    GhosttyAllocator alloc = *allocator;
-    uint8_t* buf = static_cast<uint8_t*>(
-        alloc.alloc(alloc.ctx, pixelBytes, 8));
+    uint8_t* buf = ghostty_alloc(allocator, pixelBytes);
     if (!buf) {
         qWarning() << "Kitty image decoder: allocation failed";
         return false;
