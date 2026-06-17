@@ -299,6 +299,7 @@ private:
             GLuint texture;
             uint32_t width, height;
             uint32_t lastSeenFrame;
+            size_t dataLen;  // track for replacement detection
         };
         QHash<uint32_t, KittyCachedTexture> m_kittyTextures;
         uint32_t m_kittyFrameCounter = 0;

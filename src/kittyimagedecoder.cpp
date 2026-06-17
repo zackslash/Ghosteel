@@ -2,6 +2,7 @@
 
 #include <QImage>
 #include <QDebug>
+#include <limits>
 
 static const int KITTY_MAX_IMAGE_DIM = 4096;
 
@@ -10,6 +11,10 @@ static bool decodePngCallback(void* /*userdata*/,
                               const uint8_t* data, size_t data_len,
                               GhosttySysImage* out)
 {
+    // Guard against data_len exceeding QByteArray's int-based size
+    if (data_len > static_cast<size_t>(std::numeric_limits<int>::max()))
+        return false;
+
     // Load PNG from raw bytes
     QByteArray pngData(reinterpret_cast<const char*>(data), static_cast<int>(data_len));
     QImage img;

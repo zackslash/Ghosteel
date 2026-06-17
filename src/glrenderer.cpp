@@ -1732,8 +1732,15 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             continue;
 
         GhosttyKittyGraphicsImage image = ghostty_kitty_graphics_image(graphics, imageId);
-        if (!image)
+        if (!image) {
+            // Image was deleted from storage — evict from cache
+            auto it = m_kittyTextures.find(imageId);
+            if (it != m_kittyTextures.end()) {
+                glDeleteTextures(1, &it.value().texture);
+                m_kittyTextures.erase(it);
+            }
             continue;
+        }
 
         uint32_t imgW = 0, imgH = 0;
         ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_WIDTH, &imgW);
@@ -1754,6 +1761,18 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &yOffset);
 
         // Upload texture if not cached
+        // Also check for image ID reuse (data replaced since last cache)
+        if (m_kittyTextures.contains(imageId)) {
+            const uint8_t *checkPixels = nullptr;
+            size_t checkPixelsLen = 0;
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_PTR, &checkPixels);
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &checkPixelsLen);
+            if (checkPixelsLen != m_kittyTextures[imageId].dataLen) {
+                // Image ID reused with different data — evict old texture
+                glDeleteTextures(1, &m_kittyTextures[imageId].texture);
+                m_kittyTextures.remove(imageId);
+            }
+        }
         if (!m_kittyTextures.contains(imageId)) {
             const uint8_t *pixels = nullptr;
             size_t pixelsLen = 0;
@@ -1799,6 +1818,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             cached.width = imgW;
             cached.height = imgH;
             cached.lastSeenFrame = m_kittyFrameCounter;
+            cached.dataLen = pixelsLen;
             m_kittyTextures.insert(imageId, cached);
         } else {
             m_kittyTextures[imageId].lastSeenFrame = m_kittyFrameCounter;
@@ -1846,6 +1866,8 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             m_kittyProgram->setUniformValue(m_kittyMatrixUniform, proj);
             m_kittyProgram->setUniformValue(m_kittyTexUniform, 0);
             glActiveTexture(GL_TEXTURE0);
+            glEnableVertexAttribArray(m_kittyPositionAttr);
+            glEnableVertexAttribArray(m_kittyTexcoordAttr);
             hasAnyPlacement = true;
         }
 
@@ -1855,16 +1877,13 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                               4 * sizeof(float), verts);
         glVertexAttribPointer(m_kittyTexcoordAttr, 2, GL_FLOAT, GL_FALSE,
                               4 * sizeof(float), verts + 2);
-        glEnableVertexAttribArray(m_kittyPositionAttr);
-        glEnableVertexAttribArray(m_kittyTexcoordAttr);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        glDisableVertexAttribArray(m_kittyPositionAttr);
-        glDisableVertexAttribArray(m_kittyTexcoordAttr);
     }
 
     if (hasAnyPlacement) {
+        glDisableVertexAttribArray(m_kittyPositionAttr);
+        glDisableVertexAttribArray(m_kittyTexcoordAttr);
         glBindTexture(GL_TEXTURE_2D, 0);
         m_kittyProgram->release();
     }
@@ -1889,6 +1908,8 @@ void GLRenderer::Renderer::cleanupKittyCache()
         uint32_t oldestFrame = UINT32_MAX;
         uint32_t oldestId = 0;
         for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it) {
+            if (toRemove.contains(it.key()))
+                continue; // skip IDs already marked for removal
             if (it.value().lastSeenFrame < oldestFrame) {
                 oldestFrame = it.value().lastSeenFrame;
                 oldestId = it.key();
