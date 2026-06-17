@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/shaders">
         <file alias="cursor_trail.glsl">cursor_trail.glsl</file>
+        <file alias="kitty_image.glsl">kitty_image.glsl</file>
     </qresource>
 </RCC>

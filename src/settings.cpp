@@ -46,6 +46,7 @@ void Settings::load()
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
+    m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
     m_customShaderPath = m_settings.value(QStringLiteral("terminal/customShaderPath")).toString();
 }
 
@@ -195,6 +196,16 @@ void Settings::setUrlAutoDetect(bool enabled)
     m_settings.setValue(QStringLiteral("terminal/urlAutoDetect"), enabled);
     scheduleSave();
     Q_EMIT urlAutoDetectChanged();
+}
+
+void Settings::setKittyGraphics(bool enabled)
+{
+    if (m_kittyGraphics == enabled)
+        return;
+    m_kittyGraphics = enabled;
+    m_settings.setValue(QStringLiteral("terminal/kittyGraphics"), enabled);
+    scheduleSave();
+    Q_EMIT kittyGraphicsChanged();
 }
 
 void Settings::setCustomShaderPath(const QString &path)
