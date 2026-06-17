@@ -14,8 +14,6 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QLineF>
-#include <QDesktopServices>
-#include <QUrl>
 #include <algorithm>
 #include <sys/ioctl.h>
 
@@ -1020,7 +1018,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         QString uri = m_tappedLinkUri;
         m_tappedLinkUri.clear();
         if (dragDist < TapDistancePx && !uri.isEmpty()) {
-            QDesktopServices::openUrl(QUrl(uri));
+            Q_EMIT linkActivated(uri);
             event->accept();
             return;
         }

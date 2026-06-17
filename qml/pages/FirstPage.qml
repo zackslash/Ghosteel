@@ -89,11 +89,54 @@ Page {
         expireTimeout: 5000
     }
 
+    // Link confirmation dialog — shown before opening external URLs
+    Component {
+        id: linkDialogComponent
+        Dialog {
+            id: linkDialog
+            property string url: ""
+            canAccept: url.length > 0
+
+            Column {
+                width: parent.width
+
+                DialogHeader {
+                    title: qsTr("Open Link")
+                    acceptText: qsTr("Open")
+                    cancelText: qsTr("Cancel")
+                }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: linkDialog.url
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeMedium
+                    wrapMode: Text.Wrap
+                }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: qsTr("This will open in your browser")
+                    color: Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+            }
+
+            onAccepted: Qt.openUrlExternally(url)
+        }
+    }
+
     onCtrlActiveChanged: updateModifiers()
     onAltActiveChanged: updateModifiers()
     onActiveModifiersChanged: {
         if (terminal)
             terminal.stickyModifiers = activeModifiers
+    }
+
+    function showLinkDialog(uri) {
+        pageStack.push(linkDialogComponent, { "url": uri })
     }
 
     // Apply Sailfish Theme colors to terminal UI overlays
@@ -134,6 +177,8 @@ Page {
         t.navigateSession.connect(onNavigateSession)
         t.toggleKeybar.disconnect(onToggleKeybar)
         t.toggleKeybar.connect(onToggleKeybar)
+        t.linkActivated.disconnect(showLinkDialog)
+        t.linkActivated.connect(showLinkDialog)
         terminal = t
         updateWindowTitle()
     }
@@ -145,6 +190,7 @@ Page {
         t.terminalBell.disconnect(onTerminalBell)
         t.navigateSession.disconnect(onNavigateSession)
         t.toggleKeybar.disconnect(onToggleKeybar)
+        t.linkActivated.disconnect(showLinkDialog)
         t.visible = false
     }
 

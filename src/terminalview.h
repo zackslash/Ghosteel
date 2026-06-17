@@ -127,6 +127,7 @@ Q_SIGNALS:
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
     void selectedTextChanged();
+    void linkActivated(const QString &uri);
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
     void searchActiveChanged();
