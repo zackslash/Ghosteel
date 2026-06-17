@@ -68,6 +68,9 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Planning docs
+plan.md
+
 # CTest
 Testing/
 tests/CMakeCache.txt

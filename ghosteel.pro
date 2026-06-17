@@ -61,6 +61,7 @@ HEADERS += \
     src/glrenderer.h \
     src/glyphatlas.h \
     src/keymapping.h \
+    src/kittyimagedecoder.h \
     src/ptymanager.h \
     src/scrollencryptor.h \
     src/sessionmanager.h \
@@ -75,6 +76,7 @@ SOURCES += \
     src/glrenderer.cpp \
     src/glyphatlas.cpp \
     src/keymapping.cpp \
+    src/kittyimagedecoder.cpp \
     src/ptymanager.cpp \
     src/scrollencryptor.cpp \
     src/sessionmanager.cpp \

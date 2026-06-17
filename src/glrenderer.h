@@ -7,6 +7,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
 #include <QOpenGLFramebufferObject>
+#include <QHash>
 #include <QVector>
 #include <QList>
 #include <QPointF>
@@ -148,6 +149,13 @@ private:
         void runPostProcessPass(PostShader &shader, GLuint inputTex, GLuint outputFbo, int w, int h);
         void renderMagnifier(const QMatrix4x4 &proj, int fboW, int fboH);
 
+        // Kitty Graphics Protocol — rendering helpers
+        void createKittyShaders();
+        void drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
+                                 const QMatrix4x4 &proj, int fboW, int fboH);
+        void syncKittyImages(GhosttyTerminal terminal, GhosttyVt *vt);
+        void cleanupKittyCache();
+
         QOpenGLShaderProgram *m_program = nullptr;
         QOpenGLBuffer m_vbo;
         bool m_initialized = false;
@@ -285,6 +293,26 @@ private:
         float m_postFgR = 1.0f, m_postFgG = 1.0f, m_postFgB = 1.0f;
         float m_postCursorR = 1.0f, m_postCursorG = 1.0f, m_postCursorB = 1.0f;
         bool m_postCursorColorHasValue = false;
+
+        // Kitty Graphics Protocol — image rendering
+        struct KittyCachedTexture {
+            GLuint texture;
+            uint32_t width, height;
+            uint32_t lastSeenFrame;
+        };
+        QHash<uint32_t, KittyCachedTexture> m_kittyTextures;
+        uint32_t m_kittyFrameCounter = 0;
+        static const int MAX_KITTY_TEXTURES = 32;
+        static const int KITTY_EVICTION_FRAMES = 120;
+
+        // Kitty image shader (textured quad, premultiplied alpha)
+        QOpenGLShaderProgram *m_kittyProgram = nullptr;
+        int m_kittyMatrixUniform = -1;
+        int m_kittyTexUniform = -1;
+        int m_kittyPositionAttr = -1;
+        int m_kittyTexcoordAttr = -1;
+        QVector<float> m_kittyVertices; // interleaved pos2+texcoord2 = 4 floats per vertex
+        int m_kittyVertexCount = 0;
     };
 };
 

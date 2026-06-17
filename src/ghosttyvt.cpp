@@ -47,6 +47,11 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     // Enable cursor blinking by default (Ghostty mode 12 defaults to false)
     ghostty_terminal_mode_set(m_terminal, GHOSTTY_MODE_CURSOR_BLINKING, true);
 
+    // Enable Kitty Graphics Protocol image storage (32 MiB per screen)
+    uint64_t kittyLimit = 32 * 1024 * 1024;
+    ghostty_terminal_set(m_terminal,
+                         GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_STORAGE_LIMIT, &kittyLimit);
+
     // Set callbacks
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_USERDATA, this);
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY,

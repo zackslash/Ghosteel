@@ -327,6 +327,8 @@ GLRenderer::Renderer::~Renderer()
     delete m_program;
     delete m_flatProgram;
     delete m_magProgram;
+    delete m_kittyProgram;
+    m_kittyProgram = nullptr;
     delete m_postShader.program;
     m_postShader.program = nullptr;
     for (auto &shader : m_postShaders)
@@ -334,6 +336,7 @@ GLRenderer::Renderer::~Renderer()
     m_postShaders.clear();
 
     if (QOpenGLContext::currentContext()) {
+        cleanupKittyCache();
         if (m_vbo.isCreated())
             m_vbo.destroy();
         if (m_flatVbo.isCreated())
@@ -359,6 +362,7 @@ void GLRenderer::Renderer::initialize()
     createFlatVBO();
     createMagShaders();
     createMagTexture();
+    createKittyShaders();
 
     detectES300();
     if (m_es300)
@@ -500,6 +504,43 @@ void GLRenderer::Renderer::createMagTexture()
     // Allocate 128×64 RGBA texture (initial data is garbage, will be overwritten by glCopyTexSubImage2D)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void GLRenderer::Renderer::createKittyShaders()
+{
+    m_kittyProgram = new QOpenGLShaderProgram;
+    // Load shader from Qt resource — kitty_image.glsl has //! vertex and //! fragment sections
+    QFile shaderFile(QStringLiteral(":/shaders/kitty_image.glsl"));
+    if (!shaderFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open kitty_image.glsl";
+        return;
+    }
+    QByteArray shaderSrc = shaderFile.readAll();
+    shaderFile.close();
+
+    int vertIdx = shaderSrc.indexOf("//! vertex");
+    int fragIdx = shaderSrc.indexOf("//! fragment");
+    if (vertIdx < 0 || fragIdx < 0) {
+        qWarning() << "kitty_image.glsl missing vertex/fragment markers";
+        return;
+    }
+
+    QByteArray vertSrc = shaderSrc.mid(vertIdx, fragIdx - vertIdx);
+    QByteArray fragSrc = shaderSrc.mid(fragIdx);
+
+    m_kittyProgram->addShaderFromSourceCode(QOpenGLShader::Vertex, vertSrc);
+    m_kittyProgram->addShaderFromSourceCode(QOpenGLShader::Fragment, fragSrc);
+    if (!m_kittyProgram->link()) {
+        qWarning() << "Kitty image shader link failed:" << m_kittyProgram->log();
+        delete m_kittyProgram;
+        m_kittyProgram = nullptr;
+        return;
+    }
+
+    m_kittyMatrixUniform = m_kittyProgram->uniformLocation("u_matrix");
+    m_kittyTexUniform = m_kittyProgram->uniformLocation("u_image");
+    m_kittyPositionAttr = m_kittyProgram->attributeLocation("position");
+    m_kittyTexcoordAttr = m_kittyProgram->attributeLocation("texcoord");
 }
 
 void GLRenderer::Renderer::appendCircle(float cx, float cy, float radius,
@@ -1490,6 +1531,10 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_scrollOffset = scrollbar.offset;
     }
 
+    // Sync kitty graphics images (eviction, etc.)
+    if (m_terminalView && m_terminalView->vt())
+        syncKittyImages(m_terminalView->vt()->terminal(), m_terminalView->vt());
+
     // Load/unload cursor trail shader based on setting
     // Custom shader path takes priority over cursor trails
     bool wantCustom = !q->m_customShaderPath.isEmpty() && m_es300;
@@ -1610,6 +1655,254 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
     }
 }
 
+void GLRenderer::Renderer::syncKittyImages(GhosttyTerminal terminal, GhosttyVt *vt)
+{
+    if (!terminal || !vt)
+        return;
+
+    Settings *settings = Settings::instance();
+    if (!settings || !settings->kittyGraphics()) {
+        if (!m_kittyTextures.isEmpty())
+            cleanupKittyCache();
+        return;
+    }
+
+    m_kittyFrameCounter++;
+
+    // Evict old textures periodically
+    if (m_kittyFrameCounter % 60 == 0)
+        cleanupKittyCache();
+}
+
+void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
+                                                const QMatrix4x4 &proj, int /* fboW */, int /* fboH */)
+{
+    if (!m_kittyProgram || !m_kittyProgram->isLinked())
+        return;
+
+    Settings *settings = Settings::instance();
+    if (!settings || !settings->kittyGraphics())
+        return;
+
+    if (!m_terminalView || !m_terminalView->vt())
+        return;
+
+    GhosttyTerminal terminal = m_terminalView->vt()->terminal();
+    if (!terminal)
+        return;
+
+    GhosttyKittyGraphics graphics = nullptr;
+    ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_KITTY_GRAPHICS, &graphics);
+    if (!graphics)
+        return;
+
+    GhosttyKittyGraphicsPlacementIterator iter = nullptr;
+    if (ghostty_kitty_graphics_placement_iterator_new(nullptr, &iter) != GHOSTTY_SUCCESS)
+        return;
+
+    if (ghostty_kitty_graphics_get(graphics,
+            GHOSTTY_KITTY_GRAPHICS_DATA_PLACEMENT_ITERATOR, &iter) != GHOSTTY_SUCCESS) {
+        ghostty_kitty_graphics_placement_iterator_free(iter);
+        return;
+    }
+
+    // Set layer filter
+    ghostty_kitty_graphics_placement_iterator_set(iter,
+        GHOSTTY_KITTY_GRAPHICS_PLACEMENT_ITERATOR_OPTION_LAYER, &layer);
+
+    bool hasAnyPlacement = false;
+
+    while (ghostty_kitty_graphics_placement_next(iter)) {
+        bool isVirtual = false;
+        ghostty_kitty_graphics_placement_get(iter,
+            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_IS_VIRTUAL, &isVirtual);
+        if (isVirtual)
+            continue;
+
+        uint32_t imageId = 0;
+        ghostty_kitty_graphics_placement_get(iter,
+            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_IMAGE_ID, &imageId);
+        if (imageId == 0)
+            continue;
+
+        GhosttyKittyGraphicsImage image = ghostty_kitty_graphics_image(graphics, imageId);
+        if (!image)
+            continue;
+
+        uint32_t imgW = 0, imgH = 0;
+        ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_WIDTH, &imgW);
+        ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_HEIGHT, &imgH);
+        if (imgW == 0 || imgH == 0)
+            continue;
+
+        GhosttyKittyGraphicsPlacementRenderInfo info;
+        memset(&info, 0, sizeof(info));
+        info.size = sizeof(info);
+        if (ghostty_kitty_graphics_placement_render_info(iter, image, terminal, &info) != GHOSTTY_SUCCESS)
+            continue;
+        if (!info.viewport_visible)
+            continue;
+
+        uint32_t xOffset = 0, yOffset = 0;
+        ghostty_kitty_graphics_placement_get(iter,
+            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_X_OFFSET, &xOffset);
+        ghostty_kitty_graphics_placement_get(iter,
+            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &yOffset);
+
+        // Upload texture if not cached
+        if (!m_kittyTextures.contains(imageId)) {
+            const uint8_t *pixels = nullptr;
+            size_t pixelsLen = 0;
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_PTR, &pixels);
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &pixelsLen);
+
+            if (!pixels || pixelsLen == 0)
+                continue;
+
+            GhosttyKittyImageFormat fmt = GHOSTTY_KITTY_IMAGE_FORMAT_RGBA;
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_FORMAT, &fmt);
+
+            GLenum glFmt = GL_RGBA;
+            if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_RGB)
+                glFmt = GL_RGB;
+            else if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY
+                     || fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY_ALPHA) {
+                // GLES 2.0 may not support GL_LUMINANCE as render target;
+                // the PNG decoder already converts to RGBA, but raw data
+                // could arrive in these formats. Fall through to GL_RGBA
+                // and hope the data was pre-converted. Log once.
+                static bool warned = false;
+                if (!warned) {
+                    qWarning() << "Kitty image: gray/gray-alpha format not natively supported, "
+                                  "data may render incorrectly";
+                    warned = true;
+                }
+            }
+
+            GLuint tex = 0;
+            glGenTextures(1, &tex);
+            glBindTexture(GL_TEXTURE_2D, tex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, glFmt, imgW, imgH, 0,
+                         glFmt, GL_UNSIGNED_BYTE, pixels);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            KittyCachedTexture cached;
+            cached.texture = tex;
+            cached.width = imgW;
+            cached.height = imgH;
+            cached.lastSeenFrame = m_kittyFrameCounter;
+            m_kittyTextures.insert(imageId, cached);
+        } else {
+            m_kittyTextures[imageId].lastSeenFrame = m_kittyFrameCounter;
+        }
+
+        // Compute destination rect
+        float destX = static_cast<float>(info.viewport_col * m_cellWidth) + static_cast<float>(xOffset);
+        float destY = m_topPadding + static_cast<float>(info.viewport_row * m_cellHeight) + static_cast<float>(yOffset);
+        float destW = static_cast<float>(info.pixel_width);
+        float destH = static_cast<float>(info.pixel_height);
+
+        // Compute UV from source rect
+        float uvX0 = static_cast<float>(info.source_x) / static_cast<float>(imgW);
+        float uvY0 = static_cast<float>(info.source_y) / static_cast<float>(imgH);
+        float uvX1 = static_cast<float>(info.source_x + info.source_width) / static_cast<float>(imgW);
+        float uvY1 = static_cast<float>(info.source_y + info.source_height) / static_cast<float>(imgH);
+
+        // Clip partial visibility (negative viewport_row)
+        if (info.viewport_row < 0) {
+            int clippedPx = (-info.viewport_row) * m_cellHeight;
+            destY = m_topPadding;
+            destH -= clippedPx;
+            if (destH <= 0)
+                continue;
+            float uvScale = (uvY1 - uvY0) / static_cast<float>(info.pixel_height);
+            uvY0 += uvScale * clippedPx;
+        }
+
+        // Build quad vertices (pos2 + tex2 = 4 floats per vertex, 6 vertices)
+        float x0 = destX, y0 = destY;
+        float x1 = destX + destW, y1 = destY + destH;
+
+        float verts[24] = {
+            x0, y0, uvX0, uvY0,
+            x1, y0, uvX1, uvY0,
+            x1, y1, uvX1, uvY1,
+            x0, y0, uvX0, uvY0,
+            x1, y1, uvX1, uvY1,
+            x0, y1, uvX0, uvY1,
+        };
+
+        // Bind texture and draw
+        if (!hasAnyPlacement) {
+            m_kittyProgram->bind();
+            m_kittyProgram->setUniformValue(m_kittyMatrixUniform, proj);
+            m_kittyProgram->setUniformValue(m_kittyTexUniform, 0);
+            glActiveTexture(GL_TEXTURE0);
+            hasAnyPlacement = true;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_kittyTextures[imageId].texture);
+
+        glVertexAttribPointer(m_kittyPositionAttr, 2, GL_FLOAT, GL_FALSE,
+                              4 * sizeof(float), verts);
+        glVertexAttribPointer(m_kittyTexcoordAttr, 2, GL_FLOAT, GL_FALSE,
+                              4 * sizeof(float), verts + 2);
+        glEnableVertexAttribArray(m_kittyPositionAttr);
+        glEnableVertexAttribArray(m_kittyTexcoordAttr);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glDisableVertexAttribArray(m_kittyPositionAttr);
+        glDisableVertexAttribArray(m_kittyTexcoordAttr);
+    }
+
+    if (hasAnyPlacement) {
+        glBindTexture(GL_TEXTURE_2D, 0);
+        m_kittyProgram->release();
+    }
+
+    ghostty_kitty_graphics_placement_iterator_free(iter);
+}
+
+void GLRenderer::Renderer::cleanupKittyCache()
+{
+    if (m_kittyTextures.isEmpty())
+        return;
+
+    QList<uint32_t> toRemove;
+    for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it) {
+        if (m_kittyFrameCounter - it.value().lastSeenFrame > KITTY_EVICTION_FRAMES)
+            toRemove.append(it.key());
+    }
+
+    // Also evict oldest if over hard cap
+    int excess = m_kittyTextures.size() - MAX_KITTY_TEXTURES;
+    for (int i = 0; i < excess && m_kittyTextures.size() > 0; ++i) {
+        uint32_t oldestFrame = UINT32_MAX;
+        uint32_t oldestId = 0;
+        for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it) {
+            if (it.value().lastSeenFrame < oldestFrame) {
+                oldestFrame = it.value().lastSeenFrame;
+                oldestId = it.key();
+            }
+        }
+        if (oldestId)
+            toRemove.append(oldestId);
+    }
+
+    for (uint32_t id : toRemove) {
+        auto it = m_kittyTextures.find(id);
+        if (it != m_kittyTextures.end()) {
+            glDeleteTextures(1, &it.value().texture);
+            m_kittyTextures.erase(it);
+        }
+    }
+}
+
 bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *fbo)
 {
     // Update timing uniforms
@@ -1721,6 +2014,10 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         m_vbo.release();
         m_program->release();
 
+        // Kitty images: below-text layer (between cell grid and overlays)
+        drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
+                            fbo->width(), fbo->height());
+
         // Flat overlay
         buildOverlayVertices(fbo->width(), fbo->height());
         if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
@@ -1743,6 +2040,10 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
             m_flatVbo.release();
             m_flatProgram->release();
         }
+
+        // Kitty images: above-text layer (above overlays)
+        drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
+                            fbo->width(), fbo->height());
 
         // Magnifier
         renderMagnifier(proj, fbo->width(), fbo->height());
@@ -1835,6 +2136,10 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
     m_vbo.release();
     m_program->release();
 
+    // Kitty images: below-text layer
+    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
+                        fbo->width(), fbo->height());
+
     buildOverlayVertices(fbo->width(), fbo->height());
     if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
         m_flatProgram->bind();
@@ -1856,6 +2161,10 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
         m_flatVbo.release();
         m_flatProgram->release();
     }
+
+    // Kitty images: above-text layer
+    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
+                        fbo->width(), fbo->height());
 
     renderMagnifier(proj, fbo->width(), fbo->height());
 

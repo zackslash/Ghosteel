@@ -144,6 +144,14 @@ Page {
                 onCheckedChanged: Settings.cursorTrails = checked
             }
 
+            TextSwitch {
+                width: parent.width
+                text: qsTr("Inline images")
+                description: qsTr("Display images sent via the Kitty Graphics Protocol")
+                checked: Settings.kittyGraphics
+                onCheckedChanged: Settings.kittyGraphics = checked
+            }
+
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin

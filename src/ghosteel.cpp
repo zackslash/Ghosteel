@@ -28,6 +28,7 @@
 #endif
 
 #include "ghosteeladapter.h"
+#include "kittyimagedecoder.h"
 
 static void loadTranslations(QCoreApplication *app)
 {
@@ -51,6 +52,9 @@ int main(int argc, char *argv[])
 {
     qmlRegisterType<TerminalView>(APP_QML_MODULE, 1, 0, "TerminalView");
     qmlRegisterType<GLRenderer>(APP_QML_MODULE, 1, 0, "GLRenderer");
+
+    // Register PNG decoder for Kitty Graphics Protocol (process-global, once)
+    kittyImageDecoderRegister();
 
     // Single-instance guard: if another instance is running, tell it to raise
     // its window and exit.  This handles D-Bus activation launching a duplicate
