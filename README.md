@@ -11,6 +11,18 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 [Ghostty](https://github.com/ghostty-org/ghostty), giving you accurate rendering for
 `tmux`, `neovim`, `htop`, and other TUI applications.
 
+## Features
+
+- **Ghostty VT engine**: full escape sequence support, 24-bit color, alternate screen buffer
+- **GPU rendering**: OpenGL ES 2.0/3.0 renderer with cursor trails shader support
+- **Multi-session**: create, name, switch, and persist sessions with per-session working directories
+- **Touch text selection**: long-press with Sailfish-style magnifier, velocity-aware hiding, double/triple tap
+- **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
+- **Link detection**: OSC 8 hyperlinks and automatic URL detection, tap to open in browser
+- **Encrypted scrollback**: AES-256 encryption via Sailfish Secrets, configurable retention (7–365 days or disabled)
+- **2 color schemes**: Dark and Light, adjustable opacity
+- **35+ translations**
+
 ## Install
 
 Download the `.rpm` for your architecture from [Releases](https://github.com/zackslash/sfos-ghostty/releases):
@@ -35,19 +47,6 @@ ln -sf ~/.local/zig-x86_64-linux-0.15.2/zig ~/.local/bin/zig
 # Build RPM
 mb2 build
 ```
-
-## Features
-
-- **Ghostty VT engine**: full escape sequence support, 24-bit color, alternate screen buffer
-- **GPU rendering**: OpenGL ES 2.0/3.0 renderer with cursor trails shader support
-- **Multi-session**: create, name, switch, and persist sessions with per-session working directories
-- **Encrypted scrollback**: AES-256 encryption via Sailfish Secrets, configurable retention (7 to 365 days)
-- **Link detection**: OSC 8 hyperlinks and automatic URL detection, tap to open in browser
-- **Touch text selection**: long-press with Sailfish-style magnifier, velocity-aware hiding, double/triple tap
-- **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
-- **CJK-aware**: proper wide-character handling in selection, search, and scrollback
-- **2 color schemes**: Dark and Light, adjustable opacity
-- **35+ translations**
 
 ## Architecture
 
