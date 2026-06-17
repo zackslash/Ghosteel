@@ -7,7 +7,9 @@
 #undef emit
 #endif
 
+extern "C" {
 #include <ghostty/vt/sys.h>
+}
 
 // Registers the PNG decoder callback for Kitty Graphics Protocol.
 // Must be called ONCE at app startup, before any terminal is created.
