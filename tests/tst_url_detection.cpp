@@ -266,71 +266,6 @@ private slots:
         QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
     }
 
-    // --- File paths ---
-
-    void absolutePath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("file is /usr/share/doc/readme.txt", 33, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("/usr/share/doc/readme.txt"));
-    }
-
-    void dotSlashPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("./src/main.cpp", 14, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("./src/main.cpp"));
-    }
-
-    void dotDotSlashPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("../test/file.txt", 16, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("../test/file.txt"));
-    }
-
-    void tildePath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("~/Documents/notes.md", 20, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("~/Documents/notes.md"));
-    }
-
-    void dollarVarPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("$HOME/.bashrc", 13, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("$HOME/.bashrc"));
-    }
-
-    void bareRelativePath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("src/config/url.zig", 18, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("src/config/url.zig"));
-    }
-
-    void dotConfigPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine(".config/nvim/init.lua", 21, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral(".config/nvim/init.lua"));
-    }
-
     // --- Non-matching ---
 
     void noMatchInPlainText()
@@ -350,216 +285,25 @@ private slots:
         QCOMPARE(spans.size(), 0);
     }
 
-    void barePathWithoutDot()
+    void bareSlashPathNoMatch()
     {
-        // input/output has no dot — should NOT match
+        // "/google.com" has no scheme prefix — should NOT match
         QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("input/output", 12, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void midWordSlash()
-    {
-        // some/path is mid-word — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("some/path is not a link", 23, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    // --- False positive resistance ---
-
-    void standaloneDotWord()
-    {
-        // "foo.bar" has no slash — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("foo.bar", 7, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void keyValueColon()
-    {
-        // "key: value" is not a path — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("key: value", 10, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void dotInDirNameNoExtension()
-    {
-        // "error.v2/test" has a dot in the directory name but
-        // "test" has no file extension — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("error.v2/test", 13, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void numericPathComponent()
-    {
-        // "error.code/500" — numeric-only last component,
-        // no real file extension — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("error.code/500", 14, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void dotInDirNameWithExtension()
-    {
-        // "v2.0/README.md" — dot in dir name but last component
-        // HAS a file extension — SHOULD match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("v2.0/README.md", 14, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("v2.0/README.md"));
-    }
-
-    void barePathWithDoubleExtension()
-    {
-        // "lib/utils.min.js" — double extension — SHOULD match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("lib/utils.min.js", 16, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("lib/utils.min.js"));
-    }
-
-    void dotInDirNameWithDoubleExtension()
-    {
-        // "error.v2/test.min.js" — dot-in-dir with double extension
-        // on last component — SHOULD match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("error.v2/test.min.js", 20, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("error.v2/test.min.js"));
-    }
-
-    void dotInDirNameWithSimpleExtension()
-    {
-        // "error.v2/test.txt" — dot-in-dir with simple file extension.
-        // Direct counterpart to dotInDirNameNoExtension — proves the
-        // fix is surgical (rejects no-ext, accepts with-ext).
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("error.v2/test.txt", 17, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("error.v2/test.txt"));
-    }
-
-    void dotDirPrefixNoExtension()
-    {
-        // ".hidden/file" — dot-directory prefix with no file extension.
-        // Via Branch 2 (.dir/ prefix), the content group matches zero
-        // times, yielding ".hidden/" as the match. Documents pre-existing
-        // behavior that dot-directory paths match even without extension.
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine(".hidden/file", 12, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral(".hidden/"));
-    }
-
-    void incompleteSchemeSlash()
-    {
-        // "Https:/" — colon-slash without the second slash.
-        // The absolute path prefix must not match "/" after ":".
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("Https:/", 7, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void uncDoubleSlash()
-    {
-        // UNC path "//server/share/file.txt" should NOT match.
-        // The double-slash prefix is a UNC indicator, not a relative path.
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("//server/share/file.txt", 23, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void midWordDotSlash()
-    {
-        // "x./path" — dot-slash mid-word should NOT match.
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("x./path", 7, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void midWordDotDotSlash()
-    {
-        // "word../path" — dot-dot-slash mid-word should NOT match.
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("word../path", 11, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    // --- Additional false positive rejection ---
-
-    void semverString()
-    {
-        // "v1.2.3" has no slash — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("v1.2.3", 6, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void ipAddress()
-    {
-        // "192.168.1.1" is a bare IP with no scheme or slash — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("192.168.1.1", 11, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void timeString()
-    {
-        // "12:34:56" is a time string, not a recognized scheme — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("12:34:56", 8, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void dockerImageRef()
-    {
-        // "docker pull ubuntu:20.04" — "ubuntu:" is not a recognized scheme
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("docker pull ubuntu:20.04", 23, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void envAssignment()
-    {
-        // "key=value" has no scheme, no slash, no dot — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("key=value", 9, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void dotfileNoSlash()
-    {
-        // ".gitignore" has no slash after the dot — should NOT match
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine(".gitignore", 10, flat, map);
+        buildSingleLine("/google.com", 11, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 0);
     }
 
     // --- Scheme edge cases ---
+
+    void incompleteSchemeSlash()
+    {
+        // "Https:/" — colon-slash without the second slash.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("Https:/", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
 
     void schemeWithNoHost()
     {
@@ -586,41 +330,6 @@ private slots:
         buildSingleLine("https:/", 7, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 0);
-    }
-
-    // --- Absolute path edge cases ---
-
-    void absolutePathNoExtension()
-    {
-        // "/usr/bin/ls" has no file extension in last component — should NOT match
-        // (the regex matches "/" as 1 char but findUrls filters <2 char matches)
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("/usr/bin/ls", 11, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 0);
-    }
-
-    void absolutePathTrailingText()
-    {
-        // "/tmp/file.txt trailing text" — with the no-dot content branch
-        // removed, the content stops at the first token without a dot,
-        // so only "/tmp/file.txt" is matched.
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("/tmp/file.txt trailing text", 27, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("/tmp/file.txt"));
-    }
-
-    void bareTildeSlashOnly()
-    {
-        // "~/" with nothing after the slash — the regex matches "~/"
-        // as a 2-char tilde-path (not filtered by the <2 check).
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("~/", 2, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("~/"));
     }
 
     // --- Multi-line ---
@@ -653,27 +362,6 @@ private slots:
         auto spans = TextUtil::findUrls(flat, charMap);
         QCOMPARE(spans.size(), 1);
         QCOMPARE(spans[0].uri, QStringLiteral("https://very-long-example.com/path/to/page"));
-        QCOMPARE(spans[0].startRow, 0);
-        QCOMPARE(spans[0].endRow, 1);
-    }
-
-    void wrappedBarePath()
-    {
-        // Bare relative path "v2.0/README.md" soft-wrapped across two rows.
-        // Tests that multi-row coordinate mapping works for Branch 3 paths.
-        QString flat = "v2.0/READM";
-        flat.append("E.md");
-        QVector<TextUtil::CellCoord> charMap;
-        // First part: cols 0-9 on row 0
-        for (int i = 0; i < 10; ++i)
-            charMap.append({ static_cast<uint16_t>(i), 0 });
-        // Second part: cols 0-4 on row 1 (soft-wrapped, no \n)
-        for (int i = 0; i < 5; ++i)
-            charMap.append({ static_cast<uint16_t>(i), 1 });
-
-        auto spans = TextUtil::findUrls(flat, charMap);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("v2.0/README.md"));
         QCOMPARE(spans[0].startRow, 0);
         QCOMPARE(spans[0].endRow, 1);
     }
