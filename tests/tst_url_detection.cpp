@@ -602,16 +602,14 @@ private slots:
 
     void absolutePathTrailingText()
     {
-        // "/tmp/file.txt trailing text" — the regex's space-continuation rule
-        // inside the absolute-path branch allows space-separated tokens after
-        // a matched path, so the match extends to cover the whole string.
-        // This is pre-existing behavior worth documenting.
+        // "/tmp/file.txt trailing text" — with the no-dot content branch
+        // removed, the content stops at the first token without a dot,
+        // so only "/tmp/file.txt" is matched.
         QString flat; QVector<TextUtil::CellCoord> map;
         buildSingleLine("/tmp/file.txt trailing text", 27, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 1);
-        // Note: regex greedily consumes trailing space-separated words
-        QCOMPARE(spans[0].uri, QStringLiteral("/tmp/file.txt trailing text"));
+        QCOMPARE(spans[0].uri, QStringLiteral("/tmp/file.txt"));
     }
 
     void bareTildeSlashOnly()
