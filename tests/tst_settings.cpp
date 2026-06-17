@@ -46,6 +46,7 @@ private slots:
         QCOMPARE(s.value("terminal/bellMode", 1).toInt(), 1);
         QCOMPARE(s.value("terminal/cursorTrails", true).toBool(), true);
         QCOMPARE(s.value("terminal/urlAutoDetect", true).toBool(), true);
+        QCOMPARE(s.value("terminal/kittyGraphics", true).toBool(), true);
         QCOMPARE(s.value("terminal/customShaderPath").toString(), QString());
     }
 
