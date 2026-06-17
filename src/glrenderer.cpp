@@ -508,7 +508,6 @@ void GLRenderer::Renderer::createMagTexture()
 
 void GLRenderer::Renderer::createKittyShaders()
 {
-    m_kittyProgram = new QOpenGLShaderProgram;
     // Load shader from Qt resource — kitty_image.glsl has //! vertex and //! fragment sections
     QFile shaderFile(QStringLiteral(":/shaders/kitty_image.glsl"));
     if (!shaderFile.open(QIODevice::ReadOnly)) {
@@ -528,6 +527,7 @@ void GLRenderer::Renderer::createKittyShaders()
     QByteArray vertSrc = shaderSrc.mid(vertIdx, fragIdx - vertIdx);
     QByteArray fragSrc = shaderSrc.mid(fragIdx);
 
+    m_kittyProgram = new QOpenGLShaderProgram;
     m_kittyProgram->addShaderFromSourceCode(QOpenGLShader::Vertex, vertSrc);
     m_kittyProgram->addShaderFromSourceCode(QOpenGLShader::Fragment, fragSrc);
     if (!m_kittyProgram->link()) {
@@ -1662,8 +1662,14 @@ void GLRenderer::Renderer::syncKittyImages(GhosttyTerminal terminal, GhosttyVt *
 
     Settings *settings = Settings::instance();
     if (!settings || !settings->kittyGraphics()) {
-        if (!m_kittyTextures.isEmpty())
-            cleanupKittyCache();
+        if (!m_kittyTextures.isEmpty()) {
+            // Force-evict all textures when feature is disabled.
+            // Age-based eviction won't work because the frame counter
+            // is frozen while disabled, so do a hard clear.
+            for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it)
+                glDeleteTextures(1, &it.value().texture);
+            m_kittyTextures.clear();
+        }
         return;
     }
 
@@ -1735,9 +1741,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         if (imgW == 0 || imgH == 0)
             continue;
 
-        GhosttyKittyGraphicsPlacementRenderInfo info;
-        memset(&info, 0, sizeof(info));
-        info.size = sizeof(info);
+        GhosttyKittyGraphicsPlacementRenderInfo info = GHOSTTY_INIT_SIZED(GhosttyKittyGraphicsPlacementRenderInfo);
         if (ghostty_kitty_graphics_placement_render_info(iter, image, terminal, &info) != GHOSTTY_SUCCESS)
             continue;
         if (!info.viewport_visible)

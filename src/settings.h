@@ -25,6 +25,7 @@ class Settings : public QObject
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
     Q_PROPERTY(int sessionSortMode READ sessionSortMode WRITE setSessionSortMode NOTIFY sessionSortModeChanged)
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
+    Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
     Q_PROPERTY(bool kittyGraphics READ kittyGraphics WRITE setKittyGraphics NOTIFY kittyGraphicsChanged)
     Q_PROPERTY(QString customShaderPath READ customShaderPath WRITE setCustomShaderPath NOTIFY customShaderPathChanged)
     Q_PROPERTY(bool shaderPipelineAvailable READ shaderPipelineAvailable NOTIFY shaderPipelineAvailableChanged)
@@ -76,6 +77,9 @@ public:
     bool cursorTrails() const { return m_cursorTrails; }
     void setCursorTrails(bool enabled);
 
+    bool urlAutoDetect() const { return m_urlAutoDetect; }
+    void setUrlAutoDetect(bool enabled);
+
     bool kittyGraphics() const { return m_kittyGraphics; }
     void setKittyGraphics(bool enabled);
 
@@ -99,6 +103,7 @@ Q_SIGNALS:
     void keybarVisibleChanged();
     void sessionSortModeChanged();
     void cursorTrailsChanged();
+    void urlAutoDetectChanged();
     void kittyGraphicsChanged();
     void customShaderPathChanged();
     void shaderPipelineAvailableChanged();
@@ -123,6 +128,7 @@ private:
     bool m_keybarVisible = true;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
     bool m_cursorTrails = true; // default: ON — matches load() default
+    bool m_urlAutoDetect = true; // default: ON — regex URL detection enabled
     bool m_kittyGraphics = true; // default: ON — Kitty Graphics Protocol
     QString m_customShaderPath;
     bool m_shaderPipelineAvailable = false; // set by GLRenderer after ES 3.0 probe

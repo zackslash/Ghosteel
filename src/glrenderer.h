@@ -311,8 +311,7 @@ private:
         int m_kittyTexUniform = -1;
         int m_kittyPositionAttr = -1;
         int m_kittyTexcoordAttr = -1;
-        QVector<float> m_kittyVertices; // interleaved pos2+texcoord2 = 4 floats per vertex
-        int m_kittyVertexCount = 0;
+
     };
 };
 
