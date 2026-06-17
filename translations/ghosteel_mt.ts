@@ -3,51 +3,26 @@
 <TS version="2.1" language="mt">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sessjoni(jiet)</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Terminal Ghosteel
-għal SailfishOS</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 sessjoni</numerusform>
+            <numerusform>%n sessjoni</numerusform>
+            <numerusform>%n sessjonijiet</numerusform>
+            <numerusform>%n sessjonijiet</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Aħbi l-buttuni żejda</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Sessjoni ġdida</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Sessjoni li jmiss</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Sessjoni preċedenti</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -60,14 +35,6 @@ għal SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Settings</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Uri l-buttuni żejda</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -84,6 +51,29 @@ għal SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Fittex fit-terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Iftaħ il-link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Iftaħ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Ikkanċella</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Jinfetaħ fil-browser</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell ħareġ bil-kodiċi %1</translation>
     </message>
 </context>
 <context>
@@ -106,11 +96,114 @@ għal SailfishOS</translation>
     </message>
     <message>
         <source>No keys enabled. Add keys from the list below.</source>
-        <translation>M'hemmx buttuni attivi. Żid buttuni mil-lista t'hawn taħt.</translation>
+        <translation>M&apos;hemmx buttuni attivi. Żid buttuni mil-lista t&apos;hawn taħt.</translation>
     </message>
     <message>
         <source>Available keys</source>
         <translation>Buttuni disponibbli</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigazzjoni</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modifikaturi</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Għodod</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Navigazzjoni tas-sessjoni</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Tasti tal-funzjoni</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Xellug</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Isfel</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Fuq</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Lemin</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Modifikatur Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Modifikatur Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Uri/aħbi l-keyboard</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Is-sessjoni ta' qabel</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Is-sessjoni li jmiss</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Liċenzji</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Shader tal-marka tal-kuritur</translation>
     </message>
 </context>
 <context>
@@ -190,10 +283,6 @@ għal SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -230,18 +319,8 @@ għal SailfishOS</translation>
         <translation>Daqs tal-font</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Terminal Ghosteel
-għal SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Ċar</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -258,14 +337,6 @@ għal SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Komandament shell</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -364,16 +435,41 @@ għal SailfishOS</translation>
 Powered by libghostty terminal engine</source>
         <translation>sena</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell ħareġ bil-kodiċi %1
-
-Ibgħat biex terġa&apos; tibda</translation>
+        <source>Cursor trails</source>
+        <translation>Marki tal-kuritur</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Effett animat tal-marka meta l-kuritur jimxi</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Jeħtieġ OpenGL ES 3.0 — mhux disponibbli fuq dan it-tagħmir</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Stampi inline</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Uri stampi mibgħuta permezz tal-protokoll Kitty Graphics</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>L-effetti tal-shader jeħtieġu OpenGL ES 3.0, li mhux disponibbli fuq dan it-tagħmir.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Awtodettetta l-URLs</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Enfasizza l-URLs fil-produzzjoni tat-terminal biex jinfetaħ b'tap</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Liċenzji</translation>
     </message>
 </context>
 </TS>

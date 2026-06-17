@@ -3,49 +3,24 @@
 <TS version="2.1" language="ca">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sessió(ns)</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Terminal Ghosteel
-per a SailfishOS</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 sessió</numerusform>
+            <numerusform>%n sessions</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Amagar tecles addicionals</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Nova sessió</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Sessió següent</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Sessió anterior</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ per a SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Configuració</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Mostrar tecles addicionals</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ per a SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Cercar al terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Obre l'enllaç</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Obre</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancel·la</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>S'obrirà al navegador</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell finalitzat amb codi %1</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ per a SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Tecles disponibles</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navegació</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modificadors</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Utilitats</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Navegació de sessió</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Tecles de funció</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Esquerra</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Avall</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Amunt</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Dreta</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Re Pág</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Av Pág</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Inici</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>Fi</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Supr</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Modificador Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Modificador Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Mostra/oculta el teclat</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Sessió anterior</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Sessió següent</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Llicències</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Shader de rastre del cursor</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ per a SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ per a SailfishOS</translation>
         <translation>Mida de lletra</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Terminal Ghosteel
-per a SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Clar</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ per a SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Ordre shell</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Terminal Ghosteel per a SailfishOS
 Impulsat pel motor de terminal libghostty</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>El shell ha finalitzat amb el codi %1
-
-Toqueu per reiniciar</translation>
+        <source>Cursor trails</source>
+        <translation>Rastres del cursor</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Efecte de rastre animat en moure el cursor</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Requereix OpenGL ES 3.0 — no disponible en aquest dispositiu</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Imatges en línia</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Mostra imatges enviades mitjançant el protocol gràfic Kitty</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Els efectes shader requereixen OpenGL ES 3.0, que no està disponible en aquest dispositiu.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Detecta URL automàticament</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Ressalta URL a la sortida del terminal per obrir amb un toc</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Llicències</translation>
     </message>
 </context>
 </TS>

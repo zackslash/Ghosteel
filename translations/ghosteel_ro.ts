@@ -3,50 +3,25 @@
 <TS version="2.1" language="ro">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sesiune(i)</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Terminal Ghosteel
-pentru SailfishOS</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 sesiune</numerusform>
+            <numerusform>%n sesiuni</numerusform>
+            <numerusform>%n sesiuni</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Ascunde tastele suplimentare</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Sesiune nouă</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Sesiunea următoare</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Sesiunea anterioară</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -59,14 +34,6 @@ pentru SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Setări</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Afișează tastele suplimentare</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -83,6 +50,29 @@ pentru SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Caută în terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Deschide linkul</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Deschide</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anulează</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Se va deschide în browser</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell s-a încheiat cu codul %1</translation>
     </message>
 </context>
 <context>
@@ -110,6 +100,109 @@ pentru SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Taste disponibile</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigare</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modificatori</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Utilitare</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Navigare sesiune</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Taste de funcție</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Stânga</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Jos</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Sus</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Dreapta</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Modificator Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Modificator Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Afișează/ascunde tastatura</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Sesiunea anterioară</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Sesiunea următoare</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licențe</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Shader urmă cursor</translation>
     </message>
 </context>
 <context>
@@ -189,10 +282,6 @@ pentru SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -229,18 +318,8 @@ pentru SailfishOS</translation>
         <translation>Dimensiune font</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Terminal Ghosteel
-pentru SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Luminos</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -257,14 +336,6 @@ pentru SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Comandă shell</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -364,16 +435,41 @@ Powered by libghostty terminal engine</source>
         <translation>Terminal Ghosteel pentru SailfishOS
 Propulsat de motorul de terminal libghostty</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell-ul a ieșit cu codul %1
-
-Atingeți pentru a reporni</translation>
+        <source>Cursor trails</source>
+        <translation>Urme cursor</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Efect de urmă animat la deplasarea cursorului</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Necesită OpenGL ES 3.0 — nu este disponibil pe acest dispozitiv</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Imagini inline</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Afișează imaginile trimise prin protocolul grafic Kitty</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Efectele shader necesită OpenGL ES 3.0, care nu este disponibil pe acest dispozitiv.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Detectează automat URL-urile</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Evidențiază URL-urile în ieșirea terminalului pentru deschidere prin atingere</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licențe</translation>
     </message>
 </context>
 </TS>

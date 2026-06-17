@@ -3,49 +3,24 @@
 <TS version="2.1" language="eu">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n saio</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel terminala
-SailfishOSrako</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 saio</numerusform>
+            <numerusform>%n saio</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Ezkutatu tekla gehigarriak</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Saio berria</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Hurrengo saioa</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Aurreko saioa</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ SailfishOSrako</translation>
     <message>
         <source>Settings</source>
         <translation>Ezarpenak</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Erakutsi tekla gehigarriak</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ SailfishOSrako</translation>
     <message>
         <source>Search terminal</source>
         <translation>Bilatu terminalean</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Ireki esteka</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Ireki</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Utzi</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Nabigatzailean irekiko da</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell-ek %1 kodearekin amaitu du</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ SailfishOSrako</translation>
     <message>
         <source>Available keys</source>
         <translation>Tekla eskuragarriak</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Nabigazioa</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Aldatzaileak</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Tresnak</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Saioaren nabigazioa</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funtzio-teklak</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Ezkerra</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Behera</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Gora</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Eskuina</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl aldatzailea</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt aldatzailea</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Erakutzi/ezkutatu teklatua</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Aurreko saioa</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Hurrengo saioa</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Lizentziak</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Kurtsorearen aztarnaren shader-a</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ SailfishOSrako</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ SailfishOSrako</translation>
         <translation>Letra tamaina</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel terminala
-SailfishOSrako</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Argia</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ SailfishOSrako</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell komandoa</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel terminala SailfishOSrako
 libghostty terminal motorrak bultzatuta</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell-a %1 kodearekin irten da
-
-Sakatu berrabiarazteko</translation>
+        <source>Cursor trails</source>
+        <translation>Kurtsorearen aztarnak</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Aztarna animatuaren efektua kurtsorea mugitzean</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>OpenGL ES 3.0 behar du — ez dago eskuragarri gailu honetan</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Irudi barneratuak</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Erakutsi Kitty Graphics protokoloaz bidalitako irudiak</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Shader efektuek OpenGL ES 3.0 behar dute, gailu honetan eskuragarri ez dagoena.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Automatikoki hauteman URLak</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Nabarmendu URLak terminalaren irteeran irekitzeko ukituz</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Lizentziak</translation>
     </message>
 </context>
 </TS>

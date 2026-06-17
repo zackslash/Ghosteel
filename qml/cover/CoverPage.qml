@@ -49,9 +49,7 @@ CoverBackground {
         // Session count header
         Label {
             width: parent.width
-            text: SessionManager.sessionCount === 1
-                  ? qsTr("1 session")
-                  : qsTr("%1 sessions").arg(SessionManager.sessionCount)
+            text: qsTr("%n session(s)", "", SessionManager.sessionCount)
             color: Theme.secondaryHighlightColor
             font.pixelSize: Theme.fontSizeExtraSmall
         }

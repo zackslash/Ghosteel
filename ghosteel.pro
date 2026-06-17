@@ -96,6 +96,17 @@ DISTFILES += qml/ghosteel.qml \
     rpm/ghosteel.spec \
     ghosteel.desktop
 
+# Tell lupdate to scan QML files for qsTr() calls
+lupdate_only {
+    SOURCES += qml/ghosteel.qml \
+        qml/cover/CoverPage.qml \
+        qml/pages/FirstPage.qml \
+        qml/pages/SessionPage.qml \
+        qml/pages/SettingsPage.qml \
+        qml/pages/KeybarSettings.qml \
+        qml/pages/LicensesPage.qml
+}
+
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 
 TRANSLATIONS += \

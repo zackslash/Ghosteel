@@ -3,50 +3,25 @@
 <TS version="2.1" language="cs">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n relací</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Terminál Ghosteel
-pro SailfishOS</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 relace</numerusform>
+            <numerusform>%n relace</numerusform>
+            <numerusform>%n relací</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Skrýt další klávesy</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Nová relace</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Další relace</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Předchozí relace</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -59,14 +34,6 @@ pro SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Nastavení</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Zobrazit další klávesy</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -83,6 +50,29 @@ pro SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Hledat v terminálu</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Otevřít odkaz</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Otevřít</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Zrušit</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Otevře se v prohlížeči</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell skončil s kódem %1</translation>
     </message>
 </context>
 <context>
@@ -110,6 +100,109 @@ pro SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Dostupné klávesy</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigace</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modifikátory</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Nástroje</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Navigace relace</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funkční klávesy</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Vlevo</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Dolů</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Nahoru</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Vpravo</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Modifikátor Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Modifikátor Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Zobrazit/skrýt klávesnici</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Předchozí relace</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Další relace</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licence</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Shader stopy kurzoru</translation>
     </message>
 </context>
 <context>
@@ -189,10 +282,6 @@ pro SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -229,18 +318,8 @@ pro SailfishOS</translation>
         <translation>Velikost písma</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Terminál Ghosteel
-pro SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Světlé</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -257,14 +336,6 @@ pro SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Příkaz shellu</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -364,16 +435,41 @@ Powered by libghostty terminal engine</source>
         <translation>Terminál Ghosteel pro SailfishOS
 Poháněno terminálovým enginem libghostty</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell skončil s kódem %1
-
-Klepněte pro restart</translation>
+        <source>Cursor trails</source>
+        <translation>Stopy kurzoru</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animovaný efekt stopy při pohybu kurzoru</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Vyžaduje OpenGL ES 3.0 — není k dispozici na tomto zařízení</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Vložené obrázky</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Zobrazit obrázky odeslané přes protokol Kitty Graphics</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Efekty shaderů vyžadují OpenGL ES 3.0, které není k dispozici na tomto zařízení.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Automaticky detekovat URL</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Zvýraznit URL ve výstupu terminálu pro otevření klepnutím</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licence</translation>
     </message>
 </context>
 </TS>

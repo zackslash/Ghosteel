@@ -3,48 +3,23 @@
 <TS version="2.1" language="tr">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n oturum</numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>SailfishOS için
-Ghosteel terminal</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 oturum</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Ekstra tuşları gizle</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Yeni oturum</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Sonraki oturum</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Önceki oturum</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -57,14 +32,6 @@ Ghosteel terminal</translation>
     <message>
         <source>Settings</source>
         <translation>Ayarlar</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Ekstra tuşları göster</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -81,6 +48,29 @@ Ghosteel terminal</translation>
     <message>
         <source>Search terminal</source>
         <translation>Terminalde ara</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Bağlantıyı aç</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Aç</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Tarayıcıda açılacak</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell %1 koduyla sonlandı</translation>
     </message>
 </context>
 <context>
@@ -108,6 +98,109 @@ Ghosteel terminal</translation>
     <message>
         <source>Available keys</source>
         <translation>Mevcut tuşlar</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Gezinti</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Değiştiriciler</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Araçlar</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Oturum gezintisi</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>İşlev tuşları</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Sol</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Aşağı</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Yukarı</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Sağ</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl değiştirici</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt değiştirici</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Klavyeyi göster/gizle</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Önceki oturum</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Sonraki oturum</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Lisanslar</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>İmleç izi gölgelendirici</translation>
     </message>
 </context>
 <context>
@@ -187,10 +280,6 @@ Ghosteel terminal</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -227,18 +316,8 @@ Ghosteel terminal</translation>
         <translation>Yazı tipi boyutu</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">SailfishOS için
-Ghosteel terminal</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Açık</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -255,14 +334,6 @@ Ghosteel terminal</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell komutu</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -361,16 +432,41 @@ Ghosteel terminal</translation>
 Powered by libghostty terminal engine</source>
         <translation>1 yıl</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell %1 koduyla çıktı
-
-Yeniden başlatmak için dokunun</translation>
+        <source>Cursor trails</source>
+        <translation>İmleç izleri</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>İmleç hareket ettiğinde animasyonlu iz efekti</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>OpenGL ES 3.0 gerektirir — bu cihazda mevcut değil</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Satır içi resimler</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Kitty Graphics Protokolü ile gönderilen resimleri göster</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Gölgelendirici efektler OpenGL ES 3.0 gerektirir, bu cihazda mevcut değildir.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>URL'leri otomatik algıla</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Terminal çıkışında URL'leri dokunarak açmak için vurgula</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Lisanslar</translation>
     </message>
 </context>
 </TS>

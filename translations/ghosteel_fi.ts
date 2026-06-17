@@ -3,49 +3,24 @@
 <TS version="2.1" language="fi">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n istuntoa</numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel-pääte
-SailfishOS:lle</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 istunto</numerusform>
+            <numerusform>%n istuntoa</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Piilota lisänapit</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Uusi istunto</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Seuraava istunto</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Edellinen istunto</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -58,14 +33,6 @@ SailfishOS:lle</translation>
     <message>
         <source>Settings</source>
         <translation>Asetukset</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Näytä lisänapit</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -82,6 +49,29 @@ SailfishOS:lle</translation>
     <message>
         <source>Search terminal</source>
         <translation>Hae päätteestä</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Avaa linkki</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Avaa</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Avautuu selaimessa</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell päättyi koodilla %1</translation>
     </message>
 </context>
 <context>
@@ -109,6 +99,109 @@ SailfishOS:lle</translation>
     <message>
         <source>Available keys</source>
         <translation>Käytettävissä olevat napit</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigointi</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Muokkaimet</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Työkalut</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Istunnon navigointi</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funktionäppäimet</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Vasen</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Alas</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Ylös</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Oikea</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl-muokkain</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt-muokkain</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Näytä/piilota näppäimistö</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Edellinen istunto</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Seuraava istunto</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Lisenssit</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Kursorin jälkisävytin</translation>
     </message>
 </context>
 <context>
@@ -188,10 +281,6 @@ SailfishOS:lle</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -228,18 +317,8 @@ SailfishOS:lle</translation>
         <translation>Fonttikoko</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel-pääte
-SailfishOS:lle</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Vaalea</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -256,14 +335,6 @@ SailfishOS:lle</translation>
     <message>
         <source>Shell command</source>
         <translation>Komentotulkki</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel-pääte SailfishOS:lle
 Käyttää libghostty-pääteohjelmaa</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Komentotulkki päättyi koodilla %1
-
-Käynnistä uudelleen napauttamalla</translation>
+        <source>Cursor trails</source>
+        <translation>Kursorin jäljet</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animoitu jälkiefekti kursorin liikkuessa</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Vaatii OpenGL ES 3.0 — ei saatavilla tällä laitteella</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Sisäkkäiset kuvat</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Näytä Kitty Graphics Protocolilla lähetetyt kuvat</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Sävytystehosteet vaativat OpenGL ES 3.0:n, joka ei ole saatavilla tällä laitteella.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Tunnista URLit automaattisesti</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Korosta URLit terminaalitulosteessa avattavaksi napauttamalla</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Lisenssit</translation>
     </message>
 </context>
 </TS>

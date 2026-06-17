@@ -3,50 +3,25 @@
 <TS version="2.1" language="uk">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n сеансів</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Термінал Ghosteel
-для SailfishOS</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 сеанс</numerusform>
+            <numerusform>%n сеанси</numerusform>
+            <numerusform>%n сеансів</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Сховати додаткові клавіші</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Новий сеанс</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Наступний сеанс</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Попередній сеанс</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -59,14 +34,6 @@ for SailfishOS</source>
     <message>
         <source>Settings</source>
         <translation>Налаштування</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Показати додаткові клавіші</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -83,6 +50,29 @@ for SailfishOS</source>
     <message>
         <source>Search terminal</source>
         <translation>Пошук у терміналі</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Відкрити посилання</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Відкрити</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Скасувати</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Відкриється в браузері</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell завершився з кодом %1</translation>
     </message>
 </context>
 <context>
@@ -110,6 +100,109 @@ for SailfishOS</source>
     <message>
         <source>Available keys</source>
         <translation>Доступні клавіші</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Навігація</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Модифікатори</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Інструменти</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Навігація сеансу</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Функціональні клавіші</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Ліворуч</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Вниз</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Вгору</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Праворуч</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Модифікатор Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Модифікатор Alt</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Показати/сховати клавіатуру</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Попередній сеанс</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Наступний сеанс</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Ліцензії</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Шейдер сліду курсора</translation>
     </message>
 </context>
 <context>
@@ -189,10 +282,6 @@ for SailfishOS</source>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -229,18 +318,8 @@ for SailfishOS</source>
         <translation>Розмір шрифту</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Термінал Ghosteel
-для SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Світла</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -257,14 +336,6 @@ for SailfishOS</source>
     <message>
         <source>Shell command</source>
         <translation>Команда оболонки</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -364,16 +435,41 @@ Powered by libghostty terminal engine</source>
         <translation>Термінал Ghosteel для SailfishOS
 Працює на рушії терміналу libghostty</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Оболонка завершена з кодом %1
-
-Натисніть для перезапуску</translation>
+        <source>Cursor trails</source>
+        <translation>Сліди курсора</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Анімований ефект сліду при русі курсора</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Потрібен OpenGL ES 3.0 — недоступний на цьому пристрої</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Вбудовані зображення</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Показувати зображення, надіслані через протокол Kitty Graphics</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Ефекти шейдерів потребують OpenGL ES 3.0, який недоступний на цьому пристрої.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Автоматично визначати URL-адреси</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Виділити URL-адреси у виводі терміналу для відкриття торканням</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Ліцензії</translation>
     </message>
 </context>
 </TS>

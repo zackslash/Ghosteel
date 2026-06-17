@@ -3,48 +3,23 @@
 <TS version="2.1" language="hu">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n munkamenet</numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel terminál
-SailfishOS-hoz</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 munkamenet</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Extra billentyűk elrejtése</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Új munkamenet</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Következő munkamenet</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Előző munkamenet</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -57,14 +32,6 @@ SailfishOS-hoz</translation>
     <message>
         <source>Settings</source>
         <translation>Beállítások</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Extra billentyűk megjelenítése</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -81,6 +48,29 @@ SailfishOS-hoz</translation>
     <message>
         <source>Search terminal</source>
         <translation>Keresés a terminálban</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Hivatkozás megnyitása</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Megnyitás</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Mégse</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>A böngészőben nyílik meg</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell kilépett %1 kóddal</translation>
     </message>
 </context>
 <context>
@@ -108,6 +98,109 @@ SailfishOS-hoz</translation>
     <message>
         <source>Available keys</source>
         <translation>Elérhető billentyűk</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigáció</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Módosítók</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Segédeszközök</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Munkamenet-navigáció</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funkcióbillentyűk</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Bal</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Le</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Fel</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Jobb</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl módosító</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt módosító</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Billentyűzet megjelenítése/elrejtése</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Előző munkamenet</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Következő munkamenet</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licencek</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Kurzor nyomkövető shader</translation>
     </message>
 </context>
 <context>
@@ -187,10 +280,6 @@ SailfishOS-hoz</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -227,18 +316,8 @@ SailfishOS-hoz</translation>
         <translation>Betűméret</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel terminál
-SailfishOS-hoz</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Világos</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -255,14 +334,6 @@ SailfishOS-hoz</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell parancs</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -362,16 +433,41 @@ Powered by libghostty terminal engine</source>
         <translation>Ghosteel terminál SailfishOS-hoz
 A libghostty terminálmotor hajtja</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell kilépett %1 kóddal
-
-Érintse meg az újraindításhoz</translation>
+        <source>Cursor trails</source>
+        <translation>Kurzor nyomkövetők</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animált nyomkövető effektus kurzormozgáskor</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>OpenGL ES 3.0 szükséges — nem érhető el ezen az eszközön</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Beágyazott képek</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Kitty Graphics Protocolon küldött képek megjelenítése</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>A shader effektusok OpenGL ES 3.0-t igényelnek, amely nem érhető el ezen az eszközön.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>URL-ek automatikus felismerése</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>URL-ek kiemelése a terminál kimenetén a megérintéssel történő megnyitáshoz</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licencek</translation>
     </message>
 </context>
 </TS>

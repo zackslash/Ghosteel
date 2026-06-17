@@ -3,50 +3,25 @@
 <TS version="2.1" language="lt">
 <context>
     <name>CoverPage</name>
-    <message numerus="yes">
-        <source>%n session(s)</source>
-        <translation>
-            <numerusform>%n sesija(-os)</numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation>Ghosteel terminalas
-SailfishOS</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 sesija</numerusform>
+            <numerusform>%n sesijos</numerusform>
+            <numerusform>%n sesijų</numerusform>
+        </translation>
     </message>
+
 </context>
 <context>
     <name>FirstPage</name>
     <message>
-        <source>Alt</source>
-        <translation type="vanished">Alt</translation>
-    </message>
-    <message>
-        <source>Ctrl</source>
-        <translation type="vanished">Ctrl</translation>
-    </message>
-    <message>
-        <source>Hide extra keys</source>
-        <translation type="vanished">Slėpti papildomus klavišus</translation>
-    </message>
-    <message>
         <source>New session</source>
         <translation>Nauja sesija</translation>
-    </message>
-    <message>
-        <source>Next session</source>
-        <translation type="vanished">Kita sesija</translation>
-    </message>
-    <message>
-        <source>Previous session</source>
-        <translation type="vanished">Ankstesnė sesija</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -59,14 +34,6 @@ SailfishOS</translation>
     <message>
         <source>Settings</source>
         <translation>Nustatymai</translation>
-    </message>
-    <message>
-        <source>Show extra keys</source>
-        <translation type="vanished">Rodyti papildomus klavišus</translation>
-    </message>
-    <message>
-        <source>Tab</source>
-        <translation type="vanished">Tab</translation>
     </message>
     <message>
         <source>Switch to session</source>
@@ -83,6 +50,29 @@ SailfishOS</translation>
     <message>
         <source>Search terminal</source>
         <translation>Ieškoti terminale</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Atidaryti nuorodą</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Atidaryti</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Atšaukti</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Atsidarys naršyklėje</translation>
+    </message>
+</context>
+<context>
+    <name>GLRenderer</name>
+    <message>
+        <source>Shell exited with code %1</source>
+        <translation>Shell baigėsi su kodu %1</translation>
     </message>
 </context>
 <context>
@@ -110,6 +100,109 @@ SailfishOS</translation>
     <message>
         <source>Available keys</source>
         <translation>Galimi klavišai</translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation>Navigacija</translation>
+    </message>
+    <message>
+        <source>Modifiers</source>
+        <translation>Modifikatoriai</translation>
+    </message>
+    <message>
+        <source>Utility</source>
+        <translation>Įrankiai</translation>
+    </message>
+    <message>
+        <source>Session Navigation</source>
+        <translation>Sesijos navigacija</translation>
+    </message>
+    <message>
+        <source>Function keys</source>
+        <translation>Funkciniai klavišai</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Kairė</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Žemyn</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Aukštyn</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Dešinė</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Control modifier</source>
+        <translation>Ctrl modifikatorius</translation>
+    </message>
+    <message>
+        <source>Alt modifier</source>
+        <translation>Alt modifikatorius</translation>
+    </message>
+    <message>
+        <source>Toggle keyboard</source>
+        <translation>Rodyti/slėpti klaviatūrą</translation>
+    </message>
+    <message>
+        <source>Previous session</source>
+        <translation>Ankstesnė sesija</translation>
+    </message>
+    <message>
+        <source>Next session</source>
+        <translation>Kita sesija</translation>
+    </message>
+</context>
+<context>
+    <name>LicensesPage</name>
+    <message>
+        <source>Licenses</source>
+        <translation>Licencijos</translation>
+    </message>
+    <message>
+        <source>Ghosteel</source>
+        <translation>Ghosteel</translation>
+    </message>
+    <message>
+        <source>Ghostty (libghostty-vt)</source>
+        <translation>Ghostty (libghostty-vt)</translation>
+    </message>
+    <message>
+        <source>Cursor trail shader</source>
+        <translation>Žymiklio pėdsako šeideris</translation>
     </message>
 </context>
 <context>
@@ -189,10 +282,6 @@ SailfishOS</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>%1 px</source>
-        <translation type="vanished">%1 px</translation>
-    </message>
-    <message>
         <source>%1%</source>
         <translation>%1%</translation>
     </message>
@@ -229,18 +318,8 @@ SailfishOS</translation>
         <translation>Šrifto dydis</translation>
     </message>
     <message>
-        <source>Ghosteel terminal
-for SailfishOS</source>
-        <translation type="vanished">Ghosteel terminalas
-SailfishOS</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Šviesi</translation>
-    </message>
-    <message>
-        <source>Monokai</source>
-        <translation>Monokai</translation>
     </message>
     <message>
         <source>None</source>
@@ -257,14 +336,6 @@ SailfishOS</translation>
     <message>
         <source>Shell command</source>
         <translation>Shell komanda</translation>
-    </message>
-    <message>
-        <source>Solarized Dark</source>
-        <translation>Solarized Dark</translation>
-    </message>
-    <message>
-        <source>Solarized Light</source>
-        <translation>Solarized Light</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -363,16 +434,41 @@ SailfishOS</translation>
 Powered by libghostty terminal engine</source>
         <translation>1 metus</translation>
     </message>
-</context>
-<context>
-    <name>TerminalView</name>
     <message>
-        <source>Shell exited with code %1
-
-Tap to restart</source>
-        <translation>Shell baigė darbą su kodu %1
-
-Bakstelėkite, kad paleistumėte iš naujo</translation>
+        <source>Cursor trails</source>
+        <translation>Žymiklio pėdsakai</translation>
+    </message>
+    <message>
+        <source>Animated trail effect when the cursor moves</source>
+        <translation>Animuotas pėdsako efektas judinant žymiklį</translation>
+    </message>
+    <message>
+        <source>Requires OpenGL ES 3.0 — not available on this device</source>
+        <translation>Reikia OpenGL ES 3.0 — nepasiekiama šiame įrenginyje</translation>
+    </message>
+    <message>
+        <source>Inline images</source>
+        <translation>Įterpti vaizdai</translation>
+    </message>
+    <message>
+        <source>Display images sent via the Kitty Graphics Protocol</source>
+        <translation>Rodyti vaizdus, siunčiamus per Kitty Graphics protokolą</translation>
+    </message>
+    <message>
+        <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
+        <translation>Šeiderio efektams reikia OpenGL ES 3.0, kuris nepasiekiamas šiame įrenginyje.</translation>
+    </message>
+    <message>
+        <source>Auto-detect URLs</source>
+        <translation>Automatiškai aptikti URL</translation>
+    </message>
+    <message>
+        <source>Highlight URLs in terminal output for tap-to-open</source>
+        <translation>Paryškinti URL terminalo išvestyje atidarymui bakstelėjus</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>Licencijos</translation>
     </message>
 </context>
 </TS>
