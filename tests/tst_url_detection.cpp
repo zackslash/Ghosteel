@@ -99,6 +99,143 @@ private slots:
         QCOMPARE(spans.size(), 1);
     }
 
+    // --- Additional scheme URLs ---
+
+    void fileSchemeTripleSlash()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("file:///home/user/doc.txt", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("file:///home/user/doc.txt"));
+    }
+
+    void gitScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("git://github.com/repo.git", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("git://github.com/repo.git"));
+    }
+
+    void telScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("tel:+1-555-123-4567", 19, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("tel:+1-555-123-4567"));
+    }
+
+    void magnetScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("magnet:?xt=urn:btih:abc123", 26, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("magnet:?xt=urn:btih:abc123"));
+    }
+
+    void ipfsScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("ipfs://QmHash123", 16, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("ipfs://QmHash123"));
+    }
+
+    void ipnsScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("ipns://example.com", 18, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("ipns://example.com"));
+    }
+
+    void geminiScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("gemini://example.com/page", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("gemini://example.com/page"));
+    }
+
+    void gopherScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("gopher://gopher.example.com", 27, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("gopher://gopher.example.com"));
+    }
+
+    void newsScheme()
+    {
+        // news: uses no "//" separator — just "news:group.name"
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("news:comp.lang.c", 16, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("news:comp.lang.c"));
+    }
+
+    // --- Case sensitivity ---
+
+    void uppercaseSchemeNoMatch()
+    {
+        // The regex is case-sensitive; "HTTPS" does not match "https?"
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("HTTPS://EXAMPLE.COM", 19, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    // --- IPv6 URLs ---
+
+    void ipv6WithPort()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://[::1]:8080/path", 23, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://[::1]:8080/path"));
+    }
+
+    void ipv6Address()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://[2001:db8::1]/page", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://[2001:db8::1]/page"));
+    }
+
+    // --- URLs in parentheses and brackets ---
+
+    void urlInParentheses()
+    {
+        // Opening/closing parens should be stripped from the match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("(https://example.com)", 21, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
+    }
+
+    void urlInBrackets()
+    {
+        // Square brackets should be stripped from the match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("see [https://example.com] for info", 34, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
+    }
+
     void multipleUrls()
     {
         QString flat; QVector<TextUtil::CellCoord> map;
@@ -336,6 +473,156 @@ private slots:
         buildSingleLine("Https:/", 7, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 0);
+    }
+
+    void uncDoubleSlash()
+    {
+        // UNC path "//server/share/file.txt" should NOT match.
+        // The double-slash prefix is a UNC indicator, not a relative path.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("//server/share/file.txt", 23, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void midWordDotSlash()
+    {
+        // "x./path" — dot-slash mid-word should NOT match.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("x./path", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void midWordDotDotSlash()
+    {
+        // "word../path" — dot-dot-slash mid-word should NOT match.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("word../path", 11, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    // --- Additional false positive rejection ---
+
+    void semverString()
+    {
+        // "v1.2.3" has no slash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("v1.2.3", 6, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void ipAddress()
+    {
+        // "192.168.1.1" is a bare IP with no scheme or slash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("192.168.1.1", 11, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void timeString()
+    {
+        // "12:34:56" is a time string, not a recognized scheme — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("12:34:56", 8, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void dockerImageRef()
+    {
+        // "docker pull ubuntu:20.04" — "ubuntu:" is not a recognized scheme
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("docker pull ubuntu:20.04", 23, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void envAssignment()
+    {
+        // "key=value" has no scheme, no slash, no dot — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("key=value", 9, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void dotfileNoSlash()
+    {
+        // ".gitignore" has no slash after the dot — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine(".gitignore", 10, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    // --- Scheme edge cases ---
+
+    void schemeWithNoHost()
+    {
+        // "http://" has scheme but no host — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("http://", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void singleSlashAfterScheme()
+    {
+        // "https:/example.com" has only one slash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https:/example.com", 18, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void lowercaseSingleSlash()
+    {
+        // "https:/" — lowercase variant of incompleteSchemeSlash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https:/", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    // --- Absolute path edge cases ---
+
+    void absolutePathNoExtension()
+    {
+        // "/usr/bin/ls" has no file extension in last component — should NOT match
+        // (the regex matches "/" as 1 char but findUrls filters <2 char matches)
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("/usr/bin/ls", 11, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void absolutePathTrailingText()
+    {
+        // "/tmp/file.txt trailing text" — the regex's space-continuation rule
+        // inside the absolute-path branch allows space-separated tokens after
+        // a matched path, so the match extends to cover the whole string.
+        // This is pre-existing behavior worth documenting.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("/tmp/file.txt trailing text", 27, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        // Note: regex greedily consumes trailing space-separated words
+        QCOMPARE(spans[0].uri, QStringLiteral("/tmp/file.txt trailing text"));
+    }
+
+    void bareTildeSlashOnly()
+    {
+        // "~/" with nothing after the slash — the regex matches "~/"
+        // as a 2-char tilde-path (not filtered by the <2 check).
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("~/", 2, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("~/"));
     }
 
     // --- Multi-line ---
