@@ -9,9 +9,12 @@ jobs:
   validate:
     name: Validate tag
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
-      changelog: ${{ steps.changelog.outputs.changelog }}
+      release_notes: ${{ steps.notes.outputs.release_notes }}
+      rpm_changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -24,7 +27,7 @@ jobs:
             exit 1
           fi
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
-      - id: changelog
+      - id: notes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -32,8 +35,20 @@ jobs:
             -f tag_name="${{ github.ref_name }}" \
             --jq '.body')
           DELIMITER=$(openssl rand -hex 12)
-          echo "changelog<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "release_notes<<$DELIMITER" >> "$GITHUB_OUTPUT"
           echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
+      - id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          else
+            CHANGES=$(git log --pretty=format:"- %s" --no-merges -20)
+          fi
+          DELIMITER=$(openssl rand -hex 12)
+          echo "changelog<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          echo "$CHANGES" >> "$GITHUB_OUTPUT"
           echo "$DELIMITER" >> "$GITHUB_OUTPUT"
 
   test:
@@ -125,7 +140,7 @@ jobs:
 
       - name: Generate changelog
         env:
-          CHANGELOG: ${{ needs.validate.outputs.changelog }}
+          CHANGELOG: ${{ needs.validate.outputs.rpm_changelog }}
         run: |
           DATE=$(date "+%a %b %d %Y")
           printf '* %s\n%s\n' "$DATE" "$CHANGELOG" > rpm/ghosteel.changes
@@ -160,5 +175,5 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: Ghosteel v${{ needs.validate.outputs.version }}
-          body: ${{ needs.validate.outputs.changelog }}
+          body: ${{ needs.validate.outputs.release_notes }}
           files: release-rpms/**/*.rpm
