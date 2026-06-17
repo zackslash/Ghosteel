@@ -99,6 +99,143 @@ private slots:
         QCOMPARE(spans.size(), 1);
     }
 
+    // --- Additional scheme URLs ---
+
+    void fileSchemeTripleSlash()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("file:///home/user/doc.txt", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("file:///home/user/doc.txt"));
+    }
+
+    void gitScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("git://github.com/repo.git", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("git://github.com/repo.git"));
+    }
+
+    void telScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("tel:+1-555-123-4567", 19, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("tel:+1-555-123-4567"));
+    }
+
+    void magnetScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("magnet:?xt=urn:btih:abc123", 26, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("magnet:?xt=urn:btih:abc123"));
+    }
+
+    void ipfsScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("ipfs://QmHash123", 16, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("ipfs://QmHash123"));
+    }
+
+    void ipnsScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("ipns://example.com", 18, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("ipns://example.com"));
+    }
+
+    void geminiScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("gemini://example.com/page", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("gemini://example.com/page"));
+    }
+
+    void gopherScheme()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("gopher://gopher.example.com", 27, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("gopher://gopher.example.com"));
+    }
+
+    void newsScheme()
+    {
+        // news: uses no "//" separator — just "news:group.name"
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("news:comp.lang.c", 16, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("news:comp.lang.c"));
+    }
+
+    // --- Case sensitivity ---
+
+    void uppercaseSchemeNoMatch()
+    {
+        // The regex is case-sensitive; "HTTPS" does not match "https?"
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("HTTPS://EXAMPLE.COM", 19, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    // --- IPv6 URLs ---
+
+    void ipv6WithPort()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://[::1]:8080/path", 23, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://[::1]:8080/path"));
+    }
+
+    void ipv6Address()
+    {
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://[2001:db8::1]/page", 25, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://[2001:db8::1]/page"));
+    }
+
+    // --- URLs in parentheses and brackets ---
+
+    void urlInParentheses()
+    {
+        // Closing ) is excluded from URL body by [^()\[\],.;\s], so it's stripped.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("(https://example.com)", 21, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
+    }
+
+    void urlInBrackets()
+    {
+        // Closing ] is excluded from URL body by [^()\[\],.;\s], so it's stripped.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("see [https://example.com] for info", 34, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
+    }
+
     void multipleUrls()
     {
         QString flat; QVector<TextUtil::CellCoord> map;
@@ -129,71 +266,6 @@ private slots:
         QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
     }
 
-    // --- File paths ---
-
-    void absolutePath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("file is /usr/share/doc/readme.txt", 33, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("/usr/share/doc/readme.txt"));
-    }
-
-    void dotSlashPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("./src/main.cpp", 14, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("./src/main.cpp"));
-    }
-
-    void dotDotSlashPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("../test/file.txt", 16, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("../test/file.txt"));
-    }
-
-    void tildePath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("~/Documents/notes.md", 20, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("~/Documents/notes.md"));
-    }
-
-    void dollarVarPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("$HOME/.bashrc", 13, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("$HOME/.bashrc"));
-    }
-
-    void bareRelativePath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("src/config/url.zig", 18, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral("src/config/url.zig"));
-    }
-
-    void dotConfigPath()
-    {
-        QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine(".config/nvim/init.lua", 21, flat, map);
-        auto spans = TextUtil::findUrls(flat, map);
-        QCOMPARE(spans.size(), 1);
-        QCOMPARE(spans[0].uri, QStringLiteral(".config/nvim/init.lua"));
-    }
-
     // --- Non-matching ---
 
     void noMatchInPlainText()
@@ -213,22 +285,110 @@ private slots:
         QCOMPARE(spans.size(), 0);
     }
 
-    void barePathWithoutDot()
+    void bareSlashPathNoMatch()
     {
-        // input/output has no dot — should NOT match
+        // "/google.com" has no scheme prefix — should NOT match
         QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("input/output", 12, flat, map);
+        buildSingleLine("/google.com", 11, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 0);
     }
 
-    void midWordSlash()
+    // --- Scheme edge cases ---
+
+    void incompleteSchemeSlash()
     {
-        // some/path is mid-word — should NOT match
+        // "Https:/" — colon-slash without the second slash.
         QString flat; QVector<TextUtil::CellCoord> map;
-        buildSingleLine("some/path is not a link", 23, flat, map);
+        buildSingleLine("Https:/", 7, flat, map);
         auto spans = TextUtil::findUrls(flat, map);
         QCOMPARE(spans.size(), 0);
+    }
+
+    void schemeWithNoHost()
+    {
+        // "http://" has scheme but no host — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("http://", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void singleSlashAfterScheme()
+    {
+        // "https:/example.com" has only one slash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https:/example.com", 18, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void lowercaseSingleSlash()
+    {
+        // "https:/" — lowercase variant of incompleteSchemeSlash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https:/", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    // --- Domain requirement for http/https/ftp ---
+
+    void schemeRequiresDomain()
+    {
+        // https://goog has no dot in hostname — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://goog", 12, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void bareHostnameNoMatch()
+    {
+        // http://foobar has no dot — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("http://foobar", 13, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void ftpRequiresDomain()
+    {
+        // ftp://files has no dot — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("ftp://files", 11, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void localhostRejected()
+    {
+        // http://localhost:3000 — no dot in hostname, won't match.
+        // This is a known trade-off of requiring a dot for http/https/ftp.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("http://localhost:3000", 20, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void ipAddressAccepted()
+    {
+        // https://192.168.1.1 — has dots, should match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://192.168.1.1", 19, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://192.168.1.1"));
+    }
+
+    void schemeContentNoSpaces()
+    {
+        // URL stops at whitespace
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("https://example.com/path with spaces", 35, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://example.com/path"));
     }
 
     // --- Multi-line ---

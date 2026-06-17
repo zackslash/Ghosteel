@@ -93,7 +93,7 @@ const QRegularExpression &urlRegex()
     // Thread-safe: initialized once on first call.
     static QRegularExpression re(
         QStringLiteral(
-            R"url((?:(?:https?://|mailto:|ftp://|file:|ssh:|git://|ssh://|tel:|magnet:|ipfs://|ipns://|gemini://|gopher://|news:)(?:(?:\[[0-9a-fA-F:]+(?:[0-9a-fA-F:]*)+\](?::[0-9]+)?)|[\w\-.~:/?#@!$&*+,;=%]+(?:[\(\[]\w*[\)\]])?)+(?<![,.])|(?:\.\.\/|\.\/|(?<!\w)~\/|(?:[\w][\w\-.]*\/)*(?<!\w)\$[A-Za-z_]\w*\/|\.[\w][\w\-.]*\/|(?<![\w~\/])\/(?!\/))(?:(?=[\w\-.~:\/?#@!$&*+;=%]*\.)[\w\-.~:\/?#@!$&*+;=%]+(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]*[\/.])*|(?![\w\-.~:\/?#@!$&*+;=%]*\.)(?:(?<!:) (?!\w+:\/\/)(?!\.{0,2}\/)(?!~\/)[\w\-.~:\/?#@!$&*+;=%]+)*)*(?<!:)(?: +(?= *$))?|(?=[\w\-.~:\/?#@!$&*+;=%]*\.)(?<!\w)[\w][\w\-.]*\/[\w\-.~:\/?#@!$&*+;=%]+(?<!:)(?: +(?= *$))?))url"
+            R"url((?:(?:https?|ftp)://(?:\[[0-9a-fA-F:]+\](?::\d+)?(?:/[\w\-._~:/?#@!$&*+,;=%]*)?|(?=[^\s/?#]*\.)[^()\[\],;\s]+)|(?:file|git|ipfs|ipns|gemini|gopher)://[^()\[\],;\s]+|(?:ssh|mailto|tel|magnet|news):[^()\[\],;\s]+)(?:[\(\[]\w*[\)\]])?(?<![,.:;]))url"
         )
     );
     return re;
@@ -117,6 +117,8 @@ QVector<LinkSpan> findUrls(const QString &flatText,
         int endIdx = match.capturedEnd(); // exclusive
 
         if (startIdx < 0 || endIdx <= startIdx)
+            continue;
+        if (endIdx - startIdx < 2)  // single-char matches are never useful URLs
             continue;
         if (startIdx >= charMap.size() || endIdx > charMap.size())
             continue;
