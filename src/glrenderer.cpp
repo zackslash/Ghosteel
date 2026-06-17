@@ -4,6 +4,7 @@
 #include "settings.h"
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <QDebug>
 #include <QMatrix4x4>
@@ -1703,6 +1704,8 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         return;
 
     GhosttyKittyGraphicsPlacementIterator iter = nullptr;
+    // _new() allocates the iterator struct, _get() populates it in-place
+    // from the terminal's current placement data. Both are needed.
     if (ghostty_kitty_graphics_placement_iterator_new(nullptr, &iter) != GHOSTTY_SUCCESS)
         return;
 
@@ -1786,19 +1789,28 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_FORMAT, &fmt);
 
             GLenum glFmt = GL_RGBA;
+            bool convertedPixels = false;
             if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_RGB)
                 glFmt = GL_RGB;
             else if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY
                      || fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY_ALPHA) {
-                // GLES 2.0 may not support GL_LUMINANCE as render target;
-                // the PNG decoder already converts to RGBA, but raw data
-                // could arrive in these formats. Fall through to GL_RGBA
-                // and hope the data was pre-converted. Log once.
-                static bool warned = false;
-                if (!warned) {
-                    qWarning() << "Kitty image: gray/gray-alpha format not natively supported, "
-                                  "data may render incorrectly";
-                    warned = true;
+                // Convert gray/gray-alpha to RGBA for GL upload
+                bool hasAlpha = (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY_ALPHA);
+                size_t srcBpp = hasAlpha ? 2 : 1;
+                size_t convertedLen = static_cast<size_t>(imgW) * static_cast<size_t>(imgH) * 4;
+                uint8_t* rgba = static_cast<uint8_t*>(malloc(convertedLen));
+                if (rgba) {
+                    for (size_t i = 0; i < static_cast<size_t>(imgW) * static_cast<size_t>(imgH); ++i) {
+                        uint8_t gray = pixels[i * srcBpp];
+                        uint8_t alpha = hasAlpha ? pixels[i * srcBpp + 1] : 255;
+                        rgba[i * 4 + 0] = gray;
+                        rgba[i * 4 + 1] = gray;
+                        rgba[i * 4 + 2] = gray;
+                        rgba[i * 4 + 3] = alpha;
+                    }
+                    pixels = rgba;
+                    glFmt = GL_RGBA;
+                    convertedPixels = true;
                 }
             }
 
@@ -1812,6 +1824,8 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             glTexImage2D(GL_TEXTURE_2D, 0, glFmt, imgW, imgH, 0,
                          glFmt, GL_UNSIGNED_BYTE, pixels);
             glBindTexture(GL_TEXTURE_2D, 0);
+            if (convertedPixels)
+                free(const_cast<uint8_t*>(pixels));
 
             KittyCachedTexture cached;
             cached.texture = tex;
@@ -2040,6 +2054,9 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         m_program->release();
 
         // Kitty images: below-text layer (between cell grid and overlays)
+        // Note: BELOW_BG layer (z < INT32_MIN/2) is not rendered.
+        // These placements require drawing behind cell backgrounds,
+        // which would need a separate bg-only render pass.
         drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
                             fbo->width(), fbo->height());
 
@@ -2162,6 +2179,9 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
     m_program->release();
 
     // Kitty images: below-text layer
+    // Note: BELOW_BG layer (z < INT32_MIN/2) is not rendered.
+    // These placements require drawing behind cell backgrounds,
+    // which would need a separate bg-only render pass.
     drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
                         fbo->width(), fbo->height());
 
