@@ -11,7 +11,6 @@
         <source>%n session(s)</source>
         <translation>
             <numerusform>1 munkamenet</numerusform>
-            <numerusform>%n munkamenet</numerusform>
         </translation>
     </message>
 

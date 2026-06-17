@@ -11,6 +11,8 @@
         <source>%n session(s)</source>
         <translation>
             <numerusform>1 sessjoni</numerusform>
+            <numerusform>%n sessjoni</numerusform>
+            <numerusform>%n sessjonijiet</numerusform>
             <numerusform>%n sessjonijiet</numerusform>
         </translation>
     </message>

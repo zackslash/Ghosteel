@@ -13,8 +13,6 @@
             <numerusform>1 seisiún</numerusform>
             <numerusform>2 sheisiún</numerusform>
             <numerusform>%n seisiún</numerusform>
-            <numerusform>%n seisiún</numerusform>
-            <numerusform>%n seisiún</numerusform>
         </translation>
     </message>
 

@@ -12,6 +12,7 @@
         <translation>
             <numerusform>1 sesiune</numerusform>
             <numerusform>%n sesiuni</numerusform>
+            <numerusform>%n sesiuni</numerusform>
         </translation>
     </message>
 

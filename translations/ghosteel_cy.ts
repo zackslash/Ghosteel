@@ -10,8 +10,11 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
+            <numerusform>0 sesiwn</numerusform>
             <numerusform>1 sesiwn</numerusform>
             <numerusform>%n sesiwn</numerusform>
+            <numerusform>%n sesiwn</numerusform>
+            <numerusform>%n sesiynau</numerusform>
         </translation>
     </message>
 

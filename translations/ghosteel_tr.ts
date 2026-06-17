@@ -11,7 +11,6 @@
         <source>%n session(s)</source>
         <translation>
             <numerusform>1 oturum</numerusform>
-            <numerusform>%n oturum</numerusform>
         </translation>
     </message>
 
