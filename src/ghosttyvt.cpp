@@ -52,6 +52,11 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     ghostty_terminal_set(m_terminal,
                          GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_STORAGE_LIMIT, &kittyLimit);
 
+    // Enable file medium for Kitty Graphics (allows t=f file path loading)
+    bool kittyFileMedium = true;
+    ghostty_terminal_set(m_terminal,
+                         GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_MEDIUM_FILE, &kittyFileMedium);
+
     // Set callbacks
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_USERDATA, this);
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
