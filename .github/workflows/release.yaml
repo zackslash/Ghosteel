@@ -25,16 +25,15 @@ jobs:
           fi
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
       - id: changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            CHANGES=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
-          else
-            CHANGES=$(git log --pretty=format:"- %s" --no-merges -20)
-          fi
+          NOTES=$(gh api repos/${{ github.repository }}/releases/generate-notes \
+            -f tag_name="${{ github.ref_name }}" \
+            --jq '.body')
           DELIMITER=$(openssl rand -hex 12)
           echo "changelog<<$DELIMITER" >> "$GITHUB_OUTPUT"
-          echo "$CHANGES" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
           echo "$DELIMITER" >> "$GITHUB_OUTPUT"
 
   test:
