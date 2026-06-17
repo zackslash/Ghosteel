@@ -1714,8 +1714,8 @@ void TerminalView::refreshLinks()
         m_currentLinks.erase(
             std::remove_if(m_currentLinks.begin(), m_currentLinks.end(),
                            [cursorViewportY](const TextUtil::LinkSpan &span) {
-                               return span.startRow == cursorViewportY
-                                      || span.endRow == cursorViewportY;
+                               return cursorViewportY >= span.startRow
+                                      && cursorViewportY <= span.endRow;
                            }),
             m_currentLinks.end());
     }

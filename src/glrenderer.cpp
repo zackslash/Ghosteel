@@ -1052,22 +1052,26 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         float lb = (255.0f / 255.0f) * la;
 
         for (const auto &span : m_linkSpans) {
-            // span.row is viewport-relative (0..rows-1) from refreshLinks()
-            if (span.row < 0 || span.row >= m_rows) continue;
+            for (int r = span.startRow; r <= span.endRow; ++r) {
+                if (r < 0 || r >= m_rows) continue;
 
-            // 2px-tall rect at bottom of cell
-            float y = span.row * m_cellHeight + m_topPadding + m_cellHeight - 2;
-            float x0 = span.startCol * m_cellWidth;
-            float x1 = (span.endCol + 1) * m_cellWidth;
-            float y1 = y + 2;
+                int colStart = (r == span.startRow) ? span.startCol : 0;
+                int colEnd = (r == span.endRow) ? span.endCol : m_cols;
 
-            // 2 triangles = 6 vertices
-            m_flatVertices << x0 << y  << lr << lg << lb << la;
-            m_flatVertices << x1 << y  << lr << lg << lb << la;
-            m_flatVertices << x1 << y1 << lr << lg << lb << la;
-            m_flatVertices << x0 << y  << lr << lg << lb << la;
-            m_flatVertices << x1 << y1 << lr << lg << lb << la;
-            m_flatVertices << x0 << y1 << lr << lg << lb << la;
+                // 2px-tall rect at bottom of cell
+                float y = r * m_cellHeight + m_topPadding + m_cellHeight - 2;
+                float x0 = colStart * m_cellWidth;
+                float x1 = colEnd * m_cellWidth;
+                float y1 = y + 2;
+
+                // 2 triangles = 6 vertices
+                m_flatVertices << x0 << y  << lr << lg << lb << la;
+                m_flatVertices << x1 << y  << lr << lg << lb << la;
+                m_flatVertices << x1 << y1 << lr << lg << lb << la;
+                m_flatVertices << x0 << y  << lr << lg << lb << la;
+                m_flatVertices << x1 << y1 << lr << lg << lb << la;
+                m_flatVertices << x0 << y1 << lr << lg << lb << la;
+            }
         }
     }
 
@@ -1468,7 +1472,8 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         const auto &links = m_terminalView->currentLinks();
         for (const auto &link : links) {
             LinkSpan span;
-            span.row = link.startRow;
+            span.startRow = link.startRow;
+            span.endRow = link.endRow;
             span.startCol = link.startCol;
             span.endCol = link.endCol;
             m_linkSpans.append(span);

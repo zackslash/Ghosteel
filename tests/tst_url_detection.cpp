@@ -231,6 +231,103 @@ private slots:
         QCOMPARE(spans.size(), 0);
     }
 
+    // --- False positive resistance ---
+
+    void standaloneDotWord()
+    {
+        // "foo.bar" has no slash — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("foo.bar", 7, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void keyValueColon()
+    {
+        // "key: value" is not a path — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("key: value", 10, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void dotInDirNameNoExtension()
+    {
+        // "error.v2/test" has a dot in the directory name but
+        // "test" has no file extension — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("error.v2/test", 13, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void numericPathComponent()
+    {
+        // "error.code/500" — numeric-only last component,
+        // no real file extension — should NOT match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("error.code/500", 14, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 0);
+    }
+
+    void dotInDirNameWithExtension()
+    {
+        // "v2.0/README.md" — dot in dir name but last component
+        // HAS a file extension — SHOULD match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("v2.0/README.md", 14, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("v2.0/README.md"));
+    }
+
+    void barePathWithDoubleExtension()
+    {
+        // "lib/utils.min.js" — double extension — SHOULD match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("lib/utils.min.js", 16, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("lib/utils.min.js"));
+    }
+
+    void dotInDirNameWithDoubleExtension()
+    {
+        // "error.v2/test.min.js" — dot-in-dir with double extension
+        // on last component — SHOULD match
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("error.v2/test.min.js", 20, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("error.v2/test.min.js"));
+    }
+
+    void dotInDirNameWithSimpleExtension()
+    {
+        // "error.v2/test.txt" — dot-in-dir with simple file extension.
+        // Direct counterpart to dotInDirNameNoExtension — proves the
+        // fix is surgical (rejects no-ext, accepts with-ext).
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("error.v2/test.txt", 17, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("error.v2/test.txt"));
+    }
+
+    void dotDirPrefixNoExtension()
+    {
+        // ".hidden/file" — dot-directory prefix with no file extension.
+        // Via Branch 2 (.dir/ prefix), the content group matches zero
+        // times, yielding ".hidden/" as the match. Documents pre-existing
+        // behavior that dot-directory paths match even without extension.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine(".hidden/file", 12, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral(".hidden/"));
+    }
+
     // --- Multi-line ---
 
     void urlOnSecondLine()
@@ -261,6 +358,27 @@ private slots:
         auto spans = TextUtil::findUrls(flat, charMap);
         QCOMPARE(spans.size(), 1);
         QCOMPARE(spans[0].uri, QStringLiteral("https://very-long-example.com/path/to/page"));
+        QCOMPARE(spans[0].startRow, 0);
+        QCOMPARE(spans[0].endRow, 1);
+    }
+
+    void wrappedBarePath()
+    {
+        // Bare relative path "v2.0/README.md" soft-wrapped across two rows.
+        // Tests that multi-row coordinate mapping works for Branch 3 paths.
+        QString flat = "v2.0/READM";
+        flat.append("E.md");
+        QVector<TextUtil::CellCoord> charMap;
+        // First part: cols 0-9 on row 0
+        for (int i = 0; i < 10; ++i)
+            charMap.append({ static_cast<uint16_t>(i), 0 });
+        // Second part: cols 0-4 on row 1 (soft-wrapped, no \n)
+        for (int i = 0; i < 5; ++i)
+            charMap.append({ static_cast<uint16_t>(i), 1 });
+
+        auto spans = TextUtil::findUrls(flat, charMap);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("v2.0/README.md"));
         QCOMPARE(spans[0].startRow, 0);
         QCOMPARE(spans[0].endRow, 1);
     }

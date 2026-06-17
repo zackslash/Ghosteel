@@ -224,7 +224,7 @@ private:
 
         int m_scrollOffset = 0;
 
-        struct LinkSpan { int row; int startCol; int endCol; };
+        struct LinkSpan { int startRow; int endRow; int startCol; int endCol; };
         QVector<LinkSpan> m_linkSpans;
 
         // Flat-color shader (selection, search, link overlays)
