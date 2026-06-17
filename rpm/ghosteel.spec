@@ -46,8 +46,6 @@ Ghosteel terminal emulator for Sailfish OS, powered by libghostty.
 
 desktop-file-install --delete-original         --dir %{buildroot}%{_datadir}/applications                %{buildroot}%{_datadir}/applications/*.desktop
 
-# %changelog is appended by CI — do not add one here manually
-
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
