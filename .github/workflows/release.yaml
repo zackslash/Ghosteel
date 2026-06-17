@@ -125,10 +125,11 @@ jobs:
         run: bash scripts/build-libs.sh ${{ matrix.arch }}
 
       - name: Generate changelog
+        env:
+          CHANGELOG: ${{ needs.validate.outputs.changelog }}
         run: |
           DATE=$(date "+%a %b %d %Y")
-          echo "* $DATE" > rpm/ghosteel.changes
-          echo "${{ needs.validate.outputs.changelog }}" >> rpm/ghosteel.changes
+          printf '* %s\n%s\n' "$DATE" "$CHANGELOG" > rpm/ghosteel.changes
 
       - name: Build RPM
         uses: coderus/github-sfos-build@sfos5
