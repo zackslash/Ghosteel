@@ -32,13 +32,11 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
 {
     m_ptyWriteFn = writeFn;
 
-    // Options passed by pointer to work around Zig i386 struct-by-value
-    // ABI bug. See ghostty/src/terminal/c/terminal.zig new_ptr() comment.
     GhosttyTerminalOptions opts = {};
     opts.cols = cols;
     opts.rows = rows;
     opts.max_scrollback = 3 * 1024 * 1024; // 3MB (~2500 lines)
-    GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, &opts);
+    GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, opts);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_terminal_new failed:" << res;
         return false;
