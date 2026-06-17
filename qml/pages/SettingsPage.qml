@@ -23,6 +23,7 @@ Page {
                     schemeCombo.currentIndex = 0
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
+                    urlAutoDetectToggle.checked = true
                     Settings.customShaderPath = ""
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
@@ -72,6 +73,15 @@ Page {
                 }
 
                 onCurrentIndexChanged: Settings.bellMode = currentIndex
+            }
+
+            TextSwitch {
+                id: urlAutoDetectToggle
+                width: parent.width
+                text: qsTr("Auto-detect URLs")
+                description: qsTr("Highlight URLs in terminal output for tap-to-open")
+                checked: Settings.urlAutoDetect
+                onCheckedChanged: Settings.urlAutoDetect = checked
             }
 
             // Appearance section

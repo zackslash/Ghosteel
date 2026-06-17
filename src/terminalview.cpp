@@ -1579,6 +1579,15 @@ void TerminalView::refreshLinks()
         return;
     }
 
+    // When URL auto-detection is disabled, skip regex scanning.
+    // OSC 8 hyperlinks still work — they're resolved independently
+    // via getHyperlinkAt() in findLinkAt().
+    if (!Settings::instance()->urlAutoDetect()) {
+        m_currentLinks.clear();
+        m_linkScanDirty = false;
+        return;
+    }
+
     GhosttyRenderState state = m_vt->renderState();
     if (!state) {
         m_linkScanDirty = false;
