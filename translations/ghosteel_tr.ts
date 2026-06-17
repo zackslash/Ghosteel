@@ -7,14 +7,14 @@
         <source>Ghosteel</source>
         <translation>Ghosteel</translation>
     </message>
-    <message>
-        <source>1 session</source>
-        <translation>1 oturum</translation>
+    <message numerus="yes">
+        <source>%n session(s)</source>
+        <translation>
+            <numerusform>1 oturum</numerusform>
+            <numerusform>%n oturum</numerusform>
+        </translation>
     </message>
-    <message>
-        <source>%1 sessions</source>
-        <translation>%1 oturum</translation>
-    </message>
+
 </context>
 <context>
     <name>FirstPage</name>
