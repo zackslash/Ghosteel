@@ -20,7 +20,7 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
     </tr>
     <tr>
       <td align="center"><sub>Neofetch</sub></td>
-      <td align="center"><sub>System Monitor</sub></td>
+      <td align="center"><sub>System Monitor (btop)</sub></td>
       <td align="center"><sub>Multi-session</sub></td>
     </tr>
   </table>
