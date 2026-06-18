@@ -121,8 +121,23 @@ jobs:
         if: steps.cache-lib.outputs.cache-hit != 'true'
         run: bash scripts/build-libs.sh ${{ matrix.arch }}
 
+      - name: Cache Docker image
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: /tmp/sfos-sdk.tar
+          key: sfos-sdk-5.0.0.43
+
+      - name: Load Docker image
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/sfos-sdk.tar
+
       - name: Build RPM
         uses: coderus/github-sfos-build@sfos5
         with:
           release: 5.0.0.43
           arch: ${{ matrix.arch }}
+
+      - name: Save Docker image
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: docker save coderus/sailfishos-platform-sdk:5.0.0.43 -o /tmp/sfos-sdk.tar
