@@ -65,6 +65,9 @@ jobs:
             [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
           done
 
+      - name: Fix apt cache permissions
+        run: sudo chown -R $(id -u):$(id -g) /var/cache/apt/archives
+
       - name: Cache apt packages
         uses: actions/cache@v4
         with:
@@ -77,11 +80,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qtbase5-dev qt5-qmake cmake build-essential
-
-      - name: Fix apt cache permissions
-        run: |
-          sudo chown -R $(id -u):$(id -g) /var/cache/apt/archives
-          sudo rm -rf /var/cache/apt/archives/partial
 
       - name: Build tests
         run: |
@@ -122,6 +120,7 @@ jobs:
           key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}-${{ hashFiles('patches/*.patch') }}
 
       - name: Cache Ghostty submodule
+        if: steps.cache-lib.outputs.cache-hit != 'true'
         id: cache-submodule
         uses: actions/cache@v4
         with:
@@ -131,9 +130,11 @@ jobs:
             submodule-ghostty-
 
       - name: Initialize Ghostty submodule
-        run: git submodule update --init --recursive
+        if: steps.cache-lib.outputs.cache-hit != 'true'
+        run: git submodule update --init --recursive --no-fetch
 
       - name: Apply Ghosteel patches to Ghostty
+        if: steps.cache-lib.outputs.cache-hit != 'true'
         run: |
           for patch in patches/*.patch; do
             [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
