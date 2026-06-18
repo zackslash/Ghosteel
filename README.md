@@ -11,6 +11,21 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 [Ghostty](https://github.com/ghostty-org/ghostty), giving you accurate rendering for
 `tmux`, `neovim`, `htop`, and other TUI applications.
 
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="screenshots/screenshot-neofetch-device.png" width="180"></td>
+      <td align="center"><img src="screenshots/screenshot-btop1-device.png" width="180"></td>
+      <td align="center"><img src="screenshots/screenshot-sessions-device.png" width="180"></td>
+    </tr>
+    <tr>
+      <td align="center"><sub>Truecolor &amp; GPU Rendering</sub></td>
+      <td align="center"><sub>TUI App Support</sub></td>
+      <td align="center"><sub>Multi-session</sub></td>
+    </tr>
+  </table>
+</div>
+
 ## Features
 
 - **Ghostty VT engine**: full escape sequence support, 24-bit color, alternate screen buffer
