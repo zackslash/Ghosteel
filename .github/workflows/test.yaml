@@ -22,6 +22,14 @@ jobs:
             [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
           done
 
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-qt5-${{ hashFiles('.github/workflows/test.yaml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-qt5-
+
       - name: Install Qt5 dev packages
         run: |
           sudo apt-get update
@@ -51,16 +59,43 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      - name: Get Ghostty submodule commit
+        id: ghostty-commit
+        run: |
+          SHA=$(git ls-tree HEAD ghostty | awk '{print $3}')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Cache libghostty-vt
+        id: cache-lib
+        uses: actions/cache@v4
         with:
-          submodules: recursive
+          path: lib/${{ matrix.arch }}
+          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}-${{ hashFiles('patches/*.patch') }}
+
+      - name: Cache Ghostty submodule
+        if: steps.cache-lib.outputs.cache-hit != 'true'
+        id: cache-submodule
+        uses: actions/cache@v4
+        with:
+          path: .git/modules/ghostty
+          key: submodule-ghostty-${{ steps.ghostty-commit.outputs.sha }}
+          restore-keys: |
+            submodule-ghostty-
+
+      - name: Initialize Ghostty submodule
+        if: steps.cache-lib.outputs.cache-hit != 'true'
+        run: git submodule update --init --recursive --no-fetch
 
       - name: Apply Ghosteel patches to Ghostty
+        if: steps.cache-lib.outputs.cache-hit != 'true'
         run: |
           for patch in patches/*.patch; do
             [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
           done
 
       - name: Cache Zig
+        if: steps.cache-lib.outputs.cache-hit != 'true'
         id: cache-zig
         uses: actions/cache@v4
         with:
@@ -68,15 +103,17 @@ jobs:
           key: zig-0.15.2-linux-x86_64
 
       - name: Install Zig
-        if: steps.cache-zig.outputs.cache-hit != 'true'
+        if: steps.cache-lib.outputs.cache-hit != 'true' && steps.cache-zig.outputs.cache-hit != 'true'
         run: |
           ZIG_VERSION=0.15.2
           curl -L "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" | tar -xJ -C /opt
 
       - name: Add Zig to PATH
+        if: steps.cache-lib.outputs.cache-hit != 'true'
         run: echo "/opt/zig-x86_64-linux-0.15.2" >> "$GITHUB_PATH"
 
       - name: Build libghostty-vt
+        if: steps.cache-lib.outputs.cache-hit != 'true'
         run: bash scripts/build-libs.sh ${{ matrix.arch }}
 
       - name: Build RPM
