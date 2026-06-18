@@ -606,6 +606,14 @@ void TerminalView::setTopPadding(int padding)
         recalculateDimensions();
 }
 
+void TerminalView::setPullDownZoneHeight(int height)
+{
+    if (m_pullDownZoneHeight == height)
+        return;
+    m_pullDownZoneHeight = height;
+    Q_EMIT pullDownZoneHeightChanged();
+}
+
 void TerminalView::updateFontMetrics()
 {
     QString family = Settings::instance()->fontFamily();
@@ -866,6 +874,14 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         m_touchStartPos = event->pos();
 
         if (m_mouseTrackingActive) {
+            // Top gesture zone — let SilicaFlickable handle for PullDownMenu.
+            // In practice, touchEvent should have rejected this before mouse
+            // synthesis, but guard here as a safety net.
+            if (event->pos().y() < m_pullDownZoneHeight) {
+                QQuickItem::mousePressEvent(event);
+                return;
+            }
+
             sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, GHOSTTY_MOUSE_BUTTON_LEFT,
                            event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
 
@@ -1172,6 +1188,20 @@ void TerminalView::touchEvent(QTouchEvent *event)
     if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
         m_twoFingerScrolling = false;
         m_touchScrollAccumulator = 0;
+    }
+
+    // When mouse tracking is active (TUI apps like htop/tmux), allow touches
+    // in the top gesture zone to pass through to the parent SilicaFlickable
+    // for PullDownMenu. Without this, setKeepMouseGrab(true) in mousePressEvent
+    // blocks the pull-down gesture entirely.
+    if (m_mouseTrackingActive
+        && event->type() == QEvent::TouchBegin
+        && points.size() == 1
+        && points.first().pos().y() < m_pullDownZoneHeight) {
+        // Don't accept — let SilicaFlickable claim this for PullDownMenu.
+        // This also prevents Qt from synthesizing a mouse event, so
+        // mousePressEvent never fires and setKeepMouseGrab is never called.
+        return;
     }
 
     QQuickItem::touchEvent(event);
