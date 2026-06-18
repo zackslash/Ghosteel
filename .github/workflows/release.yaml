@@ -143,7 +143,8 @@ jobs:
           CHANGELOG: ${{ needs.validate.outputs.rpm_changelog }}
         run: |
           DATE=$(date "+%a %b %d %Y")
-          printf '* %s\n%s\n' "$DATE" "$CHANGELOG" > rpm/ghosteel.changes.in
+          VER="${{ needs.validate.outputs.version }}"
+          printf '* %s - %s\n%s\n' "$DATE" "$VER" "$CHANGELOG" > rpm/ghosteel.changes
 
       - name: Build RPM
         uses: coderus/github-sfos-build@sfos5
