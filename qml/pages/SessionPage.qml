@@ -31,6 +31,11 @@ Page {
             onAccepted: {
                 SessionManager.setSessionName(sessionIndex, renameField.text.trim())
             }
+            onStatusChanged: {
+                if (status === PageStatus.Active) {
+                    renameField.forceActiveFocus()
+                }
+            }
             Column {
                 width: parent.width
                 DialogHeader {
@@ -60,6 +65,11 @@ Page {
             canAccept: true // allow empty to clear autorun
             onAccepted: {
                 SessionManager.setSessionAutorunCommand(sessionIndex, autorunField.text.trim())
+            }
+            onStatusChanged: {
+                if (status === PageStatus.Active) {
+                    autorunField.forceActiveFocus()
+                }
             }
             Column {
                 width: parent.width
