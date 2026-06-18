@@ -66,6 +66,11 @@ jobs:
         arch: [aarch64, i486]
 
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/hostedtoolcache /usr/share/dotnet
+          sudo docker image prune -af 2>/dev/null || true
+
       - uses: actions/checkout@v6
 
       - name: Get Ghostty submodule commit
@@ -121,8 +126,25 @@ jobs:
         if: steps.cache-lib.outputs.cache-hit != 'true'
         run: bash scripts/build-libs.sh ${{ matrix.arch }}
 
+      - name: Cache Docker image
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: /tmp/sfos-sdk.tar
+          key: sfos-sdk-5.0.0.43
+
+      - name: Load Docker image
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: |
+          docker load -i /tmp/sfos-sdk.tar
+          rm -f /tmp/sfos-sdk.tar
+
       - name: Build RPM
         uses: coderus/github-sfos-build@sfos5
         with:
           release: 5.0.0.43
           arch: ${{ matrix.arch }}
+
+      - name: Save Docker image
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: docker save coderus/sailfishos-platform-sdk:5.0.0.43 -o /tmp/sfos-sdk.tar
