@@ -65,6 +65,9 @@ jobs:
             [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
           done
 
+      - name: Fix apt cache permissions
+        run: sudo chown -R $(id -u):$(id -g) /var/cache/apt/archives
+
       - name: Cache apt packages
         uses: actions/cache@v4
         with:
