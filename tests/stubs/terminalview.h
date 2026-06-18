@@ -28,6 +28,7 @@ class TerminalView : public QObject
     Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
     Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
+    Q_PROPERTY(int pullDownZoneHeight READ pullDownZoneHeight WRITE setPullDownZoneHeight NOTIFY pullDownZoneHeightChanged)
 
 public:
     explicit TerminalView(QObject *parent = nullptr) : QObject(parent) {}
@@ -83,6 +84,10 @@ public:
     void setTopPadding(int padding) {
         if (m_topPadding != padding) { m_topPadding = padding; Q_EMIT topPaddingChanged(); }
     }
+    int pullDownZoneHeight() const { return m_pullDownZoneHeight; }
+    void setPullDownZoneHeight(int height) {
+        if (m_pullDownZoneHeight != height) { m_pullDownZoneHeight = height; Q_EMIT pullDownZoneHeightChanged(); }
+    }
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
@@ -127,6 +132,7 @@ Q_SIGNALS:
     void shellExitOverlayColorChanged();
     void shellExitTextColorChanged();
     void magnifierBorderColorChanged();
+    void pullDownZoneHeightChanged();
     void navigateSession(int direction);
     void toggleKeybar();
     void linkActivated(const QString &uri);
@@ -152,6 +158,7 @@ private:
     QColor m_shellExitTextColor = Qt::white;
     QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
     int m_topPadding = 12;
+    int m_pullDownZoneHeight = 100;
 };
 
 #endif // TERMINALVIEW_H

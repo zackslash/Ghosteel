@@ -32,6 +32,7 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(QColor shellExitOverlayColor READ shellExitOverlayColor WRITE setShellExitOverlayColor NOTIFY shellExitOverlayColorChanged)
     Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
+    Q_PROPERTY(int pullDownZoneHeight READ pullDownZoneHeight WRITE setPullDownZoneHeight NOTIFY pullDownZoneHeightChanged)
 
 public:
     // Scrollback search match
@@ -70,6 +71,8 @@ public:
     void setShellExitTextColor(const QColor &color);
     QColor magnifierBorderColor() const { return m_magnifierBorderColor; }
     void setMagnifierBorderColor(const QColor &color);
+    int pullDownZoneHeight() const { return m_pullDownZoneHeight; }
+    void setPullDownZoneHeight(int height);
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
@@ -139,6 +142,7 @@ Q_SIGNALS:
     void shellExitOverlayColorChanged();
     void shellExitTextColorChanged();
     void magnifierBorderColorChanged();
+    void pullDownZoneHeightChanged();
     void navigateSession(int direction);
     void toggleKeybar();
     void topPaddingChanged();
@@ -294,6 +298,7 @@ private:
     QColor m_shellExitTextColor = Qt::white;
     QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
     int m_topPadding = 12; // default matches original static const
+    int m_pullDownZoneHeight = 100; // px — overridden from QML via Theme.itemSizeLarge
 };
 
 #endif // TERMINALVIEW_H

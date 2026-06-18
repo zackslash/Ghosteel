@@ -151,6 +151,7 @@ Page {
         t.shellExitTextColor = Theme.highlightColor
         t.magnifierBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
         t.topPadding = Theme.paddingSmall
+        t.pullDownZoneHeight = Theme.itemSizeLarge
     }
 
     function attachTerminal(t) {
