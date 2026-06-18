@@ -19,8 +19,8 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
       <td align="center"><img src="screenshots/screenshot-sessions-device.png" width="180"></td>
     </tr>
     <tr>
-      <td align="center"><sub>Neofetch</sub></td>
-      <td align="center"><sub>System Monitor (btop)</sub></td>
+      <td align="center"><sub>Truecolor &amp; GPU Rendering</sub></td>
+      <td align="center"><sub>TUI App Support</sub></td>
       <td align="center"><sub>Multi-session</sub></td>
     </tr>
   </table>
