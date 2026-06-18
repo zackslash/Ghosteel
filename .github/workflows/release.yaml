@@ -159,13 +159,13 @@ jobs:
           # .pro fallback for GIT_VERSION (CI tarball has no .git)
           sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"$VER\"/" ghosteel.pro
 
-          # .pro fallback for GHOSTTY_VERSION (submodule commit hash)
+          # .pro GHOSTTY_VERSION — hardcode so qmake doesn't re-evaluate inside Docker
           if [ -f ghostty/.git ]; then
             GHOSTTY_VER=$(cd ghostty && git describe --tags --always 2>/dev/null || echo "unknown")
           else
             GHOSTTY_VER="${{ steps.ghostty-commit.outputs.sha }}"
           fi
-          sed -i "s/isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = \"[^\"]*\"/isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = \"$GHOSTTY_VER\"/" ghosteel.pro
+          sed -i "s|^GHOSTTY_VERSION = .*|GHOSTTY_VERSION = \"$GHOSTTY_VER\"|" ghosteel.pro
 
       - name: Cache Zig
         if: steps.cache-lib.outputs.cache-hit != 'true'
