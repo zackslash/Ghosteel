@@ -60,7 +60,10 @@ CoverBackground {
 
             Row {
                 property int actualIndex: {
-                    var _ = _sortRevision // force re-evaluation on sort change
+                    // Read _sortRevision so this binding re-evaluates on
+                    // sort/rename/switch — QML can't track side-effects
+                    // inside displayToActual(), so we need an explicit dep.
+                    var _ = _sortRevision
                     return SessionManager.displayToActual(index)
                 }
                 property bool isActive: actualIndex === SessionManager.activeSessionIndex
@@ -79,7 +82,13 @@ CoverBackground {
 
                 Label {
                     width: parent.width - Theme.iconSizeSmall - Theme.paddingSmall
-                    text: SessionManager.sessionName(parent.actualIndex)
+                    text: {
+                        // Depend on _sortRevision so the binding re-evaluates
+                        // when a session is renamed (even if the actual index
+                        // didn't change, e.g. in manual sort mode).
+                        var _ = _sortRevision
+                        return SessionManager.sessionName(parent.actualIndex)
+                    }
                     color: parent.isActive ? Theme.highlightColor : Theme.secondaryColor
                     font.pixelSize: Theme.fontSizeSmall
                     truncationMode: TruncationMode.Fade
