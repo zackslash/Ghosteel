@@ -471,11 +471,11 @@ void TerminalView::sendClipboardText(const QString &text, const QString &kind)
         return;
 
     QByteArray utf8 = text.toUtf8();
-    QByteArray base64 = utf8.toBase64();
-
-    // Cap response size to 1MB base64 (~768KB decoded)
-    if (base64.size() > 1024 * 1024)
+    // Check decoded size before encoding to avoid unnecessary ~1MB allocation
+    if (utf8.size() > 768 * 1024) // ~1MB when base64-encoded
         return;
+
+    QByteArray base64 = utf8.toBase64();
 
     QByteArray response;
     response.append("\x1b]52;");

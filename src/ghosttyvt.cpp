@@ -294,10 +294,19 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
                 m_osc52State = OSC52_IDLE;
             } else {
                 // Not ST — the ESC was part of the data, continue accumulating
-                if (m_osc52Data.size() < MaxOsc52DataLen)
-                    m_osc52Data.append(static_cast<char>(0x1b));
-                if (m_osc52Data.size() < MaxOsc52DataLen)
-                    m_osc52Data.append(static_cast<char>(c));
+                // Apply same base64 filter as normal DATA path
+                auto appendIfValid = [&](char ch) {
+                    if (m_osc52Data.size() >= MaxOsc52DataLen) return;
+                    unsigned char uc = static_cast<unsigned char>(ch);
+                    if ((uc >= 'A' && uc <= 'Z') || (uc >= 'a' && uc <= 'z') ||
+                        (uc >= '0' && uc <= '9') || uc == '+' || uc == '/' ||
+                        uc == '=' || uc == '?' || uc == ' ' || uc == '\t' ||
+                        uc == '\n' || uc == '\r') {
+                        m_osc52Data.append(ch);
+                    }
+                };
+                appendIfValid(static_cast<char>(0x1b));
+                appendIfValid(static_cast<char>(c));
                 m_osc52State = OSC52_DATA;
             }
             break;
