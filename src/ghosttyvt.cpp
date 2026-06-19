@@ -203,6 +203,21 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
         }
 
         // --- OSC 52 clipboard scanner ---
+        auto isBase64Char = [](uint8_t ch) {
+            return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+                   (ch >= '0' && ch <= '9') || ch == '+' || ch == '/' || ch == '=' ||
+                   ch == '?' || ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
+        };
+        auto emitOsc52 = [&]() {
+            if (m_osc52Kind == "c" || m_osc52Kind == "C") {
+                if (m_osc52Data == "?")
+                    Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
+                else
+                    Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
+            }
+            m_osc52State = OSC52_IDLE;
+        };
+
         switch (m_osc52State) {
         case OSC52_IDLE:
             if (c == 0x1b) m_osc52State = OSC52_ESC;
@@ -220,15 +235,12 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             m_osc52State = (c == ';') ? OSC52_SEMI : OSC52_IDLE;
             break;
         case OSC52_SEMI:
-            // Start reading selection target (kind)
             m_osc52Kind.clear();
             m_osc52Data.clear();
             if (c == ';') {
-                // Empty kind — default to "c" (clipboard)
                 m_osc52Kind.append('c');
                 m_osc52State = OSC52_DATA;
             } else if (c == 0x07 || c == 0x1b) {
-                // ESC]52;BEL or ESC]52;ESC — malformed, ignore
                 m_osc52State = (c == 0x1b) ? OSC52_ESC : OSC52_IDLE;
             } else {
                 m_osc52Kind.append(static_cast<char>(c));
@@ -239,74 +251,31 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             if (c == ';') {
                 m_osc52State = OSC52_DATA;
             } else if (c == 0x07 || c == 0x1b) {
-                // Malformed — kind without data separator
                 m_osc52State = (c == 0x1b) ? OSC52_ESC : OSC52_IDLE;
             } else {
                 if (m_osc52Kind.size() < MaxOsc52KindLen)
                     m_osc52Kind.append(static_cast<char>(c));
-                // Overflow: silently keep scanning but don't append
             }
             break;
         case OSC52_DATA:
             if (c == 0x07) {
-                // BEL terminator — emit
-                if (m_osc52Kind == "c" || m_osc52Kind == "C") {
-                    if (m_osc52Data == "?") {
-                        // Read query — program wants clipboard contents
-                        Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
-                    } else if (m_osc52Data.isEmpty()) {
-                        // Empty payload = clear clipboard
-                        Q_EMIT clipboardWriteRequest(QByteArray(), QString::fromUtf8(m_osc52Kind));
-                    } else {
-                        Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
-                    }
-                }
-                // Non-clipboard targets (s, p, etc.) silently ignored
-                m_osc52State = OSC52_IDLE;
+                emitOsc52();
             } else if (c == 0x1b) {
-                // Could be ST terminator (ESC \) — transition to ST_ESC
+                // Could be ST terminator (ESC \)
                 m_osc52State = OSC52_ST_ESC;
-            } else {
-                // Only accumulate valid base64 characters and whitespace.
-                // Valid: A-Z a-z 0-9 + / = ? (query marker) and whitespace.
-                // Invalid bytes are silently skipped (protocol violation).
-                if (m_osc52Data.size() < MaxOsc52DataLen) {
-                    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-                        (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=' ||
-                        c == '?' || c == ' ' || c == '\t' || c == '\n' || c == '\r') {
-                        m_osc52Data.append(static_cast<char>(c));
-                    }
-                }
+            } else if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(c)) {
+                m_osc52Data.append(static_cast<char>(c));
             }
             break;
         case OSC52_ST_ESC:
             if (c == '\\') {
-                // ST terminator confirmed — emit
-                if (m_osc52Kind == "c" || m_osc52Kind == "C") {
-                    if (m_osc52Data == "?") {
-                        Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
-                    } else if (m_osc52Data.isEmpty()) {
-                        Q_EMIT clipboardWriteRequest(QByteArray(), QString::fromUtf8(m_osc52Kind));
-                    } else {
-                        Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
-                    }
-                }
-                m_osc52State = OSC52_IDLE;
+                emitOsc52();
             } else {
-                // Not ST — the ESC was part of the data, continue accumulating
-                // Apply same base64 filter as normal DATA path
-                auto appendIfValid = [&](char ch) {
-                    if (m_osc52Data.size() >= MaxOsc52DataLen) return;
-                    unsigned char uc = static_cast<unsigned char>(ch);
-                    if ((uc >= 'A' && uc <= 'Z') || (uc >= 'a' && uc <= 'z') ||
-                        (uc >= '0' && uc <= '9') || uc == '+' || uc == '/' ||
-                        uc == '=' || uc == '?' || uc == ' ' || uc == '\t' ||
-                        uc == '\n' || uc == '\r') {
-                        m_osc52Data.append(ch);
-                    }
-                };
-                appendIfValid(static_cast<char>(0x1b));
-                appendIfValid(static_cast<char>(c));
+                // Not ST — ESC was part of the data, continue accumulating
+                if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(0x1b))
+                    m_osc52Data.append(static_cast<char>(0x1b));
+                if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(c))
+                    m_osc52Data.append(static_cast<char>(c));
                 m_osc52State = OSC52_DATA;
             }
             break;

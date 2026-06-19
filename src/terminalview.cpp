@@ -43,8 +43,6 @@ TerminalView::TerminalView(QQuickItem *parent)
     connect(m_vt, &GhosttyVt::bell, this, &TerminalView::terminalBell);
     connect(m_vt, &GhosttyVt::desktopNotification, this, &TerminalView::desktopNotification);
     connect(m_vt, &GhosttyVt::clipboardWriteRequest, this, [this](const QByteArray &base64Data, const QString &kind) {
-        // Write direction: decode base64 and set system clipboard
-        Q_UNUSED(kind)
         if (base64Data.isEmpty()) {
             QGuiApplication::clipboard()->clear();
             return;
@@ -63,8 +61,6 @@ TerminalView::TerminalView(QQuickItem *parent)
             QGuiApplication::clipboard()->setText(QString::fromUtf8(filtered));
     });
     connect(m_vt, &GhosttyVt::clipboardReadRequest, this, [this](const QString &kind) {
-        // Read direction: relay to QML for policy check + dialog
-        // Capture current clipboard content as preview for the confirmation dialog
         QString preview = QGuiApplication::clipboard()->text(QClipboard::Clipboard);
         Q_EMIT clipboardReadRequest(kind, preview);
     });
@@ -446,7 +442,6 @@ void TerminalView::paste()
 
 void TerminalView::sendClipboardText(const QString &text, const QString &kind)
 {
-    // Encode text as base64 (properly handling UTF-8) and send as OSC 52 response
     if (!m_pty || m_pty->childPid() <= 0)
         return;
 

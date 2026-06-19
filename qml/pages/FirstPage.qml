@@ -105,6 +105,7 @@ Page {
             property int requestSessionId: -1
             property string sessionName: ""
             property bool previewVisible: false
+            property int maxPreviewLength: 500
             canAccept: true
 
             Column {
@@ -159,8 +160,8 @@ Page {
                         anchors.fill: parent
                         anchors.margins: Theme.paddingMedium
                         text: clipboardReadDialog.previewVisible
-                              ? (clipboardReadDialog.previewText.length > 500
-                                 ? clipboardReadDialog.previewText.substring(0, 500) + "…"
+                              ? (clipboardReadDialog.previewText.length > clipboardReadDialog.maxPreviewLength
+                                 ? clipboardReadDialog.previewText.substring(0, clipboardReadDialog.maxPreviewLength) + "…"
                                  : clipboardReadDialog.previewText)
                               : "••••••••"
                         color: clipboardReadDialog.previewVisible ? Theme.highlightColor : Theme.secondaryColor
@@ -444,9 +445,9 @@ Page {
         onClipboardReadRequest: {
             if (clipboardReadCooldown.running) return
 
-            var policy = Settings.clipboardReadPolicy
-            if (policy === 2) return
-            if (policy === 1) {
+            var policy = Settings.clipboardReadPolicy  // 0=ask, 1=allow, 2=deny
+            if (policy === 2) return  // deny
+            if (policy === 1) {       // allow
                 var t = SessionManager.sessionById(sessionId)
                 if (t) t.sendClipboardText(preview, kind)
                 return
