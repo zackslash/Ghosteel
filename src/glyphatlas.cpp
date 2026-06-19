@@ -101,8 +101,7 @@ const GlyphInfo &GlyphAtlas::glyph(uint codepoint, bool bold, bool italic)
 
     GlyphInfo info;
     rasterizeGlyph(codepoint, bold, italic, info);
-    m_cache.insert(key, info);
-    return m_cache[key];
+    return m_cache.insert(key, info).value();
 }
 
 void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInfo &info)

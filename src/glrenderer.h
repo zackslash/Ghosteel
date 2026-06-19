@@ -148,6 +148,7 @@ private:
         void uploadPostShaderUniforms(PostShader &shader, int fboW, int fboH);
         void runPostProcessPass(PostShader &shader, GLuint inputTex, GLuint outputFbo, int w, int h);
         void renderMagnifier(const QMatrix4x4 &proj, int fboW, int fboH);
+        void drawScene(int width, int height);
 
         // Kitty Graphics Protocol — rendering helpers
         void createKittyShaders();

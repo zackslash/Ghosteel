@@ -142,7 +142,7 @@ Q_SIGNALS:
     void topPaddingChanged();
 
 private:
-    int m_fontSize = 10;
+    int m_fontSize = 18;
     int m_stickyModifiers = 0;
     QString m_title;
     QString m_selectedText;
