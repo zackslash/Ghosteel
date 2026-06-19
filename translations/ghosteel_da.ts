@@ -14,7 +14,6 @@
             <numerusform>%n sessioner</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Åbnes i browseren</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Adgang til udklipsholder</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Send</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Afvis</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Et program i &quot;%1&quot; vil læse din udklipsholder.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Et terminalprogram vil læse din udklipsholder.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skjul</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Vis</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Drevet af libghostty terminalmotor</translation>
     <message>
         <source>Licenses</source>
         <translation>Licenser</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Læseadgang til udklipsholder</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Styrer om terminalprogrammer kan læse din udklipsholder</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Spørg hver gang</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Tillad altid</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Afvis altid</translation>
     </message>
 </context>
 </TS>

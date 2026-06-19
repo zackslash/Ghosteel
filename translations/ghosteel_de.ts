@@ -14,7 +14,6 @@
             <numerusform>%n Sitzungen</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Wird im Browser geöffnet</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Zugriff auf Zwischenablage</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senden</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ein Programm in &quot;%1&quot; möchte Ihre Zwischenablage lesen.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Ein Terminalprogramm möchte Ihre Zwischenablage lesen.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ausblenden</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Anzeigen</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
     <message>
         <source>Licenses</source>
         <translation>Lizenzen</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Lesezugriff auf Zwischenablage</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Steuert, ob Terminalprogramme Ihre Zwischenablage lesen können</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Jedes Mal fragen</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Immer erlauben</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Immer ablehnen</translation>
     </message>
 </context>
 </TS>

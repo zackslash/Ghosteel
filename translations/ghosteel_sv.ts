@@ -14,7 +14,6 @@
             <numerusform>%n sessioner</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Öppnas i webbläsaren</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Åtkomst till urklipp</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Skicka</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Neka</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ett program i &quot;%1&quot; vill läsa ditt urklipp.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Ett terminalprogram vill läsa ditt urklipp.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Dölj</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Visa</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Drivs av libghostty terminalmotor</translation>
     <message>
         <source>Licenses</source>
         <translation>Licenser</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Läsåtkomst till urklipp</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Styr om terminalprogram kan läsa ditt urklipp</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Fråga varje gång</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Tillåt alltid</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Neka alltid</translation>
     </message>
 </context>
 </TS>

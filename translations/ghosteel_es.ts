@@ -14,7 +14,6 @@
             <numerusform>%n sesiones</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Se abrirá en el navegador</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Acceso al portapapeles</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Denegar</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un programa en &quot;%1&quot; quiere leer su portapapeles.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un programa de terminal quiere leer su portapapeles.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ocultar</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Mostrar</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Impulsado por el motor de terminal libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licencias</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Acceso de lectura al portapapeles</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Controla si los programas de terminal pueden leer su portapapeles</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Preguntar cada vez</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Siempre permitir</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Siempre denegar</translation>
     </message>
 </context>
 </TS>

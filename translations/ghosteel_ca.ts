@@ -14,7 +14,6 @@
             <numerusform>%n sessions</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -52,7 +51,7 @@
     </message>
     <message>
         <source>Open Link</source>
-        <translation>Obre l'enllaç</translation>
+        <translation>Obre l&apos;enllaç</translation>
     </message>
     <message>
         <source>Open</source>
@@ -64,7 +63,35 @@
     </message>
     <message>
         <source>This will open in your browser</source>
-        <translation>S'obrirà al navegador</translation>
+        <translation>S&apos;obrirà al navegador</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Accés al porta-retalls</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Denegar</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un programa a &quot;%1&quot; vol llegir el vostre porta-retalls.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un programa de terminal vol llegir el vostre porta-retalls.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Amagar</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Mostrar</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Impulsat pel motor de terminal libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Llicències</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Accés de lectura al porta-retalls</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Controla si els programes de terminal poden llegir el vostre porta-retalls</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Preguntar cada vegada</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Sempre permetre</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Sempre denegar</translation>
     </message>
 </context>
 </TS>

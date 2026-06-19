@@ -15,7 +15,6 @@
             <numerusform>%n relácií</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Otvorí sa v prehliadači</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Prístup k schránke</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Odoslať</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmietnuť</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program v &quot;%1&quot; chce čítať vašu schránku.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminálový program chce čítať vašu schránku.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skryť</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Zobraziť</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Poháňané terminálovým enginom libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licencie</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Prístup na čítanie schránky</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Ovláda, či terminálové programy môžu čítať vašu schránku</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Pýtať sa vždy</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Vždy povoliť</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Vždy odmietnuť</translation>
     </message>
 </context>
 </TS>

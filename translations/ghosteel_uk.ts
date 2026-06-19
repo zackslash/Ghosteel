@@ -15,7 +15,6 @@
             <numerusform>%n сеансів</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Відкриється в браузері</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Доступ до буфера обміну</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Надіслати</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Відхилити</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Програма в &quot;%1&quot; хоче прочитати ваш буфер обміну.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Термінальна програма хоче прочитати ваш буфер обміну.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Сховати</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Показати</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Ліцензії</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Доступ до читання буфера обміну</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Керує тим, чи можуть термінальні програми читати ваш буфер обміну</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Запитувати щоразу</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Завжди дозволяти</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Завжди відхиляти</translation>
     </message>
 </context>
 </TS>

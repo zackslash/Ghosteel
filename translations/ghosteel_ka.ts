@@ -14,7 +14,6 @@
             <numerusform>%n სესია</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>გაიხსნება ბრაუზერში</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>ბუფერზე წვდომა</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>გაგზავნა</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>უარყოფა</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>პროგრამა &quot;%1&quot; სურს წაიკითხოს თქვენი ბუფერი.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>ტერმინალის პროგრამა სურს წაიკითხოს თქვენი ბუფერი.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>დამალვა</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>ჩვენება</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>ლიცენზიები</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>ბუფერის წაკითხვის წვდომა</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>აკონტროლებს, შეუძლიათ თუ არა ტერმინალის პროგრამებს თქვენი ბუფერის წაკითხვა</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>ყოველ ჯერზე იკითხეთ</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>ყოველთვის ნებართვა</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>ყოველთვის უარყოფა</translation>
     </message>
 </context>
 </TS>

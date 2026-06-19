@@ -15,7 +15,6 @@
             <numerusform>%n sesiuni</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Se va deschide în browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Acces la clipboard</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Trimite</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Refuză</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un program în &quot;%1&quot; vrea să citească clipboard-ul dumneavoastră.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un program de terminal vrea să citească clipboard-ul dumneavoastră.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ascunde</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Afișează</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Propulsat de motorul de terminal libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licențe</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Acces la citirea clipboard-ului</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Controlează dacă programele de terminal pot citi clipboard-ul dumneavoastră</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Întreabă de fiecare dată</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Permite întotdeauna</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Refuză întotdeauna</translation>
     </message>
 </context>
 </TS>

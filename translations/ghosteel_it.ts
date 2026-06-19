@@ -14,7 +14,6 @@
             <numerusform>%n sessioni</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Si aprirà nel browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Accesso agli appunti</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Invia</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Nega</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un programma in &quot;%1&quot; vuole leggere i tuoi appunti.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un programma terminale vuole leggere i tuoi appunti.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Nascondi</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Mostra</translation>
     </message>
 </context>
 <context>
@@ -464,11 +491,31 @@ Alimentato dal motore di terminale libghostty</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Evidenzia URL nell'output del terminal per apertura con tocco</translation>
+        <translation>Evidenzia URL nell&apos;output del terminal per apertura con tocco</translation>
     </message>
     <message>
         <source>Licenses</source>
         <translation>Licenze</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Accesso in lettura agli appunti</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Controlla se i programmi terminale possono leggere i tuoi appunti</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Chiedi ogni volta</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Consenti sempre</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Nega sempre</translation>
     </message>
 </context>
 </TS>

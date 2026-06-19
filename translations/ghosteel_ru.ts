@@ -15,7 +15,6 @@
             <numerusform>%n сеансов</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Откроется в браузере</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Доступ к буферу обмена</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Программа в &quot;%1&quot; хочет прочитать ваш буфер обмена.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Терминальная программа хочет прочитать ваш буфер обмена.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скрыть</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Показать</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Лицензии</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Доступ на чтение буфера обмена</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Управляет тем, могут ли терминальные программы читать ваш буфер обмена</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Спрашивать каждый раз</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Всегда разрешать</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Всегда запрещать</translation>
     </message>
 </context>
 </TS>

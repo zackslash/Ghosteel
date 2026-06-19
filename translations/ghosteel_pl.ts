@@ -15,7 +15,6 @@
             <numerusform>%n sesji</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Zostanie otwarte w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Dostęp do schowka</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Wyślij</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmów</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program w &quot;%1&quot; chce odczytać twój schowek.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Program terminalowy chce odczytać twój schowek.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Obsługiwany przez silnik terminala libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licencje</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Dostęp do odczytu schowka</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Określa, czy programy terminalowe mogą odczytywać twój schowek</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Pytaj za każdym razem</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Zawsze zezwalaj</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Zawsze odmawiaj</translation>
     </message>
 </context>
 </TS>
