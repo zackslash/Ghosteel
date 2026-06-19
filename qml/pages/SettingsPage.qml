@@ -29,6 +29,7 @@ Page {
                     retentionCombo.currentIndex = 1  // 30 days
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
                     Settings.keybarVisible = true
+                    clipboardReadCombo.currentIndex = 0
                 }
             }
         }
@@ -151,6 +152,22 @@ Page {
                 description: qsTr("Display images sent via the Kitty Graphics Protocol")
                 checked: Settings.kittyGraphics
                 onCheckedChanged: Settings.kittyGraphics = checked
+            }
+
+            ComboBox {
+                id: clipboardReadCombo
+                width: parent.width
+                label: qsTr("Clipboard read access")
+                description: qsTr("Controls whether terminal programs can read your clipboard")
+                currentIndex: Settings.clipboardReadPolicy
+
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("Ask each time") }
+                    MenuItem { text: qsTr("Always allow") }
+                    MenuItem { text: qsTr("Always deny") }
+                }
+
+                onCurrentIndexChanged: Settings.clipboardReadPolicy = currentIndex
             }
 
             Label {

@@ -42,6 +42,30 @@ TerminalView::TerminalView(QQuickItem *parent)
     });
     connect(m_vt, &GhosttyVt::bell, this, &TerminalView::terminalBell);
     connect(m_vt, &GhosttyVt::desktopNotification, this, &TerminalView::desktopNotification);
+    connect(m_vt, &GhosttyVt::clipboardWriteRequest, this, [this](const QByteArray &base64Data, const QString &kind) {
+        // kind is the OSC 52 selection target; the scanner already filters to
+        // "c"/"C" (system clipboard) before emitting, so it is intentionally
+        // unused here — writes always target the system clipboard.
+        Q_UNUSED(kind);
+        if (base64Data.isEmpty()) {
+            Q_EMIT clipboardTextReady(QString());
+            return;
+        }
+        QByteArray decoded = QByteArray::fromBase64(base64Data);
+        // Filter: strip null bytes and control characters (keep printable + whitespace)
+        QByteArray filtered;
+        filtered.reserve(decoded.size());
+        for (int i = 0; i < decoded.size(); i++) {
+            unsigned char c = static_cast<unsigned char>(decoded[i]);
+            if (c == 0) continue; // strip null bytes
+            if (c < 0x20 && c != '\n' && c != '\r' && c != '\t') continue; // strip control chars
+            filtered.append(static_cast<char>(c));
+        }
+        Q_EMIT clipboardTextReady(QString::fromUtf8(filtered));
+    });
+    connect(m_vt, &GhosttyVt::clipboardReadRequest, this, [this](const QString &kind) {
+        Q_EMIT clipboardReadRequest(kind);
+    });
 
     // Live-apply settings changes to running terminal
     connect(Settings::instance(), &Settings::colorSchemeChanged, this, [this]() {
@@ -416,6 +440,33 @@ void TerminalView::paste()
 
     // Fallback: send raw UTF-8 only if encoding completely fails
     m_pty->writeData(utf8.constData(), utf8.size());
+}
+
+void TerminalView::sendClipboardText(const QString &text, const QString &kind)
+{
+    if (!m_pty || m_pty->childPid() <= 0)
+        return;
+
+    // Defense-in-depth: kind is interpolated into the OSC 52 response, so
+    // reject anything that isn't a single alphabetic char to prevent
+    // injecting ';', BEL, or ESC into the escape sequence.
+    QByteArray safeKind = (kind.size() == 1 && kind.at(0).isLetter())
+                          ? kind.toUtf8() : QByteArray("c");
+
+    QByteArray utf8 = text.toUtf8();
+    // Check decoded size before encoding to avoid unnecessary ~1MB allocation
+    if (utf8.size() > 768 * 1024) // ~1MB when base64-encoded
+        return;
+
+    QByteArray base64 = utf8.toBase64();
+
+    QByteArray response;
+    response.append("\x1b]52;");
+    response.append(safeKind);
+    response.append(';');
+    response.append(base64);
+    response.append('\x07'); // BEL terminator
+    m_pty->writeData(response.constData(), response.size());
 }
 
 void TerminalView::copySelection()

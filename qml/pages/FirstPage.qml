@@ -47,6 +47,13 @@ Page {
     property int currentSessionId: -1     // Stable key for sessionUIState lookups
     property TerminalView terminal: null
 
+    // Pending clipboard read dialog parameters (used by keyboard dismiss timer)
+    property string pendingClipboardPreview: ""
+    property string pendingClipboardKind: ""
+    property int pendingClipboardSessionId: -1
+    property string pendingClipboardSessionName: ""
+    property bool clipboardDialogActive: false  // Guards against stacking read dialogs
+
     // Bell sound for terminal BEL character
     SoundEffect {
         id: bellSound
@@ -67,6 +74,128 @@ Page {
     Timer {
         id: bellCooldown
         interval: 200
+    }
+
+    // Rate limit clipboard read requests to prevent dialog flooding
+    Timer {
+        id: clipboardReadCooldown
+        interval: 2000
+    }
+
+    // Delay pushing clipboard dialog to allow keyboard to dismiss
+    Timer {
+        id: clipboardReadPushTimer
+        interval: 200
+        onTriggered: {
+            clipboardDialogActive = true
+            pageStack.push(clipboardReadDialogComponent, {
+                "previewText": pendingClipboardPreview,
+                "requestKind": pendingClipboardKind,
+                "requestSessionId": pendingClipboardSessionId,
+                "sessionName": pendingClipboardSessionName
+            })
+        }
+    }
+
+    // Clipboard read confirmation dialog — shown before sending clipboard to terminal programs
+    Component {
+        id: clipboardReadDialogComponent
+        Dialog {
+            id: clipboardReadDialog
+            property string previewText: ""
+            property string requestKind: "c"
+            property int requestSessionId: -1
+            property string sessionName: ""
+            property bool previewVisible: false
+            property int maxPreviewLength: 500
+            canAccept: true
+
+            Column {
+                width: parent.width
+
+                DialogHeader {
+                    title: qsTr("Clipboard access")
+                    acceptText: qsTr("Send")
+                    cancelText: qsTr("Deny")
+                }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: sessionName.length > 0
+                          ? qsTr("A program in \"%1\" wants to read your clipboard.").arg(sessionName)
+                          : qsTr("A terminal program wants to read your clipboard.")
+                    color: Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.Wrap
+                }
+
+                Row {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.horizontalPageMargin
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        text: clipboardReadDialog.previewVisible ? qsTr("Hide") : qsTr("Show")
+                        color: Theme.highlightColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    IconButton {
+                        icon.source: clipboardReadDialog.previewVisible
+                                    ? "image://theme/icon-m-device-upload"
+                                    : "image://theme/icon-m-device-download"
+                        onClicked: clipboardReadDialog.previewVisible = !clipboardReadDialog.previewVisible
+                    }
+                }
+
+                Rectangle {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    height: previewLabel.implicitHeight + Theme.paddingMedium * 2
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+                    radius: Theme.paddingSmall
+
+                    Label {
+                        id: previewLabel
+                        anchors.fill: parent
+                        anchors.margins: Theme.paddingMedium
+                        text: clipboardReadDialog.previewVisible
+                              ? (clipboardReadDialog.previewText.length > clipboardReadDialog.maxPreviewLength
+                                 ? clipboardReadDialog.previewText.substring(0, clipboardReadDialog.maxPreviewLength) + "…"
+                                 : clipboardReadDialog.previewText)
+                              : "••••••••"
+                        color: clipboardReadDialog.previewVisible ? Theme.highlightColor : Theme.secondaryColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        wrapMode: clipboardReadDialog.previewVisible ? Text.WrapAtWordBoundaryOrAnywhere : Text.PlainText
+                        clip: true
+                    }
+                }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    visible: clipboardReadDialog.previewVisible
+                             && clipboardReadDialog.previewText.length > clipboardReadDialog.maxPreviewLength
+                    text: qsTr("Showing first %1 of %2 characters")
+                          .arg(clipboardReadDialog.maxPreviewLength)
+                          .arg(clipboardReadDialog.previewText.length)
+                    color: Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    wrapMode: Text.Wrap
+                }
+            }
+
+            onAccepted: {
+                clipboardDialogActive = false
+                var t = SessionManager.sessionById(requestSessionId)
+                if (t) {
+                    t.sendClipboardText(previewText, requestKind)
+                }
+            }
+            onRejected: clipboardDialogActive = false
+        }
     }
 
     // Share selected text to other Sailfish apps
@@ -330,6 +459,32 @@ Page {
             }
             terminalNotification.publish()
         }
+        onClipboardReadRequest: {
+            if (clipboardReadCooldown.running) return
+            if (clipboardDialogActive) return  // A read dialog is already open
+
+            var policy = Settings.clipboardReadPolicy  // 0=ask, 1=allow, 2=deny
+            var preview = Clipboard.text || ""
+            if (policy === 2) return  // deny
+            if (policy === 1) {       // allow
+                var t = SessionManager.sessionById(sessionId)
+                if (t) t.sendClipboardText(preview, kind)
+                return
+            }
+
+            clipboardReadCooldown.start()
+            var idx = SessionManager.sessionIndexById(sessionId)
+            var name = idx >= 0 ? SessionManager.sessionName(idx) : ""
+
+            pendingClipboardPreview = preview
+            pendingClipboardKind = kind
+            pendingClipboardSessionId = sessionId
+            pendingClipboardSessionName = name.length > 0 ? name : qsTr("Unknown session")
+
+            Qt.inputMethod.hide()
+            clipboardReadPushTimer.start()
+        }
+        onClipboardTextReady: Clipboard.text = text
     }
 
     function updateWindowTitle() {

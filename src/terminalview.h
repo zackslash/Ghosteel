@@ -76,6 +76,7 @@ public:
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
+    Q_INVOKABLE void sendClipboardText(const QString &text, const QString &kind = "c");
     Q_INVOKABLE void sendKey(int qtKey, int modifiers = 0);
     Q_INVOKABLE void restartShell();  // Restart shell after exit
     Q_INVOKABLE void setActive(bool active); // Start/stop blink timer
@@ -129,6 +130,8 @@ Q_SIGNALS:
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
+    void clipboardReadRequest(const QString &kind);
+    void clipboardTextReady(const QString &text);
     void selectedTextChanged();
     void linkActivated(const QString &uri);
     void searchMatchCountChanged();
