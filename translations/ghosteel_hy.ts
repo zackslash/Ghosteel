@@ -14,7 +14,6 @@
             <numerusform>%n նիստ</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Կբացվի զննարկիչում</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Քլիփբորդի մուտք</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ուղարկել</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Մերժել</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Տերմինալ ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Թաքցնել</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Ցույց տալ</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Լիցենզիաներ</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Քլիփբորդի կարդալու մուտք</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Վերահսկում է, արդյոք տերմինալ ծրագրերը կարող են կարդալ ձեր քլիփբորդը</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Հարցնել ամեն անգամ</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Միշտ թույլատրել</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Միշտ մերժել</translation>
     </message>
 </context>
 </TS>

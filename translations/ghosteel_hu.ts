@@ -13,7 +13,6 @@
             <numerusform>1 munkamenet</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -64,6 +63,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>A böngészőben nyílik meg</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Vágólap hozzáférés</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Küldés</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Elutasítás</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>A(z) &quot;%1&quot; program olvasni szeretné a vágólapot.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Egy terminálprogram olvasni szeretné a vágólapot.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Elrejtés</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Megjelenítés</translation>
     </message>
 </context>
 <context>
@@ -468,6 +495,26 @@ A libghostty terminálmotor hajtja</translation>
     <message>
         <source>Licenses</source>
         <translation>Licencek</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Vágólap olvasási hozzáférés</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Szabályozza, hogy a terminálprogramok olvashatják-e a vágólapot</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Kérdezzen minden alkalommal</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Mindig engedélyezze</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Mindig tiltsa</translation>
     </message>
 </context>
 </TS>

@@ -14,7 +14,6 @@
             <numerusform>%n saio</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Nabigatzailean irekiko da</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Arbelera sarbidea</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Bidali</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ukatu</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; programak zure arbela irakurri nahi du.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminal programa batek zure arbela irakurri nahi du.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ezkutatu</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Erakutsi</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ libghostty terminal motorrak bultzatuta</translation>
     <message>
         <source>Licenses</source>
         <translation>Lizentziak</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Arbela irakurtzeko sarbidea</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Terminal programek zure arbela irakur dezaketen kontrolatzen du</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Galdetu bakoitzean</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Beti baimendu</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Beti ukatu</translation>
     </message>
 </context>
 </TS>

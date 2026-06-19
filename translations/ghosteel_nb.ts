@@ -14,7 +14,6 @@
             <numerusform>%n økter</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Åpnes i nettleseren</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Tilgang til utklippstavle</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Send</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Avslå</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Et program i &quot;%1&quot; vil lese utklippstavlen din.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Et terminalprogram vil lese utklippstavlen din.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skjul</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Vis</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Drevet av libghostty terminalmotor</translation>
     <message>
         <source>Licenses</source>
         <translation>Lisenser</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Lesetilgang til utklippstavle</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Kontrollerer om terminalprogrammer kan lese utklippstavlen din</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Spør hver gang</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Tillat alltid</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Avslå alltid</translation>
     </message>
 </context>
 </TS>

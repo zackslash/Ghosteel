@@ -16,7 +16,6 @@
             <numerusform>%n sessjonijiet</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -67,6 +66,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Jinfetaħ fil-browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Aċċess għall-clipboard</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ibgħat</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Irrifjuta</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programm fi &quot;%1&quot; irid jaqra l-clipboard tiegħek.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Programm terminal irid jaqra l-clipboard tiegħek.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Aħbi</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Uri</translation>
     </message>
 </context>
 <context>
@@ -180,7 +207,7 @@
     </message>
     <message>
         <source>Previous session</source>
-        <translation>Is-sessjoni ta' qabel</translation>
+        <translation>Is-sessjoni ta&apos; qabel</translation>
     </message>
     <message>
         <source>Next session</source>
@@ -465,11 +492,31 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Enfasizza l-URLs fil-produzzjoni tat-terminal biex jinfetaħ b'tap</translation>
+        <translation>Enfasizza l-URLs fil-produzzjoni tat-terminal biex jinfetaħ b&apos;tap</translation>
     </message>
     <message>
         <source>Licenses</source>
         <translation>Liċenzji</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Aċċess għall-qari tal-clipboard</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Jikkontrollja jekk il-programmi terminal jistgħux jaqru l-clipboard tiegħek</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Staqsi kull darba</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Dejjem ippermetti</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Dejjem irrifjuta</translation>
     </message>
 </context>
 </TS>

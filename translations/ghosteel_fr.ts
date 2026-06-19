@@ -14,7 +14,6 @@
             <numerusform>%n sessions</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -64,7 +63,35 @@
     </message>
     <message>
         <source>This will open in your browser</source>
-        <translation>S'ouvrira dans le navigateur</translation>
+        <translation>S&apos;ouvrira dans le navigateur</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Accès au presse-papiers</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Envoyer</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Refuser</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un programme dans &quot;%1&quot; veut lire votre presse-papiers.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un programme terminal veut lire votre presse-papiers.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Masquer</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Afficher</translation>
     </message>
 </context>
 <context>
@@ -456,7 +483,7 @@ Propulsé par le moteur de terminal libghostty</translation>
     </message>
     <message>
         <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
-        <translation>Les effets shader nécessitent OpenGL ES 3.0, qui n'est pas disponible sur cet appareil.</translation>
+        <translation>Les effets shader nécessitent OpenGL ES 3.0, qui n&apos;est pas disponible sur cet appareil.</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
@@ -469,6 +496,26 @@ Propulsé par le moteur de terminal libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licences</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Accès en lecture au presse-papiers</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Contrôle si les programmes terminal peuvent lire votre presse-papiers</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Demander à chaque fois</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Toujours autoriser</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Toujours refuser</translation>
     </message>
 </context>
 </TS>

@@ -13,7 +13,6 @@
             <numerusform>1 oturum</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -64,6 +63,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Tarayıcıda açılacak</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Panoya erişim</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Reddet</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; içindeki bir program panonuzu okumak istiyor.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Bir terminal programı panonuzu okumak istiyor.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Gizle</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Göster</translation>
     </message>
 </context>
 <context>
@@ -458,15 +485,35 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Auto-detect URLs</source>
-        <translation>URL'leri otomatik algıla</translation>
+        <translation>URL&apos;leri otomatik algıla</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Terminal çıkışında URL'leri dokunarak açmak için vurgula</translation>
+        <translation>Terminal çıkışında URL&apos;leri dokunarak açmak için vurgula</translation>
     </message>
     <message>
         <source>Licenses</source>
         <translation>Lisanslar</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Panoya okuma erişimi</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Terminal programlarının panonuzu okuyup okuyamayacağını kontrol eder</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Her seferinde sor</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Her zaman izin ver</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Her zaman reddet</translation>
     </message>
 </context>
 </TS>

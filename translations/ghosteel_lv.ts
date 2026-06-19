@@ -15,7 +15,6 @@
             <numerusform>%n sesiju</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Atvērsies pārlūkprogrammā</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Piekļuve starpliktuvei</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Sūtīt</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Noraidīt</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programma &quot;%1&quot; vēlas lasīt jūsu starpliktuvi.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Termināļa programma vēlas lasīt jūsu starpliktuvi.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Slēpt</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Rādīt</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Licences</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Starpliktuves lasīšanas piekļuve</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Kontrolē, vai termināļa programmas var lasīt jūsu starpliktuvi</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Jautāt katru reizi</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Vienmēr atļaut</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Vienmēr noraidīt</translation>
     </message>
 </context>
 </TS>
