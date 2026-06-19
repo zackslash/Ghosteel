@@ -151,7 +151,7 @@ Page {
                 Rectangle {
                     x: Theme.horizontalPageMargin
                     width: parent.width - 2 * Theme.horizontalPageMargin
-                    height: previewLabel.height + Theme.paddingMedium * 2
+                    height: previewLabel.implicitHeight + Theme.paddingMedium * 2
                     color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
                     radius: Theme.paddingSmall
 
