@@ -457,7 +457,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 yıl</translation>
+        <translation>SailfishOS için Ghosteel terminal
+libghostty terminal motoru tarafından desteklenmektedir</translation>
     </message>
     <message>
         <source>Cursor trails</source>

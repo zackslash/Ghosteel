@@ -504,7 +504,7 @@ Pokreće libghostty terminalni pogon</translation>
     </message>
     <message>
         <source>Controls whether terminal programs can read your clipboard</source>
-        <translation>Kontrolira li terminalski programi mogu čitati vaš međuspremnik</translation>
+        <translation>Kontrolira da li terminalski programi mogu čitati vaš međuspremnik</translation>
     </message>
     <message>
         <source>Ask each time</source>

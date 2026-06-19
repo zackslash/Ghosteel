@@ -438,7 +438,7 @@
     </message>
     <message>
         <source>Keep history for</source>
-        <translation>Čuvaj historiju</translation>
+        <translation>Čuvaj historiju za</translation>
     </message>
     <message>
         <source>7 days</source>
@@ -459,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 godinu</translation>
+        <translation>Ghosteel terminal za SailfishOS
+Pokreće libghostty terminalski motor</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -503,7 +504,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Controls whether terminal programs can read your clipboard</source>
-        <translation>Kontroliše li terminalski programi mogu čitati vaš međuspremnik</translation>
+        <translation>Kontroliše da li terminalski programi mogu čitati vaš međuspremnik</translation>
     </message>
     <message>
         <source>Ask each time</source>

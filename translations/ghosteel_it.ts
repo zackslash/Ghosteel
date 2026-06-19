@@ -491,7 +491,7 @@ Alimentato dal motore di terminale libghostty</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Evidenzia URL nell&apos;output del terminal per apertura con tocco</translation>
+        <translation>Evidenzia URL nell&apos;output del terminale per apertura con tocco</translation>
     </message>
     <message>
         <source>Licenses</source>

@@ -40,7 +40,7 @@
     </message>
     <message>
         <source>Share selection</source>
-        <translation>Comhroghnaigh an roghnúchán</translation>
+        <translation>Roinn an roghnúchán</translation>
     </message>
     <message>
         <source>Hide search</source>
@@ -459,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 bhliain</translation>
+        <translation>Teirminéal Ghosteel le haghaidh SailfishOS
+Cumhachtaithe ag inneall teirminéal libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>

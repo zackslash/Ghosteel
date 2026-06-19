@@ -68,7 +68,7 @@
     </message>
     <message>
         <source>Clipboard access</source>
-        <translation>Достап да буфера абмену</translation>
+        <translation>Доступ да буфера абмену</translation>
     </message>
     <message>
         <source>Send</source>
@@ -500,7 +500,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Clipboard read access</source>
-        <translation>Достап на чытанне буфера абмену</translation>
+        <translation>Доступ на чытанне буфера абмену</translation>
     </message>
     <message>
         <source>Controls whether terminal programs can read your clipboard</source>

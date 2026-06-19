@@ -83,7 +83,7 @@
     </message>
     <message>
         <source>A terminal program wants to read your clipboard.</source>
-        <translation>Ohjelma haluaa lukea leikepöytäsi.</translation>
+        <translation>Pääteohjelma haluaa lukea leikepöytäsi.</translation>
     </message>
     <message>
         <source>Hide</source>
@@ -361,7 +361,7 @@
     </message>
     <message>
         <source>Shell command</source>
-        <translation>Komentotulkki</translation>
+        <translation>Shell-komento</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -475,7 +475,7 @@ Käyttää libghostty-pääteohjelmaa</translation>
     </message>
     <message>
         <source>Inline images</source>
-        <translation>Sisäkkäiset kuvat</translation>
+        <translation>Upotetut kuvat</translation>
     </message>
     <message>
         <source>Display images sent via the Kitty Graphics Protocol</source>
