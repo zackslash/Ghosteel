@@ -16,7 +16,6 @@
             <numerusform>%n sej</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -67,6 +66,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Odprlo se bo v brskalniku</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Dostop do odložišča</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Pošlji</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Zavrni</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program v &quot;%1&quot; želi brati vaše odložišče.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminalski program želi brati vaše odložišče.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skrij</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Prikaži</translation>
     </message>
 </context>
 <context>
@@ -324,7 +351,7 @@
     </message>
     <message>
         <source>None</source>
-        <translation>Nič</translation>
+        <translation>Brez</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -434,7 +461,7 @@
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
         <translation>Ghosteel terminal za SailfishOS
-Poganja pogon terminala libghostty</translation>
+Poganja terminalski pogon libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -471,6 +498,26 @@ Poganja pogon terminala libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licence</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Dostop za branje odložišča</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Nadzira, ali terminalski programi lahko berejo vaše odložišče</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Vprašaj vsakič</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Vedno dovoli</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Vedno zavrni</translation>
     </message>
 </context>
 </TS>

@@ -15,7 +15,6 @@
             <numerusform>%n relací</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Otevře se v prohlížeči</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Přístup ke schránce</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Odeslat</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmítnout</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program v &quot;%1&quot; chce číst vaši schránku.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminálový program chce číst vaši schránku.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skrýt</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Zobrazit</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Poháněno terminálovým enginem libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Licence</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Přístup ke čtení schránky</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Řídí, zda terminálové programy mohou číst vaši schránku</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Ptát se pokaždé</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Vždy povolit</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Vždy zamítnout</translation>
     </message>
 </context>
 </TS>

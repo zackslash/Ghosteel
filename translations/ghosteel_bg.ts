@@ -14,7 +14,6 @@
             <numerusform>%n сесии</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Ще се отвори в браузъра</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Достъп до клипборда</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Изпрати</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отказ</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Програма в &quot;%1&quot; иска да прочете клипборда ви.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Терминална програма иска да прочете клипборда ви.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скрий</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Покажи</translation>
     </message>
 </context>
 <context>
@@ -469,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Лицензи</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Достъп за четене на клипборда</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Управлява дали терминалните програми могат да четат клипборда ви</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Питай всеки път</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Винаги разрешавай</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Винаги отказвай</translation>
     </message>
 </context>
 </TS>

@@ -14,17 +14,16 @@
             <numerusform>%n sesione</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
     <message>
         <source>New session</source>
-        <translation>Seanca e re</translation>
+        <translation>Sesioni i ri</translation>
     </message>
     <message>
         <source>Session %1</source>
-        <translation>Seanca %1</translation>
+        <translation>Sesioni %1</translation>
     </message>
     <message>
         <source>Sessions</source>
@@ -36,7 +35,7 @@
     </message>
     <message>
         <source>Switch to session</source>
-        <translation>Kalo te seanca</translation>
+        <translation>Kalo te sesioni</translation>
     </message>
     <message>
         <source>Share selection</source>
@@ -44,7 +43,7 @@
     </message>
     <message>
         <source>Hide search</source>
-        <translation>Fshihtë kërkimin</translation>
+        <translation>Fshih kërkimin</translation>
     </message>
     <message>
         <source>Search terminal</source>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Do të hapet në shfletues</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Qasje në të prerat</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Dërgo</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Moho</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Një program në &quot;%1&quot; dëshiron të lexojë të prerat tuaja.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Një program terminali dëshiron të lexojë të prerat tuaja.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Fshih</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Shfaq</translation>
     </message>
 </context>
 <context>
@@ -208,14 +235,14 @@
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
-        <translation>Seanca %1</translation>
+        <translation>Sesioni %1</translation>
     </message>
 </context>
 <context>
     <name>SessionPage</name>
     <message>
         <source>New Session</source>
-        <translation>Seanca e re</translation>
+        <translation>Sesioni i ri</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -223,7 +250,7 @@
     </message>
     <message>
         <source>Removing session</source>
-        <translation>Heqja e seancës</translation>
+        <translation>Heqja e sesionit</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -231,7 +258,7 @@
     </message>
     <message>
         <source>Session name</source>
-        <translation>Emri i seancës</translation>
+        <translation>Emri i sesionit</translation>
     </message>
     <message>
         <source>Sessions</source>
@@ -431,7 +458,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 vit</translation>
+        <translation>Terminali Ghosteel për SailfishOS
+Mundësuar nga motori i terminalit libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -468,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Licencat</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Qasje në leximin e të prerave</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Kontrollon nëse programet e terminalit mund të lexojnë të prerat tuaja</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Pyet çdo herë</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Gjithmonë lejo</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Gjithmonë moho</translation>
     </message>
 </context>
 </TS>

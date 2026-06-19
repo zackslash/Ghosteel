@@ -17,7 +17,6 @@
             <numerusform>%n sesiynau</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -68,6 +67,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Bydd yn agor yn y porwr</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Mynediad i&apos;r clipfwrdd</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Anfon</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Gwrthod</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Mae rhaglen yn &quot;%1&quot; eisiau darllen eich clipfwrdd.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Mae rhaglen derfynell eisiau darllen eich clipfwrdd.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Cuddio</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Dangos</translation>
     </message>
 </context>
 <context>
@@ -472,6 +499,26 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>Licenses</source>
         <translation>Trwyddedau</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Mynediad darllen y clipfwrdd</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Rheoli a all rhaglenni derfynell ddarllen eich clipfwrdd</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Gofyn bob tro</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Caniatáu bob amser</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Gwrthod bob amser</translation>
     </message>
 </context>
 </TS>

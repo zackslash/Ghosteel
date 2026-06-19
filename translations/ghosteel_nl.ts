@@ -14,7 +14,6 @@
             <numerusform>%n sessies</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Wordt geopend in de browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Toegang tot klembord</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Verzenden</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Weigeren</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Een programma in &quot;%1&quot; wil uw klembord lezen.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Een terminalprogramma wil uw klembord lezen.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Verbergen</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Weergeven</translation>
     </message>
 </context>
 <context>
@@ -460,15 +487,35 @@ Aangedreven door de libghostty terminal-engine</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
-        <translation>URL's automatisch detecteren</translation>
+        <translation>URL&apos;s automatisch detecteren</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>URL's markeren in terminaluitvoer om te openen met tik</translation>
+        <translation>URL&apos;s markeren in terminaluitvoer om te openen met tik</translation>
     </message>
     <message>
         <source>Licenses</source>
         <translation>Licenties</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Leestoegang tot klembord</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Bepaalt of terminalprogramma&apos;s uw klembord kunnen lezen</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Elke keer vragen</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Altijd toestaan</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Altijd weigeren</translation>
     </message>
 </context>
 </TS>

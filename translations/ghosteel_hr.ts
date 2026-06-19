@@ -15,7 +15,6 @@
             <numerusform>%n sesija</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Otvorit će se u pregledniku</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Pristup međuspremniku</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Pošalji</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odbij</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program u &quot;%1&quot; želi čitati vaš međuspremnik.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminalski program želi čitati vaš međuspremnik.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Sakrij</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Prikaži</translation>
     </message>
 </context>
 <context>
@@ -470,6 +497,26 @@ Pokreće libghostty terminalni pogon</translation>
     <message>
         <source>Licenses</source>
         <translation>Licence</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Pristup čitanju međuspremnika</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Kontrolira da li terminalski programi mogu čitati vaš međuspremnik</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Pitaj svaki put</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Uvijek dopusti</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Uvijek odbij</translation>
     </message>
 </context>
 </TS>

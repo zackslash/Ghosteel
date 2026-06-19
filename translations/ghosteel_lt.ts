@@ -15,7 +15,6 @@
             <numerusform>%n sesijų</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Atsidarys naršyklėje</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Prieiga prie iškarpinės</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Siųsti</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Atmesti</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programa &quot;%1&quot; nori perskaityti jūsų iškarpinę.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminalo programa nori perskaityti jūsų iškarpinę.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Slėpti</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Rodyti</translation>
     </message>
 </context>
 <context>
@@ -432,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 metus</translation>
+        <translation>Ghosteel terminalas, skirtas SailfishOS
+Varomas libghostty terminalo variklio</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -469,6 +497,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Licencijos</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Iškarpinės skaitymo prieiga</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Valdo, ar terminalo programos gali perskaityti jūsų iškarpinę</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Klausti kiekvieną kartą</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Visada leisti</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Visada atmesti</translation>
     </message>
 </context>
 </TS>

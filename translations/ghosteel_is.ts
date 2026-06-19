@@ -14,7 +14,6 @@
             <numerusform>%n setur</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Opnast í vafra</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Aðgangur að klippiborði</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senda</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Hafna</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Forrit í &quot;%1&quot; vill lesa klippiborðið þitt.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Skjáhermisforrit vill lesa klippiborðið þitt.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Fela</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Sýna</translation>
     </message>
 </context>
 <context>
@@ -118,7 +145,7 @@
     </message>
     <message>
         <source>Function keys</source>
-        <translation>Virknihamlar</translation>
+        <translation>Virknilyklar</translation>
     </message>
     <message>
         <source>Left</source>
@@ -298,7 +325,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Merki</translation>
+        <translation>Bjalla</translation>
     </message>
     <message>
         <source>Color scheme</source>
@@ -469,6 +496,26 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>Licenses</source>
         <translation>Leyfi</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Lesaðgangur að klippiborði</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Stýrir hvort skjáhermisforrit geta lesið klippiborðið þitt</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Spyrja í hvert sinn</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Leyfa alltaf</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Hafna alltaf</translation>
     </message>
 </context>
 </TS>

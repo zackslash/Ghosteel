@@ -15,7 +15,6 @@
             <numerusform>%n сесии</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Ќе се отвори во прелистувачот</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Пристап до таблата со исечоци</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Испрати</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Одбиј</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Програма во &quot;%1&quot; сака да ја прочита вашата табла со исечоци.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Терминална програма сака да ја прочита вашата табла со исечоци.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скриј</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Прикажи</translation>
     </message>
 </context>
 <context>
@@ -119,7 +146,7 @@
     </message>
     <message>
         <source>Function keys</source>
-        <translation>Функции клучеви</translation>
+        <translation>Функционални копчиња</translation>
     </message>
     <message>
         <source>Left</source>
@@ -399,11 +426,11 @@
     </message>
     <message>
         <source>Scrollback</source>
-        <translation>Историја на движење</translation>
+        <translation>Историја на терминалот</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation>Зачувај историја на движење</translation>
+        <translation>Зачувај историја на терминалот</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
@@ -432,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 година</translation>
+        <translation>Ghosteel терминал за SailfishOS
+Напојуван од libghostty терминалски мотор</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -469,6 +497,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Лиценци</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Пристап за читање на таблата со исечоци</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Контролира дали терминалните програми можат да ја прочитаат вашата табла со исечоци</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Прашај секој пат</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Секогаш дозволи</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Секогаш одбиј</translation>
     </message>
 </context>
 </TS>

@@ -14,7 +14,6 @@
             <numerusform>%n συνεδρίες</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Θα ανοίξει στον περιηγητή</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Πρόσβαση στο πρόχειρο</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Αποστολή</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Άρνηση</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ένα πρόγραμμα στο &quot;%1&quot; θέλει να διαβάσει το πρόχειρό σας.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Ένα πρόγραμμα τερματικού θέλει να διαβάσει το πρόχειρό σας.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Απόκρυψη</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Εμφάνιση</translation>
     </message>
 </context>
 <context>
@@ -431,7 +458,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 έτος</translation>
+        <translation>Τερματικό Ghosteel για SailfishOS
+Λειτουργεί με τη μηχανή τερματικού libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -468,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Άδειες</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Πρόσβαση ανάγνωσης προχείρου</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Ελέγχει αν τα προγράμματα τερματικού μπορούν να διαβάσουν το πρόχειρό σας</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Ερώτηση κάθε φορά</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Πάντα να επιτρέπεται</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Πάντα να αρνείται</translation>
     </message>
 </context>
 </TS>

@@ -14,7 +14,6 @@
             <numerusform>%n seanssi</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Avaneb brauseris</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Lõikelauale juurdepääs</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Saada</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Keela</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programm &quot;%1&quot; soovib lugeda teie lõikelauda.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminaliprogramm soovib lugeda teie lõikelauda.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Peida</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Näita</translation>
     </message>
 </context>
 <context>
@@ -431,7 +458,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 aasta</translation>
+        <translation>Ghosteel terminal SailfishOSile
+Toetab libghostty terminalimootorit</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -468,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Litsentsid</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Lõikelaua lugemise juurdepääs</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Kontrollib, kas terminaliprogrammid saavad teie lõikelauda lugeda</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Küsi iga kord</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Alati luba</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Alati keela</translation>
     </message>
 </context>
 </TS>

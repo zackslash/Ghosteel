@@ -14,13 +14,12 @@
             <numerusform>%n նիստ</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
     <message>
         <source>New session</source>
-        <translation>Նոր Նիստ</translation>
+        <translation>Նոր նիստ</translation>
     </message>
     <message>
         <source>Session %1</source>
@@ -66,6 +65,34 @@
         <source>This will open in your browser</source>
         <translation>Կբացվի զննարկիչում</translation>
     </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Քլիփբորդի մուտք</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ուղարկել</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Մերժել</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Տերմինալ ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Թաքցնել</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Ցույց տալ</translation>
+    </message>
 </context>
 <context>
     <name>GLRenderer</name>
@@ -78,7 +105,7 @@
     <name>KeybarSettings</name>
     <message>
         <source>Reset to defaults</source>
-        <translation>Վերականգնել լռակյացը</translation>
+        <translation>Վերականգնել լռելյայնը</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -215,7 +242,7 @@
     <name>SessionPage</name>
     <message>
         <source>New Session</source>
-        <translation>Նոր Նիստ</translation>
+        <translation>Նոր նիստ</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -227,7 +254,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>Վերանունախել</translation>
+        <translation>Վերանվանել</translation>
     </message>
     <message>
         <source>Session name</source>
@@ -290,11 +317,11 @@
     </message>
     <message>
         <source>Appearance</source>
-        <translation>Տեղակատվուտյուն</translation>
+        <translation>Արտաքին տեսք</translation>
     </message>
     <message>
         <source>Background opacity</source>
-        <translation>Ենդհանուրի անտրածարկուտյուն</translation>
+        <translation>Ֆոնի անթափանցություն</translation>
     </message>
     <message>
         <source>Bell</source>
@@ -302,31 +329,31 @@
     </message>
     <message>
         <source>Color scheme</source>
-        <translation>Գույնի սհեմա</translation>
+        <translation>Գույնի սխեմա</translation>
     </message>
     <message>
         <source>Dark</source>
-        <translation>Մուտ</translation>
+        <translation>Մուգ</translation>
     </message>
     <message>
         <source>Default: /bin/sh</source>
-        <translation>Լարակայում: /bin/sh</translation>
+        <translation>Լռելյայն: /bin/sh</translation>
     </message>
     <message>
         <source>Font size</source>
-        <translation>Տարի փար</translation>
+        <translation>Տառաչափ</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation>Լոոյս</translation>
+        <translation>Լույս</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Վոչ</translation>
+        <translation>Ոչ</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>Վերակարնել րակեմային արազ</translation>
+        <translation>Վերականգնել լռելյայնը</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -346,11 +373,11 @@
     </message>
     <message>
         <source>Vibrate</source>
-        <translation>Թրտրում</translation>
+        <translation>Թրթռում</translation>
     </message>
     <message>
         <source>Vibrate + Sound</source>
-        <translation>Թրտրոոմ + Ձայն</translation>
+        <translation>Թրթռում + Ձայն</translation>
     </message>
     <message>
         <source>Tiny (%1)</source>
@@ -366,11 +393,11 @@
     </message>
     <message>
         <source>Large (%1)</source>
-        <translation>Մեգ (%1)</translation>
+        <translation>Մեծ (%1)</translation>
     </message>
     <message>
         <source>Extra Large (%1)</source>
-        <translation>Շատ մեգ (%1)</translation>
+        <translation>Շատ մեծ (%1)</translation>
     </message>
     <message>
         <source>Huge (%1)</source>
@@ -378,19 +405,19 @@
     </message>
     <message>
         <source>Extra keys</source>
-        <translation>Լրածոոտսիտս ստեղներ</translation>
+        <translation>Լրացուցիչ ստեղներ</translation>
     </message>
     <message>
         <source>Show extra keys</source>
-        <translation>Ցոոյց տալ լրածոոտսիտս ստեղները</translation>
+        <translation>Ցույց տալ լրացուցիչ ստեղները</translation>
     </message>
     <message>
         <source>Display the extra keys bar above the keyboard</source>
-        <translation>Ցոոյց տալ լրածոոտսիտս ստեղների վահանակը ստեղնաշարի վրա</translation>
+        <translation>Ցույց տալ լրացուցիչ ստեղների վահանակը ստեղնաշարի վրա</translation>
     </message>
     <message>
         <source>Shortcut: Ctrl+Shift+K</source>
-        <translation>Կարտս ճանապարհ: Ctrl+Shift+K</translation>
+        <translation>Դյուրանցում: Ctrl+Shift+K</translation>
     </message>
     <message>
         <source>Configure keybar</source>
@@ -398,7 +425,7 @@
     </message>
     <message>
         <source>Scrollback</source>
-        <translation>Թերտում</translation>
+        <translation>Ոլորում</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
@@ -406,11 +433,11 @@
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation>Պահպանել տերմինալի պատմոոտյունը հավելվալդը փակելիս: Լրակյացով անջատված ե գաղտնիոոտյան համար:</translation>
+        <translation>Պահպանել տերմինալի պատմությունը հավելվածը փակելիս: Լռելյայնով անջատված է գաղտնիության համար:</translation>
     </message>
     <message>
         <source>Keep history for</source>
-        <translation>Պահպանել պատմոոտյունը</translation>
+        <translation>Պահպանել պատմությունը</translation>
     </message>
     <message>
         <source>7 days</source>
@@ -432,7 +459,7 @@
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
         <translation>Ghosteel տերմինալ SailfishOS-ի համար
-Աշխատոոմ ե libghostty տերմինալ շարժիտսով</translation>
+Աշխատում է libghostty տերմինալ շարժիչով</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -440,7 +467,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Animated trail effect when the cursor moves</source>
-        <translation>Անիմացված հետքի էֆֆեկտ կուրսորը շարժվելիս</translation>
+        <translation>Անիմացված հետքի էֆեկտ կուրսորը շարժվելիս</translation>
     </message>
     <message>
         <source>Requires OpenGL ES 3.0 — not available on this device</source>
@@ -456,7 +483,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
-        <translation>Շեյդերի էֆֆեկտները պահանջում են OpenGL ES 3.0, որը հասանելի չէ այս սարքում:</translation>
+        <translation>Շեյդերի էֆեկտները պահանջում են OpenGL ES 3.0, որը հասանելի չէ այս սարքում:</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
@@ -469,6 +496,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Լիցենզիաներ</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Քլիփբորդի կարդալու մուտք</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Վերահսկում է, արդյոք տերմինալ ծրագրերը կարող են կարդալ ձեր քլիփբորդը</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Հարցնել ամեն անգամ</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Միշտ թույլատրել</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Միշտ մերժել</translation>
     </message>
 </context>
 </TS>

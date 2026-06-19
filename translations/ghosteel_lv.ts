@@ -15,7 +15,6 @@
             <numerusform>%n sesiju</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -66,6 +65,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Atvērsies pārlūkprogrammā</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Piekļuve starpliktuvei</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Sūtīt</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Noraidīt</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programma &quot;%1&quot; vēlas lasīt jūsu starpliktuvi.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Termināla programma vēlas lasīt jūsu starpliktuvi.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Slēpt</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Rādīt</translation>
     </message>
 </context>
 <context>
@@ -307,7 +334,7 @@
     </message>
     <message>
         <source>Dark</source>
-        <translation>Tumšs</translation>
+        <translation>Tumša</translation>
     </message>
     <message>
         <source>Default: /bin/sh</source>
@@ -319,11 +346,11 @@
     </message>
     <message>
         <source>Light</source>
-        <translation>Gaišs</translation>
+        <translation>Gaiša</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Neviens</translation>
+        <translation>Neviena</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -407,7 +434,7 @@
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation>Saglabāt termināļa vēsturi, kad lietotne aizveras. Pēc noklusējuma atspējots privātuma nolūkos.</translation>
+        <translation>Saglabāt termināla vēsturi, kad lietotne aizveras. Pēc noklusējuma atspējots privātuma nolūkos.</translation>
     </message>
     <message>
         <source>Keep history for</source>
@@ -432,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 gadu</translation>
+        <translation>Ghosteel terminālis SailfishOS
+Darbina libghostty termināla dzinējs</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -456,7 +484,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
-        <translation>Ģeneratora efektiem nepieciešams OpenGL ES 3.0, kas nav pieejams šajā ierīcē.</translation>
+        <translation>Šeidera efektiem nepieciešams OpenGL ES 3.0, kas nav pieejams šajā ierīcē.</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
@@ -464,11 +492,31 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Iezīmēt URL termināļa izvadē, lai atvērtu ar pieskārienu</translation>
+        <translation>Iezīmēt URL termināla izvadē, lai atvērtu ar pieskārienu</translation>
     </message>
     <message>
         <source>Licenses</source>
         <translation>Licences</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Starpliktuves lasīšanas piekļuve</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Kontrolē, vai termināla programmas var lasīt jūsu starpliktuvi</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Jautāt katru reizi</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Vienmēr atļaut</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Vienmēr noraidīt</translation>
     </message>
 </context>
 </TS>

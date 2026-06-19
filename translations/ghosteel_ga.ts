@@ -15,7 +15,6 @@
             <numerusform>%n seisiún</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -41,7 +40,7 @@
     </message>
     <message>
         <source>Share selection</source>
-        <translation>Comhroghnaigh an roghnúchán</translation>
+        <translation>Roinn an roghnúchán</translation>
     </message>
     <message>
         <source>Hide search</source>
@@ -67,12 +66,40 @@
         <source>This will open in your browser</source>
         <translation>Osclófar sa bhrabhsálaí é</translation>
     </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Rochtain ar an ngearrthaisce</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Seol</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Diúltaigh</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Tá clár i &quot;%1&quot; ag iarraidh do ghearrthaisce a léamh.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Tá clár teirminéil ag iarraidh do ghearrthaisce a léamh.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Folaigh</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Taispeáin</translation>
+    </message>
 </context>
 <context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
-        <translation>D'éirigh Shell as le cód %1</translation>
+        <translation>D&apos;éirigh Shell as le cód %1</translation>
     </message>
 </context>
 <context>
@@ -432,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 bhliain</translation>
+        <translation>Teirminéal Ghosteel le haghaidh SailfishOS
+Cumhachtaithe ag inneall teirminéal libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -469,6 +497,26 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Licenses</source>
         <translation>Ceadúnais</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Rochtain léitheoireachta ar an ngearrthaisce</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Rialaíonn an bhféadfaidh cláir teirminéil do ghearrthaisce a léamh</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Fiafraigh gach uair</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Ceadaigh i gcónaí</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Diúltaigh i gcónaí</translation>
     </message>
 </context>
 </TS>

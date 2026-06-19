@@ -14,7 +14,6 @@
             <numerusform>%n istuntoa</numerusform>
         </translation>
     </message>
-
 </context>
 <context>
     <name>FirstPage</name>
@@ -65,6 +64,34 @@
     <message>
         <source>This will open in your browser</source>
         <translation>Avautuu selaimessa</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Leikepöydän käyttöoikeus</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Lähetä</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Kiellä</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ohjelma &quot;%1&quot; haluaa lukea leikepöytäsi.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Pääteohjelma haluaa lukea leikepöytäsi.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Piilota</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Näytä</translation>
     </message>
 </context>
 <context>
@@ -334,7 +361,7 @@
     </message>
     <message>
         <source>Shell command</source>
-        <translation>Komentotulkki</translation>
+        <translation>Shell-komento</translation>
     </message>
     <message>
         <source>Sound</source>
@@ -448,7 +475,7 @@ Käyttää libghostty-pääteohjelmaa</translation>
     </message>
     <message>
         <source>Inline images</source>
-        <translation>Sisäkkäiset kuvat</translation>
+        <translation>Upotetut kuvat</translation>
     </message>
     <message>
         <source>Display images sent via the Kitty Graphics Protocol</source>
@@ -469,6 +496,26 @@ Käyttää libghostty-pääteohjelmaa</translation>
     <message>
         <source>Licenses</source>
         <translation>Lisenssit</translation>
+    </message>
+    <message>
+        <source>Clipboard read access</source>
+        <translation>Leikepöydän lukuoikeus</translation>
+    </message>
+    <message>
+        <source>Controls whether terminal programs can read your clipboard</source>
+        <translation>Määrittää, voivatko pääteohjelmat lukea leikepöytäsi</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Kysy joka kerta</translation>
+    </message>
+    <message>
+        <source>Always allow</source>
+        <translation>Salli aina</translation>
+    </message>
+    <message>
+        <source>Always deny</source>
+        <translation>Kiellä aina</translation>
     </message>
 </context>
 </TS>
