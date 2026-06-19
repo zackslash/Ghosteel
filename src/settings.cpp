@@ -47,6 +47,7 @@ void Settings::load()
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
     m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
+    m_clipboardReadPolicy = qBound(0, m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(), 2);
     m_customShaderPath = m_settings.value(QStringLiteral("terminal/customShaderPath")).toString();
 }
 
@@ -206,6 +207,18 @@ void Settings::setKittyGraphics(bool enabled)
     m_settings.setValue(QStringLiteral("terminal/kittyGraphics"), enabled);
     scheduleSave();
     Q_EMIT kittyGraphicsChanged();
+}
+
+void Settings::setClipboardReadPolicy(int policy)
+{
+    if (policy < 0) policy = 0;
+    if (policy > 2) policy = 2;
+    if (m_clipboardReadPolicy == policy)
+        return;
+    m_clipboardReadPolicy = policy;
+    m_settings.setValue(QStringLiteral("terminal/clipboardReadPolicy"), policy);
+    scheduleSave();
+    Q_EMIT clipboardReadPolicyChanged();
 }
 
 void Settings::setCustomShaderPath(const QString &path)

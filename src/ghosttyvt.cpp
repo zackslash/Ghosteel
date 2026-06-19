@@ -107,6 +107,11 @@ void GhosttyVt::destroy()
     m_osc777Title.clear();
     m_osc777Body.clear();
 
+    // Reset OSC 52 scanner
+    m_osc52State = OSC52_IDLE;
+    m_osc52Kind.clear();
+    m_osc52Data.clear();
+
     if (m_mouseEncoder) {
         ghostty_mouse_encoder_free(m_mouseEncoder);
         m_mouseEncoder = nullptr;
@@ -128,10 +133,13 @@ void GhosttyVt::destroy()
 void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
 {
     // Scan for OSC 777 desktop notifications: ESC]777;notify;title;body BEL
-    // This runs alongside the terminal parser to intercept notification sequences.
+    // Scan for OSC 52 clipboard: ESC]52;{kind};{base64} BEL/ST
+    // Both run alongside the terminal parser to intercept escape sequences.
     static const char notify[] = "notify;";
     for (size_t i = 0; i < len; i++) {
         uint8_t c = data[i];
+
+        // --- OSC 777 scanner ---
         switch (m_osc777State) {
         case OSC777_IDLE:
             if (c == 0x1b) m_osc777State = OSC777_ESC;
@@ -190,6 +198,100 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             } else {
                 if (m_osc777Body.size() < 2048)
                     m_osc777Body.append(static_cast<char>(c));
+            }
+            break;
+        }
+
+        // --- OSC 52 clipboard scanner ---
+        switch (m_osc52State) {
+        case OSC52_IDLE:
+            if (c == 0x1b) m_osc52State = OSC52_ESC;
+            break;
+        case OSC52_ESC:
+            m_osc52State = (c == ']') ? OSC52_BRACKET : OSC52_IDLE;
+            break;
+        case OSC52_BRACKET:
+            m_osc52State = (c == '5') ? OSC52_FIVE : OSC52_IDLE;
+            break;
+        case OSC52_FIVE:
+            m_osc52State = (c == '2') ? OSC52_TWO : OSC52_IDLE;
+            break;
+        case OSC52_TWO:
+            m_osc52State = (c == ';') ? OSC52_SEMI : OSC52_IDLE;
+            break;
+        case OSC52_SEMI:
+            // Start reading selection target (kind)
+            m_osc52Kind.clear();
+            m_osc52Data.clear();
+            if (c == ';') {
+                // Empty kind — default to "c" (clipboard)
+                m_osc52Kind.append('c');
+                m_osc52State = OSC52_DATA;
+            } else if (c == 0x07 || c == 0x1b) {
+                // ESC]52;BEL or ESC]52;ESC — malformed, ignore
+                m_osc52State = (c == 0x1b) ? OSC52_ESC : OSC52_IDLE;
+            } else {
+                m_osc52Kind.append(static_cast<char>(c));
+                m_osc52State = OSC52_KIND;
+            }
+            break;
+        case OSC52_KIND:
+            if (c == ';') {
+                m_osc52State = OSC52_DATA;
+            } else if (c == 0x07 || c == 0x1b) {
+                // Malformed — kind without data separator
+                m_osc52State = (c == 0x1b) ? OSC52_ESC : OSC52_IDLE;
+            } else {
+                if (m_osc52Kind.size() < MaxOsc52KindLen)
+                    m_osc52Kind.append(static_cast<char>(c));
+                // Overflow: silently keep scanning but don't append
+            }
+            break;
+        case OSC52_DATA:
+            if (c == 0x07) {
+                // BEL terminator — emit
+                if (m_osc52Kind == "c" || m_osc52Kind == "C") {
+                    if (m_osc52Data == "?") {
+                        // Read query — program wants clipboard contents
+                        Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
+                    } else if (m_osc52Data.isEmpty()) {
+                        // Empty payload = clear clipboard
+                        Q_EMIT clipboardWriteRequest(QByteArray(), QString::fromUtf8(m_osc52Kind));
+                    } else {
+                        Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
+                    }
+                }
+                // Non-clipboard targets (s, p, etc.) silently ignored
+                m_osc52State = OSC52_IDLE;
+            } else if (c == 0x1b) {
+                // Could be ST terminator (ESC \) — transition to ST_ESC
+                m_osc52State = OSC52_ST_ESC;
+            } else {
+                if (m_osc52Data.size() < MaxOsc52DataLen)
+                    m_osc52Data.append(static_cast<char>(c));
+                // Overflow: silently keep scanning but don't append
+            }
+            break;
+        case OSC52_ST_ESC:
+            if (c == '\\') {
+                // ST terminator confirmed — emit
+                if (m_osc52Kind == "c" || m_osc52Kind == "C") {
+                    if (m_osc52Data == "?") {
+                        Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
+                    } else if (m_osc52Data.isEmpty()) {
+                        Q_EMIT clipboardWriteRequest(QByteArray(), QString::fromUtf8(m_osc52Kind));
+                    } else {
+                        Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
+                    }
+                }
+                m_osc52State = OSC52_IDLE;
+            } else {
+                // Not ST — the ESC was part of the data, continue accumulating
+                if (m_osc52Data.size() < MaxOsc52DataLen)
+                    m_osc52Data.append(static_cast<char>(0x1b));
+                if (m_osc52Data.size() < MaxOsc52DataLen)
+                    m_osc52Data.append(static_cast<char>(c));
+                m_osc52State = OSC52_DATA;
             }
             break;
         }

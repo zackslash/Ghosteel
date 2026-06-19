@@ -27,6 +27,7 @@ class Settings : public QObject
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
     Q_PROPERTY(bool kittyGraphics READ kittyGraphics WRITE setKittyGraphics NOTIFY kittyGraphicsChanged)
+    Q_PROPERTY(int clipboardReadPolicy READ clipboardReadPolicy WRITE setClipboardReadPolicy NOTIFY clipboardReadPolicyChanged)
     Q_PROPERTY(QString customShaderPath READ customShaderPath WRITE setCustomShaderPath NOTIFY customShaderPathChanged)
     Q_PROPERTY(bool shaderPipelineAvailable READ shaderPipelineAvailable NOTIFY shaderPipelineAvailableChanged)
 
@@ -83,6 +84,9 @@ public:
     bool kittyGraphics() const { return m_kittyGraphics; }
     void setKittyGraphics(bool enabled);
 
+    int clipboardReadPolicy() const { return m_clipboardReadPolicy; }
+    void setClipboardReadPolicy(int policy);
+
     QString customShaderPath() const { return m_customShaderPath; }
     void setCustomShaderPath(const QString &path);
 
@@ -105,6 +109,7 @@ Q_SIGNALS:
     void cursorTrailsChanged();
     void urlAutoDetectChanged();
     void kittyGraphicsChanged();
+    void clipboardReadPolicyChanged();
     void customShaderPathChanged();
     void shaderPipelineAvailableChanged();
 
@@ -130,6 +135,7 @@ private:
     bool m_cursorTrails = true; // default: ON — matches load() default
     bool m_urlAutoDetect = true; // default: ON — regex URL detection enabled
     bool m_kittyGraphics = true; // default: ON — Kitty Graphics Protocol
+    int m_clipboardReadPolicy = 0; // 0=ask, 1=allow, 2=deny
     QString m_customShaderPath;
     bool m_shaderPipelineAvailable = false; // set by GLRenderer after ES 3.0 probe
 };

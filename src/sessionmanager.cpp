@@ -150,6 +150,12 @@ TerminalView* SessionManager::createSession()
         Q_EMIT desktopNotification(sessionId, summary, body);
     });
 
+    // Route clipboard read requests through the aggregated signal
+    connect(view, &TerminalView::clipboardReadRequest, this,
+            [this, sessionId = info.id](const QString &kind, const QString &preview) {
+        Q_EMIT clipboardReadRequest(sessionId, kind, preview);
+    });
+
     // Rebuild sorted indices BEFORE emitting signals so that QML bindings
     // (Repeater delegates calling displayToActual()) see valid mappings.
     rebuildSortedIndices();
@@ -233,6 +239,14 @@ TerminalView* SessionManager::activeSession() const
     if (m_activeSessionIndex < 0 || m_activeSessionIndex >= m_sessions.size())
         return nullptr;
     return m_sessions.at(m_activeSessionIndex).view;
+}
+
+TerminalView* SessionManager::sessionById(int sessionId) const
+{
+    int idx = sessionIndexById(sessionId);
+    if (idx < 0 || idx >= m_sessions.size())
+        return nullptr;
+    return m_sessions.at(idx).view;
 }
 
 QString SessionManager::sessionName(int index) const
@@ -744,6 +758,12 @@ bool SessionManager::restoreSessions()
         connect(view, &TerminalView::desktopNotification, this,
                 [this, sessionId = info.id](const QString &summary, const QString &body) {
             Q_EMIT desktopNotification(sessionId, summary, body);
+        });
+
+        // Route clipboard read requests through the aggregated signal
+        connect(view, &TerminalView::clipboardReadRequest, this,
+                [this, sessionId = info.id](const QString &kind, const QString &preview) {
+            Q_EMIT clipboardReadRequest(sessionId, kind, preview);
         });
 
         // Ensure nextSessionId stays ahead of any restored ID

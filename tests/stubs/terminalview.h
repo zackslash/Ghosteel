@@ -91,6 +91,8 @@ public:
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
+    Q_INVOKABLE void sendClipboardResponse(const QString &) {}
+    Q_INVOKABLE void sendClipboardText(const QString &) {}
     Q_INVOKABLE void sendKey(int, int = 0) {}
     Q_INVOKABLE void restartShell() {}
     Q_INVOKABLE void setActive(bool) {}
@@ -120,6 +122,7 @@ Q_SIGNALS:
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
+    void clipboardReadRequest(const QString &kind, const QString &preview);
     void selectedTextChanged();
     void searchMatchCountChanged();
     void currentMatchIndexChanged();

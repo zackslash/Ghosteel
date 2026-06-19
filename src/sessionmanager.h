@@ -52,6 +52,7 @@ public:
     // Q_INVOKABLE, so QML needs this to call it by name.
     Q_INVOKABLE void switchToSession(int displayIndex);
     Q_INVOKABLE TerminalView* activeSession() const;
+    Q_INVOKABLE TerminalView* sessionById(int sessionId) const;
     Q_INVOKABLE QString sessionName(int index) const;
     Q_INVOKABLE void setSessionName(int index, const QString &name);
     Q_INVOKABLE int sessionId(int index) const;
@@ -97,6 +98,7 @@ Q_SIGNALS:
     // Aggregated notification signal — emitted for any session, not just the active one.
     // QML connects once to this instead of per-view.
     void desktopNotification(int sessionId, const QString &summary, const QString &body);
+    void clipboardReadRequest(int sessionId, const QString &kind, const QString &preview);
     void sortOrderChanged();
 
 private:

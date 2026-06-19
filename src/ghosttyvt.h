@@ -15,6 +15,7 @@
 #include <QObject>
 #include <functional>
 #include <QStringList>
+#include <QElapsedTimer>
 
 // Thread safety: This class is NOT thread-safe. All methods and callbacks
 // (including writePtyCallback) run on the main GUI thread. The PtyReaderThread
@@ -36,6 +37,19 @@ public:
         OSC777_NOTIFY,     // Matching "notify;"
         OSC777_TITLE,      // Reading title until ';'
         OSC777_BODY,       // Reading body until BEL (0x07)
+    };
+
+    // OSC 52 clipboard scanner states
+    enum Osc52State {
+        OSC52_IDLE,        // Waiting for ESC
+        OSC52_ESC,         // Found ESC, expecting ']'
+        OSC52_BRACKET,     // Found ']', expecting '5'
+        OSC52_FIVE,        // Found '5', expecting '2'
+        OSC52_TWO,         // Found '2', expecting ';'
+        OSC52_SEMI,        // Found "52", expecting ';'
+        OSC52_KIND,        // Reading selection target (c/s/p) until ';'
+        OSC52_DATA,        // Reading base64 payload until BEL or ST
+        OSC52_ST_ESC,      // Found ESC in DATA — expecting '\' for ST terminator
     };
 
     using PtyWriteFn = std::function<void(const char *, size_t)>;
@@ -90,6 +104,8 @@ Q_SIGNALS:
     void titleChanged(const QString &title);
     void bell();
     void desktopNotification(const QString &summary, const QString &body);
+    void clipboardWriteRequest(const QByteArray &base64Data, const QString &kind);
+    void clipboardReadRequest(const QString &kind);
 
 private:
     static void writePtyCallback(GhosttyTerminal t, void *ud,
@@ -110,6 +126,13 @@ private:
     int m_osc777NotifyIdx = 0;
     QByteArray m_osc777Title;
     QByteArray m_osc777Body;
+
+    // OSC 52 clipboard scanner
+    Osc52State m_osc52State = OSC52_IDLE;
+    QByteArray m_osc52Kind;     // Selection target: "c", "s", "p", etc.
+    QByteArray m_osc52Data;     // Base64 payload accumulator
+    static const int MaxOsc52KindLen = 16;
+    static const int MaxOsc52DataLen = 1024 * 1024; // 1MB base64 cap
 };
 
 #endif // GHOSTTYVT_H

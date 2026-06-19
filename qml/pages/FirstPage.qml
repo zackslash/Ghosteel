@@ -69,6 +69,75 @@ Page {
         interval: 200
     }
 
+    // Rate limit clipboard read requests to prevent dialog flooding
+    Timer {
+        id: clipboardReadCooldown
+        interval: 2000
+    }
+
+    // Clipboard read confirmation dialog — shown before sending clipboard to terminal programs
+    Component {
+        id: clipboardReadDialogComponent
+        Dialog {
+            id: clipboardReadDialog
+            property string previewText: ""
+            property string requestKind: "c"
+            property int requestSessionId: -1
+            property string sessionName: ""
+            canAccept: true
+
+            Column {
+                width: parent.width
+
+                DialogHeader {
+                    title: qsTr("Clipboard access")
+                    acceptText: qsTr("Send")
+                    cancelText: qsTr("Deny")
+                }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: sessionName.length > 0
+                          ? qsTr("A program in \"%1\" wants to read your clipboard.").arg(sessionName)
+                          : qsTr("A terminal program wants to read your clipboard.")
+                    color: Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.Wrap
+                }
+
+                Rectangle {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    height: previewLabel.height + Theme.paddingMedium * 2
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+                    radius: Theme.paddingSmall
+
+                    Label {
+                        id: previewLabel
+                        anchors.fill: parent
+                        anchors.margins: Theme.paddingMedium
+                        text: clipboardReadDialog.previewText.length > 500
+                              ? clipboardReadDialog.previewText.substring(0, 500) + "…"
+                              : clipboardReadDialog.previewText
+                        color: Theme.highlightColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        clip: true
+                    }
+                }
+            }
+
+            onAccepted: {
+                // Send clipboard content to the REQUESTING session (not necessarily active)
+                var t = SessionManager.sessionById(requestSessionId)
+                if (t) {
+                    t.sendClipboardText(previewText)
+                }
+            }
+        }
+    }
+
     // Share selected text to other Sailfish apps
     ShareAction {
         id: shareAction
@@ -329,6 +398,35 @@ Page {
                 terminalNotification.remoteActions = []
             }
             terminalNotification.publish()
+        }
+        onClipboardReadRequest: {
+            // Rate limit: ignore if cooldown is active
+            if (clipboardReadCooldown.running) return
+
+            var policy = Settings.clipboardReadPolicy
+            if (policy === 2) {
+                // Always deny — silently ignore
+                return
+            }
+            if (policy === 1) {
+                // Always allow — send clipboard to the requesting session
+                var t = SessionManager.sessionById(sessionId)
+                if (t) {
+                    t.sendClipboardText(preview)
+                }
+                return
+            }
+            // policy === 0 (ask): show confirmation dialog
+            clipboardReadCooldown.start()
+            var idx = SessionManager.sessionIndexById(sessionId)
+            var name = idx >= 0 ? SessionManager.sessionName(idx) : ""
+            Qt.inputMethod.hide()
+            pageStack.push(clipboardReadDialogComponent, {
+                "previewText": preview,
+                "requestKind": kind,
+                "requestSessionId": sessionId,
+                "sessionName": name || qsTr("Session %1").arg(idx + 1)
+            })
         }
     }
 
