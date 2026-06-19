@@ -92,7 +92,6 @@ DISTFILES += qml/ghosteel.qml \
     qml/pages/SettingsPage.qml \
     qml/pages/LicensesPage.qml \
     rpm/ghosteel.changes.in \
-    rpm/ghosteel.changes.run.in \
     rpm/ghosteel.spec \
     ghosteel.desktop
 

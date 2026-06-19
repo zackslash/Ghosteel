@@ -24,7 +24,7 @@ QByteArray ScrollEncryptor::pkcs7Unpad(const QByteArray &data)
     if (padLen < 1 || padLen > 16 || padLen > data.size())
         return QByteArray(); // Invalid padding
     // Verify all padding bytes are consistent
-    for (int i = data.size() - padLen; i < data.size(); i++) {
+    for (int i = data.size() - padLen; i < data.size() - 1; i++) {
         if (data.at(i) != last)
             return QByteArray(); // Invalid padding
     }

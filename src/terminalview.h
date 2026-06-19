@@ -204,7 +204,7 @@ private:
 
     // --- Font ---
     QFont m_font;
-    int m_fontSize = 10;
+    int m_fontSize = 18;
     int m_stickyModifiers = 0;
 
     QString m_title;

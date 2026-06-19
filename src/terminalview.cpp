@@ -236,8 +236,10 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
         return;
     }
 
-    // If the event carries a key action (e.g. from virtual keyboard
-    // special keys like Backspace via IME), handle it
+    // IME replacement events (replacementStart/replacementLength) target an
+    // editable text region around the cursor. A terminal has no editable
+    // region — the terminal emulator manages its own buffer — so we accept
+    // and suppress these events to prevent unwanted default handling.
     if (event->replacementStart() != 0 || event->replacementLength() != 0) {
         event->accept();
         return;
@@ -300,8 +302,10 @@ void TerminalView::applyColorScheme()
 
     QString scheme = Settings::instance()->colorScheme();
     auto it = schemes.constFind(scheme);
-    if (it == schemes.constEnd())
+    if (it == schemes.constEnd()) {
+        qWarning() << "Unknown color scheme:" << scheme << "falling back to dark";
         it = schemes.constFind(QStringLiteral("dark"));
+    }
 
     ghostty_terminal_set(m_vt->terminal(),
                          GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND, &it->fg);

@@ -76,6 +76,22 @@ Page {
                 onCurrentIndexChanged: Settings.bellMode = currentIndex
             }
 
+            ComboBox {
+                id: clipboardReadCombo
+                width: parent.width
+                label: qsTr("Clipboard read access")
+                description: qsTr("Controls whether terminal programs can read your clipboard")
+                currentIndex: Settings.clipboardReadPolicy
+
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("Ask each time") }
+                    MenuItem { text: qsTr("Always allow") }
+                    MenuItem { text: qsTr("Always deny") }
+                }
+
+                onCurrentIndexChanged: Settings.clipboardReadPolicy = currentIndex
+            }
+
             // Appearance section
             SectionHeader {
                 text: qsTr("Appearance")
@@ -152,22 +168,6 @@ Page {
                 description: qsTr("Display images sent via the Kitty Graphics Protocol")
                 checked: Settings.kittyGraphics
                 onCheckedChanged: Settings.kittyGraphics = checked
-            }
-
-            ComboBox {
-                id: clipboardReadCombo
-                width: parent.width
-                label: qsTr("Clipboard read access")
-                description: qsTr("Controls whether terminal programs can read your clipboard")
-                currentIndex: Settings.clipboardReadPolicy
-
-                menu: ContextMenu {
-                    MenuItem { text: qsTr("Ask each time") }
-                    MenuItem { text: qsTr("Always allow") }
-                    MenuItem { text: qsTr("Always deny") }
-                }
-
-                onCurrentIndexChanged: Settings.clipboardReadPolicy = currentIndex
             }
 
             Label {

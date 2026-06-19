@@ -18,6 +18,31 @@ static int computeDisplayWidth(const QString &str) {
     return width;
 }
 
+// Return the substring of str that fits within maxDisplayWidth columns,
+// using the same width rules as computeDisplayWidth(). If nothing fits
+// (maxDisplayWidth <= 0), return one character so progress is always made.
+static QString fitToDisplayWidth(const QString &str, int maxDisplayWidth) {
+    int width = 0;
+    for (int i = 0; i < str.size(); i++) {
+        QChar ch = str.at(i);
+        int charDisplayW;
+        if (ch.isHighSurrogate() && i + 1 < str.size()
+                && str.at(i + 1).isLowSurrogate()) {
+            charDisplayW = 2;
+            if (width + charDisplayW > maxDisplayWidth)
+                return str.left(i);
+            width += charDisplayW;
+            ++i;
+        } else {
+            charDisplayW = (ch.unicode() > 127) ? 2 : 1;
+            if (width + charDisplayW > maxDisplayWidth)
+                return str.left(i);
+            width += charDisplayW;
+        }
+    }
+    return str;
+}
+
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
 {
@@ -754,25 +779,14 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
                 // column boundaries. Convert to QString for safe character
                 // splitting (byte boundary splits would corrupt UTF-8).
                 QString str = QString::fromUtf8(line);
-                int pos = 0;
-                while (pos < str.size()) {
-                    int width = 0;
-                    int end = pos;
-                    while (end < str.size()) {
-                        int charWidth = 1;
-                        QChar ch = str.at(end);
-                        if (ch.isHighSurrogate() && end + 1 < str.size()
-                                && str.at(end + 1).isLowSurrogate())
-                            charWidth = 2;
-                        int displayW = (ch.unicode() > 127) ? 2 : 1;
-                        if (width + displayW > targetCols)
-                            break;
-                        width += displayW;
-                        end += charWidth;
+                while (!str.isEmpty()) {
+                    QString segment = fitToDisplayWidth(str, targetCols);
+                    // Ensure forward progress even if targetCols is zero
+                    if (segment.isEmpty()) {
+                        segment = str.left(1);
                     }
-                    if (end == pos) end = pos + 1;
-                    QByteArray segment = str.mid(pos, end - pos).toUtf8();
-                    replayData.append(segment);
+                    int width = computeDisplayWidth(segment);
+                    replayData.append(segment.toUtf8());
                     // If segment fills full column width, pending wrap handles
                     // the line break — just send \r to position at col 0.
                     // Use display width (not byte count) for CJK correctness.
@@ -780,7 +794,7 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
                         replayData.append("\r");
                     else
                         replayData.append("\r\n");
-                    pos = end;
+                    str = str.mid(segment.size());
                 }
             } else {
                 replayData.append(line);

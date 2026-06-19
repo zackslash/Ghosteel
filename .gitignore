@@ -75,5 +75,6 @@ tests/CMakeFiles/
 tests/CTestTestfile.cmake
 tests/cmake_install.cmake
 tests/tst_*
+!tests/tst_*.cpp
 tests/*_autogen/
 moc_predefs.h

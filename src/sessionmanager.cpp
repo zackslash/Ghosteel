@@ -111,7 +111,7 @@ QQmlListProperty<TerminalView> SessionManager::sessions()
 
 int SessionManager::sessionCountCallback(QQmlListProperty<TerminalView> *prop)
 {
-    SessionManager *manager = qobject_cast<SessionManager *>(prop->object);
+    SessionManager *manager = static_cast<SessionManager *>(prop->object);
     if (!manager)
         return 0;
     return manager->m_sessions.size();
@@ -119,7 +119,7 @@ int SessionManager::sessionCountCallback(QQmlListProperty<TerminalView> *prop)
 
 TerminalView* SessionManager::sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index)
 {
-    SessionManager *manager = qobject_cast<SessionManager *>(prop->object);
+    SessionManager *manager = static_cast<SessionManager *>(prop->object);
     if (!manager || index < 0 || index >= manager->m_sessions.size())
         return nullptr;
     return manager->m_sessions.at(index).view;

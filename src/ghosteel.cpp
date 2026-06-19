@@ -102,13 +102,7 @@ int main(int argc, char *argv[])
     // can detect this instance instead of spawning a duplicate.
     sessionManager->startSingleInstanceServer();
 
-    // Expose version strings to QML
-#ifndef GIT_VERSION
-#define GIT_VERSION "dev"
-#endif
-#ifndef GHOSTTY_VERSION
-#define GHOSTTY_VERSION "unknown"
-#endif
+    // Expose version strings to QML (always defined via -D flags from ghosteel.pro)
     view->rootContext()->setContextProperty(QStringLiteral("appVersion"), QStringLiteral(GIT_VERSION));
     view->rootContext()->setContextProperty(QStringLiteral("ghosttyVersion"), QStringLiteral(GHOSTTY_VERSION));
     view->rootContext()->setContextProperty(QStringLiteral("appName"), QStringLiteral(APP_NAME));

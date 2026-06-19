@@ -1999,97 +1999,7 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        QMatrix4x4 proj;
-        proj.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
-
-        // Cell grid
-        glActiveTexture(GL_TEXTURE0);
-        m_atlas.bind();
-
-        m_program->bind();
-        m_program->setUniformValue(m_matrixUniform, proj);
-        m_program->setUniformValue(m_atlasUniform, 0);
-        m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
-        m_program->setUniformValue(m_cellSizeUniform,
-                                   static_cast<float>(m_cellWidth),
-                                   static_cast<float>(m_cellHeight));
-        m_program->setUniformValue(m_cursorBlinkUniform, m_cursorVisible ? 1.0f : 0.0f);
-        m_program->setUniformValue(m_cursorStyleUniform, static_cast<float>(m_cursorStyle));
-        m_program->setUniformValue(m_topPaddingUniform, static_cast<float>(m_topPadding));
-
-        m_vbo.bind();
-        const int stride = 13 * sizeof(float);
-        if (m_positionAttr >= 0) {
-            glEnableVertexAttribArray(m_positionAttr);
-            glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
-        }
-        if (m_texcoordAttr >= 0) {
-            glEnableVertexAttribArray(m_texcoordAttr);
-            glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(2 * sizeof(float)));
-        }
-        if (m_fgColorAttr >= 0) {
-            glEnableVertexAttribArray(m_fgColorAttr);
-            glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(4 * sizeof(float)));
-        }
-        if (m_bgColorAttr >= 0) {
-            glEnableVertexAttribArray(m_bgColorAttr);
-            glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(8 * sizeof(float)));
-        }
-        if (m_decoAttr >= 0) {
-            glEnableVertexAttribArray(m_decoAttr);
-            glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
-                                  reinterpret_cast<void*>(12 * sizeof(float)));
-        }
-        glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-
-        if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
-        if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
-        if (m_fgColorAttr >= 0) glDisableVertexAttribArray(m_fgColorAttr);
-        if (m_bgColorAttr >= 0) glDisableVertexAttribArray(m_bgColorAttr);
-        if (m_decoAttr >= 0) glDisableVertexAttribArray(m_decoAttr);
-        m_vbo.release();
-        m_program->release();
-
-        // Kitty images: below-text layer (between cell grid and overlays)
-        // Note: BELOW_BG layer (z < INT32_MIN/2) is not rendered.
-        // These placements require drawing behind cell backgrounds,
-        // which would need a separate bg-only render pass.
-        drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
-                            fbo->width(), fbo->height());
-
-        // Flat overlay
-        buildOverlayVertices(fbo->width(), fbo->height());
-        if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
-            m_flatProgram->bind();
-            m_flatProgram->setUniformValue(m_flatMatrixUniform, proj);
-            m_flatVbo.bind();
-            const int flatStride = 6 * sizeof(float);
-            if (m_flatPositionAttr >= 0) {
-                glEnableVertexAttribArray(m_flatPositionAttr);
-                glVertexAttribPointer(m_flatPositionAttr, 2, GL_FLOAT, GL_FALSE, flatStride, nullptr);
-            }
-            if (m_flatColorAttr >= 0) {
-                glEnableVertexAttribArray(m_flatColorAttr);
-                glVertexAttribPointer(m_flatColorAttr, 4, GL_FLOAT, GL_FALSE, flatStride,
-                                      reinterpret_cast<void*>(2 * sizeof(float)));
-            }
-            glDrawArrays(GL_TRIANGLES, 0, m_flatVertexCount);
-            if (m_flatPositionAttr >= 0) glDisableVertexAttribArray(m_flatPositionAttr);
-            if (m_flatColorAttr >= 0) glDisableVertexAttribArray(m_flatColorAttr);
-            m_flatVbo.release();
-            m_flatProgram->release();
-        }
-
-        // Kitty images: above-text layer (above overlays)
-        drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
-                            fbo->width(), fbo->height());
-
-        // Magnifier
-        renderMagnifier(proj, fbo->width(), fbo->height());
-
+        drawScene(fbo->width(), fbo->height());
         glDisable(GL_BLEND);
     }
 
@@ -2115,18 +2025,12 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
     return true;
 }
 
-void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
+void GLRenderer::Renderer::drawScene(int width, int height)
 {
-    glViewport(0, 0, fbo->width(), fbo->height());
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
     QMatrix4x4 proj;
-    proj.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
+    proj.ortho(0, width, 0, height, -1, 1);
 
+    // Cell grid
     glActiveTexture(GL_TEXTURE0);
     m_atlas.bind();
 
@@ -2167,7 +2071,6 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
         glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
                               reinterpret_cast<void*>(12 * sizeof(float)));
     }
-
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
 
     if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
@@ -2178,14 +2081,15 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
     m_vbo.release();
     m_program->release();
 
-    // Kitty images: below-text layer
+    // Kitty images: below-text layer (between cell grid and overlays)
     // Note: BELOW_BG layer (z < INT32_MIN/2) is not rendered.
     // These placements require drawing behind cell backgrounds,
     // which would need a separate bg-only render pass.
     drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
-                        fbo->width(), fbo->height());
+                        width, height);
 
-    buildOverlayVertices(fbo->width(), fbo->height());
+    // Flat overlay
+    buildOverlayVertices(width, height);
     if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
         m_flatProgram->bind();
         m_flatProgram->setUniformValue(m_flatMatrixUniform, proj);
@@ -2207,11 +2111,24 @@ void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
         m_flatProgram->release();
     }
 
-    // Kitty images: above-text layer
+    // Kitty images: above-text layer (above overlays)
     drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
-                        fbo->width(), fbo->height());
+                        width, height);
 
-    renderMagnifier(proj, fbo->width(), fbo->height());
+    // Magnifier
+    renderMagnifier(proj, width, height);
+}
+
+void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
+{
+    glViewport(0, 0, fbo->width(), fbo->height());
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    drawScene(fbo->width(), fbo->height());
 
     glDisable(GL_BLEND);
 }
