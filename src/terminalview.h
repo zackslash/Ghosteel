@@ -76,7 +76,6 @@ public:
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
-    Q_INVOKABLE void sendClipboardResponse(const QString &base64Data, const QString &kind = "c"); // Send OSC 52 read response (pre-encoded)
     Q_INVOKABLE void sendClipboardText(const QString &text, const QString &kind = "c"); // Send text as OSC 52 read response (encodes here)
     Q_INVOKABLE void sendKey(int qtKey, int modifiers = 0);
     Q_INVOKABLE void restartShell();  // Restart shell after exit

@@ -448,7 +448,7 @@ Page {
             if (policy === 2) return
             if (policy === 1) {
                 var t = SessionManager.sessionById(sessionId)
-                if (t) t.sendClipboardText(preview)
+                if (t) t.sendClipboardText(preview, kind)
                 return
             }
 

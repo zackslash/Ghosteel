@@ -444,26 +444,6 @@ void TerminalView::paste()
     m_pty->writeData(utf8.constData(), utf8.size());
 }
 
-void TerminalView::sendClipboardResponse(const QString &base64Data, const QString &kind)
-{
-    // Send OSC 52 read response back to the PTY: ESC]52;{kind};{base64}BEL
-    if (!m_pty || m_pty->childPid() <= 0)
-        return;
-
-    // Cap response size to 1MB base64 (~768KB decoded)
-    QByteArray base64Utf8 = base64Data.toUtf8();
-    if (base64Utf8.size() > 1024 * 1024)
-        return;
-
-    QByteArray response;
-    response.append("\x1b]52;");
-    response.append(kind.toUtf8());
-    response.append(';');
-    response.append(base64Utf8);
-    response.append('\x07'); // BEL terminator
-    m_pty->writeData(response.constData(), response.size());
-}
-
 void TerminalView::sendClipboardText(const QString &text, const QString &kind)
 {
     // Encode text as base64 (properly handling UTF-8) and send as OSC 52 response
