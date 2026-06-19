@@ -267,9 +267,16 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
                 // Could be ST terminator (ESC \) — transition to ST_ESC
                 m_osc52State = OSC52_ST_ESC;
             } else {
-                if (m_osc52Data.size() < MaxOsc52DataLen)
-                    m_osc52Data.append(static_cast<char>(c));
-                // Overflow: silently keep scanning but don't append
+                // Only accumulate valid base64 characters and whitespace.
+                // Valid: A-Z a-z 0-9 + / = ? (query marker) and whitespace.
+                // Invalid bytes are silently skipped (protocol violation).
+                if (m_osc52Data.size() < MaxOsc52DataLen) {
+                    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                        (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=' ||
+                        c == '?' || c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+                        m_osc52Data.append(static_cast<char>(c));
+                    }
+                }
             }
             break;
         case OSC52_ST_ESC:

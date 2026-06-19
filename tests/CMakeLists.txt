@@ -95,6 +95,18 @@ target_include_directories(tst_osc777 PRIVATE SYSTEM
 target_link_libraries(tst_osc777 PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME Osc777 COMMAND tst_osc777)
 
+# --- OSC 52 clipboard scanner tests ---
+add_executable(tst_osc52
+    tst_osc52.cpp
+    ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
+)
+target_include_directories(tst_osc52 PRIVATE SYSTEM
+    ${CMAKE_SOURCE_DIR}/stubs
+)
+target_link_libraries(tst_osc52 PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME Osc52 COMMAND tst_osc52)
+
 # --- Word boundary (isWordChar) tests ---
 add_executable(tst_word_boundary
     tst_word_boundary.cpp

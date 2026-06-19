@@ -50,10 +50,17 @@ TerminalView::TerminalView(QQuickItem *parent)
             return;
         }
         QByteArray decoded = QByteArray::fromBase64(base64Data);
-        // Strip null bytes — binary clipboard content could confuse text consumers
-        decoded.replace('\0', "");
-        if (!decoded.isEmpty())
-            QGuiApplication::clipboard()->setText(QString::fromUtf8(decoded));
+        // Filter: strip null bytes and control characters (keep printable + whitespace)
+        QByteArray filtered;
+        filtered.reserve(decoded.size());
+        for (int i = 0; i < decoded.size(); i++) {
+            unsigned char c = static_cast<unsigned char>(decoded[i]);
+            if (c == 0) continue; // strip null bytes
+            if (c < 0x20 && c != '\n' && c != '\r' && c != '\t') continue; // strip control chars
+            filtered.append(static_cast<char>(c));
+        }
+        if (!filtered.isEmpty())
+            QGuiApplication::clipboard()->setText(QString::fromUtf8(filtered));
     });
     connect(m_vt, &GhosttyVt::clipboardReadRequest, this, [this](const QString &kind) {
         // Read direction: relay to QML for policy check + dialog
@@ -437,20 +444,27 @@ void TerminalView::paste()
     m_pty->writeData(utf8.constData(), utf8.size());
 }
 
-void TerminalView::sendClipboardResponse(const QString &base64Data)
+void TerminalView::sendClipboardResponse(const QString &base64Data, const QString &kind)
 {
-    // Send OSC 52 read response back to the PTY: ESC]52;c;{base64}BEL
+    // Send OSC 52 read response back to the PTY: ESC]52;{kind};{base64}BEL
     if (!m_pty || m_pty->childPid() <= 0)
         return;
 
+    // Cap response size to 1MB base64 (~768KB decoded)
+    QByteArray base64Utf8 = base64Data.toUtf8();
+    if (base64Utf8.size() > 1024 * 1024)
+        return;
+
     QByteArray response;
-    response.append("\x1b]52;c;");
-    response.append(base64Data.toUtf8());
+    response.append("\x1b]52;");
+    response.append(kind.toUtf8());
+    response.append(';');
+    response.append(base64Utf8);
     response.append('\x07'); // BEL terminator
     m_pty->writeData(response.constData(), response.size());
 }
 
-void TerminalView::sendClipboardText(const QString &text)
+void TerminalView::sendClipboardText(const QString &text, const QString &kind)
 {
     // Encode text as base64 (properly handling UTF-8) and send as OSC 52 response
     if (!m_pty || m_pty->childPid() <= 0)
@@ -459,8 +473,14 @@ void TerminalView::sendClipboardText(const QString &text)
     QByteArray utf8 = text.toUtf8();
     QByteArray base64 = utf8.toBase64();
 
+    // Cap response size to 1MB base64 (~768KB decoded)
+    if (base64.size() > 1024 * 1024)
+        return;
+
     QByteArray response;
-    response.append("\x1b]52;c;");
+    response.append("\x1b]52;");
+    response.append(kind.toUtf8());
+    response.append(';');
     response.append(base64);
     response.append('\x07'); // BEL terminator
     m_pty->writeData(response.constData(), response.size());

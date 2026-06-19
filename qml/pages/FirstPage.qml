@@ -47,6 +47,12 @@ Page {
     property int currentSessionId: -1     // Stable key for sessionUIState lookups
     property TerminalView terminal: null
 
+    // Pending clipboard read dialog parameters (used by keyboard dismiss timer)
+    property string pendingClipboardPreview: ""
+    property string pendingClipboardKind: ""
+    property int pendingClipboardSessionId: -1
+    property string pendingClipboardSessionName: ""
+
     // Bell sound for terminal BEL character
     SoundEffect {
         id: bellSound
@@ -75,6 +81,20 @@ Page {
         interval: 2000
     }
 
+    // Delay pushing clipboard dialog to allow keyboard to dismiss
+    Timer {
+        id: clipboardReadPushTimer
+        interval: 200
+        onTriggered: {
+            pageStack.push(clipboardReadDialogComponent, {
+                "previewText": pendingClipboardPreview,
+                "requestKind": pendingClipboardKind,
+                "requestSessionId": pendingClipboardSessionId,
+                "sessionName": pendingClipboardSessionName
+            })
+        }
+    }
+
     // Clipboard read confirmation dialog — shown before sending clipboard to terminal programs
     Component {
         id: clipboardReadDialogComponent
@@ -84,6 +104,7 @@ Page {
             property string requestKind: "c"
             property int requestSessionId: -1
             property string sessionName: ""
+            property bool previewVisible: false
             canAccept: true
 
             Column {
@@ -106,6 +127,26 @@ Page {
                     wrapMode: Text.Wrap
                 }
 
+                Row {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.horizontalPageMargin
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        text: clipboardReadDialog.previewVisible ? qsTr("Hide") : qsTr("Show")
+                        color: Theme.highlightColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    IconButton {
+                        icon.source: clipboardReadDialog.previewVisible
+                                    ? "image://theme/icon-m-device-upload"
+                                    : "image://theme/icon-m-device-download"
+                        onClicked: clipboardReadDialog.previewVisible = !clipboardReadDialog.previewVisible
+                    }
+                }
+
                 Rectangle {
                     x: Theme.horizontalPageMargin
                     width: parent.width - 2 * Theme.horizontalPageMargin
@@ -117,22 +158,23 @@ Page {
                         id: previewLabel
                         anchors.fill: parent
                         anchors.margins: Theme.paddingMedium
-                        text: clipboardReadDialog.previewText.length > 500
-                              ? clipboardReadDialog.previewText.substring(0, 500) + "…"
-                              : clipboardReadDialog.previewText
-                        color: Theme.highlightColor
+                        text: clipboardReadDialog.previewVisible
+                              ? (clipboardReadDialog.previewText.length > 500
+                                 ? clipboardReadDialog.previewText.substring(0, 500) + "…"
+                                 : clipboardReadDialog.previewText)
+                              : "••••••••"
+                        color: clipboardReadDialog.previewVisible ? Theme.highlightColor : Theme.secondaryColor
                         font.pixelSize: Theme.fontSizeSmall
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        wrapMode: clipboardReadDialog.previewVisible ? Text.WrapAtWordBoundaryOrAnywhere : Text.PlainText
                         clip: true
                     }
                 }
             }
 
             onAccepted: {
-                // Send clipboard content to the REQUESTING session (not necessarily active)
                 var t = SessionManager.sessionById(requestSessionId)
                 if (t) {
-                    t.sendClipboardText(previewText)
+                    t.sendClipboardText(previewText, requestKind)
                 }
             }
         }
@@ -400,33 +442,27 @@ Page {
             terminalNotification.publish()
         }
         onClipboardReadRequest: {
-            // Rate limit: ignore if cooldown is active
             if (clipboardReadCooldown.running) return
 
             var policy = Settings.clipboardReadPolicy
-            if (policy === 2) {
-                // Always deny — silently ignore
-                return
-            }
+            if (policy === 2) return
             if (policy === 1) {
-                // Always allow — send clipboard to the requesting session
                 var t = SessionManager.sessionById(sessionId)
-                if (t) {
-                    t.sendClipboardText(preview)
-                }
+                if (t) t.sendClipboardText(preview)
                 return
             }
-            // policy === 0 (ask): show confirmation dialog
+
             clipboardReadCooldown.start()
             var idx = SessionManager.sessionIndexById(sessionId)
             var name = idx >= 0 ? SessionManager.sessionName(idx) : ""
+
+            pendingClipboardPreview = preview
+            pendingClipboardKind = kind
+            pendingClipboardSessionId = sessionId
+            pendingClipboardSessionName = name || qsTr("Session %1").arg(idx + 1)
+
             Qt.inputMethod.hide()
-            pageStack.push(clipboardReadDialogComponent, {
-                "previewText": preview,
-                "requestKind": kind,
-                "requestSessionId": sessionId,
-                "sessionName": name || qsTr("Session %1").arg(idx + 1)
-            })
+            clipboardReadPushTimer.start()
         }
     }
 

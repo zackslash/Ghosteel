@@ -91,8 +91,8 @@ public:
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
-    Q_INVOKABLE void sendClipboardResponse(const QString &) {}
-    Q_INVOKABLE void sendClipboardText(const QString &) {}
+    Q_INVOKABLE void sendClipboardResponse(const QString &, const QString & = "c") {}
+    Q_INVOKABLE void sendClipboardText(const QString &, const QString & = "c") {}
     Q_INVOKABLE void sendKey(int, int = 0) {}
     Q_INVOKABLE void restartShell() {}
     Q_INVOKABLE void setActive(bool) {}
