@@ -152,8 +152,14 @@ TerminalView* SessionManager::createSession()
 
     // Route clipboard read requests through the aggregated signal
     connect(view, &TerminalView::clipboardReadRequest, this,
-            [this, sessionId = info.id](const QString &kind, const QString &preview) {
-        Q_EMIT clipboardReadRequest(sessionId, kind, preview);
+            [this, sessionId = info.id](const QString &kind) {
+        Q_EMIT clipboardReadRequest(sessionId, kind);
+    });
+
+    // Route clipboard write results to QML (Clipboard.text singleton)
+    connect(view, &TerminalView::clipboardTextReady, this,
+            [this](const QString &text) {
+        Q_EMIT clipboardTextReady(text);
     });
 
     // Rebuild sorted indices BEFORE emitting signals so that QML bindings
@@ -762,8 +768,14 @@ bool SessionManager::restoreSessions()
 
         // Route clipboard read requests through the aggregated signal
         connect(view, &TerminalView::clipboardReadRequest, this,
-                [this, sessionId = info.id](const QString &kind, const QString &preview) {
-            Q_EMIT clipboardReadRequest(sessionId, kind, preview);
+                [this, sessionId = info.id](const QString &kind) {
+            Q_EMIT clipboardReadRequest(sessionId, kind);
+        });
+
+        // Route clipboard write results to QML (Clipboard.text singleton)
+        connect(view, &TerminalView::clipboardTextReady, this,
+                [this](const QString &text) {
+            Q_EMIT clipboardTextReady(text);
         });
 
         // Ensure nextSessionId stays ahead of any restored ID

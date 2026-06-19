@@ -98,7 +98,8 @@ Q_SIGNALS:
     // Aggregated notification signal — emitted for any session, not just the active one.
     // QML connects once to this instead of per-view.
     void desktopNotification(int sessionId, const QString &summary, const QString &body);
-    void clipboardReadRequest(int sessionId, const QString &kind, const QString &preview);
+    void clipboardReadRequest(int sessionId, const QString &kind);
+    void clipboardTextReady(const QString &text);
     void sortOrderChanged();
 
 private:

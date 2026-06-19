@@ -121,7 +121,8 @@ Q_SIGNALS:
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
-    void clipboardReadRequest(const QString &kind, const QString &preview);
+    void clipboardReadRequest(const QString &kind);
+    void clipboardTextReady(const QString &text);
     void selectedTextChanged();
     void searchMatchCountChanged();
     void currentMatchIndexChanged();

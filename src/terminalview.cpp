@@ -44,7 +44,7 @@ TerminalView::TerminalView(QQuickItem *parent)
     connect(m_vt, &GhosttyVt::desktopNotification, this, &TerminalView::desktopNotification);
     connect(m_vt, &GhosttyVt::clipboardWriteRequest, this, [this](const QByteArray &base64Data, const QString &kind) {
         if (base64Data.isEmpty()) {
-            QGuiApplication::clipboard()->clear();
+            Q_EMIT clipboardTextReady(QString());
             return;
         }
         QByteArray decoded = QByteArray::fromBase64(base64Data);
@@ -57,12 +57,10 @@ TerminalView::TerminalView(QQuickItem *parent)
             if (c < 0x20 && c != '\n' && c != '\r' && c != '\t') continue; // strip control chars
             filtered.append(static_cast<char>(c));
         }
-        if (!filtered.isEmpty())
-            QGuiApplication::clipboard()->setText(QString::fromUtf8(filtered));
+        Q_EMIT clipboardTextReady(QString::fromUtf8(filtered));
     });
     connect(m_vt, &GhosttyVt::clipboardReadRequest, this, [this](const QString &kind) {
-        QString preview = QGuiApplication::clipboard()->text(QClipboard::Clipboard);
-        Q_EMIT clipboardReadRequest(kind, preview);
+        Q_EMIT clipboardReadRequest(kind);
     });
 
     // Live-apply settings changes to running terminal

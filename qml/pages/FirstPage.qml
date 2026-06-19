@@ -446,6 +446,7 @@ Page {
             if (clipboardReadCooldown.running) return
 
             var policy = Settings.clipboardReadPolicy  // 0=ask, 1=allow, 2=deny
+            var preview = Clipboard.text || ""
             if (policy === 2) return  // deny
             if (policy === 1) {       // allow
                 var t = SessionManager.sessionById(sessionId)
@@ -465,6 +466,7 @@ Page {
             Qt.inputMethod.hide()
             clipboardReadPushTimer.start()
         }
+        onClipboardTextReady: Clipboard.text = text
     }
 
     function updateWindowTitle() {
