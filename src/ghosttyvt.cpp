@@ -136,6 +136,23 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
     // Scan for OSC 52 clipboard: ESC]52;{kind};{base64} BEL/ST
     // Both run alongside the terminal parser to intercept escape sequences.
     static const char notify[] = "notify;";
+
+    // --- OSC 52 clipboard scanner helpers (defined once, used per byte) ---
+    auto isBase64Char = [](uint8_t ch) {
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+               (ch >= '0' && ch <= '9') || ch == '+' || ch == '/' || ch == '=' ||
+               ch == '?' || ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
+    };
+    auto emitOsc52 = [&]() {
+        if (m_osc52Kind == "c" || m_osc52Kind == "C") {
+            if (m_osc52Data == "?")
+                Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
+            else
+                Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
+        }
+        m_osc52State = OSC52_IDLE;
+    };
+
     for (size_t i = 0; i < len; i++) {
         uint8_t c = data[i];
 
@@ -203,21 +220,6 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
         }
 
         // --- OSC 52 clipboard scanner ---
-        auto isBase64Char = [](uint8_t ch) {
-            return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-                   (ch >= '0' && ch <= '9') || ch == '+' || ch == '/' || ch == '=' ||
-                   ch == '?' || ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
-        };
-        auto emitOsc52 = [&]() {
-            if (m_osc52Kind == "c" || m_osc52Kind == "C") {
-                if (m_osc52Data == "?")
-                    Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
-                else
-                    Q_EMIT clipboardWriteRequest(m_osc52Data, QString::fromUtf8(m_osc52Kind));
-            }
-            m_osc52State = OSC52_IDLE;
-        };
-
         switch (m_osc52State) {
         case OSC52_IDLE:
             if (c == 0x1b) m_osc52State = OSC52_ESC;
@@ -271,9 +273,8 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             if (c == '\\') {
                 emitOsc52();
             } else {
-                // Not ST — ESC was part of the data, continue accumulating
-                if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(0x1b))
-                    m_osc52Data.append(static_cast<char>(0x1b));
+                // Not ST — ESC is not valid base64, drop it and resume
+                // accumulating the following char if it is valid base64.
                 if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(c))
                     m_osc52Data.append(static_cast<char>(c));
                 m_osc52State = OSC52_DATA;

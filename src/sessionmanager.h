@@ -111,6 +111,11 @@ private:
     void scheduleSave();
     void rebuildSortedIndices();
 
+    // Connect a view's session-routed signals (notifications, clipboard) to
+    // this manager's aggregated signals. Called from both create and restore
+    // paths to keep the wiring in one place.
+    void connectSessionSignals(TerminalView *view, int sessionId);
+
     // Scrollback persistence
     void saveScrollback();
     void cleanupScrollbackFiles();

@@ -94,6 +94,14 @@
         <source>Show</source>
         <translation>Показати</translation>
     </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GLRenderer</name>

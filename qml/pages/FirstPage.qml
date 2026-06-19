@@ -52,6 +52,7 @@ Page {
     property string pendingClipboardKind: ""
     property int pendingClipboardSessionId: -1
     property string pendingClipboardSessionName: ""
+    property bool clipboardDialogActive: false  // Guards against stacking read dialogs
 
     // Bell sound for terminal BEL character
     SoundEffect {
@@ -86,6 +87,7 @@ Page {
         id: clipboardReadPushTimer
         interval: 200
         onTriggered: {
+            clipboardDialogActive = true
             pageStack.push(clipboardReadDialogComponent, {
                 "previewText": pendingClipboardPreview,
                 "requestKind": pendingClipboardKind,
@@ -170,14 +172,29 @@ Page {
                         clip: true
                     }
                 }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    visible: clipboardReadDialog.previewVisible
+                             && clipboardReadDialog.previewText.length > clipboardReadDialog.maxPreviewLength
+                    text: qsTr("Showing first %1 of %2 characters")
+                          .arg(clipboardReadDialog.maxPreviewLength)
+                          .arg(clipboardReadDialog.previewText.length)
+                    color: Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    wrapMode: Text.Wrap
+                }
             }
 
             onAccepted: {
+                clipboardDialogActive = false
                 var t = SessionManager.sessionById(requestSessionId)
                 if (t) {
                     t.sendClipboardText(previewText, requestKind)
                 }
             }
+            onRejected: clipboardDialogActive = false
         }
     }
 
@@ -444,6 +461,7 @@ Page {
         }
         onClipboardReadRequest: {
             if (clipboardReadCooldown.running) return
+            if (clipboardDialogActive) return  // A read dialog is already open
 
             var policy = Settings.clipboardReadPolicy  // 0=ask, 1=allow, 2=deny
             var preview = Clipboard.text || ""
@@ -461,7 +479,7 @@ Page {
             pendingClipboardPreview = preview
             pendingClipboardKind = kind
             pendingClipboardSessionId = sessionId
-            pendingClipboardSessionName = name || qsTr("Session %1").arg(idx + 1)
+            pendingClipboardSessionName = name.length > 0 ? name : qsTr("Unknown session")
 
             Qt.inputMethod.hide()
             clipboardReadPushTimer.start()

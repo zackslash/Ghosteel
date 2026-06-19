@@ -125,6 +125,27 @@ TerminalView* SessionManager::sessionAtCallback(QQmlListProperty<TerminalView> *
     return manager->m_sessions.at(index).view;
 }
 
+void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
+{
+    // Route this view's notifications through the aggregated signal
+    connect(view, &TerminalView::desktopNotification, this,
+            [this, sessionId](const QString &summary, const QString &body) {
+        Q_EMIT desktopNotification(sessionId, summary, body);
+    });
+
+    // Route clipboard read requests through the aggregated signal
+    connect(view, &TerminalView::clipboardReadRequest, this,
+            [this, sessionId](const QString &kind) {
+        Q_EMIT clipboardReadRequest(sessionId, kind);
+    });
+
+    // Route clipboard write results to QML (Clipboard.text singleton)
+    connect(view, &TerminalView::clipboardTextReady, this,
+            [this](const QString &text) {
+        Q_EMIT clipboardTextReady(text);
+    });
+}
+
 TerminalView* SessionManager::createSession()
 {
     // Create a new TerminalView as a child of this manager
@@ -144,23 +165,8 @@ TerminalView* SessionManager::createSession()
     int index = m_sessions.size();
     m_sessions.append(info);
 
-    // Route this view's notifications through the aggregated signal
-    connect(view, &TerminalView::desktopNotification, this,
-            [this, sessionId = info.id](const QString &summary, const QString &body) {
-        Q_EMIT desktopNotification(sessionId, summary, body);
-    });
-
-    // Route clipboard read requests through the aggregated signal
-    connect(view, &TerminalView::clipboardReadRequest, this,
-            [this, sessionId = info.id](const QString &kind) {
-        Q_EMIT clipboardReadRequest(sessionId, kind);
-    });
-
-    // Route clipboard write results to QML (Clipboard.text singleton)
-    connect(view, &TerminalView::clipboardTextReady, this,
-            [this](const QString &text) {
-        Q_EMIT clipboardTextReady(text);
-    });
+    // Route this view's session-routed signals through the aggregated signals
+    connectSessionSignals(view, info.id);
 
     // Rebuild sorted indices BEFORE emitting signals so that QML bindings
     // (Repeater delegates calling displayToActual()) see valid mappings.
@@ -760,23 +766,8 @@ bool SessionManager::restoreSessions()
 
         m_sessions.append(info);
 
-        // Route this view's notifications through the aggregated signal
-        connect(view, &TerminalView::desktopNotification, this,
-                [this, sessionId = info.id](const QString &summary, const QString &body) {
-            Q_EMIT desktopNotification(sessionId, summary, body);
-        });
-
-        // Route clipboard read requests through the aggregated signal
-        connect(view, &TerminalView::clipboardReadRequest, this,
-                [this, sessionId = info.id](const QString &kind) {
-            Q_EMIT clipboardReadRequest(sessionId, kind);
-        });
-
-        // Route clipboard write results to QML (Clipboard.text singleton)
-        connect(view, &TerminalView::clipboardTextReady, this,
-                [this](const QString &text) {
-            Q_EMIT clipboardTextReady(text);
-        });
+        // Route this view's session-routed signals through the aggregated signals
+        connectSessionSignals(view, info.id);
 
         // Ensure nextSessionId stays ahead of any restored ID
         if (savedId >= m_nextSessionId)

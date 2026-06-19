@@ -15,7 +15,6 @@
 #include <QObject>
 #include <functional>
 #include <QStringList>
-#include <QElapsedTimer>
 
 // Thread safety: This class is NOT thread-safe. All methods and callbacks
 // (including writePtyCallback) run on the main GUI thread. The PtyReaderThread
