@@ -145,7 +145,7 @@
     </message>
     <message>
         <source>Function keys</source>
-        <translation>Virknihamlar</translation>
+        <translation>Virknilyklar</translation>
     </message>
     <message>
         <source>Left</source>
@@ -325,7 +325,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Merki</translation>
+        <translation>Bjalla</translation>
     </message>
     <message>
         <source>Color scheme</source>

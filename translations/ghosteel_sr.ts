@@ -10,9 +10,9 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 сесија</numerusform>
-            <numerusform>%n сесије</numerusform>
-            <numerusform>%n сесија</numerusform>
+            <numerusform>1 sesija</numerusform>
+            <numerusform>%n sesije</numerusform>
+            <numerusform>%n sesija</numerusform>
         </translation>
     </message>
 </context>
@@ -52,19 +52,19 @@
     </message>
     <message>
         <source>Open Link</source>
-        <translation>Отвори везу</translation>
+        <translation>Otvori vezu</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Отвори</translation>
+        <translation>Otvori</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Откажи</translation>
+        <translation>Otkaži</translation>
     </message>
     <message>
         <source>This will open in your browser</source>
-        <translation>Отвориће се у прегледачу</translation>
+        <translation>Otvoriće se u pregledaču</translation>
     </message>
     <message>
         <source>Clipboard access</source>
@@ -99,7 +99,7 @@
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
-        <translation>Shell завршен са кодом %1</translation>
+        <translation>Shell završen sa kodom %1</translation>
     </message>
 </context>
 <context>
@@ -130,94 +130,94 @@
     </message>
     <message>
         <source>Navigation</source>
-        <translation>Навигација</translation>
+        <translation>Navigacija</translation>
     </message>
     <message>
         <source>Modifiers</source>
-        <translation>Модификатори</translation>
+        <translation>Modifikatori</translation>
     </message>
     <message>
         <source>Utility</source>
-        <translation>Помоћни алати</translation>
+        <translation>Pomoćni alati</translation>
     </message>
     <message>
         <source>Session Navigation</source>
-        <translation>Навигација сесије</translation>
+        <translation>Navigacija sesije</translation>
     </message>
     <message>
         <source>Function keys</source>
-        <translation>Функцијске тастере</translation>
+        <translation>Funkcijski tasteri</translation>
     </message>
     <message>
         <source>Left</source>
-        <translation>Лево</translation>
+        <translation>Levo</translation>
     </message>
     <message>
         <source>Down</source>
-        <translation>Доле</translation>
+        <translation>Dole</translation>
     </message>
     <message>
         <source>Up</source>
-        <translation>Горе</translation>
+        <translation>Gore</translation>
     </message>
     <message>
         <source>Right</source>
-        <translation>Десно</translation>
+        <translation>Desno</translation>
     </message>
     <message>
         <source>Tab</source>
-        <translation>Таб</translation>
+        <translation>Tab</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Есц</translation>
+        <translation>Esc</translation>
     </message>
     <message>
         <source>Page Up</source>
-        <translation>Паге Уп</translation>
+        <translation>Page Up</translation>
     </message>
     <message>
         <source>Page Down</source>
-        <translation>Паге Довн</translation>
+        <translation>Page Down</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation>Хоме</translation>
+        <translation>Home</translation>
     </message>
     <message>
         <source>End</source>
-        <translation>Енд</translation>
+        <translation>End</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Делете</translation>
+        <translation>Delete</translation>
     </message>
     <message>
         <source>Control modifier</source>
-        <translation>Цтрл модификатор</translation>
+        <translation>Ctrl modifikator</translation>
     </message>
     <message>
         <source>Alt modifier</source>
-        <translation>Алт модификатор</translation>
+        <translation>Alt modifikator</translation>
     </message>
     <message>
         <source>Toggle keyboard</source>
-        <translation>Прикажи/сакриј тастатуру</translation>
+        <translation>Prikaži/sakrij tastaturu</translation>
     </message>
     <message>
         <source>Previous session</source>
-        <translation>Претходна сесија</translation>
+        <translation>Prethodna sesija</translation>
     </message>
     <message>
         <source>Next session</source>
-        <translation>Следећа сесија</translation>
+        <translation>Sledeća sesija</translation>
     </message>
 </context>
 <context>
     <name>LicensesPage</name>
     <message>
         <source>Licenses</source>
-        <translation>Лиценце</translation>
+        <translation>Licence</translation>
     </message>
     <message>
         <source>Ghosteel</source>
@@ -229,7 +229,7 @@
     </message>
     <message>
         <source>Cursor trail shader</source>
-        <translation>Шејдер трага курсора</translation>
+        <translation>Šejder traga kursora</translation>
     </message>
 </context>
 <context>
@@ -464,39 +464,39 @@ Pokreće libghostty terminalski motor</translation>
     </message>
     <message>
         <source>Cursor trails</source>
-        <translation>Трагови курсора</translation>
+        <translation>Tragovi kursora</translation>
     </message>
     <message>
         <source>Animated trail effect when the cursor moves</source>
-        <translation>Анимирани ефекат трага при померању курсора</translation>
+        <translation>Animirani efekat traga pri pomeranju kursora</translation>
     </message>
     <message>
         <source>Requires OpenGL ES 3.0 — not available on this device</source>
-        <translation>Захтева OpenGL ES 3.0 — није доступно на овом уређају</translation>
+        <translation>Zahteva OpenGL ES 3.0 — nije dostupno na ovom uređaju</translation>
     </message>
     <message>
         <source>Inline images</source>
-        <translation>Уметнуте слике</translation>
+        <translation>Umetnute slike</translation>
     </message>
     <message>
         <source>Display images sent via the Kitty Graphics Protocol</source>
-        <translation>Прикажи слике послате преко Kitty Graphics протокола</translation>
+        <translation>Prikaži slike poslate preko Kitty Graphics protokola</translation>
     </message>
     <message>
         <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
-        <translation>Шејдер ефекти захтевају OpenGL ES 3.0, који није доступан на овом уређају.</translation>
+        <translation>Šejder efekti zahtevaju OpenGL ES 3.0, koji nije dostupan na ovom uređaju.</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
-        <translation>Аутоматски откриј URL-ове</translation>
+        <translation>Automatski otkrij URL-ove</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Истакни URL-ове у излазу терминала за отварање додиром</translation>
+        <translation>Istakni URL-ove u izlazu terminala za otvaranje dodirom</translation>
     </message>
     <message>
         <source>Licenses</source>
-        <translation>Лиценце</translation>
+        <translation>Licence</translation>
     </message>
     <message>
         <source>Clipboard read access</source>

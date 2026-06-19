@@ -458,7 +458,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 έτος</translation>
+        <translation>Τερματικό Ghosteel για SailfishOS
+Λειτουργεί με τη μηχανή τερματικού libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>

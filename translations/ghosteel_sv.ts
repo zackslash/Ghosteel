@@ -487,11 +487,11 @@ Drivs av libghostty terminalmotor</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
-        <translation>Upptäck URLer automatiskt</translation>
+        <translation>Upptäck URL:er automatiskt</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Markera URLer i terminalutmatning för öppning med tryck</translation>
+        <translation>Markera URL:er i terminalutmatning för öppning med tryck</translation>
     </message>
     <message>
         <source>Licenses</source>

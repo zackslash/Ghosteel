@@ -403,7 +403,7 @@
     </message>
     <message>
         <source>Huge (%1)</source>
-        <translation>Kbira ħafna (%1)</translation>
+        <translation>Enormi (%1)</translation>
     </message>
     <message>
         <source>Extra keys</source>
@@ -460,7 +460,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>sena</translation>
+        <translation>Terminal Ghosteel għal SailfishOS
+Mħaddem minn magna terminali libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -488,7 +489,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Auto-detect URLs</source>
-        <translation>Awtodettetta l-URLs</translation>
+        <translation>Awtodetetta l-URLs</translation>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>

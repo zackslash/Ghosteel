@@ -19,11 +19,11 @@
     <name>FirstPage</name>
     <message>
         <source>New session</source>
-        <translation>Seanca e re</translation>
+        <translation>Sesioni i ri</translation>
     </message>
     <message>
         <source>Session %1</source>
-        <translation>Seanca %1</translation>
+        <translation>Sesioni %1</translation>
     </message>
     <message>
         <source>Sessions</source>
@@ -35,7 +35,7 @@
     </message>
     <message>
         <source>Switch to session</source>
-        <translation>Kalo te seanca</translation>
+        <translation>Kalo te sesioni</translation>
     </message>
     <message>
         <source>Share selection</source>
@@ -43,7 +43,7 @@
     </message>
     <message>
         <source>Hide search</source>
-        <translation>Fshihtë kërkimin</translation>
+        <translation>Fshih kërkimin</translation>
     </message>
     <message>
         <source>Search terminal</source>
@@ -235,14 +235,14 @@
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
-        <translation>Seanca %1</translation>
+        <translation>Sesioni %1</translation>
     </message>
 </context>
 <context>
     <name>SessionPage</name>
     <message>
         <source>New Session</source>
-        <translation>Seanca e re</translation>
+        <translation>Sesioni i ri</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -250,7 +250,7 @@
     </message>
     <message>
         <source>Removing session</source>
-        <translation>Heqja e seancës</translation>
+        <translation>Heqja e sesionit</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -258,7 +258,7 @@
     </message>
     <message>
         <source>Session name</source>
-        <translation>Emri i seancës</translation>
+        <translation>Emri i sesionit</translation>
     </message>
     <message>
         <source>Sessions</source>
@@ -458,7 +458,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 vit</translation>
+        <translation>Terminali Ghosteel për SailfishOS
+Mundësuar nga motori i terminalit libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>

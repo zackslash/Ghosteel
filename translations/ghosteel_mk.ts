@@ -146,7 +146,7 @@
     </message>
     <message>
         <source>Function keys</source>
-        <translation>Функции клучеви</translation>
+        <translation>Функционални копчиња</translation>
     </message>
     <message>
         <source>Left</source>
@@ -426,11 +426,11 @@
     </message>
     <message>
         <source>Scrollback</source>
-        <translation>Историја на движење</translation>
+        <translation>Историја на терминалот</translation>
     </message>
     <message>
         <source>Persist scrollback</source>
-        <translation>Зачувај историја на движење</translation>
+        <translation>Зачувај историја на терминалот</translation>
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
@@ -459,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 година</translation>
+        <translation>Ghosteel терминал за SailfishOS
+Напојуван од libghostty терминалски мотор</translation>
     </message>
     <message>
         <source>Cursor trails</source>

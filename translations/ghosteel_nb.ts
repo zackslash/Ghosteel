@@ -413,7 +413,7 @@
     </message>
     <message>
         <source>Display the extra keys bar above the keyboard</source>
-        <translation>Vis den ekstra tastaturet over tastaturet</translation>
+        <translation>Vis den ekstra tastaturlinjen over tastaturet</translation>
     </message>
     <message>
         <source>Shortcut: Ctrl+Shift+K</source>

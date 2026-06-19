@@ -507,7 +507,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Ask each time</source>
-        <translation>ყოველ ჯერზე იკითხეთ</translation>
+        <translation>ყოველ ჯერზე კითხვა</translation>
     </message>
     <message>
         <source>Always allow</source>

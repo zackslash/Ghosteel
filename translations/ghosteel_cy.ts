@@ -506,7 +506,7 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     </message>
     <message>
         <source>Controls whether terminal programs can read your clipboard</source>
-        <translation>Rhestru a all rhaglenni derfynell ddarllen eich clipfwrdd</translation>
+        <translation>Rheoli a all rhaglenni derfynell ddarllen eich clipfwrdd</translation>
     </message>
     <message>
         <source>Ask each time</source>

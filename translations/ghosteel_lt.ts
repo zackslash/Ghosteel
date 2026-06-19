@@ -459,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 metus</translation>
+        <translation>Ghosteel terminalas, skirtas SailfishOS
+Varomas libghostty terminalo variklio</translation>
     </message>
     <message>
         <source>Cursor trails</source>

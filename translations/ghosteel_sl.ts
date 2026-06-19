@@ -351,7 +351,7 @@
     </message>
     <message>
         <source>None</source>
-        <translation>Nič</translation>
+        <translation>Brez</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -461,7 +461,7 @@
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
         <translation>Ghosteel terminal za SailfishOS
-Poganja pogon terminala libghostty</translation>
+Poganja terminalski pogon libghostty</translation>
     </message>
     <message>
         <source>Cursor trails</source>

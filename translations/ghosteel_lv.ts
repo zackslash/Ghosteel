@@ -84,7 +84,7 @@
     </message>
     <message>
         <source>A terminal program wants to read your clipboard.</source>
-        <translation>Termināļa programma vēlas lasīt jūsu starpliktuvi.</translation>
+        <translation>Termināla programma vēlas lasīt jūsu starpliktuvi.</translation>
     </message>
     <message>
         <source>Hide</source>
@@ -334,7 +334,7 @@
     </message>
     <message>
         <source>Dark</source>
-        <translation>Tumšs</translation>
+        <translation>Tumša</translation>
     </message>
     <message>
         <source>Default: /bin/sh</source>
@@ -346,11 +346,11 @@
     </message>
     <message>
         <source>Light</source>
-        <translation>Gaišs</translation>
+        <translation>Gaiša</translation>
     </message>
     <message>
         <source>None</source>
-        <translation>Neviens</translation>
+        <translation>Neviena</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -434,7 +434,7 @@
     </message>
     <message>
         <source>Save terminal history when app closes. Disabled by default for privacy.</source>
-        <translation>Saglabāt termināļa vēsturi, kad lietotne aizveras. Pēc noklusējuma atspējots privātuma nolūkos.</translation>
+        <translation>Saglabāt termināla vēsturi, kad lietotne aizveras. Pēc noklusējuma atspējots privātuma nolūkos.</translation>
     </message>
     <message>
         <source>Keep history for</source>
@@ -459,7 +459,8 @@
     <message>
         <source>Ghosteel terminal for SailfishOS
 Powered by libghostty terminal engine</source>
-        <translation>1 gadu</translation>
+        <translation>Ghosteel terminālis SailfishOS
+Darbina libghostty termināla dzinējs</translation>
     </message>
     <message>
         <source>Cursor trails</source>
@@ -483,7 +484,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Shader effects require OpenGL ES 3.0, which is not available on this device.</source>
-        <translation>Ģeneratora efektiem nepieciešams OpenGL ES 3.0, kas nav pieejams šajā ierīcē.</translation>
+        <translation>Šeidera efektiem nepieciešams OpenGL ES 3.0, kas nav pieejams šajā ierīcē.</translation>
     </message>
     <message>
         <source>Auto-detect URLs</source>
@@ -491,7 +492,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Highlight URLs in terminal output for tap-to-open</source>
-        <translation>Iezīmēt URL termināļa izvadē, lai atvērtu ar pieskārienu</translation>
+        <translation>Iezīmēt URL termināla izvadē, lai atvērtu ar pieskārienu</translation>
     </message>
     <message>
         <source>Licenses</source>
@@ -503,7 +504,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Controls whether terminal programs can read your clipboard</source>
-        <translation>Kontrolē, vai termināļa programmas var lasīt jūsu starpliktuvi</translation>
+        <translation>Kontrolē, vai termināla programmas var lasīt jūsu starpliktuvi</translation>
     </message>
     <message>
         <source>Ask each time</source>
