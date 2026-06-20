@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Seuraava istunto</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Lähennä</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Loitonna</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
     <message>
         <source>Always deny</source>
         <translation>Kiellä aina</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoomaa nipistämällä</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Muuta fontin kokoa kahden sormen nipistys-eleellä</translation>
     </message>
 </context>
 </TS>

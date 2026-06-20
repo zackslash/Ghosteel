@@ -218,6 +218,14 @@
         <source>Next session</source>
         <translation>Sonraki oturum</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Yakınlaştır</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Uzaklaştır</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -523,6 +531,14 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
     <message>
         <source>Always deny</source>
         <translation>Her zaman reddet</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Kıstırarak yakınlaştır ve uzaklaştır</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>İki parmak kıstırma hareketiyle yazı boyutunu değiştir</translation>
     </message>
 </context>
 </TS>

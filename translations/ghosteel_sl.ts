@@ -221,6 +221,14 @@
         <source>Next session</source>
         <translation>Naslednja seja</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Povečaj</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Zmanjšaj</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -526,6 +534,14 @@ Poganja terminalski pogon libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Vedno zavrni</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Povečaj s ščipanjem</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Spremenite velikost pisave z gesto ščipanja z dvema prstoma</translation>
     </message>
 </context>
 </TS>

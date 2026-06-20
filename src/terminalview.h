@@ -7,6 +7,8 @@
 #include <QFont>
 #include <QElapsedTimer>
 #include <QVector>
+#include <QPointF>
+#include <QTouchEvent>
 
 #include "ghosttyvt.h"
 #include "textutil.h"
@@ -150,6 +152,8 @@ Q_SIGNALS:
     void toggleKeybar();
     void topPaddingChanged();
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
+    void pinchingChanged(bool pinching);
+    void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out
 
 protected:
     void update(); // Override to emit contentChanged()
@@ -193,6 +197,11 @@ private:
     void scrollToMatch(int index);
     void buildCellMapping();
     void scrollViewportToBottom();
+
+    // --- Pinch-to-zoom gesture disambiguation ---
+    void handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points);
+    void handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points);
+    void handleMultiTouchEnd();
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -252,6 +261,20 @@ private:
     qreal m_twoFingerLastY = 0;
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
+
+    // --- Pinch-to-zoom state ---
+    enum class GestureMode { Undecided, Scrolling, Pinching };
+    GestureMode m_gestureMode = GestureMode::Undecided;
+    qreal m_pinchInitialDistance = 0;
+    int m_pinchBaseFontSize = 0;
+    int m_lastAppliedFontSize = 0;
+    int m_pinchCandidateFrames = 0;
+    QPointF m_gestureInitialCentroid;
+
+    static constexpr qreal PinchRatioThreshold = 1.12;
+    static constexpr int PinchRatioFrames = 2;
+    static constexpr qreal ScrollMinDistancePx = 40.0;
+    static constexpr qreal PinchScaleExponent = 0.6; // <1 dampens; 0.5=sqrt, 1.0=linear
 
     // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;

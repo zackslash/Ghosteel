@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>Kita sesija</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Padidinti</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Sumažinti</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Varomas libghostty terminalo variklio</translation>
     <message>
         <source>Always deny</source>
         <translation>Visada atmesti</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Mastelis suėmus</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Keiskite šrifto dydį dviejų pirštų suėmimo gestu</translation>
     </message>
 </context>
 </TS>

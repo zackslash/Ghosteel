@@ -221,6 +221,14 @@
         <source>Next session</source>
         <translation>Is-sessjoni li jmiss</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Kabbar</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Naqqas</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -526,6 +534,14 @@ Mħaddem minn magna terminali libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Dejjem irrifjuta</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoom biċċim</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Bidel id-daqs tal-font bi ġest ta' biċċim b'żewġ swaba'</translation>
     </message>
 </context>
 </TS>

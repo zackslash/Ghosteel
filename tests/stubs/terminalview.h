@@ -140,6 +140,8 @@ Q_SIGNALS:
     void toggleKeybar();
     void linkActivated(const QString &uri);
     void topPaddingChanged();
+    void pinchingChanged(bool pinching);
+    void zoomRequested(int delta);
 
 private:
     int m_fontSize = 18;

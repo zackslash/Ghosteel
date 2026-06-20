@@ -222,6 +222,14 @@
         <source>Next session</source>
         <translation>Sesiwn nesaf</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Chwyddo i mewn</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Chwyddo allan</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -527,6 +535,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Gwrthod bob amser</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Chwyddo trwy bincio</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Newid maint y ffont â ystum pinio dau fys</translation>
     </message>
 </context>
 </TS>

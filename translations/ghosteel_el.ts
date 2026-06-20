@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Επόμενη συνεδρία</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Μεγέθυνση</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Σμίκρυνση</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Always deny</source>
         <translation>Πάντα να αρνείται</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Ζουμ με τσίμπημα</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Αλλάξτε το μέγεθος γραμματοσειράς με χειρονομία τσιμπήματος δύο δαχτύλων</translation>
     </message>
 </context>
 </TS>

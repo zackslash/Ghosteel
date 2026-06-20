@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Следваща сесия</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Увеличаване</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Намаляване</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Always deny</source>
         <translation>Винаги отказвай</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Мащабиране с щипане</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Променяйте размера на шрифта с жест с два пръста</translation>
     </message>
 </context>
 </TS>

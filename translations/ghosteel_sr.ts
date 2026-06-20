@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>Sledeća sesija</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Увећај</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Умањи</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Pokreće libghostty terminalski motor</translation>
     <message>
         <source>Always deny</source>
         <translation>Uvek odbij</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Зумирање штипањем</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Промените величину фонта гестом штипања са два прста</translation>
     </message>
 </context>
 </TS>

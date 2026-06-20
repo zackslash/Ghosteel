@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>Наступний сеанс</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Збільшити</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Зменшити</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Always deny</source>
         <translation>Завжди відхиляти</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Масштабування щипком</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Змінюйте розмір шрифту щипком двома пальцями</translation>
     </message>
 </context>
 </TS>

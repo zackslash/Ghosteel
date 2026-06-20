@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Hurrengo saioa</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Handiagotu</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Txikiagotu</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ libghostty terminal motorrak bultzatuta</translation>
     <message>
         <source>Always deny</source>
         <translation>Beti ukatu</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoom egin atximurkatuz</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Aldatu letra-tamaina bi hatzeko atximurka keinuarekin</translation>
     </message>
 </context>
 </TS>

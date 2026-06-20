@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Nächste Sitzung</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Vergrößern</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Verkleinern</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
     <message>
         <source>Always deny</source>
         <translation>Immer ablehnen</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Mit Pinch zoomen</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Schriftgröße mit einer Zweifinger-Pinch-Geste ändern</translation>
     </message>
 </context>
 </TS>

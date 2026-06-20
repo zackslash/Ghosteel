@@ -218,6 +218,14 @@
         <source>Next session</source>
         <translation>Következő munkamenet</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Nagyítás</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Kicsinyítés</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -523,6 +531,14 @@ A libghostty terminálmotor hajtja</translation>
     <message>
         <source>Always deny</source>
         <translation>Mindig tiltsa</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Nagyítás csippentéssel</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Változtasd a betűméretet kétujjas csippentő kézmozdulattal</translation>
     </message>
 </context>
 </TS>

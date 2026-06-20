@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Հաջորդ նիստ</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Մեծացնել</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Փոքրացնել</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Always deny</source>
         <translation>Միշտ մերժել</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Մասշտաբում սեղմելով</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Փոխիր տառատեսակի չափը երկու մատով սեղմելու ժեստով</translation>
     </message>
 </context>
 </TS>

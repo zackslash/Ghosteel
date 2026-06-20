@@ -292,7 +292,8 @@ Page {
         }
         t.visible = true
         t.opacity = 1
-        t.fontSize = appWindow.terminalFontSize
+        var sessionFontSize = SessionManager.activeSessionFontSize()
+        t.fontSize = sessionFontSize > 0 ? sessionFontSize : Settings.fontSize
         applyTerminalTheme(t)
         t.forceActiveFocus()
 
@@ -309,6 +310,10 @@ Page {
         t.toggleKeybar.connect(onToggleKeybar)
         t.linkActivated.disconnect(showLinkDialog)
         t.linkActivated.connect(showLinkDialog)
+        t.zoomRequested.disconnect(onZoomRequested)
+        t.zoomRequested.connect(onZoomRequested)
+        t.pinchingChanged.disconnect(onPinchingChanged)
+        t.pinchingChanged.connect(onPinchingChanged)
         terminal = t
         updateWindowTitle()
     }
@@ -321,6 +326,9 @@ Page {
         t.navigateSession.disconnect(onNavigateSession)
         t.toggleKeybar.disconnect(onToggleKeybar)
         t.linkActivated.disconnect(showLinkDialog)
+        t.zoomRequested.disconnect(onZoomRequested)
+        t.pinchingChanged.disconnect(onPinchingChanged)
+        fontSizeOverlay.hide()
         t.visible = false
     }
 
@@ -539,6 +547,22 @@ Page {
         sessionUIState[currentSessionId] = state
     }
 
+    function onZoomRequested(delta) {
+        if (!terminal) return
+        SessionManager.setActiveSessionFontSize(
+            Math.max(6, Math.min(32, terminal.fontSize + delta)))
+    }
+
+    function onPinchingChanged(pinching) {
+        if (pinching) {
+            fontSizeOverlay.show()
+        } else {
+            fontSizeOverlay.hide()
+            if (terminal)
+                SessionManager.setActiveSessionFontSize(terminal.fontSize)
+        }
+    }
+
     SilicaFlickable {
         anchors.top: parent.top
         anchors.left: parent.left
@@ -725,6 +749,61 @@ Page {
         }
     }
 
+    // Font size indicator overlay (shown during pinch-to-zoom)
+    Rectangle {
+        id: fontSizeOverlay
+        anchors.centerIn: parent
+        width: Math.max(fontSizeLabel.implicitWidth, 120) + Theme.horizontalPageMargin * 4
+        height: Theme.paddingLarge + fontSizeLabel.implicitHeight + Theme.paddingMedium + barTrack.height + Theme.paddingLarge
+        radius: Theme.paddingMedium
+        color: Theme.rgba(Theme.highlightBackgroundColor, 0.9)
+        opacity: 0.0
+        visible: opacity > 0
+        z: 100  // Same layer as sessionIndicator
+
+        Behavior on opacity {
+            FadeAnimator { duration: 200 }  // Match existing sessionIndicator timing
+        }
+
+        Label {
+            id: fontSizeLabel
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Theme.paddingLarge
+            color: Theme.highlightColor
+            font.pixelSize: Theme.fontSizeExtraLarge
+            text: terminal ? terminal.fontSize + "pt" : ""
+        }
+
+        Rectangle {
+            id: barTrack
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: fontSizeLabel.bottom
+            anchors.topMargin: Theme.paddingMedium
+            width: parent.width - Theme.paddingLarge * 2
+            height: Theme.paddingSmall
+            radius: height / 2
+            color: Theme.rgba(Theme.highlightColor, 0.2)
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width * Math.max(0, Math.min(1, ((terminal ? terminal.fontSize : 6) - 6) / (32 - 6)))
+                height: parent.height
+                radius: height / 2
+                color: Theme.highlightColor
+            }
+        }
+
+        function show() {
+            opacity = 1.0
+        }
+
+        function hide() {
+            opacity = 0.0
+        }
+    }
+
     // Extra terminal keys panel
     DockedPanel {
         id: keybar
@@ -788,6 +867,10 @@ Page {
                             } else if (keyDef.id === "prevSession" || keyDef.id === "nextSession") {
                                 var dir = keyDef.id === "prevSession" ? -1 : 1
                                 switchSession(dir)
+                            } else if (keyDef.id === "zoomIn") {
+                                SessionManager.setActiveSessionFontSize(Math.min(32, terminal.fontSize + 1))
+                            } else if (keyDef.id === "zoomOut") {
+                                SessionManager.setActiveSessionFontSize(Math.max(6, terminal.fontSize - 1))
                             }
                         }
 

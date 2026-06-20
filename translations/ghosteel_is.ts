@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Næsta seta</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Auka aðdrátt</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Minnka aðdrátt</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>Always deny</source>
         <translation>Hafna alltaf</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Aðdráttur með klemmu</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Breyttu leturstærð með tveggja-fingra klemmuhreyfingu</translation>
     </message>
 </context>
 </TS>
