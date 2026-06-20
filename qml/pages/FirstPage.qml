@@ -597,11 +597,9 @@ Page {
         switchSession(direction)
     }
 
-    // Set keybar open state
     function setKeybarOpen(value) {
         keybar.open = value
     }
-
     function onToggleKeybar() {
         if (!Settings.keybarVisible) return
         setKeybarOpen(!keybar.open)
@@ -880,8 +878,6 @@ Page {
         anchors.right: parent.right
         height: Theme.itemSizeMedium + Theme.paddingSmall
         y: open ? parent.height - height : parent.height
-        z: 1
-        clip: true
         property bool open: false  // set by setKeybarOpen(), onToggleKeybar(), etc.
 
         Behavior on y {
