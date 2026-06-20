@@ -32,6 +32,7 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 - **GPU rendering**: OpenGL ES 2.0/3.0 renderer with cursor trails shader support
 - **Multi-session**: create, name, switch, and persist sessions with per-session working directories
 - **Touch text selection**: long-press with Sailfish-style magnifier, velocity-aware hiding, double/triple tap
+- **Pinch-to-zoom**: two-finger pinch to adjust font size with live overlay, per-session font size, optional (off by default)
 - **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
 - **Link detection**: OSC 8 hyperlinks and automatic URL detection, tap to open in browser
 - **Inline images**: Kitty Graphics Protocol support, PNG decoding, configurable toggle
