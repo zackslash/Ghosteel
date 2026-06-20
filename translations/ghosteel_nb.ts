@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Neste økt</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Zoom inn</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Zoom ut</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Drevet av libghostty terminalmotor</translation>
     <message>
         <source>Always deny</source>
         <translation>Avslå alltid</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoom med klyp</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Endre skriftstørrelse med en tofingerklype-bevegelse</translation>
     </message>
 </context>
 </TS>

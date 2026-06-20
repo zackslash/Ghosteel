@@ -18,6 +18,7 @@ struct SessionInfo {
     QString autorunCommand;  // Command to run when session starts
     bool keybarOpen = true;           // Whether the extra keys panel is open
     bool keyboardVisible = true;      // Whether the software keyboard is visible
+    int fontSize = 0;                 // Per-session font size (0 = use global default)
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
     TerminalView *view;
@@ -66,6 +67,9 @@ public:
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
     Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
     Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
+
+    Q_INVOKABLE void setActiveSessionFontSize(int size);
+    Q_INVOKABLE int activeSessionFontSize() const;
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
     Q_INVOKABLE int displayToActual(int displayIndex) const;

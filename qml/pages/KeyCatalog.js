@@ -28,6 +28,8 @@ var keys = [
 
     // Utility
     { id: "keyboard", label: "\u2328", description: "Toggle keyboard", category: "utility", action: "special" },
+    { id: "zoomIn",  label: "+",  description: "Zoom in",  category: "utility", action: "special" },
+    { id: "zoomOut", label: "\u2212", description: "Zoom out", category: "utility", action: "special" },
 
     // Session
     { id: "prevSession", label: "\u25C0", description: "Previous session", category: "session", action: "special" },

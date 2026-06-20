@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Järgmine seanss</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Suurenda</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Vähenda</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Toetab libghostty terminalimootorit</translation>
     <message>
         <source>Always deny</source>
         <translation>Alati keela</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Suumi näpistamisega</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Muuda kirja suurust kahe sõrme näpistamise liigutusega</translation>
     </message>
 </context>
 </TS>

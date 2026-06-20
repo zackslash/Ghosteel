@@ -25,6 +25,7 @@ class Settings : public QObject
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
     Q_PROPERTY(int sessionSortMode READ sessionSortMode WRITE setSessionSortMode NOTIFY sessionSortModeChanged)
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
+    Q_PROPERTY(bool pinchToZoom READ pinchToZoom WRITE setPinchToZoom NOTIFY pinchToZoomChanged)
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
     Q_PROPERTY(bool kittyGraphics READ kittyGraphics WRITE setKittyGraphics NOTIFY kittyGraphicsChanged)
     Q_PROPERTY(int clipboardReadPolicy READ clipboardReadPolicy WRITE setClipboardReadPolicy NOTIFY clipboardReadPolicyChanged)
@@ -78,6 +79,9 @@ public:
     bool cursorTrails() const { return m_cursorTrails; }
     void setCursorTrails(bool enabled);
 
+    bool pinchToZoom() const { return m_pinchToZoom; }
+    void setPinchToZoom(bool enabled);
+
     bool urlAutoDetect() const { return m_urlAutoDetect; }
     void setUrlAutoDetect(bool enabled);
 
@@ -107,6 +111,7 @@ Q_SIGNALS:
     void keybarVisibleChanged();
     void sessionSortModeChanged();
     void cursorTrailsChanged();
+    void pinchToZoomChanged();
     void urlAutoDetectChanged();
     void kittyGraphicsChanged();
     void clipboardReadPolicyChanged();
@@ -133,6 +138,7 @@ private:
     bool m_keybarVisible = true;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
     bool m_cursorTrails = true; // default: ON — matches load() default
+    bool m_pinchToZoom = true; // default: ON — pinch gesture changes font size
     bool m_urlAutoDetect = true; // default: ON — regex URL detection enabled
     bool m_kittyGraphics = true; // default: ON — Kitty Graphics Protocol
     int m_clipboardReadPolicy = 0; // 0=ask, 1=allow, 2=deny

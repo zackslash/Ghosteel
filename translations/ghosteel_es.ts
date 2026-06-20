@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Sesión siguiente</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Ampliar</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Reducir</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Impulsado por el motor de terminal libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Siempre denegar</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoom con pellizco</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Cambia el tamaño de fuente con un gesto de pellizco de dos dedos</translation>
     </message>
 </context>
 </TS>

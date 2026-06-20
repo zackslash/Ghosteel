@@ -8,9 +8,6 @@ ApplicationWindow {
 
     // Shared properties for cover page and settings
     property string windowTitle: ""
-    property int terminalFontSize: Settings.fontSize
-
-    onTerminalFontSizeChanged: Settings.fontSize = terminalFontSize
 
     initialPage: Component {
         FirstPage {

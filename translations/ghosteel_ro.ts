@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>Sesiunea următoare</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Mărește</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Micșorează</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Propulsat de motorul de terminal libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Refuză întotdeauna</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoom cu ciupire</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Schimbă dimensiunea fontului cu un gest de ciupire cu două degete</translation>
     </message>
 </context>
 </TS>

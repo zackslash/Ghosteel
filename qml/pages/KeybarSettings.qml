@@ -45,7 +45,9 @@ Page {
             "Alt modifier": qsTr("Alt modifier"),
             "Toggle keyboard": qsTr("Toggle keyboard"),
             "Previous session": qsTr("Previous session"),
-            "Next session": qsTr("Next session")
+            "Next session": qsTr("Next session"),
+            "Zoom in": qsTr("Zoom in"),
+            "Zoom out": qsTr("Zoom out")
         }
         return map[description] || description
     }

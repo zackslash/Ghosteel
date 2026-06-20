@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>An chéad seisiún eile</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Súmáil isteach</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Súmáil amach</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Diúltaigh i gcónaí</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Súmáil le pinc</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Athraigh méid an chló le gluaiseacht pinnte dhá mhéar</translation>
     </message>
 </context>
 </TS>

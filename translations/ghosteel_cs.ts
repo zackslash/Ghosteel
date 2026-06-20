@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>Další relace</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Přiblížit</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Oddálit</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Poháněno terminálovým enginem libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Vždy zamítnout</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Přiblížení štípnutím</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Změňte velikost písma gestem štípnutí dvěma prsty</translation>
     </message>
 </context>
 </TS>

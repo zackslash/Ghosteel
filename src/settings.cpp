@@ -45,6 +45,7 @@ void Settings::load()
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
+    m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), true).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
     m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
     m_clipboardReadPolicy = qBound(0, m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(), 2);
@@ -229,6 +230,16 @@ void Settings::setCustomShaderPath(const QString &path)
     m_settings.setValue(QStringLiteral("terminal/customShaderPath"), path);
     scheduleSave();
     Q_EMIT customShaderPathChanged();
+}
+
+void Settings::setPinchToZoom(bool enabled)
+{
+    if (m_pinchToZoom == enabled)
+        return;
+    m_pinchToZoom = enabled;
+    m_settings.setValue(QStringLiteral("terminal/pinchToZoom"), enabled);
+    scheduleSave();
+    Q_EMIT pinchToZoomChanged();
 }
 
 void Settings::setShaderPipelineAvailable(bool available)

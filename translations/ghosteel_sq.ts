@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>Sesioni tjetër</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Zmadho</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Zvogëlo</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Mundësuar nga motori i terminalit libghostty</translation>
     <message>
         <source>Always deny</source>
         <translation>Gjithmonë moho</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Zoom me shtrydhje</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Ndrysho madhësinë e shkronjave me gjest shtrydhjeje me dy gishta</translation>
     </message>
 </context>
 </TS>

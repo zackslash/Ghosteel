@@ -220,6 +220,14 @@
         <source>Next session</source>
         <translation>Nākamā sesija</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Palielināt</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Samazināt</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -525,6 +533,14 @@ Darbina libghostty termināla dzinējs</translation>
     <message>
         <source>Always deny</source>
         <translation>Vienmēr noraidīt</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>Tālummaiņa ar kniebšanu</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>Mainiet fonta izmēru ar divu pirkstu kniebšanas žestu</translation>
     </message>
 </context>
 </TS>

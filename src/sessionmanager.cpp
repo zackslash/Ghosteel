@@ -586,6 +586,10 @@ void SessionManager::saveSessions()
             cwd = QDir::homePath();
         m_settings.setValue(QStringLiteral("workingDirectory"), cwd);
         m_settings.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
+        // Read live font size from view before persisting
+        if (info.view)
+            info.fontSize = info.view->fontSize();
+        m_settings.setValue(QStringLiteral("fontSize"), info.fontSize);
         m_settings.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
         m_settings.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
         m_settings.setValue(QStringLiteral("createdAt"), info.createdAt);
@@ -682,6 +686,25 @@ void SessionManager::cleanupScrollbackFiles()
     }
 }
 
+void SessionManager::setActiveSessionFontSize(int size)
+{
+    if (m_activeSessionIndex < 0 || m_activeSessionIndex >= m_sessions.size())
+        return;
+    size = qBound(6, size, 32);  // Clamp before storing — keeps INI clean
+    SessionInfo &info = m_sessions[m_activeSessionIndex];
+    info.fontSize = size;
+    if (info.view)
+        info.view->setFontSize(size);
+    scheduleSave();
+}
+
+int SessionManager::activeSessionFontSize() const
+{
+    if (m_activeSessionIndex < 0 || m_activeSessionIndex >= m_sessions.size())
+        return 0;
+    return m_sessions[m_activeSessionIndex].fontSize;
+}
+
 bool SessionManager::restoreSessions()
 {
     m_settings.beginGroup(QStringLiteral("sessions"));
@@ -712,6 +735,7 @@ bool SessionManager::restoreSessions()
         QString workingDir = m_settings.value(QStringLiteral("workingDirectory"),
                                               QDir::homePath()).toString();
         QString autorun = m_settings.value(QStringLiteral("autorunCommand"), QString()).toString();
+        int fontSize = m_settings.value(QStringLiteral("fontSize"), 0).toInt();
         bool keybarOpen = m_settings.value(QStringLiteral("keybarOpen"), true).toBool();
         bool keyboardVisible = m_settings.value(QStringLiteral("keyboardVisible"), true).toBool();
         qint64 createdAt = m_settings.value(QStringLiteral("createdAt"), 0).toLongLong();
@@ -758,6 +782,7 @@ bool SessionManager::restoreSessions()
         info.name = name;
         info.cachedWorkingDirectory = workingDir;
         info.autorunCommand = autorun;
+        info.fontSize = fontSize;
         info.keybarOpen = keybarOpen;
         info.keyboardVisible = keyboardVisible;
         info.createdAt = createdAt;

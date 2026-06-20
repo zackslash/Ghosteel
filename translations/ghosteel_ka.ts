@@ -219,6 +219,14 @@
         <source>Next session</source>
         <translation>შემდეგი სესია</translation>
     </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>გადიდება</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>შემცირება</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -524,6 +532,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Always deny</source>
         <translation>ყოველთვის უარყოფა</translation>
+    </message>
+    <message>
+        <source>Pinch to zoom</source>
+        <translation>მასშტაბი ჩაჭერით</translation>
+    </message>
+    <message>
+        <source>Change font size with a two-finger pinch gesture</source>
+        <translation>შეცვალე ფონტის ზომა ორი თითის ჩაჭერის ჟესტით</translation>
     </message>
 </context>
 </TS>

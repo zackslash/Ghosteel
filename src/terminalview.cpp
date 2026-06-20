@@ -80,13 +80,6 @@ TerminalView::TerminalView(QQuickItem *parent)
         updateFontMetrics();
         update();
     });
-    connect(Settings::instance(), &Settings::fontSizeChanged, this, [this]() {
-        m_fontSize = Settings::instance()->fontSize();
-        updateFontMetrics();
-        if (width() > 0 && height() > 0)
-            recalculateDimensions();
-        update();
-    });
     connect(Settings::instance(), &Settings::urlAutoDetectChanged, this, [this]() {
         m_linkScanDirty = true;
         update();
@@ -1186,56 +1179,25 @@ void TerminalView::touchEvent(QTouchEvent *event)
     const auto points = event->touchPoints();
 
     if (points.size() >= 2) {
-        if (event->type() == QEvent::TouchBegin) {
-            m_twoFingerScrolling = true;
-            if (m_longPressTimerId) {
-                killTimer(m_longPressTimerId);
-                m_longPressTimerId = 0;
-            }
-            if (m_draggingHandle != 0) {
-                m_draggingHandle = 0;
-                m_magnifierVisible = false;
-                m_handlesVisible = true;
-                setKeepMouseGrab(false);
-            }
-            // Clear any active selection — pixel coordinates become stale after scroll
-            if (m_selecting)
-                clearSelection();
-            m_twoFingerLastY = (points[0].pos().y() + points[1].pos().y()) / 2.0;
-            event->accept();
-            return;
+        switch (event->type()) {
+        case QEvent::TouchBegin:
+            handleMultiTouchBegin(points);
+            break;
+        case QEvent::TouchUpdate:
+            handleMultiTouchUpdate(points);
+            break;
+        case QEvent::TouchEnd:
+        case QEvent::TouchCancel:
+            handleMultiTouchEnd();
+            break;
+        default:
+            break;
         }
-
-        if (event->type() == QEvent::TouchUpdate && m_twoFingerScrolling) {
-            qreal avgY = (points[0].pos().y() + points[1].pos().y()) / 2.0;
-            qreal deltaY = avgY - m_twoFingerLastY;
-            m_twoFingerLastY = avgY;
-
-            qreal newDelta = -deltaY / m_cellHeight;
-            auto touchScrollResult = TextUtil::accumulateScroll(m_touchScrollAccumulator, newDelta);
-            m_touchScrollAccumulator = touchScrollResult.accumulator;
-            int lines = touchScrollResult.lines;
-
-            if (lines != 0) {
-                GhosttyTerminalScrollViewport scroll = {};
-                scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-                scroll.value.delta = lines;
-                ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-                m_linkScanDirty = true;
-                update();
-            }
-            event->accept();
-            return;
-        }
-
-        if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
-            m_twoFingerScrolling = false;
-            m_touchScrollAccumulator = 0;
-            event->accept();
-            return;
-        }
+        event->accept();
+        return;
     }
 
+    // Single-touch: reset two-finger state on end/cancel
     if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
         m_twoFingerScrolling = false;
         m_touchScrollAccumulator = 0;
@@ -1256,6 +1218,141 @@ void TerminalView::touchEvent(QTouchEvent *event)
     }
 
     QQuickItem::touchEvent(event);
+}
+
+void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points)
+{
+    // Shell exited — ignore multi-touch, let it fall through to parent
+    if (m_shellExited)
+        return;
+
+    // Cancel any active long-press / selection / handle drag
+    if (m_longPressTimerId) {
+        killTimer(m_longPressTimerId);
+        m_longPressTimerId = 0;
+    }
+    if (m_draggingHandle != 0) {
+        m_draggingHandle = 0;
+        m_magnifierVisible = false;
+        m_handlesVisible = true;
+        setKeepMouseGrab(false);
+    }
+    if (m_selecting)
+        clearSelection();
+
+    // Record initial positions
+    qreal avgY = (points[0].pos().y() + points[1].pos().y()) / 2.0;
+    m_twoFingerLastY = avgY;
+
+    // TUI apps or pinch-to-zoom disabled: force scroll mode
+    if (m_vt->isMouseTracking() || !Settings::instance()->pinchToZoom()) {
+        m_gestureMode = GestureMode::Scrolling;
+        m_twoFingerScrolling = true;
+        return;
+    }
+
+    // Undecided — record initial geometry for later classification
+    QPointF p0 = points[0].pos();
+    QPointF p1 = points[1].pos();
+    m_pinchInitialDistance = QLineF(p0, p1).length();
+    m_gestureInitialCentroid = QPointF((p0.x() + p1.x()) / 2.0,
+                                       (p0.y() + p1.y()) / 2.0);
+    m_gestureMode = GestureMode::Undecided;
+    m_pinchCandidateFrames = 0;
+}
+
+void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points)
+{
+    QPointF p0 = points[0].pos();
+    QPointF p1 = points[1].pos();
+    qreal currentDistance = QLineF(p0, p1).length();
+    QPointF currentCentroid((p0.x() + p1.x()) / 2.0,
+                            (p0.y() + p1.y()) / 2.0);
+
+    switch (m_gestureMode) {
+    case GestureMode::Undecided: {
+        // --- Check for pinch classification ---
+        qreal distanceRatio = (m_pinchInitialDistance > 0)
+            ? currentDistance / m_pinchInitialDistance : 1.0;
+        bool ratioExceeded = (distanceRatio > PinchRatioThreshold)
+                          || (distanceRatio < 1.0 / PinchRatioThreshold);
+
+        if (ratioExceeded) {
+            m_pinchCandidateFrames++;
+            if (m_pinchCandidateFrames >= PinchRatioFrames) {
+                // Commit to pinch mode
+                m_gestureMode = GestureMode::Pinching;
+                m_pinchBaseFontSize = m_fontSize;
+                m_lastAppliedFontSize = m_fontSize;
+                Q_EMIT pinchingChanged(true);
+                return;
+            }
+        } else {
+            m_pinchCandidateFrames = 0;
+        }
+
+        // --- Check for scroll classification ---
+        QPointF centroidDelta = currentCentroid - m_gestureInitialCentroid;
+        if (qAbs(centroidDelta.y()) > ScrollMinDistancePx
+            && qAbs(centroidDelta.y()) > qAbs(centroidDelta.x())) {
+            // Commit to scroll mode
+            m_gestureMode = GestureMode::Scrolling;
+            m_twoFingerScrolling = true;
+            // Reset lastY to current centroid so first scroll delta is clean
+            m_twoFingerLastY = currentCentroid.y();
+            return;
+        }
+
+        return;
+    }
+
+    case GestureMode::Pinching: {
+        qreal scale = (m_pinchInitialDistance > 0)
+            ? currentDistance / m_pinchInitialDistance : 1.0;
+        int targetSize = qRound(m_pinchBaseFontSize * scale);
+        targetSize = qBound(6, targetSize, 32);
+
+        if (targetSize != m_lastAppliedFontSize) {
+            setFontSize(targetSize);
+            m_lastAppliedFontSize = targetSize;
+        }
+        return;
+    }
+
+    case GestureMode::Scrolling: {
+        qreal avgY = (p0.y() + p1.y()) / 2.0;
+        qreal deltaY = avgY - m_twoFingerLastY;
+        m_twoFingerLastY = avgY;
+
+        qreal newDelta = -deltaY / m_cellHeight;
+        auto touchScrollResult = TextUtil::accumulateScroll(m_touchScrollAccumulator, newDelta);
+        m_touchScrollAccumulator = touchScrollResult.accumulator;
+        int lines = touchScrollResult.lines;
+
+        if (lines != 0) {
+            GhosttyTerminalScrollViewport scroll = {};
+            scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+            scroll.value.delta = lines;
+            ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+            m_linkScanDirty = true;
+            update();
+        }
+        return;
+    }
+    }
+}
+
+void TerminalView::handleMultiTouchEnd()
+{
+    if (m_gestureMode == GestureMode::Pinching) {
+        Q_EMIT pinchingChanged(false);
+    }
+
+    m_gestureMode = GestureMode::Undecided;
+    m_pinchCandidateFrames = 0;
+    m_twoFingerScrolling = false;
+    m_twoFingerLastY = 0;
+    m_touchScrollAccumulator = 0;
 }
 
 void TerminalView::timerEvent(QTimerEvent *event)
@@ -1337,6 +1434,8 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
     if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
         if (key == GHOSTTY_KEY_C) { copySelection(); event->accept(); return; }
         if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
+        if (key == GHOSTTY_KEY_EQUAL) { Q_EMIT zoomRequested(1);  event->accept(); return; }  // Ctrl+Shift+=
+        if (key == GHOSTTY_KEY_MINUS) { Q_EMIT zoomRequested(-1); event->accept(); return; }  // Ctrl+Shift+-
         if (key == GHOSTTY_KEY_F) {
             if (m_searchActive)
                 closeSearch();

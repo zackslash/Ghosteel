@@ -17,7 +17,8 @@ Page {
             MenuItem {
                 text: qsTr("Reset to defaults")
                 onClicked: {
-                    fontSlider.value = 18
+                    Settings.fontSize = 18           // Reset global default for new sessions
+                    SessionManager.setActiveSessionFontSize(18)  // Reset active session
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
                     schemeCombo.currentIndex = 0
@@ -29,6 +30,7 @@ Page {
                     retentionCombo.currentIndex = 1  // 30 days
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
                     Settings.keybarVisible = true
+                    pinchToZoomToggle.checked = true
                     clipboardReadCombo.currentIndex = 0
                 }
             }
@@ -107,7 +109,7 @@ Page {
                 minimumValue: 6
                 maximumValue: 32
                 stepSize: 1
-                value: Settings.fontSize
+                value: SessionManager.activeSessionFontSize() > 0 ? SessionManager.activeSessionFontSize() : Settings.fontSize
                 valueText: {
                     if (value < 10) return qsTr("Tiny (%1)").arg(value)
                     if (value < 14) return qsTr("Small (%1)").arg(value)
@@ -117,7 +119,15 @@ Page {
                     return qsTr("Huge (%1)").arg(value)
                 }
 
-                onValueChanged: Settings.fontSize = value
+                onValueChanged: SessionManager.setActiveSessionFontSize(value)
+            }
+
+            TextSwitch {
+                id: pinchToZoomToggle
+                text: qsTr("Pinch to zoom")
+                description: qsTr("Change font size with a two-finger pinch gesture")
+                checked: Settings.pinchToZoom
+                onCheckedChanged: Settings.pinchToZoom = checked
             }
 
             Slider {
