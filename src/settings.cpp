@@ -45,7 +45,7 @@ void Settings::load()
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
-    m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), true).toBool();
+    m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), false).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
     m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
     m_clipboardReadPolicy = qBound(0, m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(), 2);

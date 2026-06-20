@@ -229,13 +229,14 @@ GLRenderer::GLRenderer(QQuickItem *parent)
     : QQuickFramebufferObject(parent)
 {
     // Connect settings signals once — Settings is a singleton that never changes.
-    // Font/opacity changes invalidate cached metrics via atomic generation counter.
+    // Font family/opacity changes invalidate cached metrics via atomic generation counter.
+    // Font size is per-session and is wired from the TerminalView source in setSource().
     Settings *s = Settings::instance();
-    connect(s, &Settings::fontSizeChanged, this, &GLRenderer::invalidateMetrics);
     connect(s, &Settings::fontFamilyChanged, this, &GLRenderer::invalidateMetrics);
     connect(s, &Settings::backgroundOpacityChanged, this, &GLRenderer::invalidateMetrics);
 
-    // Populate initial cached values so the first render uses actual settings
+    // Populate initial cached values so the first render uses actual settings.
+    // fontSize is updated from the TerminalView source in setSource().
     m_cachedMetrics.fontFamily = s->fontFamily();
     m_cachedMetrics.fontSize = s->fontSize();
     m_cachedMetrics.backgroundOpacity = s->backgroundOpacity();
@@ -276,10 +277,12 @@ void GLRenderer::setSource(QObject *source)
 
     m_source = source;
 
-    // Connect TerminalView's contentChanged to trigger GL repaint
+    // Connect TerminalView signals to trigger GL repaint and metric invalidation
     TerminalView *tv = qobject_cast<TerminalView *>(m_source);
     if (tv) {
         connect(tv, &TerminalView::contentChanged, this, &QQuickItem::update);
+        connect(tv, &TerminalView::fontSizeChanged, this, &GLRenderer::invalidateMetrics);
+        invalidateMetrics();
     }
 
     Q_EMIT sourceChanged();
@@ -290,8 +293,11 @@ void GLRenderer::invalidateMetrics()
     // Snapshot settings for Renderer (consumed on render thread via generation counter)
     Settings *s = Settings::instance();
     m_cachedMetrics.fontFamily = s->fontFamily();
-    m_cachedMetrics.fontSize = s->fontSize();
     m_cachedMetrics.backgroundOpacity = s->backgroundOpacity();
+
+    // Font size is per-session — read from the TerminalView source, not Settings
+    TerminalView *tv = qobject_cast<TerminalView *>(m_source);
+    m_cachedMetrics.fontSize = tv ? tv->fontSize() : s->fontSize();
 
     // Increment generation counter — synchronize() will detect the mismatch
     // and re-initialize font metrics, atlas, and opacity on the render thread.

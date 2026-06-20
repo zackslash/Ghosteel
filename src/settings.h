@@ -138,7 +138,7 @@ private:
     bool m_keybarVisible = true;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
     bool m_cursorTrails = true; // default: ON — matches load() default
-    bool m_pinchToZoom = true; // default: ON — pinch gesture changes font size
+    bool m_pinchToZoom = false; // default: OFF — pinch gesture changes font size
     bool m_urlAutoDetect = true; // default: ON — regex URL detection enabled
     bool m_kittyGraphics = true; // default: ON — Kitty Graphics Protocol
     int m_clipboardReadPolicy = 0; // 0=ask, 1=allow, 2=deny

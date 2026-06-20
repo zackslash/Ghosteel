@@ -30,7 +30,7 @@ Page {
                     retentionCombo.currentIndex = 1  // 30 days
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
                     Settings.keybarVisible = true
-                    pinchToZoomToggle.checked = true
+                    pinchToZoomToggle.checked = false
                     clipboardReadCombo.currentIndex = 0
                 }
             }

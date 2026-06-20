@@ -754,7 +754,7 @@ Page {
         id: fontSizeOverlay
         anchors.centerIn: parent
         width: Math.max(fontSizeLabel.implicitWidth, 120) + Theme.horizontalPageMargin * 4
-        height: fontSizeLabel.implicitHeight + Theme.paddingLarge * 2
+        height: Theme.paddingLarge + fontSizeLabel.implicitHeight + Theme.paddingMedium + barTrack.height + Theme.paddingLarge
         radius: Theme.paddingMedium
         color: Theme.rgba(Theme.highlightBackgroundColor, 0.9)
         opacity: 0.0
@@ -767,10 +767,32 @@ Page {
 
         Label {
             id: fontSizeLabel
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Theme.paddingLarge
             color: Theme.highlightColor
             font.pixelSize: Theme.fontSizeExtraLarge
             text: terminal ? terminal.fontSize + "pt" : ""
+        }
+
+        Rectangle {
+            id: barTrack
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: fontSizeLabel.bottom
+            anchors.topMargin: Theme.paddingMedium
+            width: parent.width - Theme.paddingLarge * 2
+            height: Theme.paddingSmall
+            radius: height / 2
+            color: Theme.rgba(Theme.highlightColor, 0.2)
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width * Math.max(0, Math.min(1, ((terminal ? terminal.fontSize : 6) - 6) / (32 - 6)))
+                height: parent.height
+                radius: height / 2
+                color: Theme.highlightColor
+            }
         }
 
         function show() {

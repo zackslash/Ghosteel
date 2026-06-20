@@ -274,6 +274,7 @@ private:
     static constexpr qreal PinchRatioThreshold = 1.12;
     static constexpr int PinchRatioFrames = 2;
     static constexpr qreal ScrollMinDistancePx = 40.0;
+    static constexpr qreal PinchScaleExponent = 0.6; // <1 dampens; 0.5=sqrt, 1.0=linear
 
     // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;

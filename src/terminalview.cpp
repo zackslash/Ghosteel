@@ -15,6 +15,7 @@
 #include <QDateTime>
 #include <QLineF>
 #include <algorithm>
+#include <cmath>
 #include <sys/ioctl.h>
 
 TerminalView::TerminalView(QQuickItem *parent)
@@ -1197,6 +1198,14 @@ void TerminalView::touchEvent(QTouchEvent *event)
         return;
     }
 
+    // If we drop below 2 touch points while in a multi-touch gesture
+    // (e.g., one finger lifts mid-pinch), end the gesture properly.
+    // Without this, pinchingChanged(false) is never emitted and the
+    // font size overlay stays visible.
+    if (m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
+        handleMultiTouchEnd();
+    }
+
     // Single-touch: reset two-finger state on end/cancel
     if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
         m_twoFingerScrolling = false;
@@ -1225,6 +1234,14 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // Shell exited — ignore multi-touch, let it fall through to parent
     if (m_shellExited)
         return;
+
+    // Clean up any previous gesture that wasn't properly ended. This can
+    // happen if TouchEnd was missed (e.g., window deactivated, touch stolen
+    // by another item) and a new gesture starts while the overlay is still
+    // visible. Without this, pinchingChanged(false) is never emitted.
+    if (m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
+        handleMultiTouchEnd();
+    }
 
     // Cancel any active long-press / selection / handle drag
     if (m_longPressTimerId) {
@@ -1263,6 +1280,17 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
 
 void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points)
 {
+    // If any touch point was released, end the gesture immediately. Qt may
+    // deliver a TouchUpdate with a released point before TouchEnd arrives.
+    // Without this, the gesture continues processing a stale finger position
+    // and the overlay may not hide if the final TouchEnd is also missed.
+    for (const auto &p : points) {
+        if (p.state() & Qt::TouchPointReleased) {
+            handleMultiTouchEnd();
+            return;
+        }
+    }
+
     QPointF p0 = points[0].pos();
     QPointF p1 = points[1].pos();
     qreal currentDistance = QLineF(p0, p1).length();
@@ -1284,6 +1312,11 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
                 m_gestureMode = GestureMode::Pinching;
                 m_pinchBaseFontSize = m_fontSize;
                 m_lastAppliedFontSize = m_fontSize;
+                // Reset baseline to current distance so the scale starts at 1.0
+                // at the moment of commitment. The overlay shows the current
+                // font size and no change happens until the user pinches further,
+                // giving them a visible starting point to track from.
+                m_pinchInitialDistance = currentDistance;
                 Q_EMIT pinchingChanged(true);
                 return;
             }
@@ -1309,7 +1342,11 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
     case GestureMode::Pinching: {
         qreal scale = (m_pinchInitialDistance > 0)
             ? currentDistance / m_pinchInitialDistance : 1.0;
-        int targetSize = qRound(m_pinchBaseFontSize * scale);
+        // Power-curve dampening: requires more finger travel for the same font
+        // delta. Exponent < 1 softens the response around scale=1.0 so small
+        // finger movements no longer produce large font jumps.
+        qreal dampedScale = std::pow(scale, PinchScaleExponent);
+        int targetSize = qRound(m_pinchBaseFontSize * dampedScale);
         targetSize = qBound(6, targetSize, 32);
 
         if (targetSize != m_lastAppliedFontSize) {
