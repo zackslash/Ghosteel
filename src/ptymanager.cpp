@@ -265,15 +265,42 @@ void PtyManager::stop()
     }
 
     if (m_readerThread) {
-        m_readerThread->wait(3000);
-        if (m_readerThread->isRunning())
-            m_readerThread->terminate(); // last resort
+        // Disconnect signals first — prevents queued dataReady/readFinished
+        // from being delivered to a destroyed PtyManager after we return.
+        disconnect(m_readerThread, nullptr, this, nullptr);
+
+        // Without requestInterruption(), the thread only exits on EOF or
+        // poll/read error — neither is guaranteed if grandchildren hold the
+        // PTY open after SIGHUP kills the shell.
+        m_readerThread->requestInterruption();
+
+        if (!m_readerThread->wait(3000)) {
+            // Close the PTY fd to make poll()/read() return errors, forcing
+            // the thread out. Technically undefined per POSIX, but reliable
+            // on Linux: poll() returns POLLNVAL, read() returns EBADF. The
+            // child is dead and the reader thread is the only other consumer.
+            if (m_ptyFd >= 0) {
+                if (m_writeNotifier) {
+                    m_writeNotifier->setEnabled(false);
+                    delete m_writeNotifier;
+                    m_writeNotifier = nullptr;
+                }
+                m_writeBuffer.clear();
+                ::close(m_ptyFd);
+                m_ptyFd = -1;
+            }
+
+            if (!m_readerThread->wait(1000)) {
+                qWarning() << "PtyReaderThread did not exit after closing PTY, terminating";
+                m_readerThread->terminate();
+                m_readerThread->wait(1000);
+            }
+        }
         delete m_readerThread;
         m_readerThread = nullptr;
     }
 
     if (m_ptyFd >= 0) {
-        // Clean up write notifier before closing fd
         if (m_writeNotifier) {
             m_writeNotifier->setEnabled(false);
             delete m_writeNotifier;
