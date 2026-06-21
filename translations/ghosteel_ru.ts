@@ -17,7 +17,7 @@
     </message>
 </context>
 <context>
-    <name>FirstPage</name>
+    <name>TerminalPage</name>
     <message>
         <source>New session</source>
         <translation>Новый сеанс</translation>
