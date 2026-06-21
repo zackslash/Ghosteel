@@ -250,7 +250,7 @@ private slots:
         QCOMPARE(s.bellMode(), 1);
         QCOMPARE(s.scrollbackPersistence(), false);
         QCOMPARE(s.scrollbackRetentionDays(), 30);
-        QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","keyboard","esc"}));
+        QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","esc","keyboard"}));
         QCOMPARE(s.keybarVisible(), true);
         QCOMPARE(s.cursorTrails(), true);  // load() default is true
         QCOMPARE(s.customShaderPath(), QString());
@@ -333,8 +333,8 @@ private slots:
         QStringList expected = {QStringLiteral("left"), QStringLiteral("down"),
                                 QStringLiteral("up"), QStringLiteral("right"),
                                 QStringLiteral("tab"), QStringLiteral("ctrl"),
-                                QStringLiteral("alt"), QStringLiteral("keyboard"),
-                                QStringLiteral("esc")};
+                                QStringLiteral("alt"), QStringLiteral("esc"),
+                                QStringLiteral("keyboard")};
         QCOMPARE(s.keybarKeys(), expected);
     }
 
@@ -362,13 +362,13 @@ private slots:
     {
         QTemporaryDir dir;
         Settings s(dir.path() + "/test.conf");
-        // Default is {"left","down","up","right","tab","ctrl","alt","keyboard","esc"}
+        // Default is {"left","down","up","right","tab","ctrl","alt","esc","keyboard"}
         QSignalSpy spy(&s, &Settings::keybarKeysChanged);
         s.setKeybarKeys({QStringLiteral("left"), QStringLiteral("down"),
                          QStringLiteral("up"), QStringLiteral("right"),
                          QStringLiteral("tab"), QStringLiteral("ctrl"),
-                         QStringLiteral("alt"), QStringLiteral("keyboard"),
-                         QStringLiteral("esc")});
+                         QStringLiteral("alt"), QStringLiteral("esc"),
+                         QStringLiteral("keyboard")});
         QCOMPARE(spy.count(), 0);
     }
 

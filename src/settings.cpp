@@ -40,7 +40,7 @@ void Settings::load()
     m_scrollbackRetentionDays = qBound(7, m_settings.value(QStringLiteral("scrollback/retentionDays"), 30).toInt(), 365);
     QStringList defaultKeys = {QStringLiteral("left"), QStringLiteral("down"), QStringLiteral("up"),
                                QStringLiteral("right"), QStringLiteral("tab"), QStringLiteral("ctrl"),
-                               QStringLiteral("alt"), QStringLiteral("keyboard"), QStringLiteral("esc")};
+                               QStringLiteral("alt"), QStringLiteral("esc"), QStringLiteral("keyboard")};
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
