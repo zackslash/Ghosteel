@@ -160,14 +160,13 @@ jobs:
           # the main repo's git describe works inside Docker (not cached like submodule)
           sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"$VER\"/" ghosteel.pro
 
-          # .pro GHOSTTY_VERSION — hardcode so qmake doesn't re-evaluate inside Docker
-          if [ -f ghostty/.git ]; then
-            GHOSTTY_VER=$(cd ghostty && git describe --tags --always 2>/dev/null || echo "unknown")
-          else
-            GHOSTTY_VER="${{ steps.ghostty-commit.outputs.sha }}"
-          fi
-          sed -i "s|^GHOSTTY_VERSION = .*|GHOSTTY_VERSION = \"$GHOSTTY_VER\"|" ghosteel.pro
-          grep -q "GHOSTTY_VERSION = \"$GHOSTTY_VER\"" ghosteel.pro || {
+          # .pro GHOSTTY_VERSION — hardcode the submodule commit SHA so qmake
+          # doesn't re-evaluate inside Docker. Using git describe here is
+          # unreliable in CI's shallow clone (picks up the "tip" tag).
+          GHOSTTY_VER="${{ steps.ghostty-commit.outputs.sha }}"
+          GHOSTTY_SHORT="${GHOSTTY_VER:0:9}"
+          sed -i "s|^GHOSTTY_VERSION = .*|GHOSTTY_VERSION = \"$GHOSTTY_SHORT\"|" ghosteel.pro
+          grep -q "GHOSTTY_VERSION = \"$GHOSTTY_SHORT\"" ghosteel.pro || {
             echo "ERROR: Failed to set GHOSTTY_VERSION in ghosteel.pro"
             exit 1
           }
