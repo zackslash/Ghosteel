@@ -16,7 +16,7 @@
     </message>
 </context>
 <context>
-    <name>FirstPage</name>
+    <name>TerminalPage</name>
     <message>
         <source>New session</source>
         <translation>Nouvelle session</translation>

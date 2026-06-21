@@ -86,6 +86,21 @@ Page {
         }
     }
 
+    // Re-suppress keyboard when returning to this page (e.g. from Sessions page).
+    // When the user taps the same session, onSessionSwitched fires during the pop
+    // animation (page still Inactive) and consumes the suppress flag via
+    // forceActiveFocus(). Silica then fires focusInEvent when the page becomes
+    // Active, which calls im->show() since the flag is already consumed.
+    onStatusChanged: {
+        if (status === PageStatus.Active && terminal) {
+            var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
+            if (!SessionManager.sessionKeyboardVisible(idx)) {
+                terminal.suppressNextKeyboardAutoShow()
+                terminal.forceActiveFocus()
+            }
+        }
+    }
+
     // Key definition lookup map (O(1) access by ID)
     property var keyLookup: {
         var lookup = {}

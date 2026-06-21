@@ -15,7 +15,7 @@
     </message>
 </context>
 <context>
-    <name>FirstPage</name>
+    <name>TerminalPage</name>
     <message>
         <source>New session</source>
         <translation>Új munkamenet</translation>

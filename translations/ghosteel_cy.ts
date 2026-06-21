@@ -19,7 +19,7 @@
     </message>
 </context>
 <context>
-    <name>FirstPage</name>
+    <name>TerminalPage</name>
     <message>
         <source>New session</source>
         <translation>Sesiwn newydd</translation>

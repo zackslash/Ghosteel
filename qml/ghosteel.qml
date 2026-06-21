@@ -10,8 +10,8 @@ ApplicationWindow {
     property string windowTitle: ""
 
     initialPage: Component {
-        FirstPage {
-            objectName: "firstPage"
+        TerminalPage {
+            objectName: "terminalPage"
         }
     }
     cover: Qt.resolvedUrl("cover/CoverPage.qml")

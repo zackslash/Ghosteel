@@ -87,7 +87,7 @@ SOURCES += \
 DISTFILES += qml/ghosteel.qml \
     LICENSE \
     qml/cover/CoverPage.qml \
-    qml/pages/FirstPage.qml \
+    qml/pages/TerminalPage.qml \
     qml/pages/SessionPage.qml \
     qml/pages/SettingsPage.qml \
     qml/pages/LicensesPage.qml \
@@ -99,7 +99,7 @@ DISTFILES += qml/ghosteel.qml \
 lupdate_only {
     SOURCES += qml/ghosteel.qml \
         qml/cover/CoverPage.qml \
-        qml/pages/FirstPage.qml \
+        qml/pages/TerminalPage.qml \
         qml/pages/SessionPage.qml \
         qml/pages/SettingsPage.qml \
         qml/pages/KeybarSettings.qml \
