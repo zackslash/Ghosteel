@@ -55,7 +55,6 @@ Page {
         id: dragDismissReShowTimer
         interval: 300
         onTriggered: {
-            // Only re-show if this page is active and the terminal is visible.
             // Without this guard, navigating to another page (e.g. Sessions)
             // within the 300ms window would pop the keyboard on that page.
             if (terminal && terminal.visible
@@ -71,9 +70,18 @@ Page {
         target: Qt.application
         onStateChanged: {
             if (Qt.application.state === Qt.ApplicationActive && terminal) {
-                var idx = SessionManager.activeSessionIndex
+                var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
                 var name = SessionManager.sessionName(idx)
                 sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+                // Re-focus and restore keyboard state. The compositor
+                // deactivates the text input context when the app is
+                // backgrounded, same as drag-dismiss.
+                if (SessionManager.sessionKeyboardVisible(idx)) {
+                    dragDismissReShowTimer.start()
+                } else {
+                    terminal.suppressNextKeyboardAutoShow()
+                    terminal.forceActiveFocus()
+                }
             }
         }
     }
@@ -400,9 +408,7 @@ Page {
             currentSessionId = SessionManager.sessionId(idx)
             // Ensure keyboard hidden if persisted state says so
             if (!SessionManager.sessionKeyboardVisible(idx)) {
-                dragDismissReShowTimer.stop()
-                _programmaticKeyboardHide = true
-                Qt.inputMethod.hide()
+                programmaticHide()
             } else {
                 // im->show() from focusInEvent may not work on startup if the
                 // Wayland surface isn't mapped yet. Delay and show explicitly.
@@ -490,9 +496,7 @@ Page {
             // but we also need explicit hide for the case where keyboard was already visible
             var incomingKbRestore = state ? state.kb : SessionManager.sessionKeyboardVisible(index)
             if (!incomingKbRestore) {
-                dragDismissReShowTimer.stop()
-                _programmaticKeyboardHide = true
-                Qt.inputMethod.hide()
+                programmaticHide()
             }
 
             // Show session switch indicator (only when multiple sessions exist)
@@ -549,9 +553,7 @@ Page {
             pendingClipboardSessionId = sessionId
             pendingClipboardSessionName = name.length > 0 ? name : qsTr("Unknown session")
 
-            dragDismissReShowTimer.stop()
-            _programmaticKeyboardHide = true
-            Qt.inputMethod.hide()
+            programmaticHide()
             clipboardReadPushTimer.start()
         }
         onClipboardTextReady: Clipboard.text = text
@@ -595,6 +597,15 @@ Page {
 
     function onNavigateSession(direction) {
         switchSession(direction)
+    }
+
+    // Hide the VKB as an app-initiated action (not compositor drag-dismiss).
+    // Bundles the flag + timer stop + hide so the invariant can't be broken
+    // by a future call site forgetting one of the three.
+    function programmaticHide() {
+        dragDismissReShowTimer.stop()
+        _programmaticKeyboardHide = true
+        Qt.inputMethod.hide()
     }
 
     function setKeybarOpen(value) {
@@ -936,9 +947,7 @@ Page {
                                     if (terminal) terminal.forceActiveFocus()
                                     Qt.inputMethod.show()
                                 } else {
-                                    dragDismissReShowTimer.stop()
-                                    _programmaticKeyboardHide = true
-                                    Qt.inputMethod.hide()
+                                    programmaticHide()
                                 }
                                 SessionManager.setSessionKeyboardVisible(currentSessionIndex, newVisible)
                                 var state = sessionUIState[currentSessionId] || {
@@ -980,8 +989,8 @@ Page {
             }
         }
 
-        // Custom scroll indicator — replaces HorizontalScrollDecorator
-        // (which has no programmatic flash API). We fully control opacity.
+        // Custom scroll indicator — HorizontalScrollDecorator has no
+        // programmatic flash API.
         Rectangle {
             id: scrollIndicator
             anchors.left: parent.left
