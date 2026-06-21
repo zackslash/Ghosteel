@@ -19,14 +19,69 @@ Page {
     property bool ctrlActive: false
     property bool altActive: false
     property bool keyboardVisible: Qt.inputMethod && Qt.inputMethod.visible
+
+    // Distinguish app-initiated Qt.inputMethod.hide() from compositor-initiated
+    // drag-dismiss. On Sailfish/Wayland, drag-dismiss deactivates the
+    // wl_text_input context (stops hardware key delivery), while app-initiated
+    // hide() only hides the VKB panel (context stays active). Set this flag
+    // before every programmatic hide() so the handler below knows to keep the
+    // VKB hidden rather than re-showing it.
+    property bool _programmaticKeyboardHide: false
+
+    onKeyboardVisibleChanged: {
+        if (keyboardVisible) {
+            // Keyboard is being shown — clear any stale programmatic-hide flag
+            // from a previous no-op hide() (keyboard was already hidden).
+            _programmaticKeyboardHide = false
+            return
+        }
+        if (!terminal) return
+        if (_programmaticKeyboardHide) {
+            // App-initiated hide — context stays active, just suppress
+            // auto-show on re-focus so the VKB stays hidden.
+            terminal.suppressNextKeyboardAutoShow()
+            _programmaticKeyboardHide = false
+            terminal.forceActiveFocus()
+        } else {
+            // Compositor drag-dismiss — context was deactivated. Re-show
+            // the VKB after a short delay to avoid racing with the
+            // compositor's dismiss processing. Drag-dismiss becomes a
+            // no-op (VKB re-appears). Use the toggle button to hide.
+            dragDismissReShowTimer.start()
+        }
+    }
+
+    Timer {
+        id: dragDismissReShowTimer
+        interval: 300
+        onTriggered: {
+            // Without this guard, navigating to another page (e.g. Sessions)
+            // within the 300ms window would pop the keyboard on that page.
+            if (terminal && terminal.visible
+                    && page.status === PageStatus.Active
+                    && !keyboardVisible) {
+                terminal.forceActiveFocus()
+                Qt.inputMethod.show()
+            }
+        }
+    }
     // Show session indicator when returning from background
     Connections {
         target: Qt.application
         onStateChanged: {
             if (Qt.application.state === Qt.ApplicationActive && terminal) {
-                var idx = SessionManager.activeSessionIndex
+                var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
                 var name = SessionManager.sessionName(idx)
                 sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+                // Re-focus and restore keyboard state. The compositor
+                // deactivates the text input context when the app is
+                // backgrounded, same as drag-dismiss.
+                if (SessionManager.sessionKeyboardVisible(idx)) {
+                    dragDismissReShowTimer.start()
+                } else {
+                    terminal.suppressNextKeyboardAutoShow()
+                    terminal.forceActiveFocus()
+                }
             }
         }
     }
@@ -352,10 +407,17 @@ Page {
             currentSessionIndex = idx
             currentSessionId = SessionManager.sessionId(idx)
             // Ensure keyboard hidden if persisted state says so
-            if (!SessionManager.sessionKeyboardVisible(idx))
-                Qt.inputMethod.hide()
+            if (!SessionManager.sessionKeyboardVisible(idx)) {
+                programmaticHide()
+            } else {
+                // im->show() from focusInEvent may not work on startup if the
+                // Wayland surface isn't mapped yet. Delay and show explicitly.
+                dragDismissReShowTimer.start()
+            }
             // Restore keybar state (global setting takes precedence)
-            keybar.open = Settings.keybarVisible && SessionManager.sessionKeybarOpen(idx)
+            setKeybarOpen(Settings.keybarVisible && SessionManager.sessionKeybarOpen(idx))
+            if (keybar.open && keybarFlickable.contentWidth > keybarFlickable.width)
+                scrollIndicator.flash()
             // Show session indicator on launch so the user knows which session they're in
             var name = SessionManager.sessionName(idx)
             sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
@@ -367,13 +429,13 @@ Page {
         target: Settings
         onKeybarVisibleChanged: {
             if (!Settings.keybarVisible) {
-                keybar.open = false
+                setKeybarOpen(false)
             } else {
                 // Restore per-session state when re-enabled
                 var state = sessionUIState[currentSessionId]
-                keybar.open = state
+                setKeybarOpen(state
                     ? state.kbbar
-                    : SessionManager.sessionKeybarOpen(currentSessionIndex)
+                    : SessionManager.sessionKeybarOpen(currentSessionIndex))
             }
         }
     }
@@ -384,7 +446,7 @@ Page {
         onSessionSwitched: {
             // Save outgoing session's UI state using session ID (stable across removals)
             if (terminal && currentSessionId >= 0) {
-                // Keybar: read directly from DockedPanel (reliable, sync, local)
+                // Keybar: read directly from the panel property (reliable, sync, local)
                 var keybarState = keybar.open
                 // Keyboard: use persisted preference (not Qt.inputMethod.visible which
                 // is global/async and affected by focus changes, not just user intent)
@@ -424,15 +486,17 @@ Page {
             // Restore incoming session's keybar state (global setting takes precedence)
             var state = sessionUIState[incomingSid]
             if (state) {
-                keybar.open = Settings.keybarVisible && state.kbbar
+                setKeybarOpen(Settings.keybarVisible && state.kbbar)
             } else {
-                keybar.open = Settings.keybarVisible && SessionManager.sessionKeybarOpen(index)
+                setKeybarOpen(Settings.keybarVisible && SessionManager.sessionKeybarOpen(index))
             }
+            if (keybar.open && keybarFlickable.contentWidth > keybarFlickable.width)
+                scrollIndicator.flash()
             // Ensure keyboard hidden if needed — suppress prevents focus-triggered show,
             // but we also need explicit hide for the case where keyboard was already visible
             var incomingKbRestore = state ? state.kb : SessionManager.sessionKeyboardVisible(index)
             if (!incomingKbRestore) {
-                Qt.inputMethod.hide()
+                programmaticHide()
             }
 
             // Show session switch indicator (only when multiple sessions exist)
@@ -489,7 +553,7 @@ Page {
             pendingClipboardSessionId = sessionId
             pendingClipboardSessionName = name.length > 0 ? name : qsTr("Unknown session")
 
-            Qt.inputMethod.hide()
+            programmaticHide()
             clipboardReadPushTimer.start()
         }
         onClipboardTextReady: Clipboard.text = text
@@ -535,9 +599,21 @@ Page {
         switchSession(direction)
     }
 
+    // Hide the VKB as an app-initiated action (not compositor drag-dismiss).
+    // Bundles the flag + timer stop + hide so the invariant can't be broken
+    // by a future call site forgetting one of the three.
+    function programmaticHide() {
+        dragDismissReShowTimer.stop()
+        _programmaticKeyboardHide = true
+        Qt.inputMethod.hide()
+    }
+
+    function setKeybarOpen(value) {
+        keybar.open = value
+    }
     function onToggleKeybar() {
         if (!Settings.keybarVisible) return
-        keybar.open = !keybar.open
+        setKeybarOpen(!keybar.open)
         SessionManager.setSessionKeybarOpen(currentSessionIndex, keybar.open)
         var state = sessionUIState[currentSessionId] || {
             kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
@@ -804,15 +880,29 @@ Page {
         }
     }
 
-    // Extra terminal keys panel
-    DockedPanel {
+    // Extra terminal keys panel — plain Item (not DockedPanel, whose C++
+    // drag-to-close cannot be reliably overridden from QML). We animate y
+    // manually; the terminal flickable anchors to keybar.top and tracks it.
+    Item {
         id: keybar
-        dock: Dock.Bottom
-        width: parent.width
+        anchors.left: parent.left
+        anchors.right: parent.right
         height: Theme.itemSizeMedium + Theme.paddingSmall
-        open: false  // set by Component.onCompleted with per-session state
+        y: open ? parent.height - height : parent.height
+        property bool open: false  // set by setKeybarOpen(), onToggleKeybar(), etc.
+
+        Behavior on y {
+            NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
+        }
+
+        // Match DockedPanel's default translucent gradient background
+        PanelBackground {
+            anchors.fill: parent
+            position: Dock.Bottom
+        }
 
         SilicaFlickable {
+            id: keybarFlickable
             anchors.fill: parent
             clip: true
             flickableDirection: Flickable.HorizontalFlick
@@ -853,10 +943,12 @@ Page {
                                 page.altActive = !page.altActive
                             } else if (keyDef.id === "keyboard") {
                                 var newVisible = !page.keyboardVisible
-                                if (newVisible)
+                                if (newVisible) {
+                                    if (terminal) terminal.forceActiveFocus()
                                     Qt.inputMethod.show()
-                                else
-                                    Qt.inputMethod.hide()
+                                } else {
+                                    programmaticHide()
+                                }
                                 SessionManager.setSessionKeyboardVisible(currentSessionIndex, newVisible)
                                 var state = sessionUIState[currentSessionId] || {
                                     kb: SessionManager.sessionKeyboardVisible(currentSessionIndex),
@@ -894,6 +986,95 @@ Page {
                         }
                     }
                 }
+            }
+        }
+
+        // Custom scroll indicator — HorizontalScrollDecorator has no
+        // programmatic flash API.
+        Rectangle {
+            id: scrollIndicator
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 2
+            color: "transparent"
+            visible: keybarFlickable.contentWidth > keybarFlickable.width
+            opacity: 0.0
+
+            Rectangle {
+                id: indicatorBar
+                height: parent.height
+                color: Theme.primaryColor
+                radius: height / 2
+                width: keybarFlickable.contentWidth > 0
+                       ? Math.max(20, keybarFlickable.width * (keybarFlickable.width / keybarFlickable.contentWidth))
+                       : 20
+                x: {
+                    var maxScroll = keybarFlickable.contentWidth - keybarFlickable.width
+                    if (maxScroll <= 0) return 0
+                    return (keybarFlickable.width - width)
+                        * Math.max(0, Math.min(1, keybarFlickable.contentX / maxScroll))
+                }
+            }
+
+            function flash() {
+                flashAnim.stop()
+                scrollFadeIn.stop()
+                scrollFadeOut.stop()
+                flashTimer.start()
+            }
+
+            // Delay so the panel slide animation finishes first
+            Timer {
+                id: flashTimer
+                interval: 300
+                onTriggered: flashAnim.start()
+            }
+
+            SequentialAnimation {
+                id: flashAnim
+                NumberAnimation { target: scrollIndicator; property: "opacity"; to: 0.8; duration: 200 }
+                PauseAnimation { duration: 800 }
+                NumberAnimation { target: scrollIndicator; property: "opacity"; to: 0.0; duration: 800 }
+            }
+
+            // Show on manual scroll (fade in/out like stock HorizontalScrollDecorator)
+            Connections {
+                target: keybarFlickable
+                onMovementStarted: {
+                    if (!flashAnim.running)
+                        scrollFadeIn.start()
+                }
+                onMovementEnded: {
+                    if (!flashAnim.running)
+                        scrollFadeOut.start()
+                }
+            }
+
+            NumberAnimation {
+                id: scrollFadeIn
+                target: scrollIndicator
+                property: "opacity"
+                to: 0.6
+                duration: 200
+            }
+
+            NumberAnimation {
+                id: scrollFadeOut
+                target: scrollIndicator
+                property: "opacity"
+                to: 0.0
+                duration: 500
+            }
+        }
+
+        onOpenChanged: {
+            if (open && keybarFlickable.contentWidth > keybarFlickable.width)
+                scrollIndicator.flash()
+            else if (!open) {
+                flashAnim.stop()
+                scrollFadeIn.stop()
+                scrollFadeOut.stop()
             }
         }
     }
