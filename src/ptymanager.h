@@ -33,6 +33,7 @@ public:
     ~PtyManager();
 
     bool startShell(uint16_t cols, uint16_t rows);
+    bool startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows);
     void stop();
     bool writeData(const char *data, size_t len);
     void setShellCommand(const QString &cmd) { m_shellCommand = cmd; }
@@ -47,6 +48,8 @@ Q_SIGNALS:
 private:
     void ensureWriteNotifier();
     void drainWriteBuffer();
+    void setupChildProcess();
+    bool startParentProcess(pid_t pid, int execPipe[2]);
 
     int m_ptyFd = -1;
     pid_t m_childPid = -1;

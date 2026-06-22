@@ -13,11 +13,28 @@
 #include <QFile>
 #include <QSaveFile>
 #include <QFileInfo>
+#include <QTimer>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <algorithm>
-
 #include <unistd.h>
+
+static constexpr int kMaxSessionCount = 100;
+static constexpr int kMaxSessionNameLength = 128;
+
+static QString sanitizeSessionName(const QString &name)
+{
+    QString clean = name;
+    clean.truncate(kMaxSessionNameLength);
+    clean.remove(QChar('\0'));
+    clean.remove(QChar('\n'));
+    clean.remove(QChar('\r'));
+    return clean;
+}
+
+// Delay before auto-removing an anonymous -e session on error,
+// so the user can see "Command not found" or the exit code.
+static constexpr int kCommandExitDisplayDelayMs = 800;
 
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(Settings::instance(), parent)
@@ -143,6 +160,15 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
     });
 }
 
+int SessionManager::findSessionByName(const QString &name) const
+{
+    for (int i = 0; i < m_sessions.size(); i++) {
+        if (m_sessions[i].name == name)
+            return i;
+    }
+    return -1;
+}
+
 TerminalView* SessionManager::createSession()
 {
     // Create a new TerminalView as a child of this manager
@@ -177,6 +203,71 @@ TerminalView* SessionManager::createSession()
     setActiveSessionIndex(index);
 
     return view;
+}
+
+TerminalView* SessionManager::createSessionWithCommand(const QString &name, const QStringList &commandArgs)
+{
+    if (m_sessions.size() >= kMaxSessionCount) {
+        qWarning() << "Session limit reached (" << kMaxSessionCount << "), ignoring command";
+        return nullptr;
+    }
+
+    TerminalView *view = new TerminalView();
+
+    SessionInfo info;
+    info.id = m_nextSessionId++;
+    info.name = name;
+    info.cachedWorkingDirectory = QDir::homePath();
+    info.commandSession = true;
+    info.execCommand = commandArgs.isEmpty() ? QString() : commandArgs.first();
+    info.createdAt = QDateTime::currentMSecsSinceEpoch();
+    info.lastUsedAt = info.createdAt;
+    info.view = view;
+
+    view->setCommandArgs(commandArgs);
+
+    int index = m_sessions.size();
+    m_sessions.append(info);
+
+    // Route this view's session-routed signals through the aggregated signals
+    connectSessionSignals(view, info.id);
+
+    // Auto-remove anonymous command sessions when the command exits.
+    // On error (non-zero exit), brief delay so the user can see "Command not found" or exit code.
+    // Note: if the user renames the session during the delay, name.isEmpty() becomes false
+    // and auto-remove is skipped — this is desirable (user claimed the session).
+    connect(view, &TerminalView::commandExited, this, [this, sessionId = info.id](int exitCode) {
+        int delay = (exitCode != 0) ? kCommandExitDisplayDelayMs : 0;
+        QTimer::singleShot(delay, this, [this, sessionId]() {
+            int idx = sessionIndexById(sessionId);
+            if (idx >= 0 && m_sessions[idx].isAnonymous()) {
+                removeSession(idx);
+            }
+        });
+    });
+
+    rebuildSortedIndices();
+
+    Q_EMIT sessionCountChanged();
+    Q_EMIT sessionsChanged();
+    Q_EMIT sessionCreated(index);
+
+    // Auto-switch to the new session
+    setActiveSessionIndex(index);
+
+    return view;
+}
+
+void SessionManager::switchToSessionByName(const QString &name)
+{
+    int idx = findSessionByName(name);
+    if (idx >= 0) {
+        setActiveSessionIndex(idx);
+    } else {
+        createSession();
+        int newIdx = m_sessions.size() - 1;
+        setSessionName(newIdx, name);
+    }
 }
 
 void SessionManager::removeSession(int index)
@@ -312,6 +403,13 @@ QString SessionManager::sessionAutorunCommand(int index) const
     if (index < 0 || index >= m_sessions.size())
         return QString();
     return m_sessions.at(index).autorunCommand;
+}
+
+QString SessionManager::sessionExecCommand(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return QString();
+    return m_sessions.at(index).execCommand;
 }
 
 void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
@@ -481,12 +579,25 @@ QString SessionManager::socketPath()
            + QStringLiteral("/ghosteel-singleton");
 }
 
-bool SessionManager::checkSingleInstance()
+bool SessionManager::checkSingleInstance(const QString &execCommand,
+                                         const QStringList &execArgs,
+                                         const QString &sessionName)
 {
     QLocalSocket socket;
     socket.connectToServer(socketPath());
     if (socket.waitForConnected(500)) {
-        socket.write("raise\n");
+        QByteArray msg;
+        if (!execCommand.isEmpty()) {
+            QByteArray cmdBytes = execCommand.toUtf8();
+            for (const QString &arg : execArgs)
+                cmdBytes.append('\0' + arg.toUtf8());
+            msg = QStringLiteral("exec:%1:").arg(sessionName).toUtf8() + cmdBytes + '\n';
+        } else if (!sessionName.isEmpty()) {
+            msg = QStringLiteral("switch:%1\n").arg(sessionName).toUtf8();
+        } else {
+            msg = QByteArrayLiteral("raise\n");
+        }
+        socket.write(msg);
         socket.waitForBytesWritten(1000);
         socket.disconnectFromServer();
         return true;
@@ -534,6 +645,37 @@ void SessionManager::startSingleInstanceServer()
             this, &SessionManager::onNewInstanceConnection);
 }
 
+void SessionManager::setCliArgs(const QString &execCommand,
+                                const QStringList &execArgs,
+                                const QString &sessionName)
+{
+    m_cliExecCommand = execCommand;
+    m_cliExecArgs = execArgs;
+    m_cliSessionName = sanitizeSessionName(sessionName);
+}
+
+void SessionManager::processCliArgs()
+{
+    if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty())
+        return; // No CLI args — nothing to do
+
+    if (!m_cliExecCommand.isEmpty()) {
+        // -e was passed: create a command session
+        QStringList fullArgs;
+        fullArgs << m_cliExecCommand;
+        fullArgs << m_cliExecArgs;
+        createSessionWithCommand(m_cliSessionName, fullArgs);
+    } else if (!m_cliSessionName.isEmpty()) {
+        // -s without -e: switch to or create named session
+        switchToSessionByName(m_cliSessionName);
+    }
+
+    // Clear so processCliArgs() is idempotent
+    m_cliExecCommand.clear();
+    m_cliExecArgs.clear();
+    m_cliSessionName.clear();
+}
+
 void SessionManager::onNewInstanceConnection()
 {
     QLocalSocket *socket = m_localServer->nextPendingConnection();
@@ -543,12 +685,42 @@ void SessionManager::onNewInstanceConnection()
     // guaranteed to be in the buffer, avoiding partial-read issues.
     connect(socket, &QLocalSocket::disconnected, this, [this, socket]() {
         QByteArray data = socket->readAll();
-        if (data.trimmed() == "raise") {
+        QString msg = QString::fromUtf8(data.trimmed());
+
+        auto raiseWindow = []() {
             const auto windows = QGuiApplication::topLevelWindows();
             if (!windows.isEmpty()) {
                 if (auto *window = windows.first())
                     window->requestActivate();
             }
+        };
+
+        if (msg == QStringLiteral("raise")) {
+            raiseWindow();
+        } else if (msg.startsWith(QStringLiteral("switch:"))) {
+            QString sessionName = sanitizeSessionName(msg.mid(7)); // length of "switch:"
+            switchToSessionByName(sessionName);
+            raiseWindow();
+        } else if (msg.startsWith(QStringLiteral("exec:"))) {
+            QString rest = msg.mid(5); // after "exec:"
+            int lastColon = rest.lastIndexOf(':');
+            if (lastColon < 0) return; // malformed
+
+            QString sessionName = sanitizeSessionName(rest.left(lastColon));
+            QByteArray commandBytes = rest.mid(lastColon + 1).toUtf8();
+
+            // Deserialize null-separated argv (matches checkSingleInstance format)
+            QList<QByteArray> parts = commandBytes.split('\0');
+            if (parts.isEmpty() || parts.first().isEmpty()) return; // malformed
+
+            QString command = QString::fromUtf8(parts.first());
+            QStringList args;
+            for (int i = 1; i < parts.size(); i++)
+                args.append(QString::fromUtf8(parts[i]));
+
+            setCliArgs(command, args, sessionName);
+            processCliArgs();
+            raiseWindow();
         }
         socket->deleteLater();
     });
@@ -557,17 +729,19 @@ void SessionManager::onNewInstanceConnection()
 void SessionManager::saveSessions()
 {
     QSettings &s = m_settings->raw();
-    s.beginGroup(QStringLiteral("sessions"));
-    s.setValue(QStringLiteral("count"), m_sessions.size());
-    s.setValue(QStringLiteral("nextId"), m_nextSessionId);
-    s.setValue(QStringLiteral("activeIndex"), m_activeSessionIndex);
-    s.endGroup();
 
+    // Clear old session entries
     s.remove(QStringLiteral("sessionData"));
 
+    // Skip anonymous command sessions during save
+    int saveIndex = 0;
     for (int i = 0; i < m_sessions.size(); i++) {
         SessionInfo &info = m_sessions[i];
-        QString group = QStringLiteral("sessionData/session_%1").arg(i);
+
+        if (info.isAnonymous())
+            continue;
+
+        QString group = QStringLiteral("sessionData/session_%1").arg(saveIndex);
         s.beginGroup(group);
         s.setValue(QStringLiteral("id"), info.id);
         s.setValue(QStringLiteral("name"), info.name);
@@ -591,7 +765,19 @@ void SessionManager::saveSessions()
         s.setValue(QStringLiteral("createdAt"), info.createdAt);
         s.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
         s.endGroup();
+        saveIndex++;
     }
+
+    s.beginGroup(QStringLiteral("sessions"));
+    s.setValue(QStringLiteral("count"), saveIndex);
+    s.setValue(QStringLiteral("nextId"), m_nextSessionId);
+    // Save the active session's ID (not index) so that anonymous sessions
+    // being skipped doesn't corrupt the active session on restore.
+    int activeSessionId = (m_activeSessionIndex >= 0
+                           && m_activeSessionIndex < m_sessions.size())
+                          ? m_sessions[m_activeSessionIndex].id : -1;
+    s.setValue(QStringLiteral("activeId"), activeSessionId);
+    s.endGroup();
 
     m_settings->save();
 }
@@ -707,7 +893,12 @@ bool SessionManager::restoreSessions()
     s.beginGroup(QStringLiteral("sessions"));
     int count = s.value(QStringLiteral("count"), 0).toInt();
     int nextId = s.value(QStringLiteral("nextId"), 1).toInt();
-    int activeIndex = s.value(QStringLiteral("activeIndex"), 0).toInt();
+    // Read activeId (new format) with fallback to activeIndex (old format)
+    int activeId = s.value(QStringLiteral("activeId"), -1).toInt();
+    int legacyActiveIndex = -1;
+    if (activeId < 0) {
+        legacyActiveIndex = s.value(QStringLiteral("activeIndex"), 0).toInt();
+    }
     s.endGroup();
 
     if (count <= 0) {
@@ -716,8 +907,8 @@ bool SessionManager::restoreSessions()
     }
 
     // Sanity cap to protect against corrupted settings
-    if (count > 50)
-        count = 50;
+    if (count > kMaxSessionCount)
+        count = kMaxSessionCount;
 
     m_nextSessionId = nextId;
 
@@ -799,9 +990,21 @@ bool SessionManager::restoreSessions()
         Q_EMIT sessionsChanged();
     }
 
-    // Restore active session index
-    if (activeIndex >= 0 && activeIndex < m_sessions.size())
-        setActiveSessionIndex(activeIndex);
+    // Restore active session by ID (or by legacy index)
+    int resolvedActive = -1;
+    if (activeId >= 0) {
+        for (int i = 0; i < m_sessions.size(); i++) {
+            if (m_sessions[i].id == activeId) {
+                resolvedActive = i;
+                break;
+            }
+        }
+    } else if (legacyActiveIndex >= 0) {
+        if (legacyActiveIndex < m_sessions.size())
+            resolvedActive = legacyActiveIndex;
+    }
+    if (resolvedActive >= 0)
+        setActiveSessionIndex(resolvedActive);
     else if (!m_sessions.isEmpty())
         setActiveSessionIndex(0);
 

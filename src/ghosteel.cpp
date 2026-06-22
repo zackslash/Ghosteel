@@ -56,10 +56,42 @@ int main(int argc, char *argv[])
     // Register PNG decoder for Kitty Graphics Protocol (process-global, once)
     kittyImageDecoderRegister();
 
-    // Single-instance guard: if another instance is running, tell it to raise
-    // its window and exit.  This handles D-Bus activation launching a duplicate
-    // when a sandboxed instance is already running.
-    if (SessionManager::checkSingleInstance())
+    // Parse CLI arguments for -e/--exec and -s/--session before the
+    // single-instance check.  QCommandLineParser requires QCoreApplication,
+    // which doesn't exist yet, so scan argv manually.
+    QString execCommand;
+    QStringList execArgs;
+    QString sessionName;
+
+    for (int i = 1; i < argc; i++) {
+        QString arg = QString::fromLocal8Bit(argv[i]);
+        if (arg == QStringLiteral("-h") || arg == QStringLiteral("--help")) {
+            printf("Usage: ghosteel [-e|--exec <command> [args...]] [-s|--session <name>]\n"
+                   "\n"
+                   "  -e, --exec <command> [args...]  Run command instead of default shell\n"
+                   "  -s, --session <name>            Switch to or create named session\n"
+                   "  -h, --help                      Show this help\n");
+            fflush(stdout);
+            return 0;
+        } else if (arg == QStringLiteral("-e") || arg == QStringLiteral("--exec")) {
+            if (i + 1 < argc) {
+                execCommand = QString::fromLocal8Bit(argv[i + 1]);
+                for (int j = i + 2; j < argc; j++)
+                    execArgs.append(QString::fromLocal8Bit(argv[j]));
+                break; // -e consumes everything after it
+            }
+        } else if (arg == QStringLiteral("-s") || arg == QStringLiteral("--session")) {
+            if (i + 1 < argc) {
+                sessionName = QString::fromLocal8Bit(argv[i + 1]);
+                i++; // skip the value
+            }
+        }
+    }
+
+    // Single-instance guard: if another instance is running, send the
+    // appropriate IPC message and exit.  This handles D-Bus activation
+    // launching a duplicate when a sandboxed instance is already running.
+    if (SessionManager::checkSingleInstance(execCommand, execArgs, sessionName))
         return 0;
 
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
@@ -72,6 +104,10 @@ int main(int argc, char *argv[])
     // Expose SessionManager singleton to QML
     SessionManager *sessionManager = new SessionManager(app.data());
     view->rootContext()->setContextProperty(QStringLiteral("SessionManager"), sessionManager);
+
+    // Store CLI args for deferred processing after QML restoreSessions()
+    if (!execCommand.isEmpty() || !sessionName.isEmpty())
+        sessionManager->setCliArgs(execCommand, execArgs, sessionName);
 
     // Register D-Bus adaptor for notification action callbacks.
     // Under Sailjail, D-Bus name ownership is restricted, so registration

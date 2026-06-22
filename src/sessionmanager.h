@@ -19,9 +19,13 @@ struct SessionInfo {
     bool keybarOpen = true;           // Whether the extra keys panel is open
     bool keyboardVisible = true;      // Whether the software keyboard is visible
     int fontSize = 0;                 // Per-session font size (0 = use global default)
+    bool commandSession = false;      // true for -e sessions (affects exit behavior + persistence)
+    QString execCommand;              // Command binary name from -e
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
     TerminalView *view;
+
+    bool isAnonymous() const { return commandSession && name.isEmpty(); }
 };
 
 class SessionManager : public QObject
@@ -48,6 +52,8 @@ public:
     QQmlListProperty<TerminalView> sessions();
 
     Q_INVOKABLE TerminalView* createSession();
+    TerminalView* createSessionWithCommand(const QString &name, const QStringList &commandArgs);
+    Q_INVOKABLE void switchToSessionByName(const QString &name);
     Q_INVOKABLE void removeSession(int index);
     // QML convenience: setActiveSessionIndex is a Q_PROPERTY setter, not
     // Q_INVOKABLE, so QML needs this to call it by name.
@@ -62,6 +68,7 @@ public:
     Q_INVOKABLE bool restoreSessions(); // Returns true if sessions were restored
     Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
     Q_INVOKABLE QString sessionAutorunCommand(int index) const;
+    Q_INVOKABLE QString sessionExecCommand(int index) const;
     Q_INVOKABLE void setSessionAutorunCommand(int index, const QString &cmd);
     Q_INVOKABLE bool sessionKeybarOpen(int index) const;
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
@@ -80,11 +87,21 @@ public:
     // Single-instance guard: returns true if another instance is already running.
     // Call before creating SessionManager. If true, a "raise" message was sent
     // to the existing instance and the caller should exit.
-    static bool checkSingleInstance();
+    static bool checkSingleInstance(const QString &execCommand = QString(),
+                                    const QStringList &execArgs = QStringList(),
+                                    const QString &sessionName = QString());
 
     // Start the single-instance socket server. Call after D-Bus registration
     // so that future instances can detect this one.
     void startSingleInstanceServer();
+
+    // Store CLI arguments for deferred processing after QML initialization.
+    void setCliArgs(const QString &execCommand, const QStringList &execArgs,
+                    const QString &sessionName);
+
+    // Process stored CLI arguments: creates command sessions or switches
+    // to named sessions. Called from QML after restoreSessions().
+    Q_INVOKABLE void processCliArgs();
 
 Q_SIGNALS:
     void activeSessionIndexChanged();
@@ -119,6 +136,7 @@ private:
     // this manager's aggregated signals. Called from both create and restore
     // paths to keep the wiring in one place.
     void connectSessionSignals(TerminalView *view, int sessionId);
+    int findSessionByName(const QString &name) const;  // Returns m_sessions index, or -1
 
     // Scrollback persistence
     void saveScrollback();
@@ -147,6 +165,11 @@ private:
 
     // Scrollback encryption (Sailfish Secrets + Crypto)
     ScrollEncryptor *m_encryptor = nullptr;
+
+    // CLI arguments (set from main(), processed by processCliArgs() from QML)
+    QString m_cliExecCommand;
+    QStringList m_cliExecArgs;
+    QString m_cliSessionName;
 };
 
 #endif // SESSIONMANAGER_H

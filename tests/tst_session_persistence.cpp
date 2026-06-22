@@ -186,12 +186,12 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        // restoreSessions caps at 50 and creates all count sessions (even without data).
-        // With count=9999, only the first 50 are created (data exists for 2, defaults for 48).
-        QCOMPARE(mgr.sessionCount(), 50);
+        // restoreSessions caps at 100 and creates all count sessions (even without data).
+        // With count=9999, only the first 100 are created (data exists for 2, defaults for 98).
+        QCOMPARE(mgr.sessionCount(), 100);
     }
 
-    void testRestoreCorruptedCountCapExactly50()
+    void testRestoreCorruptedCountCapBelowLimit()
     {
         // Write settings with count = 50 (at the cap boundary)
         {
@@ -304,7 +304,7 @@ private slots:
 
         QSettings s(m_settingsPath, QSettings::IniFormat);
         s.beginGroup("sessions");
-        QCOMPARE(s.value("activeIndex").toInt(), 1);
+        QCOMPARE(s.value("activeId").toInt(), 2);
         s.endGroup();
     }
 
@@ -1401,7 +1401,6 @@ private slots:
 
         // Capture displayToActual(0) from inside a sessionsChanged handler
         int display0ActualFromSignal = -1;
-        int display0ActualFromSignalOnRemove = -1;
 
         connect(&mgr, &SessionManager::sessionsChanged, [&]() {
             // At this point, rebuildSortedIndices() must have already run
@@ -1424,6 +1423,497 @@ private slots:
         // have returned a valid (non-negative) index
         QVERIFY(display0ActualFromSignal >= 0);
         QCOMPARE(display0ActualFromSignal, mgr.displayToActual(0));
+    }
+
+    // --- -e / --exec and -s / --session tests ---
+
+    // --- createSessionWithCommand() ---
+
+    void testCreateCommandSessionSetsFields()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        TerminalView *view = mgr.createSessionWithCommand("htop", QStringList() << "htop");
+        QVERIFY(view);
+
+        int idx = mgr.sessionCount() - 1;
+        QCOMPARE(mgr.sessionName(idx), QStringLiteral("htop"));
+        QCOMPARE(mgr.sessionExecCommand(idx), QStringLiteral("htop"));
+    }
+
+    void testCreateCommandSessionAnonymous()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        TerminalView *view = mgr.createSessionWithCommand(QString(), QStringList() << "htop");
+        QVERIFY(view);
+
+        int idx = mgr.sessionCount() - 1;
+        QCOMPARE(mgr.sessionName(idx), QString());
+        QCOMPARE(mgr.sessionExecCommand(idx), QStringLiteral("htop"));
+    }
+
+    void testCreateCommandSessionSetsCommandArgs()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QStringList args = QStringList() << "python3" << "-m" << "http.server";
+        TerminalView *view = mgr.createSessionWithCommand("python3", args);
+        QVERIFY(view);
+        QCOMPARE(view->commandArgs(), args);
+    }
+
+    // --- Anonymous auto-remove ---
+
+    void testAnonymousAutoRemoveOnSuccess()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand(QString(), QStringList() << "true");
+        int countBefore = mgr.sessionCount();
+        int idx = countBefore - 1;
+
+        // Get the view to emit commandExited
+        TerminalView *view = mgr.sessionById(mgr.sessionId(idx));
+        QVERIFY(view);
+
+        QSignalSpy removedSpy(&mgr, &SessionManager::sessionCountChanged);
+        view->emitCommandExited(0); // success = immediate remove (0ms singleShot)
+
+        // Process the queued singleShot(0) and verify removal
+        QTest::qWait(50);
+        QCOMPARE(mgr.sessionCount(), countBefore - 1);
+    }
+
+    void testAnonymousAutoRemoveOnErrorDelayed()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand(QString(), QStringList() << "badcommand");
+        int countBefore = mgr.sessionCount();
+        int idx = countBefore - 1;
+
+        TerminalView *view = mgr.sessionById(mgr.sessionId(idx));
+        QVERIFY(view);
+
+        view->emitCommandExited(127); // error = delayed remove
+
+        // Should NOT be removed immediately
+        QCOMPARE(mgr.sessionCount(), countBefore);
+
+        // Wait for the delay (kCommandExitDisplayDelayMs = 800 + margin)
+        QTest::qWait(900);
+
+        QCOMPARE(mgr.sessionCount(), countBefore - 1);
+    }
+
+    void testAnonymousAutoRemoveSkippedAfterRename()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand(QString(), QStringList() << "htop");
+        int countBefore = mgr.sessionCount();
+        int idx = countBefore - 1;
+        int sessionId = mgr.sessionId(idx);
+
+        // Rename the session — it's no longer anonymous
+        mgr.setSessionName(idx, "My Htop");
+
+        TerminalView *view = mgr.sessionById(sessionId);
+        QVERIFY(view);
+        view->emitCommandExited(0);
+
+        QCOMPARE(mgr.sessionCount(), countBefore);
+    }
+
+    void testNamedCommandSessionNotAutoRemoved()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand("editor", QStringList() << "nvim");
+        int countBefore = mgr.sessionCount();
+        int idx = countBefore - 1;
+
+        TerminalView *view = mgr.sessionById(mgr.sessionId(idx));
+        QVERIFY(view);
+        view->emitCommandExited(0);
+
+        QCOMPARE(mgr.sessionCount(), countBefore);
+    }
+
+    // --- processCliArgs() ---
+
+    void testProcessCliArgsExecOnly()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        int countBefore = mgr.sessionCount();
+
+        mgr.setCliArgs("htop", QStringList(), QString());
+        mgr.processCliArgs();
+
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        int idx = mgr.sessionCount() - 1;
+        QCOMPARE(mgr.sessionExecCommand(idx), QStringLiteral("htop"));
+        QCOMPARE(mgr.sessionName(idx), QString());
+    }
+
+    void testProcessCliArgsSessionOnly()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        int countBefore = mgr.sessionCount();
+
+        mgr.setCliArgs(QString(), QStringList(), "editor");
+        mgr.processCliArgs();
+
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        int idx = mgr.sessionCount() - 1;
+        QCOMPARE(mgr.sessionName(idx), QStringLiteral("editor"));
+        QCOMPARE(mgr.sessionExecCommand(idx), QString());
+    }
+
+    void testProcessCliArgsExecAndSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        int countBefore = mgr.sessionCount();
+
+        mgr.setCliArgs("nvim", QStringList(), "editor");
+        mgr.processCliArgs();
+
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        int idx = mgr.sessionCount() - 1;
+        QCOMPARE(mgr.sessionName(idx), QStringLiteral("editor"));
+        QCOMPARE(mgr.sessionExecCommand(idx), QStringLiteral("nvim"));
+    }
+
+    void testProcessCliArgsIdempotent()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.setCliArgs("htop", QStringList(), QString());
+        mgr.processCliArgs();
+        int countAfterFirst = mgr.sessionCount();
+
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), countAfterFirst);
+    }
+
+    void testProcessCliArgsExecWithArgs()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        int countBefore = mgr.sessionCount();
+
+        QStringList execArgs = QStringList() << "-m" << "http.server";
+        mgr.setCliArgs("python3", execArgs, QString());
+        mgr.processCliArgs();
+
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        TerminalView *view = mgr.sessionById(mgr.sessionId(mgr.sessionCount() - 1));
+        QVERIFY(view);
+        QCOMPARE(view->commandArgs(), QStringList() << "python3" << "-m" << "http.server");
+    }
+
+    // --- saveSessions skips anonymous ---
+
+    void testSaveSkipsAnonymousCommandSessions()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create a regular session, a named command session, and an anonymous command session
+        mgr.createSession(); // regular
+        mgr.createSessionWithCommand("editor", QStringList() << "nvim"); // named command
+        mgr.createSessionWithCommand(QString(), QStringList() << "htop"); // anonymous
+
+        QCOMPARE(mgr.sessionCount(), 3);
+
+        // Trigger save
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Read settings and verify count
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessions");
+        int savedCount = s.value("count").toInt();
+        s.endGroup();
+
+        QCOMPARE(savedCount, 2); // anonymous should be skipped
+    }
+
+    void testSavePreservesNamedCommandSessions()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // regular session
+        mgr.createSessionWithCommand("editor", QStringList() << "nvim");
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessions");
+        QCOMPARE(s.value("count").toInt(), 2); // regular + named command
+        s.endGroup();
+
+        s.beginGroup("sessionData/session_1");
+        QCOMPARE(s.value("name").toString(), QStringLiteral("editor"));
+        s.endGroup();
+    }
+
+    // --- activeId with anonymous sessions ---
+
+    void testActiveIdWhenAnonymousIsActive()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        mgr.createSession(); // session 0 (regular, id=1)
+        TerminalView *view = mgr.createSessionWithCommand(QString(), QStringList() << "htop"); // session 1 (anonymous, id=2, now active)
+        Q_UNUSED(view);
+
+        QCOMPARE(mgr.activeSessionIndex(), 1); // anonymous is active
+
+        // Save fires — anonymous session is skipped in persistence, but activeId
+        // points to the anonymous session's ID (because it IS the active session).
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        int anonId = mgr.sessionId(1);
+
+        // Verify activeId was saved pointing to the anonymous session's ID
+        QSettings s(m_settingsPath, QSettings::IniFormat);
+        s.beginGroup("sessions");
+        int savedActiveId = s.value("activeId").toInt();
+        int savedCount = s.value("count").toInt();
+        s.endGroup();
+
+        QCOMPARE(savedActiveId, anonId); // activeId tracks the real active session
+        QCOMPARE(savedCount, 1);         // anonymous session is NOT persisted
+
+        // On restore, the anonymous session doesn't exist — activeId has no match,
+        // so the manager falls back to session 0.
+        SessionManager mgr2(m_settingsPath);
+        mgr2.restoreSessions();
+        QCOMPARE(mgr2.activeSessionIndex(), 0);
+    }
+
+    void testActiveIdLegacyFallback()
+    {
+        // Write settings with only activeIndex (no activeId) — simulates pre-feature config
+        writeRawSessions({{"A", "/tmp"}, {"B", "/home"}}, 1);
+
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.activeSessionIndex(), 1); // should use legacy index
+    }
+
+    // --- findSessionByName (tested indirectly via switchToSessionByName) ---
+
+    void testFindSessionByName()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // index 0
+        mgr.setSessionName(0, "editor");
+
+        mgr.createSession(); // index 1
+        mgr.setSessionName(1, "logs");
+
+        mgr.setActiveSessionIndex(1); // start on "logs"
+
+        mgr.switchToSessionByName("editor");
+        QCOMPARE(mgr.activeSessionIndex(), 0);
+    }
+
+    void testFindSessionByNameNotFound()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // switchToSessionByName with non-existent name should create a new session
+        int countBefore = mgr.sessionCount();
+        mgr.switchToSessionByName("nonexistent");
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        QCOMPARE(mgr.sessionName(mgr.sessionCount() - 1), QStringLiteral("nonexistent"));
+    }
+
+    void testFindSessionByNameCaseSensitive()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        mgr.setSessionName(0, "editor");
+
+        int countBefore = mgr.sessionCount();
+        mgr.switchToSessionByName("Editor"); // different case
+        QCOMPARE(mgr.sessionCount(), countBefore + 1); // should create new, not find existing
+    }
+
+    // --- switchToSessionByName ---
+
+    void testSwitchToExistingNamedSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        mgr.createSession();
+        mgr.setSessionName(0, "Terminal");
+        mgr.setSessionName(1, "editor");
+        mgr.setActiveSessionIndex(0);
+
+        mgr.switchToSessionByName("editor");
+        QCOMPARE(mgr.activeSessionIndex(), 1);
+    }
+
+    void testSwitchToNewNamedSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+        int countBefore = mgr.sessionCount();
+
+        mgr.switchToSessionByName("logs");
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        QCOMPARE(mgr.sessionName(mgr.sessionCount() - 1), QStringLiteral("logs"));
+        QCOMPARE(mgr.activeSessionIndex(), mgr.sessionCount() - 1);
+    }
+
+    // --- sessionExecCommand ---
+
+    void testSessionExecCommandForCommandSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand("htop", QStringList() << "htop");
+        QCOMPARE(mgr.sessionExecCommand(mgr.sessionCount() - 1), QStringLiteral("htop"));
+    }
+
+    void testSessionExecCommandForRegularSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionExecCommand(0), QString());
+    }
+
+    // --- isAnonymous() helper ---
+
+    void testIsAnonymousHelper()
+    {
+        SessionInfo info;
+        info.id = 1;
+        info.commandSession = false;
+        info.name = "test";
+        QCOMPARE(info.isAnonymous(), false);
+
+        info.commandSession = true;
+        info.name = "test";
+        QCOMPARE(info.isAnonymous(), false); // named command session
+
+        info.commandSession = true;
+        info.name = "";
+        QCOMPARE(info.isAnonymous(), true); // anonymous command session
+
+        info.commandSession = false;
+        info.name = "";
+        QCOMPARE(info.isAnonymous(), false); // regular session with empty name (edge case)
+    }
+
+    // --- Multiple anonymous sessions ---
+
+    void testMultipleAnonymousSessionsIndependent()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand(QString(), QStringList() << "htop");
+        mgr.createSessionWithCommand(QString(), QStringList() << "btop");
+
+        QCOMPARE(mgr.sessionCount(), 2);
+
+        // Get the first anonymous session's view and emit exit
+        int firstId = mgr.sessionId(0);
+        TerminalView *view1 = mgr.sessionById(firstId);
+        QVERIFY(view1);
+
+        view1->emitCommandExited(0);
+
+        // Process the queued singleShot(0) and verify only first removed
+        QTest::qWait(50);
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.sessionExecCommand(0), QStringLiteral("btop")); // second still exists
+    }
+
+    // --- Security: sanitization and rate limiting ---
+
+    void testSessionNameSanitizedControlChars()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Newlines should be stripped
+        mgr.setCliArgs(QString(), QStringList(), QStringLiteral("name\nwith\nnewlines"));
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        QString name = mgr.sessionName(0);
+        QVERIFY(!name.contains('\n'));
+        QVERIFY(!name.contains('\r'));
+
+        // Clean up
+        mgr.removeSession(0);
+
+        // Long names should be truncated
+        QString longName(200, QChar('x'));
+        mgr.setCliArgs(QString(), QStringList(), longName);
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        QVERIFY(mgr.sessionName(0).length() <= 128);
+    }
+
+    void testRateLimitAtMaxSessions()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create sessions up to the limit
+        // matches kMaxSessionCount in sessionmanager.cpp
+        for (int i = 0; i < 100; i++) {
+            auto *view = mgr.createSessionWithCommand(
+                QStringLiteral("cmd%1").arg(i), QStringList() << "true");
+            QVERIFY(view != nullptr);
+        }
+        QCOMPARE(mgr.sessionCount(), 100);
+
+        // Next one should be rejected
+        auto *view = mgr.createSessionWithCommand(
+            QStringLiteral("overflow"), QStringList() << "true");
+        QVERIFY(view == nullptr);
+        QCOMPARE(mgr.sessionCount(), 100); // unchanged
+    }
+
+    void testRateLimitAnonymousSessions()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Fill up with anonymous sessions
+        // matches kMaxSessionCount in sessionmanager.cpp
+        for (int i = 0; i < 100; i++) {
+            mgr.createSessionWithCommand(QString(), QStringList() << "true");
+        }
+        QCOMPARE(mgr.sessionCount(), 100);
+
+        // Anonymous overflow should also be rejected
+        auto *view = mgr.createSessionWithCommand(QString(), QStringList() << "htop");
+        QVERIFY(view == nullptr);
+        QCOMPARE(mgr.sessionCount(), 100);
     }
 };
 

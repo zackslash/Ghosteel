@@ -141,6 +141,7 @@ Page {
             }
             property string sessionName: SessionManager.sessionName(actualIndex)
             property string autorunCommand: SessionManager.sessionAutorunCommand(actualIndex)
+            property string execCommand: SessionManager.sessionExecCommand(actualIndex)
 
             onClicked: {
                 pageStack.pop()
@@ -185,9 +186,11 @@ Page {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    // Session name
+                    // Session name (or exec command for -e sessions)
                     Label {
-                        text: sessionDelegate.sessionName
+                        text: sessionDelegate.sessionName.length > 0
+                              ? sessionDelegate.sessionName
+                              : sessionDelegate.execCommand
                         color: sessionDelegate.highlighted
                                ? Theme.highlightColor
                                : Theme.primaryColor

@@ -21,5 +21,7 @@ ApplicationWindow {
         if (!SessionManager.restoreSessions()) {
             SessionManager.createSession()
         }
+        // Process CLI args (-e/--exec, -s/--session) after sessions are restored
+        SessionManager.processCliArgs()
     }
 }

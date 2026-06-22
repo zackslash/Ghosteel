@@ -2152,9 +2152,15 @@ void GLRenderer::Renderer::renderShellExitText(QOpenGLFramebufferObject *fbo)
     font.setPointSize(m_cachedFontSize + 4);
     font.setBold(true);
     painter.setFont(font);
+
+    QString exitText;
+    if (m_shellExitCode == -127) {
+        exitText = GLRenderer::tr("Command not found");
+    } else {
+        exitText = GLRenderer::tr("Shell exited with code %1").arg(m_shellExitCode);
+    }
     painter.drawText(QRectF(0, 0, fbo->width(), fbo->height()),
-                     Qt::AlignCenter,
-                     GLRenderer::tr("Shell exited with code %1").arg(m_shellExitCode));
+                     Qt::AlignCenter, exitText);
 
     painter.end();
 }

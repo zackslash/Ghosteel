@@ -110,30 +110,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     if (pid == 0) {
         // Child process
         ::close(execPipe[0]); // Close read end of exec pipe
-
-        setsid();
-
-        // Change to working directory if specified (for session restore)
-        if (!m_workingDirectory.isEmpty()) {
-            QByteArray dirBytes = m_workingDirectory.toUtf8();
-            if (chdir(dirBytes.constData()) != 0) {
-                // Fallback to home directory if saved path no longer exists
-                const char *home = getenv("HOME");
-                if (home)
-                    (void)chdir(home);
-            }
-        }
-
-        // Set TERM
-        setenv("TERM", "xterm-256color", 1);
-
-        // Set GHOSTTY_RESOURCES_DIR for shell integration scripts.
-        // The scripts are installed at /usr/share/<APP_NAME>/shell-integration/
-        // but GHOSTTY_RESOURCES_DIR should point to the parent so that
-        // scripts reference ${GHOSTTY_RESOURCES_DIR}/shell-integration/bash/...
-        QByteArray resourceDir = QDir::toNativeSeparators(
-            QStringLiteral("/usr/share/" APP_NAME)).toUtf8();
-        setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
+        setupChildProcess();
 
         execlp(shell, shell, nullptr);
         // If exec fails, try sh
@@ -146,7 +123,95 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     }
 
     // Parent process
-    ::close(execPipe[1]); // Close write end in parent
+    if (!startParentProcess(pid, execPipe))
+        return false;
+    return true;
+}
+
+void PtyManager::setupChildProcess()
+{
+    setsid();
+
+    // Change to working directory if specified (for session restore)
+    if (!m_workingDirectory.isEmpty()) {
+        QByteArray dirBytes = m_workingDirectory.toUtf8();
+        if (chdir(dirBytes.constData()) != 0) {
+            // Fallback to home directory if saved path no longer exists
+            const char *home = getenv("HOME");
+            if (home)
+                (void)chdir(home);
+        }
+    }
+
+    // Set TERM
+    setenv("TERM", "xterm-256color", 1);
+
+    // Set GHOSTTY_RESOURCES_DIR for shell integration scripts.
+    // The scripts are installed at /usr/share/<APP_NAME>/shell-integration/
+    // but GHOSTTY_RESOURCES_DIR should point to the parent so that
+    // scripts reference ${GHOSTTY_RESOURCES_DIR}/shell-integration/bash/...
+    QByteArray resourceDir = QDir::toNativeSeparators(
+        QStringLiteral("/usr/share/" APP_NAME)).toUtf8();
+    setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
+}
+
+bool PtyManager::startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows)
+{
+    m_sessionGeneration++;
+
+    struct winsize ws = {};
+    ws.ws_col = cols;
+    ws.ws_row = rows;
+
+    int execPipe[2];
+    if (pipe(execPipe) < 0) {
+        qWarning() << "pipe() failed:" << strerror(errno);
+        return false;
+    }
+    fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
+
+    pid_t pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
+    if (pid < 0) {
+        qWarning() << "forkpty failed:" << strerror(errno);
+        ::close(execPipe[0]);
+        ::close(execPipe[1]);
+        return false;
+    }
+
+    if (pid == 0) {
+        // Child process
+        ::close(execPipe[0]); // Close read end of exec pipe
+        setupChildProcess();
+
+        QByteArray cmdBytes = command.toUtf8();
+        QList<QByteArray> argBytes;
+        argBytes.append(cmdBytes);
+        for (const QString &arg : args)
+            argBytes.append(arg.toUtf8());
+
+        QVector<const char *> argv(argBytes.size() + 1);
+        for (int i = 0; i < argBytes.size(); ++i)
+            argv[i] = argBytes[i].constData();
+        argv[argBytes.size()] = nullptr;
+
+        execvp(cmdBytes.constData(), const_cast<char *const *>(argv.data()));
+
+        int execErr = errno;
+        ssize_t written = ::write(execPipe[1], &execErr, sizeof(execErr));
+        (void)written;
+        _exit(127);
+    }
+
+    // Parent process
+    if (!startParentProcess(pid, execPipe))
+        return false;
+    return true;
+}
+
+bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
+{
+    // Close write end in parent
+    ::close(execPipe[1]);
     m_execPipeReadFd = execPipe[0];
     m_childPid = pid;
 
@@ -159,7 +224,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     connect(m_readerThread, &PtyReaderThread::dataReady,
             this, &PtyManager::dataReady, Qt::QueuedConnection);
     connect(m_readerThread, &PtyReaderThread::readFinished, this, [this]() {
-        // Capture generation by value — if startShell() is called again,
+        // Capture generation by value — if startShell()/startCommand() is called again,
         // the old timer will see a stale generation and bail out.
         uint32_t gen = m_sessionGeneration;
 
@@ -221,7 +286,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 
         if (n > 0) {
             // exec failed — we received the errno from the child
-            qWarning() << "Shell exec failed:" << strerror(execErr);
+            qWarning() << "Process exec failed:" << strerror(execErr);
             int status = 0;
             waitpid(m_childPid, &status, WNOHANG);
             m_childPid = -1;
