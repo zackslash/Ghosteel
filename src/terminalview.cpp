@@ -1129,6 +1129,8 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         event->accept();
         return;
     }
+    // Reset touch grab set in touchEvent for multi-touch anticipation.
+    setKeepMouseGrab(false);
     QQuickItem::mouseReleaseEvent(event);
 }
 
@@ -1214,20 +1216,32 @@ void TerminalView::touchEvent(QTouchEvent *event)
     if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
         m_twoFingerScrolling = false;
         m_touchScrollAccumulator = 0;
+        setKeepMouseGrab(false);
     }
 
-    // When mouse tracking is active (TUI apps like htop/tmux), allow touches
-    // in the top gesture zone to pass through to the parent SilicaFlickable
-    // for PullDownMenu. Without this, setKeepMouseGrab(true) in mousePressEvent
-    // blocks the pull-down gesture entirely.
-    if (m_mouseTrackingActive
-        && event->type() == QEvent::TouchBegin
+    // Top gesture zone: allow touches to pass through to the parent
+    // SilicaFlickable for PullDownMenu. This applies to all modes
+    // (not just mouse tracking) so the pull-down menu is reachable
+    // even when the terminal would otherwise grab the touch sequence.
+    if (event->type() == QEvent::TouchBegin
         && points.size() == 1
         && points.first().pos().y() < m_pullDownZoneHeight) {
         // Don't accept — let SilicaFlickable claim this for PullDownMenu.
         // This also prevents Qt from synthesizing a mouse event, so
         // mousePressEvent never fires and setKeepMouseGrab is never called.
+        setKeepMouseGrab(false);
         return;
+    }
+
+    // Prevent the parent SilicaFlickable from stealing the touch
+    // sequence once we detect multi-touch. Without this, two-finger
+    // scroll gestures are captured by the PullDownMenu because the
+    // SilicaFlickable claims the first finger's vertical movement
+    // before the second finger arrives.
+    // NOTE: only grab on multi-touch (2+ points), NOT on single-finger
+    // TouchBegin — that would block the PullDownMenu from working.
+    if (points.size() >= 2) {
+        setKeepMouseGrab(true);
     }
 
     QQuickItem::touchEvent(event);
@@ -1394,6 +1408,7 @@ void TerminalView::handleMultiTouchEnd()
     m_twoFingerScrolling = false;
     m_twoFingerLastY = 0;
     m_touchScrollAccumulator = 0;
+    setKeepMouseGrab(false);
 }
 
 void TerminalView::timerEvent(QTimerEvent *event)
