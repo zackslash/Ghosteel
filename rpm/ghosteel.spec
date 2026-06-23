@@ -8,7 +8,7 @@ License:    MIT
 URL:        https://github.com/zackslash/Ghosteel
 Source0:    %{name}-%{version}.tar.bz2
 Source1:    https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz
-Source2:    https://deps.files.ghostty.org/uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9.tar.gz
+Source2:    zig-deps-cache.tar.gz
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   libGLESv2
 Requires:   libEGL
@@ -30,8 +30,6 @@ BuildRequires:  pkgconfig(sailfishcrypto)
 BuildRequires:  desktop-file-utils
 BuildRequires:  xz
 BuildRequires:  patch
-
-%define uucode_hash uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9
 
 ExclusiveArch:  %arm aarch64 %ix86
 
@@ -66,12 +64,12 @@ if [ -f "%{_sourcedir}/zig-x86_64-linux-0.15.2.tar.xz" ]; then
     tar -xJf "%{_sourcedir}/zig-x86_64-linux-0.15.2.tar.xz" -C %{_builddir}
 fi
 
-# Set up Zig package cache (OBS only — Source2 is fetched by OBS before build)
-if [ -f "%{_sourcedir}/%{uucode_hash}.tar.gz" ]; then
+# Set up Zig package cache with all dependencies (OBS only)
+# Source2 is a pre-built cache containing all Zig deps for offline builds
+if [ -f "%{_sourcedir}/zig-deps-cache.tar.gz" ]; then
     ZIG_CACHE="%{_builddir}/zig-cache"
-    mkdir -p "${ZIG_CACHE}/p/%{uucode_hash}"
-    tar -xzf "%{_sourcedir}/%{uucode_hash}.tar.gz" \
-        --strip-components=1 -C "${ZIG_CACHE}/p/%{uucode_hash}"
+    mkdir -p "${ZIG_CACHE}"
+    tar -xzf "%{_sourcedir}/zig-deps-cache.tar.gz" -C "${ZIG_CACHE}"
 fi
 
 %build
@@ -167,16 +165,18 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
         exit 1
     fi
 
-    # If OBS pre-fetched uucode into cache, point Zig at it
-    ZIG_CACHE_ENV=""
-    if [ -d "%{_builddir}/zig-cache/p/%{uucode_hash}" ]; then
-        ZIG_CACHE_ENV="ZIG_GLOBAL_CACHE_DIR=%{_builddir}/zig-cache"
+    # Use --system to disable network and point Zig at pre-fetched deps
+    # Only set when the full deps cache exists (OBS builds)
+    SYSTEM_FLAG=""
+    if [ -d "%{_builddir}/zig-cache/p" ]; then
+        SYSTEM_FLAG="--system %{_builddir}/zig-cache/p"
     fi
 
     cd ghostty
-    env ${ZIG_CACHE_ENV} "$ZIG" build -Demit-lib-vt \
+    "$ZIG" build -Demit-lib-vt \
         -Dtarget="${ZIG_TARGET}" \
-        -Doptimize=ReleaseSafe 2>&1 || exit 1
+        -Doptimize=ReleaseSafe \
+        ${SYSTEM_FLAG} 2>&1 || exit 1
     mkdir -p %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}
     cp zig-out/lib/libghostty-vt.a %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}/
     cd %{_builddir}/%{name}-%{version}

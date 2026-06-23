@@ -22,6 +22,7 @@ zig-out/
 ghostty/zig-cache/
 ghostty/zig-out/
 ghostty/.zig-cache/
+zig-deps-cache.tar.gz
 
 # C++ build artifacts
 *.o
@@ -46,6 +47,7 @@ lib/
 # Sailfish SDK
 deploy/
 *.rpm
+_service
 
 # IDE
 .vscode/
