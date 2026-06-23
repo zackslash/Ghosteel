@@ -154,6 +154,11 @@ Q_SIGNALS:
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
     void pinchingChanged(bool pinching);
     void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out
+    // Asks the embedding QML to toggle the parent SilicaFlickable's
+    // `interactive` flag. Emitted false at multi-touch begin so the Flickable
+    // stops stealing the gesture (which otherwise opens the PullDownMenu),
+    // and true at gesture end to restore pull-down behaviour.
+    void requestParentInteractive(bool interactive);
 
 protected:
     void update(); // Override to emit contentChanged()
@@ -261,6 +266,12 @@ private:
     qreal m_twoFingerLastY = 0;
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
+
+    // --- Single-finger touch grab (prevents SilicaFlickable stealing) ---
+    // When true, TerminalView owns the touch grab for a single-finger
+    // gesture and synthesises mouse events so existing mouse-based
+    // interactions (tap, long-press, selection) keep working.
+    bool m_touchGrabActive = false;
 
     // --- Pinch-to-zoom state ---
     enum class GestureMode { Undecided, Scrolling, Pinching };
