@@ -920,7 +920,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         m_lastInputTime.start();
 
         m_mouseTrackingActive = m_vt->isMouseTracking();
-        m_touchStartPos = event->pos();
 
         if (m_mouseTrackingActive) {
             // Top gesture zone — let SilicaFlickable handle for PullDownMenu.
@@ -1231,7 +1230,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
     // ── Drop below 2 points during active multi-touch gesture ────
     // Check m_multiTouchActive too: a brief two-finger tap may never
     // leave Undecided, but must still end (or the Flickable stays disabled).
-    if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
+    if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided) {
         handleMultiTouchEnd();
     }
 
@@ -1301,8 +1300,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
                 mouseReleaseEvent(&synthRel);
             }
             Q_EMIT requestParentInteractive(true);
-            m_twoFingerScrolling = false;
-            m_touchScrollAccumulator = 0;
             m_tuiScrollAccumulator = 0;
             setKeepMouseGrab(false);
             setKeepTouchGrab(false);
@@ -1326,7 +1323,7 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // happen if TouchEnd was missed (e.g., window deactivated, touch stolen
     // by another item) and a new gesture starts while the overlay is still
     // visible. Without this, pinchingChanged(false) is never emitted.
-    if (m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
+    if (m_gestureMode != GestureMode::Undecided) {
         handleMultiTouchEnd();
     }
 
@@ -1356,7 +1353,6 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // TUI apps or pinch-to-zoom disabled: force scroll mode
     if (m_vt->isMouseTracking() || !Settings::instance()->pinchToZoom()) {
         m_gestureMode = GestureMode::Scrolling;
-        m_twoFingerScrolling = true;
         return;
     }
 
@@ -1422,7 +1418,6 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
             && qAbs(centroidDelta.y()) > qAbs(centroidDelta.x())) {
             // Commit to scroll mode
             m_gestureMode = GestureMode::Scrolling;
-            m_twoFingerScrolling = true;
             // Reset lastY to current centroid so first scroll delta is clean
             m_twoFingerLastY = currentCentroid.y();
             return;
@@ -1482,7 +1477,6 @@ void TerminalView::handleMultiTouchEnd()
 
     m_gestureMode = GestureMode::Undecided;
     m_pinchCandidateFrames = 0;
-    m_twoFingerScrolling = false;
     m_multiTouchActive = false;
     m_twoFingerLastY = 0;
     m_touchScrollAccumulator = 0;

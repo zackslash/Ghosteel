@@ -257,13 +257,11 @@ private:
     // --- Mouse tracking for TUI apps (tmux, neovim, htop) ---
     bool m_mouseTrackingActive = false;
     bool m_mouseButtonPressed = false;  // tracks any-button state for encoder
-    QPointF m_touchStartPos;
 
     qreal m_tuiScrollAccumulator = 0;
     qreal m_tuiDragLastY = 0;
 
     // --- Scroll state (two-finger touch + mouse wheel) ---
-    bool m_twoFingerScrolling = false;
     qreal m_twoFingerLastY = 0;
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;

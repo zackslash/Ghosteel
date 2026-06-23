@@ -121,11 +121,7 @@ void send_two_finger_drag(int fd, int start_x, int start_y,
     int inter_finger_delay = 25000;  // 25ms between finger 1 and finger 2 (realistic human)
     int baseline_frames = 3;  // Stationary frames after both fingers down
 
-    /* ---------------------------------------------------------------
-     * PHASE 1: Finger 1 touchdown (single finger)
-     * Real humans don't land both fingers simultaneously.
-     * Typical inter-finger delay is 10-50ms.
-     * --------------------------------------------------------------- */
+    // PHASE 1: Finger 0 down (staggered — realistic 10-50ms before finger 1)
     int baseline_x0 = start_x - finger_offset / 2;
     int baseline_x1 = start_x + finger_offset / 2;
     int baseline_y  = start_y;
@@ -147,10 +143,7 @@ void send_two_finger_drag(int fd, int start_x, int start_y,
     // Inter-finger delay (25ms - realistic human timing)
     usleep(inter_finger_delay);
 
-    /* ---------------------------------------------------------------
-     * PHASE 2: Finger 2 touchdown + transition to two-finger gesture
-     * Now BTN_TOOL_FINGER -> BTN_TOOL_DOUBLETAP
-     * --------------------------------------------------------------- */
+    // PHASE 2: Finger 1 down — transition BTN_TOOL_FINGER → BTN_TOOL_DOUBLETAP
     // Frame 2: Finger 1 joins
     emit(fd, EV_ABS, ABS_MT_SLOT, 1);
     emit(fd, EV_ABS, ABS_MT_TRACKING_ID, 1);
@@ -168,10 +161,7 @@ void send_two_finger_drag(int fd, int start_x, int start_y,
     emit(fd, EV_KEY, BTN_TOOL_DOUBLETAP, 1);  // Now two-finger
     emit_syn(fd);
 
-    /* ---------------------------------------------------------------
-     * PHASE 3: Baseline frames (stationary, both fingers down)
-     * Gesture recognizer needs these to classify gesture type.
-     * --------------------------------------------------------------- */
+    // PHASE 3: Baseline frames (stationary, both fingers down)
     for (int b = 0; b < baseline_frames; b++) {
         emit(fd, EV_ABS, ABS_MT_SLOT, 0);
         emit(fd, EV_ABS, ABS_MT_POSITION_X, baseline_x0);
@@ -183,9 +173,7 @@ void send_two_finger_drag(int fd, int start_x, int start_y,
         usleep(delay_ms > 0 ? delay_ms * 1000 : 16000);
     }
 
-    /* ---------------------------------------------------------------
-     * PHASE 4: Movement (both fingers same direction = scroll)
-     * --------------------------------------------------------------- */
+    // PHASE 4: Movement (both fingers same direction = scroll)
     for (int step = 1; step <= steps; step++) {
         float ratio = (float)step / steps;
         int current_x = start_x + (int)((end_x - start_x) * ratio);
@@ -212,13 +200,7 @@ void send_two_finger_drag(int fd, int start_x, int start_y,
         }
     }
 
-    /* ---------------------------------------------------------------
-     * PHASE 5: Finger release (separate frames, realistic timing)
-     * Real hands lift fingers sequentially:
-     *   1. Lift finger 0 (two-finger -> one-finger transition)
-     *   2. Wait ~30ms
-     *   3. Lift finger 1 (one-finger -> no-finger)
-     * --------------------------------------------------------------- */
+    // PHASE 5: Finger release (staggered — finger 0 first, then finger 1)
 
     // Lift finger 0 (left) first
     emit(fd, EV_ABS, ABS_MT_SLOT, 0);
