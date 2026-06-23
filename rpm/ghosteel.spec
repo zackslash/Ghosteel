@@ -35,6 +35,16 @@ BuildRequires:  patch
 
 ExclusiveArch:  %arm aarch64 %ix86
 
+%if 0%{?_chum}
+Title: Ghosteel Terminal
+Type: desktop-application
+Categories:
+  - Terminal
+  - System
+Custom:
+  Repo: https://github.com/zackslash/Ghosteel
+%endif
+
 %description
 Ghosteel terminal emulator for Sailfish OS, powered by libghostty.
 
@@ -157,17 +167,16 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
         exit 1
     fi
 
-    # Offline build if OBS pre-fetched uucode into cache
-    SYSTEM_FLAG=""
+    # If OBS pre-fetched uucode into cache, point Zig at it
+    ZIG_CACHE_ENV=""
     if [ -d "%{_builddir}/zig-cache/p/%{uucode_hash}" ]; then
-        SYSTEM_FLAG="--system %{_builddir}/zig-cache/p"
+        ZIG_CACHE_ENV="ZIG_GLOBAL_CACHE_DIR=%{_builddir}/zig-cache"
     fi
 
     cd ghostty
-    "$ZIG" build -Demit-lib-vt \
+    env ${ZIG_CACHE_ENV} "$ZIG" build -Demit-lib-vt \
         -Dtarget="${ZIG_TARGET}" \
-        -Doptimize=ReleaseSafe \
-        ${SYSTEM_FLAG} 2>&1 || exit 1
+        -Doptimize=ReleaseSafe 2>&1 || exit 1
     mkdir -p %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}
     cp zig-out/lib/libghostty-vt.a %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}/
     cd %{_builddir}/%{name}-%{version}
