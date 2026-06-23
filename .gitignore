@@ -48,6 +48,7 @@ lib/
 deploy/
 *.rpm
 _service
+ghosteel.changes
 
 # IDE
 .vscode/
