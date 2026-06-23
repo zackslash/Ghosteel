@@ -267,24 +267,12 @@ private:
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
 
-    // --- Single-finger touch grab (prevents SilicaFlickable stealing) ---
-    // When true, TerminalView owns the touch grab for a single-finger
-    // gesture and synthesises mouse events so existing mouse-based
-    // interactions (tap, long-press, selection) keep working.
-    bool m_touchGrabActive = false;
-
     // True between handleMultiTouchBegin and handleMultiTouchEnd. Used to
     // detect the <2 → ≥2 finger transition independent of the Qt event type:
     // when a second finger lands AFTER the first, the event arrives as a
     // TouchUpdate (not TouchBegin), so we must start the gesture on the first
     // ≥2-point event of any type — otherwise the Flickable is never disabled.
     bool m_multiTouchActive = false;
-
-    // True when the parent SilicaFlickable was disabled due to single-finger
-    // motion outside the pull-down zone. Cleared in handleMultiTouchEnd and
-    // used to re-enable the Flickable at TouchEnd so pull-down gestures
-    // from the top zone are not affected.
-    bool m_motionFlickableDisabled = false;
 
     // --- Pinch-to-zoom state ---
     enum class GestureMode { Undecided, Scrolling, Pinching };

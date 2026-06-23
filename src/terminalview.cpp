@@ -909,8 +909,6 @@ bool TerminalView::updateMagnifierVelocity(const QPointF &pos)
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
 {
-    qWarning() << "GHOSTEEL_INPUT mousePressEvent pos=" << event->pos()
-               << "src=" << event->source();
     if (m_shellExited) {
         restartShell();
         event->accept();
@@ -1015,8 +1013,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
 
 void TerminalView::mouseMoveEvent(QMouseEvent *event)
 {
-    qWarning() << "GHOSTEEL_INPUT mouseMoveEvent pos=" << event->pos()
-               << "src=" << event->source();
     if (m_draggingHandle != 0) {
         if (m_draggingHandle == 1)
             m_selStart = event->pos();
@@ -1140,8 +1136,6 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
 
 void TerminalView::wheelEvent(QWheelEvent *event)
 {
-    qWarning() << "GHOSTEEL_INPUT wheelEvent angleDelta=" << event->angleDelta()
-               << "src=" << event->source();
     if (!m_vt || !m_vt->terminal()) {
         QQuickItem::wheelEvent(event);
         return;
@@ -1184,8 +1178,6 @@ void TerminalView::wheelEvent(QWheelEvent *event)
 
 void TerminalView::touchEvent(QTouchEvent *event)
 {
-    qWarning() << "GHOSTEEL_INPUT touchEvent type=" << event->type()
-               << "points=" << event->touchPoints().size();
     if (!m_vt || !m_vt->terminal()) {
         QQuickItem::touchEvent(event);
         return;
@@ -1195,19 +1187,6 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     // ── Multi-touch (2+ fingers) ──────────────────────────────────
     if (points.size() >= 2) {
-        // If we were tracking a single-finger grab, end it cleanly
-        // before entering multi-touch mode so mouse-based state
-        // (selection, long-press timer, handle drag) is reset.
-        if (m_touchGrabActive) {
-            const auto &pt = points.first();
-            QMouseEvent synthRel(QEvent::MouseButtonRelease,
-                                 pt.pos(), pt.screenPos(),
-                                 Qt::LeftButton, Qt::NoButton,
-                                 event->modifiers());
-            mouseReleaseEvent(&synthRel);
-            m_touchGrabActive = false;
-        }
-
         setKeepMouseGrab(true);
         // Qt 5.6: the touch grab is a SEPARATE mechanism from the mouse grab.
         // SilicaFlickable (a filtering parent) steals the touch grab via its
@@ -1456,7 +1435,6 @@ void TerminalView::handleMultiTouchEnd()
     m_pinchCandidateFrames = 0;
     m_twoFingerScrolling = false;
     m_multiTouchActive = false;
-    m_motionFlickableDisabled = false;
     m_twoFingerLastY = 0;
     m_touchScrollAccumulator = 0;
     setKeepMouseGrab(false);
