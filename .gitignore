@@ -38,7 +38,10 @@ documentation.list
 /ghosteel
 
 # Pre-built libs: built locally via ./scripts/build-libs.sh
+# Un-ignored for sfdk method: tar — guarded by .githooks/pre-commit
 lib/
+!lib/
+!lib/**
 
 # Sailfish SDK
 deploy/

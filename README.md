@@ -71,6 +71,14 @@ Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-
 
 ## Development
 
+After cloning, enable the git hooks:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This activates a pre-commit hook that blocks accidental commits of compiled `.a` files and ghostty submodule pointer changes (use `git commit --no-verify` for intentional submodule upgrades).
+
 The Ghostty submodule needs a patch applied before building locally. The patch works around a Zig i386 C ABI bug that corrupts struct-by-value parameters. It's applied automatically in CI, but for local builds:
 
 ```bash
