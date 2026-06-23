@@ -94,6 +94,7 @@ for i in $(seq 0 $((TOTAL - 1))); do
             *.tar.xz)        tar -xJf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
             *.tar.zst)       tar --zstd -xf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
             *.tar)           tar -xf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
+            *.zip)           unzip -q -o "${WORK_DIR}/${FILENAME}" -d "${WORK_DIR}/${DEST}" ;;
             *)               echo "  WARNING: Unknown archive format: $FILENAME" >&2; SKIPPED=$((SKIPPED + 1)) ;;
         esac
 

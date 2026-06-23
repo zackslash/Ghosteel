@@ -42,7 +42,7 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 
 ## Install
 
-Download the `.rpm` for your architecture from [Releases](https://github.com/zackslash/sfos-ghostty/releases):
+Download the `.rpm` for your architecture from [Releases](https://github.com/zackslash/Ghosteel/releases):
 
 ```bash
 devel-su pkcon install-local ./ghosteel-<version>.rpm

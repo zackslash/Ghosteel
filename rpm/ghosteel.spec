@@ -4,10 +4,11 @@ Summary:    Ghosteel terminal emulator for Sailfish OS
 Version:    0.0.0
 Release:    1
 %define debug_package %{nil}
+%define zig_version 0.15.2
 License:    MIT
 URL:        https://github.com/zackslash/Ghosteel
 Source0:    %{name}-%{version}.tar.bz2
-Source1:    zig-x86_64-linux-0.15.2.tar.xz
+Source1:    zig-x86_64-linux-%{zig_version}.tar.xz
 Source2:    zig-deps-cache.tar.gz
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   libGLESv2
@@ -61,8 +62,8 @@ if [ -d ghostty/src ]; then
 fi
 
 # Extract Zig compiler (OBS only — Source1 is fetched by OBS before build)
-if [ -f "%{_sourcedir}/zig-x86_64-linux-0.15.2.tar.xz" ]; then
-    tar -xJf "%{_sourcedir}/zig-x86_64-linux-0.15.2.tar.xz" -C %{_builddir}
+if [ -f "%{_sourcedir}/zig-x86_64-linux-%{zig_version}.tar.xz" ]; then
+    tar -xJf "%{_sourcedir}/zig-x86_64-linux-%{zig_version}.tar.xz" -C %{_builddir}
 fi
 
 # Set up Zig package cache with all dependencies (OBS only)
@@ -141,10 +142,10 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
 
     # Find Zig compiler
     #   OBS: extracted from Source1 in the prep step
-    #   SDK: must be installed on host (zig 0.15.2)
+    #   SDK: must be installed on host (zig %{zig_version})
     ZIG=""
-    if [ -f "%{_builddir}/zig-x86_64-linux-0.15.2/zig" ]; then
-        ZIG="%{_builddir}/zig-x86_64-linux-0.15.2/zig"
+    if [ -f "%{_builddir}/zig-x86_64-linux-%{zig_version}/zig" ]; then
+        ZIG="%{_builddir}/zig-x86_64-linux-%{zig_version}/zig"
     elif command -v zig >/dev/null 2>&1; then
         ZIG="zig"
     fi
@@ -152,7 +153,7 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
     if [ -z "$ZIG" ]; then
         echo "ERROR: lib/${LIB_ARCH}/libghostty-vt.a not found and no Zig compiler available." >&2
         echo "" >&2
-        echo "Install Zig 0.15.2 from https://ziglang.org/" >&2
+        echo "Install Zig %{zig_version} from https://ziglang.org/" >&2
         echo "Then either:" >&2
         echo "  - Run ./scripts/build-libs.sh (one-time, builds all arches)" >&2
         echo "  - Or ensure ghostty submodule is initialized (builds per sfdk target)" >&2
