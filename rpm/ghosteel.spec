@@ -205,7 +205,3 @@ desktop-file-install --delete-original \
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 %{_datadir}/dbus-1/services/com.zackslash.ghosteel.service
-
-%changelog
-* Mon Jun 23 2026 Luke Hines <luke@hines.im>
-- See https://github.com/zackslash/Ghosteel/releases
