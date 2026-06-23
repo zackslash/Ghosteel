@@ -5,7 +5,7 @@
 # Uses Ghostty's Flatpak zig-packages.json as the authoritative dep list.
 # Run this whenever the ghostty submodule is updated (new release, version bump, etc.)
 #
-# Usage: ./scripts/create-zig-deps-tarball.sh [output-dir]
+# Usage: ./scripts/chum-create-zig-deps-tarball.sh [output-dir]
 # Default output: repo root
 #
 # Outputs:
