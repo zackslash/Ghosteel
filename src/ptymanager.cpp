@@ -67,15 +67,42 @@ PtyManager::~PtyManager()
     stop();
 }
 
-bool PtyManager::startShell(uint16_t cols, uint16_t rows)
+bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid)
 {
-    // Increment generation so stale timers from previous sessions bail out
     m_sessionGeneration++;
 
     struct winsize ws = {};
     ws.ws_col = cols;
     ws.ws_row = rows;
 
+    // Create pipe for exec failure detection.
+    // The write end has FD_CLOEXEC, so it is closed automatically on successful exec.
+    // If exec fails, the child writes errno to the pipe before _exit.
+    if (pipe(execPipe) < 0) {
+        qWarning() << "pipe() failed:" << strerror(errno);
+        return false;
+    }
+    fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
+
+    pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
+    if (pid < 0) {
+        qWarning() << "forkpty failed:" << strerror(errno);
+        ::close(execPipe[0]);
+        ::close(execPipe[1]);
+        return false;
+    }
+
+    if (pid == 0) {
+        // Child process — close read end and set up environment
+        ::close(execPipe[0]);
+        setupChildProcess();
+    }
+
+    return true;
+}
+
+bool PtyManager::startShell(uint16_t cols, uint16_t rows)
+{
     // Determine shell — prefer configured command, then $SHELL, then /bin/sh
     const char *shell = nullptr;
     QByteArray shellBytes;
@@ -89,33 +116,15 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
             shell = "/bin/sh";
     }
 
-    // Create pipe for exec failure detection.
-    // The write end has FD_CLOEXEC, so it is closed automatically on successful exec.
-    // If exec fails, the child writes errno to the pipe before _exit(127).
     int execPipe[2];
-    if (pipe(execPipe) < 0) {
-        qWarning() << "pipe() failed:" << strerror(errno);
+    pid_t pid;
+    if (!forkPtyProcess(cols, rows, execPipe, pid))
         return false;
-    }
-    fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
-
-    pid_t pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
-    if (pid < 0) {
-        qWarning() << "forkpty failed:" << strerror(errno);
-        ::close(execPipe[0]);
-        ::close(execPipe[1]);
-        return false;
-    }
 
     if (pid == 0) {
-        // Child process
-        ::close(execPipe[0]); // Close read end of exec pipe
-        setupChildProcess();
-
+        // Child process — exec the shell
         execlp(shell, shell, nullptr);
-        // If exec fails, try sh
-        execlp("sh", "sh", nullptr);
-        // Both exec attempts failed — write errno to pipe so parent knows
+        execlp("sh", "sh", nullptr);  // fallback
         int execErr = errno;
         ssize_t written = ::write(execPipe[1], &execErr, sizeof(execErr));
         (void)written;
@@ -123,9 +132,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     }
 
     // Parent process
-    if (!startParentProcess(pid, execPipe))
-        return false;
-    return true;
+    return startParentProcess(pid, execPipe);
 }
 
 void PtyManager::setupChildProcess()
@@ -143,7 +150,6 @@ void PtyManager::setupChildProcess()
         }
     }
 
-    // Set TERM
     setenv("TERM", "xterm-256color", 1);
 
     // Set GHOSTTY_RESOURCES_DIR for shell integration scripts.
@@ -157,32 +163,13 @@ void PtyManager::setupChildProcess()
 
 bool PtyManager::startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows)
 {
-    m_sessionGeneration++;
-
-    struct winsize ws = {};
-    ws.ws_col = cols;
-    ws.ws_row = rows;
-
     int execPipe[2];
-    if (pipe(execPipe) < 0) {
-        qWarning() << "pipe() failed:" << strerror(errno);
+    pid_t pid;
+    if (!forkPtyProcess(cols, rows, execPipe, pid))
         return false;
-    }
-    fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
-
-    pid_t pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
-    if (pid < 0) {
-        qWarning() << "forkpty failed:" << strerror(errno);
-        ::close(execPipe[0]);
-        ::close(execPipe[1]);
-        return false;
-    }
 
     if (pid == 0) {
-        // Child process
-        ::close(execPipe[0]); // Close read end of exec pipe
-        setupChildProcess();
-
+        // Child process — exec the command with arguments
         QByteArray cmdBytes = command.toUtf8();
         QList<QByteArray> argBytes;
         argBytes.append(cmdBytes);
@@ -203,14 +190,11 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
     }
 
     // Parent process
-    if (!startParentProcess(pid, execPipe))
-        return false;
-    return true;
+    return startParentProcess(pid, execPipe);
 }
 
 bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
 {
-    // Close write end in parent
     ::close(execPipe[1]);
     m_execPipeReadFd = execPipe[0];
     m_childPid = pid;
@@ -219,7 +203,6 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     int flags = fcntl(m_ptyFd, F_GETFL, 0);
     fcntl(m_ptyFd, F_SETFL, flags | O_NONBLOCK);
 
-    // Start reader thread
     m_readerThread = new PtyReaderThread(m_ptyFd, this);
     connect(m_readerThread, &PtyReaderThread::dataReady,
             this, &PtyManager::dataReady, Qt::QueuedConnection);
@@ -263,9 +246,8 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
                     ? WEXITSTATUS(status) : -1;
                 Q_EMIT shellExited(exitCode);
             }
-            // else: child still running, retry on next tick
         });
-        timer->start(100); // Check every 100ms
+        timer->start(100);
     }, Qt::QueuedConnection);
     m_readerThread->start();
 
@@ -290,7 +272,7 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
             int status = 0;
             waitpid(m_childPid, &status, WNOHANG);
             m_childPid = -1;
-            Q_EMIT shellExited(-127);
+            Q_EMIT shellExited(kExecFailedExitCode);
         }
         // else: n == 0 means EOF → exec succeeded (pipe closed by CLOEXEC)
     });
@@ -300,7 +282,6 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
 
 void PtyManager::stop()
 {
-    // Clean up exec pipe resources
     if (m_execNotifier) {
         m_execNotifier->setEnabled(false);
         m_execNotifier->deleteLater();

@@ -199,7 +199,6 @@ TerminalView* SessionManager::createSession()
     Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
 
-    // Auto-switch to the new session
     setActiveSessionIndex(index);
 
     return view;
@@ -252,7 +251,6 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
     Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
 
-    // Auto-switch to the new session
     setActiveSessionIndex(index);
 
     return view;
@@ -591,9 +589,9 @@ bool SessionManager::checkSingleInstance(const QString &execCommand,
             QByteArray cmdBytes = execCommand.toUtf8();
             for (const QString &arg : execArgs)
                 cmdBytes.append('\0' + arg.toUtf8());
-            msg = QStringLiteral("exec:%1:").arg(sessionName).toUtf8() + cmdBytes + '\n';
+            msg = (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
         } else if (!sessionName.isEmpty()) {
-            msg = QStringLiteral("switch:%1\n").arg(sessionName).toUtf8();
+            msg = (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
         } else {
             msg = QByteArrayLiteral("raise\n");
         }
@@ -657,16 +655,14 @@ void SessionManager::setCliArgs(const QString &execCommand,
 void SessionManager::processCliArgs()
 {
     if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty())
-        return; // No CLI args — nothing to do
+        return;
 
     if (!m_cliExecCommand.isEmpty()) {
-        // -e was passed: create a command session
         QStringList fullArgs;
         fullArgs << m_cliExecCommand;
         fullArgs << m_cliExecArgs;
         createSessionWithCommand(m_cliSessionName, fullArgs);
     } else if (!m_cliSessionName.isEmpty()) {
-        // -s without -e: switch to or create named session
         switchToSessionByName(m_cliSessionName);
     }
 

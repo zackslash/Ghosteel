@@ -79,11 +79,17 @@ int main(int argc, char *argv[])
                 for (int j = i + 2; j < argc; j++)
                     execArgs.append(QString::fromLocal8Bit(argv[j]));
                 break; // -e consumes everything after it
+            } else {
+                fprintf(stderr, "ghosteel: -e requires a command argument\n");
+                return 1;
             }
         } else if (arg == QStringLiteral("-s") || arg == QStringLiteral("--session")) {
             if (i + 1 < argc) {
                 sessionName = QString::fromLocal8Bit(argv[i + 1]);
                 i++; // skip the value
+            } else {
+                fprintf(stderr, "ghosteel: -s requires a session name\n");
+                return 1;
             }
         }
     }

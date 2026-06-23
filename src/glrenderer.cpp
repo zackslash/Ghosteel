@@ -2,6 +2,7 @@
 #include "terminalview.h"
 #include "ghosttyvt.h"
 #include "settings.h"
+#include "ptymanager.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -2154,7 +2155,7 @@ void GLRenderer::Renderer::renderShellExitText(QOpenGLFramebufferObject *fbo)
     painter.setFont(font);
 
     QString exitText;
-    if (m_shellExitCode == -127) {
+    if (m_shellExitCode == PtyManager::kExecFailedExitCode) {
         exitText = GLRenderer::tr("Command not found");
     } else {
         exitText = GLRenderer::tr("Shell exited with code %1").arg(m_shellExitCode);
