@@ -1,0 +1,18 @@
+#!/bin/bash
+# Prevent accidental commits of compiled libraries and submodule pointer changes.
+# .a files are built locally via ./scripts/build-libs.sh and must not be tracked.
+# ghostty submodule pointer changes should only happen during intentional upgrades.
+
+# Block .a files
+if git diff --cached --name-only --diff-filter=ACR | grep -qE '\.a$'; then
+    echo "ERROR: .a files must not be committed." >&2
+    echo "Run: git reset HEAD -- '*.a'" >&2
+    exit 1
+fi
+
+# Block ghostty submodule pointer changes
+if git diff --cached --raw -- ghostty 2>/dev/null | grep -qE '^:[0-9]+ 160000'; then
+    echo "ERROR: ghostty submodule pointer change detected." >&2
+    echo "If this is an intentional version upgrade, use: git commit --no-verify" >&2
+    exit 1
+fi

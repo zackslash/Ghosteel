@@ -4,6 +4,7 @@ X-Nemo-Application-Type=silica-qt5
 Icon=ghosteel
 Exec=ghosteel
 Name=Ghosteel
+Comment=Terminal emulator for SailfishOS
 
 [X-Sailjail]
 OrganizationName=com.zackslash

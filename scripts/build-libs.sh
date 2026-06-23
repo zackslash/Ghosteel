@@ -2,7 +2,7 @@
 # Build libghostty-vt static libraries for all Sailfish OS architectures.
 # Requires Zig 0.15.2 (see README for installation).
 #
-# Usage: ./scripts/build-libs.sh [--arch aarch64|armv7hl|i486|all]
+# Usage: ./scripts/build-libs.sh [aarch64|armv7hl|i486|all]
 
 set -euo pipefail
 
@@ -70,7 +70,7 @@ main() {
             ;;
         *)
             echo "Unknown architecture: $arch"
-            echo "Usage: $0 [--arch aarch64|armv7hl|i486|all]"
+            echo "Usage: $0 [aarch64|armv7hl|i486|all]"
             exit 1
             ;;
     esac
