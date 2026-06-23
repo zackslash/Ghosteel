@@ -7,7 +7,7 @@ Release:    1
 License:    MIT
 URL:        https://github.com/zackslash/Ghosteel
 Source0:    %{name}-%{version}.tar.bz2
-Source1:    https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz
+Source1:    zig-x86_64-linux-0.15.2.tar.xz
 Source2:    zig-deps-cache.tar.gz
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   libGLESv2
