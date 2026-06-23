@@ -32,7 +32,7 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
 
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
-    m_saveTimer->setInterval(500);
+    m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
     connect(m_saveTimer, &QTimer::timeout, this, &SessionManager::saveSessions);
 
     // Save sessions early on app quit — before QML engine destruction kills

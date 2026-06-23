@@ -18,7 +18,6 @@ class TerminalView : public QObject
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
-    Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
     Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
@@ -126,7 +125,6 @@ Q_SIGNALS:
     void selectedTextChanged();
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
-    void searchActiveChanged();
     void selectionHighlightColorChanged();
     void selectionHandleColorChanged();
     void selectionHandleBorderColorChanged();

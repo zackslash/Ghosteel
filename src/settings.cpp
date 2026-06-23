@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <unistd.h>
 
 Settings::Settings(QObject *parent)
     : Settings(
@@ -73,6 +74,14 @@ void Settings::save()
         for (const auto &key : keys)
             tmp.setValue(key, m_settings.value(key));
         tmp.sync();
+    }
+
+    // fsync before rename to ensure data is on disk — protects against
+    // power loss between write and rename (same pattern as scrollback)
+    {
+        QFile f(tmpPath);
+        if (f.open(QIODevice::ReadOnly))
+            ::fsync(f.handle());
     }
 
     if (QFile::exists(tmpPath)) {
