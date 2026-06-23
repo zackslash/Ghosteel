@@ -1,20 +1,30 @@
 #!/bin/bash
-# Creates a tarball of all Zig package dependencies needed for offline OBS builds.
-# Uses Ghostty's Flatpak zig-packages.json as the authoritative package list.
+# Downloads the Zig compiler and all Zig package dependencies needed for
+# offline OBS builds. Produces two files to upload to OBS as Source1/Source2.
 #
+# Uses Ghostty's Flatpak zig-packages.json as the authoritative dep list.
 # Run this whenever the ghostty submodule is updated (new release, version bump, etc.)
-# then upload the resulting tarball to OBS as Source2.
 #
-# Usage: ./scripts/create-zig-deps-tarball.sh [output.tar.gz]
-# Default output: zig-deps-cache.tar.gz (in repo root)
+# Usage: ./scripts/create-zig-deps-tarball.sh [output-dir]
+# Default output: repo root
+#
+# Outputs:
+#   zig-x86_64-linux-<version>.tar.xz  (Zig compiler binary — upload as Source1)
+#   zig-deps-cache.tar.gz               (all Zig package deps — upload as Source2)
 
 set -euo pipefail
+
+ZIG_VERSION="0.15.2"
+ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GHOSTTY_DIR="${REPO_ROOT}/ghostty"
 PACKAGES_JSON="${GHOSTTY_DIR}/flatpak/zig-packages.json"
-OUTPUT="${1:-${REPO_ROOT}/zig-deps-cache.tar.gz}"
+OUTPUT_DIR="${1:-${REPO_ROOT}}"
 WORK_DIR=$(mktemp -d)
+
+ZIG_OUTPUT="${OUTPUT_DIR}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
+DEPS_OUTPUT="${OUTPUT_DIR}/zig-deps-cache.tar.gz"
 
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -24,10 +34,22 @@ if [ ! -f "$PACKAGES_JSON" ]; then
     exit 1
 fi
 
+# ── Download Zig compiler ────────────────────────────────────────────
+echo "=== Downloading Zig ${ZIG_VERSION} ==="
+if [ -f "$ZIG_OUTPUT" ]; then
+    echo "  Already exists: $ZIG_OUTPUT (skipping)"
+else
+    echo "  Downloading: $ZIG_URL"
+    curl -fsSL -o "$ZIG_OUTPUT" "$ZIG_URL"
+    echo "  Saved: $ZIG_OUTPUT ($(du -h "$ZIG_OUTPUT" | awk '{print $1}'))"
+fi
+
+# ── Download Zig package dependencies ────────────────────────────────
+echo ""
+echo "=== Downloading Zig package dependencies ==="
 echo "Reading packages from $PACKAGES_JSON..."
 mkdir -p "${WORK_DIR}/p"
 
-# Parse JSON and download each package
 TOTAL=$(jq length "$PACKAGES_JSON")
 COUNT=0
 SKIPPED=0
@@ -84,12 +106,13 @@ for i in $(seq 0 $((TOTAL - 1))); do
 done
 
 echo ""
-echo "Creating tarball: $OUTPUT"
-tar -czf "$OUTPUT" -C "${WORK_DIR}" p
+echo "Creating deps tarball: $DEPS_OUTPUT"
+tar -czf "$DEPS_OUTPUT" -C "${WORK_DIR}" p
 
-SIZE=$(du -h "$OUTPUT" | awk '{print $1}')
+DEPS_SIZE=$(du -h "$DEPS_OUTPUT" | awk '{print $1}')
+ZIG_SIZE=$(du -h "$ZIG_OUTPUT" | awk '{print $1}')
 echo ""
-echo "Done! $OUTPUT ($SIZE)"
-echo "Packages: $((COUNT - SKIPPED)) included, $SKIPPED skipped"
-echo ""
-echo "Upload this to OBS as Source2, replacing the previous zig-deps-cache.tar.gz."
+echo "=== Done ==="
+echo "  Zig compiler: $ZIG_OUTPUT ($ZIG_SIZE)   → upload as OBS Source1"
+echo "  Zig deps:     $DEPS_OUTPUT ($DEPS_SIZE) → upload as OBS Source2"
+echo "  Packages:     $((COUNT - SKIPPED)) included, $SKIPPED skipped"
