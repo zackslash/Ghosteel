@@ -35,6 +35,7 @@ for tag in $TAGS; do
     CHANGES=$(echo "$BODY" | grep -E '^\* ' \
         | grep -v '^\*\*Full Changelog' \
         | grep -v '^\*\*New Contributors' \
+        | grep -v '^\* @.* made their first contribution' \
         | sed 's/^\* /- /' \
         | sed 's/ by @[^ ]*//' \
         | sed 's/ in https:\/\/github.com\/[^ ]*//' \

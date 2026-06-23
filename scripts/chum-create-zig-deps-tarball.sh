@@ -40,7 +40,8 @@ if [ -f "$ZIG_OUTPUT" ]; then
     echo "  Already exists: $ZIG_OUTPUT (skipping)"
 else
     echo "  Downloading: $ZIG_URL"
-    curl -fsSL -o "$ZIG_OUTPUT" "$ZIG_URL"
+    curl -fsSL -o "${ZIG_OUTPUT}.partial" "$ZIG_URL"
+    mv "${ZIG_OUTPUT}.partial" "$ZIG_OUTPUT"
     echo "  Saved: $ZIG_OUTPUT ($(du -h "$ZIG_OUTPUT" | awk '{print $1}'))"
 fi
 
