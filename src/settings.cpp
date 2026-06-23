@@ -1,6 +1,13 @@
 #include "settings.h"
 
 #include <QStandardPaths>
+#include <QFile>
+#include <QDebug>
+
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <unistd.h>
 
 Settings::Settings(QObject *parent)
     : Settings(
@@ -13,6 +20,9 @@ Settings::Settings(const QString &settingsPath, QObject *parent)
     : QObject(parent)
     , m_settings(settingsPath, QSettings::IniFormat)
 {
+    // Clean up stale temp file from a previous crash during atomic save
+    QFile::remove(settingsPath + QStringLiteral(".tmp"));
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce
@@ -54,7 +64,35 @@ void Settings::load()
 
 void Settings::save()
 {
-    m_settings.sync();
+    const QString path = m_settings.fileName();
+    const QString tmpPath = path + QStringLiteral(".tmp");
+
+    // QSettings preserves INI formatting, group structure, and type handling
+    {
+        QSettings tmp(tmpPath, QSettings::IniFormat);
+        const auto keys = m_settings.allKeys();
+        for (const auto &key : keys)
+            tmp.setValue(key, m_settings.value(key));
+        tmp.sync();
+    }
+
+    // fsync before rename to ensure data is on disk — protects against
+    // power loss between write and rename (same pattern as scrollback)
+    {
+        QFile f(tmpPath);
+        if (f.open(QIODevice::ReadOnly))
+            ::fsync(f.handle());
+    }
+
+    if (QFile::exists(tmpPath)) {
+        if (::rename(tmpPath.toUtf8().constData(), path.toUtf8().constData()) != 0) {
+            qWarning() << "Settings: atomic save failed:" << std::strerror(errno);
+            QFile::remove(tmpPath);
+            m_settings.sync();
+        }
+    } else {
+        m_settings.sync();
+    }
 }
 
 void Settings::scheduleSave()

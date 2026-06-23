@@ -14,6 +14,7 @@
 #include <QPainter>
 #include <QDateTime>
 #include <QFile>
+#include <QFont>
 
 // GLSL ES 1.00 shaders — textured cell quads with per-cell fg/bg colors
 // Cursor blink and style are handled in the fragment shader via uniforms to avoid

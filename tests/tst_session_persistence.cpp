@@ -71,7 +71,8 @@ private slots:
 
     void testRestoreNoSavedData()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         QSignalSpy createdSpy(&mgr, &SessionManager::sessionCreated);
         QSignalSpy restoredSpy(&mgr, &SessionManager::sessionsRestored);
 
@@ -87,7 +88,8 @@ private slots:
     {
         writeRawSessions({{"Projects", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         QSignalSpy createdSpy(&mgr, &SessionManager::sessionCreated);
         QSignalSpy restoredSpy(&mgr, &SessionManager::sessionsRestored);
         QSignalSpy switchedSpy(&mgr, &SessionManager::sessionSwitched);
@@ -111,7 +113,8 @@ private slots:
             {"Temp", "/tmp"}
         }, 1);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         QSignalSpy createdSpy(&mgr, &SessionManager::sessionCreated);
         QSignalSpy restoredSpy(&mgr, &SessionManager::sessionsRestored);
         QSignalSpy switchedSpy(&mgr, &SessionManager::sessionSwitched);
@@ -133,7 +136,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}}, 5); // activeIndex out of range
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.activeSessionIndex(), 0); // clamped to valid range
@@ -143,7 +147,8 @@ private slots:
     {
         writeRawSessions({{"Test", "/nonexistent/path/that/does/not/exist"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         // Session should still be created — directory validated on restore
@@ -177,7 +182,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         // restoreSessions caps at 50 and creates all count sessions (even without data).
@@ -205,7 +211,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.sessionCount(), 50);
@@ -215,7 +222,8 @@ private slots:
 
     void testSaveOnCreateSession()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions(); // initialize (returns false, sets m_sessionsLoaded)
 
         TerminalView *view = mgr.createSession();
@@ -240,7 +248,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 2);
 
@@ -263,7 +272,8 @@ private slots:
     {
         writeRawSessions({{"Original", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.setSessionName(0, "Renamed");
@@ -281,7 +291,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.activeSessionIndex(), 0);
 
@@ -301,7 +312,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 3);
 
@@ -317,7 +329,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.removeSessionById(999); // doesn't exist
@@ -328,7 +341,8 @@ private slots:
     {
         writeRawSessions({{"Only", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 1);
         QCOMPARE(mgr.activeSessionIndex(), 0);
@@ -344,7 +358,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}}, 2);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.activeSessionIndex(), 2); // "C" is active
 
@@ -357,7 +372,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}}, 0);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 3);
         QCOMPARE(mgr.activeSessionIndex(), 0); // "A" is active
@@ -374,7 +390,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}}, 1);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 3);
         QCOMPARE(mgr.activeSessionIndex(), 1); // "B" is active
@@ -391,7 +408,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}}, 0);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 3);
         QCOMPARE(mgr.activeSessionIndex(), 0); // "A" is active
@@ -408,7 +426,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}}, 1);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.activeSessionIndex(), 1); // "B" is active
 
@@ -436,7 +455,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}, {"D", "/opt"}}, 3);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 4);
         QCOMPARE(mgr.activeSessionIndex(), 3); // "D" is active
@@ -459,7 +479,8 @@ private slots:
     {
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}}, 0);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 2);
         QCOMPARE(mgr.activeSessionIndex(), 0);
@@ -475,7 +496,8 @@ private slots:
     {
         writeRawSessions({{"Htop", "/tmp", "htop"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.sessionCount(), 1);
@@ -487,7 +509,8 @@ private slots:
     {
         writeRawSessions({{"Terminal", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.sessionCount(), 1);
@@ -498,7 +521,8 @@ private slots:
     {
         writeRawSessions({{"Htop", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.setSessionAutorunCommand(0, "htop");
@@ -516,7 +540,8 @@ private slots:
     {
         writeRawSessions({{"Htop", "/tmp", "htop"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
@@ -530,7 +555,8 @@ private slots:
     {
         writeRawSessions({{"Htop", "/tmp", "htop"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
@@ -544,7 +570,8 @@ private slots:
     {
         // Create fresh manager, set autorun, save
         {
-            SessionManager mgr(m_settingsPath);
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
             mgr.restoreSessions();
 
             mgr.createSession();
@@ -553,7 +580,8 @@ private slots:
         }
 
         // New instance — restore
-        SessionManager mgr2(m_settingsPath);
+        Settings settings2(m_settingsPath);
+        SessionManager mgr2(&settings2);
         mgr2.restoreSessions();
 
         QCOMPARE(mgr2.sessionCount(), 1);
@@ -565,7 +593,8 @@ private slots:
     {
         writeRawSessions({{"Logs", "/tmp", "tail -f /var/log/syslog | grep error"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("tail -f /var/log/syslog | grep error"));
@@ -576,7 +605,8 @@ private slots:
         // Start with autorun set
         writeRawSessions({{"Htop", "/tmp", "htop"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("htop"));
 
@@ -595,7 +625,8 @@ private slots:
         }
 
         // Verify stays cleared after restore
-        SessionManager mgr2(m_settingsPath);
+        Settings settings2(m_settingsPath);
+        SessionManager mgr2(&settings2);
         mgr2.restoreSessions();
         QCOMPARE(mgr2.sessionAutorunCommand(0), QString());
     }
@@ -605,7 +636,8 @@ private slots:
     void testRestoreKeybarOpen()
     {
         writeRawSessions({{"Test", "/tmp", "", "true"}});
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionKeybarOpen(0), true);
     }
@@ -613,7 +645,8 @@ private slots:
     void testRestoreKeybarClosed()
     {
         writeRawSessions({{"Test", "/tmp", "", "false"}});
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionKeybarOpen(0), false);
     }
@@ -621,7 +654,8 @@ private slots:
     void testRestoreKeyboardVisible()
     {
         writeRawSessions({{"Test", "/tmp", "", "", "true"}});
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionKeyboardVisible(0), true);
     }
@@ -629,14 +663,16 @@ private slots:
     void testRestoreKeyboardHidden()
     {
         writeRawSessions({{"Test", "/tmp", "", "", "false"}});
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionKeyboardVisible(0), false);
     }
 
     void testSaveKeybarState()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         mgr.setSessionKeybarOpen(0, false);
         QTest::qWait(DEBOUNCE_WAIT_MS);
@@ -649,7 +685,8 @@ private slots:
 
     void testSaveKeyboardState()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         mgr.setSessionKeyboardVisible(0, false);
         QTest::qWait(DEBOUNCE_WAIT_MS);
@@ -662,7 +699,8 @@ private slots:
 
     void testKeybarNoOpSuppressesSignal()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         QSignalSpy spy(&mgr, &SessionManager::sessionKeybarOpenChanged);
         mgr.setSessionKeybarOpen(0, true); // default is true
@@ -671,7 +709,8 @@ private slots:
 
     void testKeyboardNoOpSuppressesSignal()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         QSignalSpy spy(&mgr, &SessionManager::sessionKeyboardVisibleChanged);
         mgr.setSessionKeyboardVisible(0, true); // default is true
@@ -680,7 +719,8 @@ private slots:
 
     void testKeybarSignalOnChange()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         QSignalSpy spy(&mgr, &SessionManager::sessionKeybarOpenChanged);
         mgr.setSessionKeybarOpen(0, false);
@@ -690,7 +730,8 @@ private slots:
 
     void testKeyboardSignalOnChange()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         QSignalSpy spy(&mgr, &SessionManager::sessionKeyboardVisibleChanged);
         mgr.setSessionKeyboardVisible(0, false);
@@ -700,14 +741,16 @@ private slots:
 
     void testKeybarDefaultValue()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         QCOMPARE(mgr.sessionKeybarOpen(0), true);
     }
 
     void testKeyboardDefaultValue()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.createSession();
         QCOMPARE(mgr.sessionKeyboardVisible(0), true);
     }
@@ -716,7 +759,8 @@ private slots:
     {
         // Save sessions with custom UI state
         {
-            SessionManager mgr(m_settingsPath);
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
             mgr.restoreSessions(); // initialize (sets m_sessionsLoaded)
             mgr.createSession();
             mgr.createSession();
@@ -728,7 +772,8 @@ private slots:
         }
 
         // Restore and verify
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         QVERIFY(mgr.restoreSessions());
         QCOMPARE(mgr.sessionKeybarOpen(0), false);
         QCOMPARE(mgr.sessionKeyboardVisible(0), false);
@@ -745,7 +790,8 @@ private slots:
             {"S3", "/home"}
         }, 0);
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QCOMPARE(mgr.sessionCount(), 3);
 
@@ -775,7 +821,8 @@ private slots:
     {
         // Create fresh manager, create sessions, save
         {
-            SessionManager mgr(m_settingsPath);
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
             mgr.restoreSessions();
 
             mgr.createSession();
@@ -788,7 +835,8 @@ private slots:
         }
 
         // New manager instance — restore from saved state
-        SessionManager mgr2(m_settingsPath);
+        Settings settings2(m_settingsPath);
+        SessionManager mgr2(&settings2);
         bool restored = mgr2.restoreSessions();
 
         QCOMPARE(restored, true);
@@ -809,7 +857,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         // The restore itself should NOT trigger a save (m_sessionsLoaded is false during restore)
@@ -837,7 +886,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         bool restored = mgr.restoreSessions();
 
         QCOMPARE(restored, false);
@@ -867,7 +917,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         // Restore assigns IDs 10, 11 (m_nextSessionId increments to 12).
@@ -905,7 +956,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.sessionCount(), 3);
@@ -931,7 +983,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         QCOMPARE(mgr.sessionIndexById(5), 0);
@@ -943,7 +996,8 @@ private slots:
 
     void testSessionIndexByIdAfterRemoval()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions(); // initialize
 
         mgr.createSession(); // id=1, index=0
@@ -965,7 +1019,8 @@ private slots:
 
     void testDesktopNotificationSignal()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions(); // initialize
 
         TerminalView *view1 = mgr.createSession(); // id=1
@@ -1003,7 +1058,8 @@ private slots:
             s.sync();
         }
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         // Create a new session — its ID should be >= 201
@@ -1029,7 +1085,8 @@ private slots:
 
     void testCreateSessionSetsTimestamps()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession();
@@ -1053,7 +1110,8 @@ private slots:
         qint64 savedCreatedAt = 0;
         qint64 savedLastUsedAt = 0;
         {
-            SessionManager mgr(m_settingsPath);
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
             mgr.restoreSessions();
             mgr.createSession();
             QTest::qWait(DEBOUNCE_WAIT_MS);
@@ -1069,7 +1127,8 @@ private slots:
         QVERIFY(savedLastUsedAt > 0);
 
         // Create new manager and restore
-        SessionManager mgr2(m_settingsPath);
+        Settings settings2(m_settingsPath);
+        SessionManager mgr2(&settings2);
         mgr2.restoreSessions();
         QTest::qWait(DEBOUNCE_WAIT_MS);
 
@@ -1089,7 +1148,8 @@ private slots:
         // writeRawSessions doesn't write timestamps — simulates legacy data
         writeRawSessions({{"Legacy", "/tmp"}});
 
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
         QTest::qWait(DEBOUNCE_WAIT_MS);
 
@@ -1105,7 +1165,8 @@ private slots:
 
     void testSwitchToSessionUpdatesLastUsedAt()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         // Create 2 sessions with a small delay between them
@@ -1157,7 +1218,8 @@ private slots:
 
     void testDisplayToActualManualMode()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession();
@@ -1173,7 +1235,8 @@ private slots:
 
     void testDisplayToActualAlphabeticalSort()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession(); // actual 0
@@ -1194,7 +1257,8 @@ private slots:
 
     void testDisplayToActualLastUsedSort()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession(); // actual 0 — least recent
@@ -1212,7 +1276,8 @@ private slots:
 
     void testActualToDisplayRoundTrip()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession();
@@ -1234,7 +1299,8 @@ private slots:
 
     void testSwitchToSessionByDisplayIndex()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession();
@@ -1254,7 +1320,8 @@ private slots:
 
     void testSortRebuildsOnNameChange()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession(); // actual 0 — "C"
@@ -1283,7 +1350,8 @@ private slots:
 
     void testSortRebuildsOnRemove()
     {
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession(); // actual 0 — "C"
@@ -1317,7 +1385,8 @@ private slots:
         // valid mappings because rebuildSortedIndices() now runs BEFORE
         // signal emissions.  Verify by reading displayToActual() inside
         // a signal handler.
-        SessionManager mgr(m_settingsPath);
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
         mgr.restoreSessions();
 
         mgr.createSession(); // actual 0

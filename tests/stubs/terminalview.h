@@ -18,7 +18,6 @@ class TerminalView : public QObject
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
-    Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
     Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
@@ -101,8 +100,8 @@ public:
     Q_INVOKABLE QString autorunCommand() const { return m_autorunCommand; }
     Q_INVOKABLE void suppressNextKeyboardAutoShow() {}
     Q_INVOKABLE void setPendingScrollback(const QByteArray &) {}
-    Q_INVOKABLE void openSearch() { m_searchActive = true; Q_EMIT searchActiveChanged(); }
-    Q_INVOKABLE void closeSearch() { m_searchActive = false; m_currentMatchIndex = -1; Q_EMIT searchActiveChanged(); Q_EMIT searchMatchCountChanged(); Q_EMIT currentMatchIndexChanged(); }
+    Q_INVOKABLE void openSearch() { m_searchActive = true; }
+    Q_INVOKABLE void closeSearch() { m_searchActive = false; m_currentMatchIndex = -1; Q_EMIT searchMatchCountChanged(); Q_EMIT currentMatchIndexChanged(); }
     Q_INVOKABLE void setSearchPattern(const QString &) {}
     Q_INVOKABLE void findNext() {}
     Q_INVOKABLE void findPrevious() {}
@@ -126,7 +125,6 @@ Q_SIGNALS:
     void selectedTextChanged();
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
-    void searchActiveChanged();
     void selectionHighlightColorChanged();
     void selectionHandleColorChanged();
     void selectionHandleBorderColorChanged();

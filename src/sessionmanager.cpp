@@ -20,15 +20,12 @@
 #include <unistd.h>
 
 SessionManager::SessionManager(QObject *parent)
-    : SessionManager(
-          QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
-          + QStringLiteral("/" APP_ORG "/" APP_NAME ".conf"),
-          parent)
+    : SessionManager(Settings::instance(), parent)
 {}
 
-SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
+SessionManager::SessionManager(Settings *settings, QObject *parent)
     : QObject(parent)
-    , m_settings(settingsPath, QSettings::IniFormat)
+    , m_settings(settings)
 {
     // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
     m_encryptor = new ScrollEncryptor(this);
@@ -396,12 +393,12 @@ int SessionManager::actualToDisplay(int actualIndex) const
 
 int SessionManager::sortMode() const
 {
-    return Settings::instance()->sessionSortMode();
+    return m_settings->sessionSortMode();
 }
 
 void SessionManager::setSortMode(int mode)
 {
-    Settings::instance()->setSessionSortMode(mode);
+    m_settings->setSessionSortMode(mode);
     rebuildSortedIndices();
     Q_EMIT sessionsChanged();
     Q_EMIT sortOrderChanged();
@@ -414,7 +411,7 @@ void SessionManager::rebuildSortedIndices()
         return;
     }
 
-    int mode = Settings::instance()->sessionSortMode();
+    int mode = m_settings->sessionSortMode();
 
     // Manual mode: keep insertion order
     if (mode == Settings::SortManual) {
@@ -559,22 +556,21 @@ void SessionManager::onNewInstanceConnection()
 
 void SessionManager::saveSessions()
 {
-    m_settings.beginGroup(QStringLiteral("sessions"));
-    m_settings.setValue(QStringLiteral("count"), m_sessions.size());
-    m_settings.setValue(QStringLiteral("nextId"), m_nextSessionId);
-    m_settings.setValue(QStringLiteral("activeIndex"), m_activeSessionIndex);
-    m_settings.endGroup();
+    QSettings &s = m_settings->raw();
+    s.beginGroup(QStringLiteral("sessions"));
+    s.setValue(QStringLiteral("count"), m_sessions.size());
+    s.setValue(QStringLiteral("nextId"), m_nextSessionId);
+    s.setValue(QStringLiteral("activeIndex"), m_activeSessionIndex);
+    s.endGroup();
 
-    // Clear old session entries
-    m_settings.remove(QStringLiteral("sessionData"));
+    s.remove(QStringLiteral("sessionData"));
 
-    // Save each session by index
     for (int i = 0; i < m_sessions.size(); i++) {
         SessionInfo &info = m_sessions[i];
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
-        m_settings.beginGroup(group);
-        m_settings.setValue(QStringLiteral("id"), info.id);
-        m_settings.setValue(QStringLiteral("name"), info.name);
+        s.beginGroup(group);
+        s.setValue(QStringLiteral("id"), info.id);
+        s.setValue(QStringLiteral("name"), info.name);
         // Use live CWD from /proc if shell is running, otherwise use cached value
         if (info.view) {
             QString liveCwd = info.view->workingDirectory();
@@ -584,26 +580,26 @@ void SessionManager::saveSessions()
         QString cwd = info.cachedWorkingDirectory;
         if (cwd.isEmpty())
             cwd = QDir::homePath();
-        m_settings.setValue(QStringLiteral("workingDirectory"), cwd);
-        m_settings.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
+        s.setValue(QStringLiteral("workingDirectory"), cwd);
+        s.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
         // Read live font size from view before persisting
         if (info.view)
             info.fontSize = info.view->fontSize();
-        m_settings.setValue(QStringLiteral("fontSize"), info.fontSize);
-        m_settings.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
-        m_settings.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
-        m_settings.setValue(QStringLiteral("createdAt"), info.createdAt);
-        m_settings.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
-        m_settings.endGroup();
+        s.setValue(QStringLiteral("fontSize"), info.fontSize);
+        s.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
+        s.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
+        s.setValue(QStringLiteral("createdAt"), info.createdAt);
+        s.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
+        s.endGroup();
     }
 
-    m_settings.sync();
+    m_settings->save();
 }
 
 void SessionManager::scheduleSave()
 {
     if (m_sessionsLoaded)
-        m_saveTimer->start(); // restarts timer on each call (debounce)
+        m_saveTimer->start();
 }
 
 QString SessionManager::scrollbackDir() const
@@ -619,7 +615,7 @@ QString SessionManager::scrollbackFilePath(int sessionId) const
 
 void SessionManager::saveScrollback()
 {
-    if (!Settings::instance()->scrollbackPersistence())
+    if (!m_settings->scrollbackPersistence())
         return;
 
     QString dir = scrollbackDir();
@@ -664,7 +660,7 @@ void SessionManager::saveScrollback()
 
 void SessionManager::cleanupScrollbackFiles()
 {
-    int retentionDays = Settings::instance()->scrollbackRetentionDays();
+    int retentionDays = m_settings->scrollbackRetentionDays();
     QDir dir(scrollbackDir());
     if (!dir.exists())
         return;
@@ -707,11 +703,12 @@ int SessionManager::activeSessionFontSize() const
 
 bool SessionManager::restoreSessions()
 {
-    m_settings.beginGroup(QStringLiteral("sessions"));
-    int count = m_settings.value(QStringLiteral("count"), 0).toInt();
-    int nextId = m_settings.value(QStringLiteral("nextId"), 1).toInt();
-    int activeIndex = m_settings.value(QStringLiteral("activeIndex"), 0).toInt();
-    m_settings.endGroup();
+    QSettings &s = m_settings->raw();
+    s.beginGroup(QStringLiteral("sessions"));
+    int count = s.value(QStringLiteral("count"), 0).toInt();
+    int nextId = s.value(QStringLiteral("nextId"), 1).toInt();
+    int activeIndex = s.value(QStringLiteral("activeIndex"), 0).toInt();
+    s.endGroup();
 
     if (count <= 0) {
         m_sessionsLoaded = true;
@@ -728,19 +725,19 @@ bool SessionManager::restoreSessions()
 
     for (int i = 0; i < count; i++) {
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
-        m_settings.beginGroup(group);
-        int savedId = m_settings.value(QStringLiteral("id"), m_nextSessionId).toInt();
-        QString name = m_settings.value(QStringLiteral("name"),
+        s.beginGroup(group);
+        int savedId = s.value(QStringLiteral("id"), m_nextSessionId).toInt();
+        QString name = s.value(QStringLiteral("name"),
                                         tr("Session %1").arg(i + 1)).toString();
-        QString workingDir = m_settings.value(QStringLiteral("workingDirectory"),
+        QString workingDir = s.value(QStringLiteral("workingDirectory"),
                                               QDir::homePath()).toString();
-        QString autorun = m_settings.value(QStringLiteral("autorunCommand"), QString()).toString();
-        int fontSize = m_settings.value(QStringLiteral("fontSize"), 0).toInt();
-        bool keybarOpen = m_settings.value(QStringLiteral("keybarOpen"), true).toBool();
-        bool keyboardVisible = m_settings.value(QStringLiteral("keyboardVisible"), true).toBool();
-        qint64 createdAt = m_settings.value(QStringLiteral("createdAt"), 0).toLongLong();
-        qint64 lastUsedAt = m_settings.value(QStringLiteral("lastUsedAt"), 0).toLongLong();
-        m_settings.endGroup();
+        QString autorun = s.value(QStringLiteral("autorunCommand"), QString()).toString();
+        int fontSize = s.value(QStringLiteral("fontSize"), 0).toInt();
+        bool keybarOpen = s.value(QStringLiteral("keybarOpen"), true).toBool();
+        bool keyboardVisible = s.value(QStringLiteral("keyboardVisible"), true).toBool();
+        qint64 createdAt = s.value(QStringLiteral("createdAt"), 0).toLongLong();
+        qint64 lastUsedAt = s.value(QStringLiteral("lastUsedAt"), 0).toLongLong();
+        s.endGroup();
 
         // Validate working directory exists, fallback to home
         if (!QDir(workingDir).exists())
@@ -752,7 +749,7 @@ bool SessionManager::restoreSessions()
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
 
-        if (Settings::instance()->scrollbackPersistence()) {
+        if (m_settings->scrollbackPersistence()) {
             QString sbPath = scrollbackFilePath(savedId);
             QFile sbFile(sbPath);
             if (sbFile.exists() && sbFile.open(QIODevice::ReadOnly)) {

@@ -12,7 +12,6 @@
 #include <QList>
 #include <QPointF>
 #include <QColor>
-#include <QFont>
 #include <QAtomicInt>
 #include <QElapsedTimer>
 #include <QBasicTimer>

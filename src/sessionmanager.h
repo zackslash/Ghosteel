@@ -4,12 +4,12 @@
 #include <QObject>
 #include <QQmlListProperty>
 #include <QVector>
-#include <QSettings>
 #include <QTimer>
 #include <QLocalServer>
 
 class TerminalView;
 class ScrollEncryptor;
+class Settings;
 
 struct SessionInfo {
     int id;
@@ -34,7 +34,7 @@ class SessionManager : public QObject
 
 public:
     explicit SessionManager(QObject *parent = nullptr);
-    explicit SessionManager(const QString &settingsPath, QObject *parent = nullptr);
+    explicit SessionManager(Settings *settings, QObject *parent = nullptr);
     ~SessionManager();
 
     int activeSessionIndex() const { return m_activeSessionIndex; }
@@ -136,7 +136,7 @@ private:
     int m_nextSessionId = 1;
 
     // Session persistence
-    QSettings m_settings;
+    Settings *m_settings = nullptr;
     QTimer *m_saveTimer = nullptr;
     bool m_sessionsLoaded = false;
     bool m_savedOnQuit = false;

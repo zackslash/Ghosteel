@@ -14,7 +14,6 @@ class Settings : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
-    Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY fontFamilyChanged)
     Q_PROPERTY(QString shellCommand READ shellCommand WRITE setShellCommand NOTIFY shellCommandChanged)
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
     Q_PROPERTY(float backgroundOpacity READ backgroundOpacity WRITE setBackgroundOpacity NOTIFY backgroundOpacityChanged)
@@ -23,7 +22,6 @@ class Settings : public QObject
     Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
     Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
-    Q_PROPERTY(int sessionSortMode READ sessionSortMode WRITE setSessionSortMode NOTIFY sessionSortModeChanged)
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
     Q_PROPERTY(bool pinchToZoom READ pinchToZoom WRITE setPinchToZoom NOTIFY pinchToZoomChanged)
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
@@ -42,6 +40,13 @@ public:
 
     // Test constructor: allows injecting a custom settings path
     explicit Settings(const QString &settingsPath, QObject *parent = nullptr);
+
+    // Exposed for SessionManager's group-based persistence
+    QSettings &raw() { return m_settings; }
+
+    // Public: called by SessionManager after writing via raw()
+    void save();
+    void scheduleSave();
 
     int fontSize() const { return m_fontSize; }
     void setFontSize(int size);
@@ -121,8 +126,6 @@ Q_SIGNALS:
 private:
     explicit Settings(QObject *parent = nullptr);
     void load();
-    void save();
-    void scheduleSave();
 
     QSettings m_settings;
     QTimer *m_saveTimer;

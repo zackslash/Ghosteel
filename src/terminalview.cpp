@@ -1670,8 +1670,6 @@ void TerminalView::openSearch()
     }
 
     clearSelection();
-
-    Q_EMIT searchActiveChanged();
 }
 
 void TerminalView::closeSearch()
@@ -1686,7 +1684,6 @@ void TerminalView::closeSearch()
     m_searchMatches.clear();
     m_currentMatchIndex = -1;
     update();
-    Q_EMIT searchActiveChanged();
     Q_EMIT searchMatchCountChanged();
     Q_EMIT currentMatchIndexChanged();
 }

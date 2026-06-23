@@ -90,6 +90,8 @@ DISTFILES += qml/ghosteel.qml \
     qml/pages/TerminalPage.qml \
     qml/pages/SessionPage.qml \
     qml/pages/SettingsPage.qml \
+    qml/pages/KeybarSettings.qml \
+    qml/pages/KeyCatalog.js \
     qml/pages/LicensesPage.qml \
     rpm/ghosteel.changes.in \
     rpm/ghosteel.spec \

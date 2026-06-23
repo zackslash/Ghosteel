@@ -24,7 +24,6 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
-    Q_PROPERTY(bool searchActive READ searchActive NOTIFY searchActiveChanged)
     Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
@@ -138,7 +137,6 @@ Q_SIGNALS:
     void linkActivated(const QString &uri);
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
-    void searchActiveChanged();
     void selectionHighlightColorChanged();
     void selectionHandleColorChanged();
     void selectionHandleBorderColorChanged();
