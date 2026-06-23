@@ -2,9 +2,11 @@
   <img src="icons/full.png" alt="Ghosteel" width="128">
 </p>
 
-# Ghosteel
+<h1 align="center">Ghosteel</h1>
 
-Desktop-class terminal for SailfishOS, powered by [Ghostty](https://github.com/ghostty-org/ghostty)'s VT engine. Truecolor, GPU-rendered, multi-session, TUI apps, encrypted scrollback.
+<p align="center">
+  Desktop-class terminal for SailfishOS, powered by <a href="https://github.com/ghostty-org/ghostty">Ghostty</a>'s VT engine. Truecolor, GPU-rendered, multi-session, TUI apps, encrypted scrollback.
+</p>
 
 Ghosteel brings a modern terminal engine to SailfishOS. Most mobile terminals use
 legacy VT parsers with known limitations. Ghosteel uses the same engine that powers
