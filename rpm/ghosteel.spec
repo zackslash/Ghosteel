@@ -95,9 +95,12 @@ fi
 # from there so that qmake and the rest of the build can proceed.
 #
 # When sfdk build (full pipeline) runs, the prep step extracts the tarball and
-# ghosteel.pro already exists → this block is skipped.
+# lib/ already exists → this block is skipped.
+#
+# Check lib/ (not ghosteel.pro) because a previous IDE build may have left
+# ghosteel.pro as a stale symlink while lib/ went missing or became stale.
 # ─────────────────────────────────────────────────────────────────────
-if [ ! -f ghosteel.pro ] && [ -L .sfdk/src ]; then
+if [ ! -e lib ] && [ -L .sfdk/src ]; then
     SRC="$(readlink -f .sfdk/src)"
     if [ -d "$SRC" ]; then
         echo "IDE build: linking source tree from $SRC"
