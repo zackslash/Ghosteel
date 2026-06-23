@@ -43,6 +43,13 @@ public:
     // Test constructor: allows injecting a custom settings path
     explicit Settings(const QString &settingsPath, QObject *parent = nullptr);
 
+    // Exposed for SessionManager's group-based persistence
+    QSettings &raw() { return m_settings; }
+
+    // Public: called by SessionManager after writing via raw()
+    void save();
+    void scheduleSave();
+
     int fontSize() const { return m_fontSize; }
     void setFontSize(int size);
 
@@ -121,8 +128,6 @@ Q_SIGNALS:
 private:
     explicit Settings(QObject *parent = nullptr);
     void load();
-    void save();
-    void scheduleSave();
 
     QSettings m_settings;
     QTimer *m_saveTimer;
