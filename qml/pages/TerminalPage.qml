@@ -384,6 +384,8 @@ Page {
         t.zoomRequested.connect(onZoomRequested)
         t.pinchingChanged.disconnect(onPinchingChanged)
         t.pinchingChanged.connect(onPinchingChanged)
+        t.requestParentInteractive.disconnect(onRequestParentInteractive)
+        t.requestParentInteractive.connect(onRequestParentInteractive)
         terminal = t
         updateWindowTitle()
     }
@@ -398,6 +400,7 @@ Page {
         t.linkActivated.disconnect(showLinkDialog)
         t.zoomRequested.disconnect(onZoomRequested)
         t.pinchingChanged.disconnect(onPinchingChanged)
+        t.requestParentInteractive.disconnect(onRequestParentInteractive)
         fontSizeOverlay.hide()
         t.visible = false
     }
@@ -654,7 +657,14 @@ Page {
         }
     }
 
+    // Disable the wrapping SilicaFlickable during multi-touch gestures so it
+    // cannot steal the sequence and open the PullDownMenu. Re-enabled on end.
+    function onRequestParentInteractive(interactive) {
+        terminalFlickable.interactive = interactive
+    }
+
     SilicaFlickable {
+        id: terminalFlickable
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right

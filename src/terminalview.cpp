@@ -920,12 +920,11 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         m_lastInputTime.start();
 
         m_mouseTrackingActive = m_vt->isMouseTracking();
-        m_touchStartPos = event->pos();
 
         if (m_mouseTrackingActive) {
-            // Top gesture zone — let SilicaFlickable handle for PullDownMenu.
-            // In practice, touchEvent should have rejected this before mouse
-            // synthesis, but guard here as a safety net.
+            // Safety net: reject touches in the pull-down zone. In practice,
+            // touchEvent accepts TUI touches before synthesis, so this is
+            // rarely reached.
             if (event->pos().y() < m_pullDownZoneHeight) {
                 QQuickItem::mousePressEvent(event);
                 return;
@@ -1129,6 +1128,8 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         event->accept();
         return;
     }
+    // Release mouse grab acquired by touchEvent multi-touch/TUI path.
+    setKeepMouseGrab(false);
     QQuickItem::mouseReleaseEvent(event);
 }
 
@@ -1183,54 +1184,147 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     const auto points = event->touchPoints();
 
+    // ── Multi-touch (2+ fingers) ──────────────────────────────────
     if (points.size() >= 2) {
+        setKeepMouseGrab(true);
+        // Qt 5.6: the touch grab is a SEPARATE mechanism from the mouse grab.
+        // SilicaFlickable (a filtering parent) steals the touch grab via its
+        // childMouseEventFilter — setKeepMouseGrab alone does NOT stop this.
+        // setKeepTouchGrab(true) denies the steal so two-finger scroll/pinch
+        // stays with the terminal instead of triggering the PullDownMenu.
+        setKeepTouchGrab(true);
+
+        // ACTIVE grab — passive flags above only prevent future steals.
+        // SilicaFlickable ignores them once its drag recogniser has armed.
+        // grabTouchPoints()/grabMouse() wrest the grab back immediately.
+        {
+            QVector<int> ids;
+            ids.reserve(points.size());
+            for (const auto &p : points)
+                ids.append(p.id());
+            grabTouchPoints(ids);
+            grabMouse();
+        }
+
         switch (event->type()) {
-        case QEvent::TouchBegin:
-            handleMultiTouchBegin(points);
-            break;
-        case QEvent::TouchUpdate:
-            handleMultiTouchUpdate(points);
-            break;
         case QEvent::TouchEnd:
         case QEvent::TouchCancel:
             handleMultiTouchEnd();
             break;
         default:
+            // Start the gesture on the FIRST ≥2-point event of any type.
+            // When the second finger lands after the first, Qt delivers a
+            // TouchUpdate (not TouchBegin), so keying off the event type alone
+            // would skip handleMultiTouchBegin — and the Flickable would never
+            // be disabled, re-opening the PullDownMenu bug for staggered taps.
+            if (!m_multiTouchActive)
+                handleMultiTouchBegin(points);
+            else
+                handleMultiTouchUpdate(points);
             break;
         }
         event->accept();
         return;
     }
 
-    // If we drop below 2 touch points while in a multi-touch gesture
-    // (e.g., one finger lifts mid-pinch), end the gesture properly.
-    // Without this, pinchingChanged(false) is never emitted and the
-    // font size overlay stays visible.
-    if (m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
+    // ── Drop below 2 points during active multi-touch gesture ────
+    // Check m_multiTouchActive too: a brief two-finger tap may never
+    // leave Undecided, but must still end (or the Flickable stays disabled).
+    if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided) {
         handleMultiTouchEnd();
     }
 
-    // Single-touch: reset two-finger state on end/cancel
-    if (event->type() == QEvent::TouchEnd || event->type() == QEvent::TouchCancel) {
-        m_twoFingerScrolling = false;
-        m_touchScrollAccumulator = 0;
+    // ── Single-finger events ──────────────────────────────────────
+    // TUI mode (mouse tracking): accept + grab + forward as synthetic
+    // mouse/wheel events.  Normal mode: fall through to QQuickItem —
+    // accepting would break the Flickable's press-delay disambiguation
+    // (instant drag → pull-down, press-hold → selection).
+
+    if (m_mouseTrackingActive) {
+        if (event->type() == QEvent::TouchBegin && points.size() == 1) {
+            handleTuiTouchBegin(event, points.first());
+            return;
+        }
+        if (event->type() == QEvent::TouchUpdate && points.size() == 1) {
+            handleTuiTouchUpdate(event, points.first());
+            return;
+        }
+        if (event->type() == QEvent::TouchEnd
+            || event->type() == QEvent::TouchCancel) {
+            handleTuiTouchEnd(event, points);
+            return;
+        }
     }
 
-    // When mouse tracking is active (TUI apps like htop/tmux), allow touches
-    // in the top gesture zone to pass through to the parent SilicaFlickable
-    // for PullDownMenu. Without this, setKeepMouseGrab(true) in mousePressEvent
-    // blocks the pull-down gesture entirely.
-    if (m_mouseTrackingActive
-        && event->type() == QEvent::TouchBegin
-        && points.size() == 1
-        && points.first().pos().y() < m_pullDownZoneHeight) {
-        // Don't accept — let SilicaFlickable claim this for PullDownMenu.
-        // This also prevents Qt from synthesizing a mouse event, so
-        // mousePressEvent never fires and setKeepMouseGrab is never called.
-        return;
-    }
-
+    // Normal mode: native fall-through — let Qt synthesise mouse events and
+    // the Flickable handle pull-down disambiguation.
     QQuickItem::touchEvent(event);
+}
+
+void TerminalView::handleTuiTouchBegin(QTouchEvent *event,
+                                       const QTouchEvent::TouchPoint &pt)
+{
+    event->accept();
+    setKeepMouseGrab(true);
+    setKeepTouchGrab(true);
+    Q_EMIT requestParentInteractive(false);
+    grabTouchPoints(QVector<int>{ pt.id() });
+    grabMouse();
+    m_tuiDragLastY = pt.pos().y();
+    m_tuiScrollAccumulator = 0;
+    QMouseEvent synthPress(QEvent::MouseButtonPress,
+                           pt.pos(), pt.screenPos(),
+                           Qt::LeftButton, Qt::LeftButton,
+                           event->modifiers());
+    mousePressEvent(&synthPress);
+}
+
+void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
+                                        const QTouchEvent::TouchPoint &pt)
+{
+    event->accept();
+
+    // Convert vertical drag delta to wheel events for TUI scroll.
+    qreal deltaY = pt.pos().y() - m_tuiDragLastY;
+    m_tuiDragLastY = pt.pos().y();
+    qreal newDelta = -deltaY / m_cellHeight; // negative: down-drag = scroll down
+    auto scrollResult = TextUtil::accumulateScroll(
+        m_tuiScrollAccumulator, newDelta);
+    m_tuiScrollAccumulator = scrollResult.accumulator;
+    if (scrollResult.lines != 0) {
+        GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
+        GhosttyMouseButton btn = (scrollResult.lines > 0)
+            ? GHOSTTY_MOUSE_BUTTON_FOUR : GHOSTTY_MOUSE_BUTTON_FIVE;
+        for (int i = 0; i < qAbs(scrollResult.lines); ++i) {
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, btn, pt.pos(), mods);
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, btn, pt.pos(), mods);
+        }
+    }
+
+    // Also forward mouse motion for TUI click/drag/selection.
+    QMouseEvent synthMove(QEvent::MouseMove,
+                          pt.pos(), pt.screenPos(),
+                          Qt::LeftButton, Qt::LeftButton,
+                          event->modifiers());
+    mouseMoveEvent(&synthMove);
+}
+
+void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
+                                     const QList<QTouchEvent::TouchPoint> &points)
+{
+    if (points.size() == 1) {
+        const auto &pt = points.first();
+        QMouseEvent synthRel(QEvent::MouseButtonRelease,
+                             pt.pos(), pt.screenPos(),
+                             Qt::LeftButton, Qt::NoButton,
+                             event->modifiers());
+        mouseReleaseEvent(&synthRel);
+    }
+    Q_EMIT requestParentInteractive(true);
+    m_tuiScrollAccumulator = 0;
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
+    event->accept();
 }
 
 void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points)
@@ -1243,9 +1337,14 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // happen if TouchEnd was missed (e.g., window deactivated, touch stolen
     // by another item) and a new gesture starts while the overlay is still
     // visible. Without this, pinchingChanged(false) is never emitted.
-    if (m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
+    if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided) {
         handleMultiTouchEnd();
     }
+
+    // Disable the parent Flickable immediately — passive grabs aren't
+    // enough; SilicaFlickable steals the gesture before scroll-commit.
+    Q_EMIT requestParentInteractive(false);
+    m_multiTouchActive = true;
 
     // Cancel any active long-press / selection / handle drag
     if (m_longPressTimerId) {
@@ -1268,7 +1367,6 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // TUI apps or pinch-to-zoom disabled: force scroll mode
     if (m_vt->isMouseTracking() || !Settings::instance()->pinchToZoom()) {
         m_gestureMode = GestureMode::Scrolling;
-        m_twoFingerScrolling = true;
         return;
     }
 
@@ -1334,7 +1432,6 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
             && qAbs(centroidDelta.y()) > qAbs(centroidDelta.x())) {
             // Commit to scroll mode
             m_gestureMode = GestureMode::Scrolling;
-            m_twoFingerScrolling = true;
             // Reset lastY to current centroid so first scroll delta is clean
             m_twoFingerLastY = currentCentroid.y();
             return;
@@ -1389,11 +1486,16 @@ void TerminalView::handleMultiTouchEnd()
         Q_EMIT pinchingChanged(false);
     }
 
+    // Restore the parent SilicaFlickable so single-finger pull-down works again.
+    Q_EMIT requestParentInteractive(true);
+
     m_gestureMode = GestureMode::Undecided;
     m_pinchCandidateFrames = 0;
-    m_twoFingerScrolling = false;
+    m_multiTouchActive = false;
     m_twoFingerLastY = 0;
     m_touchScrollAccumulator = 0;
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
 }
 
 void TerminalView::timerEvent(QTimerEvent *event)

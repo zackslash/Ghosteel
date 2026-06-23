@@ -154,6 +154,9 @@ Q_SIGNALS:
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
     void pinchingChanged(bool pinching);
     void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out
+    // Toggle parent SilicaFlickable.interactive — emitted false on
+    // multi-touch/TUI begin, true on end.
+    void requestParentInteractive(bool interactive);
 
 protected:
     void update(); // Override to emit contentChanged()
@@ -202,6 +205,11 @@ private:
     void handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points);
     void handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points);
     void handleMultiTouchEnd();
+
+    // TUI single-finger touch → synthetic mouse/wheel events
+    void handleTuiTouchBegin(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
+    void handleTuiTouchUpdate(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
+    void handleTuiTouchEnd(QTouchEvent *event, const QList<QTouchEvent::TouchPoint> &points);
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -254,15 +262,26 @@ private:
     // --- Mouse tracking for TUI apps (tmux, neovim, htop) ---
     bool m_mouseTrackingActive = false;
     bool m_mouseButtonPressed = false;  // tracks any-button state for encoder
-    QPointF m_touchStartPos;
+
+    qreal m_tuiScrollAccumulator = 0;
+    qreal m_tuiDragLastY = 0;
 
     // --- Scroll state (two-finger touch + mouse wheel) ---
-    bool m_twoFingerScrolling = false;
     qreal m_twoFingerLastY = 0;
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
 
+    // True between handleMultiTouchBegin/End. Needed because Qt delivers
+    // TouchUpdate (not TouchBegin) when the second finger lands after the
+    // first — so we start the gesture on the first ≥2-point event of any type.
+    bool m_multiTouchActive = false;
+
     // --- Pinch-to-zoom state ---
+    // Touch state machine:
+    //   Idle → [≥2 fingers] → MultiTouch (Undecided → Scrolling | Pinching)
+    //   MultiTouch → [all fingers up or drop below 2] → Idle
+    //   TUI mode: single-finger touches are grabbed and forwarded as synthetic mouse events
+    //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
     GestureMode m_gestureMode = GestureMode::Undecided;
     qreal m_pinchInitialDistance = 0;
