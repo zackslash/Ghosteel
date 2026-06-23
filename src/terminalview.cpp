@@ -922,9 +922,9 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         m_mouseTrackingActive = m_vt->isMouseTracking();
 
         if (m_mouseTrackingActive) {
-            // Top gesture zone — let SilicaFlickable handle for PullDownMenu.
-            // In practice, touchEvent should have rejected this before mouse
-            // synthesis, but guard here as a safety net.
+            // Safety net: reject touches in the pull-down zone. In practice,
+            // touchEvent accepts TUI touches before synthesis, so this is
+            // rarely reached.
             if (event->pos().y() < m_pullDownZoneHeight) {
                 QQuickItem::mousePressEvent(event);
                 return;
@@ -1242,68 +1242,16 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     if (m_mouseTrackingActive) {
         if (event->type() == QEvent::TouchBegin && points.size() == 1) {
-            event->accept();
-            setKeepMouseGrab(true);
-            setKeepTouchGrab(true);
-            Q_EMIT requestParentInteractive(false);
-            grabTouchPoints(QVector<int>{ points.first().id() });
-            grabMouse();
-            const auto &pt = points.first();
-            m_tuiDragLastY = pt.pos().y();
-            m_tuiScrollAccumulator = 0;
-            QMouseEvent synthPress(QEvent::MouseButtonPress,
-                                   pt.pos(), pt.screenPos(),
-                                   Qt::LeftButton, Qt::LeftButton,
-                                   event->modifiers());
-            mousePressEvent(&synthPress);
+            handleTuiTouchBegin(event, points.first());
             return;
         }
         if (event->type() == QEvent::TouchUpdate && points.size() == 1) {
-            event->accept();
-            const auto &pt = points.first();
-
-            // Convert vertical drag delta to wheel events for TUI scroll.
-            qreal deltaY = pt.pos().y() - m_tuiDragLastY;
-            m_tuiDragLastY = pt.pos().y();
-            qreal newDelta = -deltaY / m_cellHeight; // negative: down-drag = scroll down
-            auto scrollResult = TextUtil::accumulateScroll(
-                m_tuiScrollAccumulator, newDelta);
-            m_tuiScrollAccumulator = scrollResult.accumulator;
-            if (scrollResult.lines != 0) {
-                GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
-                GhosttyMouseButton btn = (scrollResult.lines > 0)
-                    ? GHOSTTY_MOUSE_BUTTON_FOUR : GHOSTTY_MOUSE_BUTTON_FIVE;
-                for (int i = 0; i < qAbs(scrollResult.lines); ++i) {
-                    sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, btn,
-                                   pt.pos(), mods);
-                    sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, btn,
-                                   pt.pos(), mods);
-                }
-            }
-
-            // Also forward mouse motion for TUI click/drag/selection.
-            QMouseEvent synthMove(QEvent::MouseMove,
-                                  pt.pos(), pt.screenPos(),
-                                  Qt::LeftButton, Qt::LeftButton,
-                                  event->modifiers());
-            mouseMoveEvent(&synthMove);
+            handleTuiTouchUpdate(event, points.first());
             return;
         }
         if (event->type() == QEvent::TouchEnd
             || event->type() == QEvent::TouchCancel) {
-            if (points.size() == 1) {
-                const auto &pt = points.first();
-                QMouseEvent synthRel(QEvent::MouseButtonRelease,
-                                     pt.pos(), pt.screenPos(),
-                                     Qt::LeftButton, Qt::NoButton,
-                                     event->modifiers());
-                mouseReleaseEvent(&synthRel);
-            }
-            Q_EMIT requestParentInteractive(true);
-            m_tuiScrollAccumulator = 0;
-            setKeepMouseGrab(false);
-            setKeepTouchGrab(false);
-            event->accept();
+            handleTuiTouchEnd(event, points);
             return;
         }
     }
@@ -1311,6 +1259,72 @@ void TerminalView::touchEvent(QTouchEvent *event)
     // Normal mode: native fall-through — let Qt synthesise mouse events and
     // the Flickable handle pull-down disambiguation.
     QQuickItem::touchEvent(event);
+}
+
+void TerminalView::handleTuiTouchBegin(QTouchEvent *event,
+                                       const QTouchEvent::TouchPoint &pt)
+{
+    event->accept();
+    setKeepMouseGrab(true);
+    setKeepTouchGrab(true);
+    Q_EMIT requestParentInteractive(false);
+    grabTouchPoints(QVector<int>{ pt.id() });
+    grabMouse();
+    m_tuiDragLastY = pt.pos().y();
+    m_tuiScrollAccumulator = 0;
+    QMouseEvent synthPress(QEvent::MouseButtonPress,
+                           pt.pos(), pt.screenPos(),
+                           Qt::LeftButton, Qt::LeftButton,
+                           event->modifiers());
+    mousePressEvent(&synthPress);
+}
+
+void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
+                                        const QTouchEvent::TouchPoint &pt)
+{
+    event->accept();
+
+    // Convert vertical drag delta to wheel events for TUI scroll.
+    qreal deltaY = pt.pos().y() - m_tuiDragLastY;
+    m_tuiDragLastY = pt.pos().y();
+    qreal newDelta = -deltaY / m_cellHeight; // negative: down-drag = scroll down
+    auto scrollResult = TextUtil::accumulateScroll(
+        m_tuiScrollAccumulator, newDelta);
+    m_tuiScrollAccumulator = scrollResult.accumulator;
+    if (scrollResult.lines != 0) {
+        GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
+        GhosttyMouseButton btn = (scrollResult.lines > 0)
+            ? GHOSTTY_MOUSE_BUTTON_FOUR : GHOSTTY_MOUSE_BUTTON_FIVE;
+        for (int i = 0; i < qAbs(scrollResult.lines); ++i) {
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, btn, pt.pos(), mods);
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, btn, pt.pos(), mods);
+        }
+    }
+
+    // Also forward mouse motion for TUI click/drag/selection.
+    QMouseEvent synthMove(QEvent::MouseMove,
+                          pt.pos(), pt.screenPos(),
+                          Qt::LeftButton, Qt::LeftButton,
+                          event->modifiers());
+    mouseMoveEvent(&synthMove);
+}
+
+void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
+                                     const QList<QTouchEvent::TouchPoint> &points)
+{
+    if (points.size() == 1) {
+        const auto &pt = points.first();
+        QMouseEvent synthRel(QEvent::MouseButtonRelease,
+                             pt.pos(), pt.screenPos(),
+                             Qt::LeftButton, Qt::NoButton,
+                             event->modifiers());
+        mouseReleaseEvent(&synthRel);
+    }
+    Q_EMIT requestParentInteractive(true);
+    m_tuiScrollAccumulator = 0;
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
+    event->accept();
 }
 
 void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points)
@@ -1323,12 +1337,12 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // happen if TouchEnd was missed (e.g., window deactivated, touch stolen
     // by another item) and a new gesture starts while the overlay is still
     // visible. Without this, pinchingChanged(false) is never emitted.
-    if (m_gestureMode != GestureMode::Undecided) {
+    if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided) {
         handleMultiTouchEnd();
     }
 
-        // Disable the parent Flickable immediately — passive grabs aren't
-        // enough; SilicaFlickable steals the gesture before scroll-commit.
+    // Disable the parent Flickable immediately — passive grabs aren't
+    // enough; SilicaFlickable steals the gesture before scroll-commit.
     Q_EMIT requestParentInteractive(false);
     m_multiTouchActive = true;
 

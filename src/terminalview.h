@@ -206,6 +206,11 @@ private:
     void handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points);
     void handleMultiTouchEnd();
 
+    // TUI single-finger touch → synthetic mouse/wheel events
+    void handleTuiTouchBegin(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
+    void handleTuiTouchUpdate(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
+    void handleTuiTouchEnd(QTouchEvent *event, const QList<QTouchEvent::TouchPoint> &points);
+
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
     PtyManager *m_pty = nullptr;
@@ -272,6 +277,11 @@ private:
     bool m_multiTouchActive = false;
 
     // --- Pinch-to-zoom state ---
+    // Touch state machine:
+    //   Idle → [≥2 fingers] → MultiTouch (Undecided → Scrolling | Pinching)
+    //   MultiTouch → [all fingers up or drop below 2] → Idle
+    //   TUI mode: single-finger touches are grabbed and forwarded as synthetic mouse events
+    //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
     GestureMode m_gestureMode = GestureMode::Undecided;
     qreal m_pinchInitialDistance = 0;

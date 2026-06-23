@@ -142,6 +142,7 @@ Q_SIGNALS:
     void topPaddingChanged();
     void pinchingChanged(bool pinching);
     void zoomRequested(int delta);
+    void requestParentInteractive(bool interactive);
 
 private:
     int m_fontSize = 18;
