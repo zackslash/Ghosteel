@@ -71,6 +71,19 @@ Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-
 
 ## Development
 
+### IDE Setup
+
+Before first IDE build:
+
+```bash
+git submodule update --init
+./scripts/build-libs.sh i486
+```
+
+The Ghostty submodule needs a patch for a Zig i386 C ABI bug. It's applied automatically by the spec during builds. For manual builds: `git -C ghostty apply patches/ghostty-i386-abi-fix.patch`
+
+### Hooks
+
 After cloning, enable the git hooks:
 
 ```bash
@@ -78,14 +91,6 @@ git config core.hooksPath .githooks
 ```
 
 This activates a pre-commit hook that blocks accidental commits of compiled `.a` files and ghostty submodule pointer changes (use `git commit --no-verify` for intentional submodule upgrades).
-
-The Ghostty submodule needs a patch applied before building locally. The patch works around a Zig i386 C ABI bug that corrupts struct-by-value parameters. It's applied automatically in CI, but for local builds:
-
-```bash
-git -C ghostty apply patches/ghostty-i386-abi-fix.patch
-```
-
-The patch changes `ghostty_terminal_new` to accept options by pointer instead of by value. Can be dropped once Ghostty upgrades to Zig >= 0.16.0. See `patches/ghostty-i386-abi-fix.patch` for details.
 
 ## License
 
