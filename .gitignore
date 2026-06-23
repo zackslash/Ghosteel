@@ -49,6 +49,7 @@ deploy/
 *.rpm
 _service
 ghosteel.changes
+.sfdk/
 
 # IDE
 .vscode/
