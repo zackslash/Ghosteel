@@ -261,6 +261,11 @@ private:
     bool m_mouseButtonPressed = false;  // tracks any-button state for encoder
     QPointF m_touchStartPos;
 
+    // TUI single-finger drag-to-wheel conversion: accumulate vertical drag
+    // delta and emit wheel events (buttons 4/5) when the threshold is crossed.
+    qreal m_tuiScrollAccumulator = 0;
+    qreal m_tuiDragLastY = 0;
+
     // --- Scroll state (two-finger touch + mouse wheel) ---
     bool m_twoFingerScrolling = false;
     qreal m_twoFingerLastY = 0;

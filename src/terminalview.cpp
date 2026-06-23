@@ -1241,26 +1241,104 @@ void TerminalView::touchEvent(QTouchEvent *event)
         handleMultiTouchEnd();
     }
 
-    // ── Single-finger events: NATIVE handling ────────────────────
-    // We deliberately do NOT accept, grab, or disable the Flickable for a
-    // single finger. Letting the event fall through means Qt synthesises mouse
-    // events and Sailfish's SilicaFlickable runs its normal press-delay
-    // disambiguation, which gives exactly the behaviour the user wants:
+    // ── Single-finger events ──────────────────────────────────────
     //
-    //   • immediate single-finger drag  → Flickable pull-down menu (any speed)
-    //   • press-and-hold, then drag      → Flickable replays the press to us
-    //                                       after pressDelay → our 300ms
-    //                                       long-press timer fires → timerEvent
-    //                                       grabs the mouse → text selection
-    //   • tap                            → existing tap / link handling
+    // TWO PATHS depending on whether a TUI app has mouse tracking active:
     //
-    // Two-finger scroll/zoom is unaffected: when the second finger lands, the
-    // multi-touch block above ACTIVELY grabs BOTH touch points, wrenching the
-    // gesture back from the Flickable before it can commit a pull-down. Because
-    // real two-finger gestures land both fingers within the Flickable's
-    // pressDelay, the 2-point grab wins; a lone finger dragging past pressDelay
-    // commits to pull-down. handleMultiTouchBegin cancels any pending
-    // long-press / selection state, so the 1→2-finger transition stays clean.
+    // Normal mode (no mouse tracking):
+    //   Do NOT accept, grab, or disable the Flickable. Let the event fall
+    //   through so Qt synthesises mouse events and Sailfish's Flickable
+    //   runs its normal press-delay disambiguation:
+    //     • immediate single-finger drag  → pull-down menu (any speed)
+    //     • press-and-hold, then drag      → long-press → text selection
+    //     • tap                            → existing tap / link handling
+    //
+    // TUI mode (mouse tracking active — htop, tmux, lazygit, etc.):
+    //   The TUI app wants ALL input including single-finger scroll. Accept +
+    //   grab the touch so the Flickable cannot arm, then forward synthetic
+    //   mouse events so the existing mouse-tracking path in mousePressEvent /
+    //   mouseMoveEvent / mouseReleaseEvent handles them. requestParentInteractive
+    //   disables the Flickable so pull-down doesn't interfere.
+    //
+    // Two-finger scroll/zoom is unaffected in both modes: the multi-touch block
+    // above actively grabs both points when the second finger lands.
+
+    if (m_mouseTrackingActive) {
+        // TUI mode: claim the touch, disable the Flickable, forward as mouse.
+        // Single-finger drag is also converted to wheel events (buttons 4/5)
+        // so TUI apps can scroll content — Qt won't auto-synthesise wheel
+        // events because we accepted the touch to prevent Flickable steal.
+        if (event->type() == QEvent::TouchBegin && points.size() == 1) {
+            event->accept();
+            setKeepMouseGrab(true);
+            setKeepTouchGrab(true);
+            Q_EMIT requestParentInteractive(false);
+            grabTouchPoints(QVector<int>{ points.first().id() });
+            grabMouse();
+            const auto &pt = points.first();
+            m_tuiDragLastY = pt.pos().y();
+            m_tuiScrollAccumulator = 0;
+            QMouseEvent synthPress(QEvent::MouseButtonPress,
+                                   pt.pos(), pt.screenPos(),
+                                   Qt::LeftButton, Qt::LeftButton,
+                                   event->modifiers());
+            mousePressEvent(&synthPress);
+            return;
+        }
+        if (event->type() == QEvent::TouchUpdate && points.size() == 1) {
+            event->accept();
+            const auto &pt = points.first();
+
+            // Convert vertical drag delta to wheel events for TUI scroll.
+            qreal deltaY = pt.pos().y() - m_tuiDragLastY;
+            m_tuiDragLastY = pt.pos().y();
+            qreal newDelta = -deltaY / 40.0; // negative: down-drag = scroll down
+            auto scrollResult = TextUtil::accumulateScroll(
+                m_tuiScrollAccumulator, newDelta);
+            m_tuiScrollAccumulator = scrollResult.accumulator;
+            if (scrollResult.lines != 0) {
+                GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
+                GhosttyMouseButton btn = (scrollResult.lines > 0)
+                    ? GHOSTTY_MOUSE_BUTTON_FOUR : GHOSTTY_MOUSE_BUTTON_FIVE;
+                for (int i = 0; i < qAbs(scrollResult.lines); ++i) {
+                    sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, btn,
+                                   pt.pos(), mods);
+                    sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, btn,
+                                   pt.pos(), mods);
+                }
+            }
+
+            // Also forward mouse motion for TUI click/drag/selection.
+            QMouseEvent synthMove(QEvent::MouseMove,
+                                  pt.pos(), pt.screenPos(),
+                                  Qt::LeftButton, Qt::LeftButton,
+                                  event->modifiers());
+            mouseMoveEvent(&synthMove);
+            return;
+        }
+        if (event->type() == QEvent::TouchEnd
+            || event->type() == QEvent::TouchCancel) {
+            if (points.size() == 1) {
+                const auto &pt = points.first();
+                QMouseEvent synthRel(QEvent::MouseButtonRelease,
+                                     pt.pos(), pt.screenPos(),
+                                     Qt::LeftButton, Qt::NoButton,
+                                     event->modifiers());
+                mouseReleaseEvent(&synthRel);
+            }
+            Q_EMIT requestParentInteractive(true);
+            m_twoFingerScrolling = false;
+            m_touchScrollAccumulator = 0;
+            m_tuiScrollAccumulator = 0;
+            setKeepMouseGrab(false);
+            setKeepTouchGrab(false);
+            event->accept();
+            return;
+        }
+    }
+
+    // Normal mode: native fall-through — let Qt synthesise mouse events and
+    // the Flickable handle pull-down disambiguation.
     QQuickItem::touchEvent(event);
 }
 
