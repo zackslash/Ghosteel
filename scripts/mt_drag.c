@@ -213,7 +213,7 @@ void send_two_finger_drag(int fd, int start_x, int start_y,
     }
 
     /* ---------------------------------------------------------------
-     * PHASE 4: Finger release (separate frames, realistic timing)
+     * PHASE 5: Finger release (separate frames, realistic timing)
      * Real hands lift fingers sequentially:
      *   1. Lift finger 0 (two-finger -> one-finger transition)
      *   2. Wait ~30ms
