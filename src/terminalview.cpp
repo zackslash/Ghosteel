@@ -1129,7 +1129,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         event->accept();
         return;
     }
-    // Reset touch grab set in touchEvent for multi-touch anticipation.
+    // Release mouse grab acquired by touchEvent multi-touch/TUI path.
     setKeepMouseGrab(false);
     QQuickItem::mouseReleaseEvent(event);
 }
@@ -1195,12 +1195,9 @@ void TerminalView::touchEvent(QTouchEvent *event)
         // stays with the terminal instead of triggering the PullDownMenu.
         setKeepTouchGrab(true);
 
-        // ACTIVE grab (Qt 5.6). The calls above are passive ("don't let my
-        // grab be stolen") and Sailfish's SilicaFlickable ignores them once its
-        // drag recogniser has armed on the first finger. grabTouchPoints() /
-        // grabMouse() are ACTIVE ("take the grab NOW") and wrench the sequence
-        // back from the Flickable before it commits its steal (~3 frames after
-        // the press). This is the mechanism the passive flags could not provide.
+        // ACTIVE grab — passive flags above only prevent future steals.
+        // SilicaFlickable ignores them once its drag recogniser has armed.
+        // grabTouchPoints()/grabMouse() wrest the grab back immediately.
         {
             QVector<int> ids;
             ids.reserve(points.size());
@@ -1232,42 +1229,19 @@ void TerminalView::touchEvent(QTouchEvent *event)
     }
 
     // ── Drop below 2 points during active multi-touch gesture ────
-    // (e.g., one finger lifts mid-pinch). End the gesture properly
-    // so pinchingChanged(false) is emitted, the overlay hides, and the
-    // parent Flickable is re-enabled. Check m_multiTouchActive too: a brief
-    // two-finger gesture may never leave Undecided, but must still be ended
-    // (otherwise the Flickable stays disabled forever).
+    // Check m_multiTouchActive too: a brief two-finger tap may never
+    // leave Undecided, but must still end (or the Flickable stays disabled).
     if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided || m_twoFingerScrolling) {
         handleMultiTouchEnd();
     }
 
     // ── Single-finger events ──────────────────────────────────────
-    //
-    // TWO PATHS depending on whether a TUI app has mouse tracking active:
-    //
-    // Normal mode (no mouse tracking):
-    //   Do NOT accept, grab, or disable the Flickable. Let the event fall
-    //   through so Qt synthesises mouse events and Sailfish's Flickable
-    //   runs its normal press-delay disambiguation:
-    //     • immediate single-finger drag  → pull-down menu (any speed)
-    //     • press-and-hold, then drag      → long-press → text selection
-    //     • tap                            → existing tap / link handling
-    //
-    // TUI mode (mouse tracking active — htop, tmux, lazygit, etc.):
-    //   The TUI app wants ALL input including single-finger scroll. Accept +
-    //   grab the touch so the Flickable cannot arm, then forward synthetic
-    //   mouse events so the existing mouse-tracking path in mousePressEvent /
-    //   mouseMoveEvent / mouseReleaseEvent handles them. requestParentInteractive
-    //   disables the Flickable so pull-down doesn't interfere.
-    //
-    // Two-finger scroll/zoom is unaffected in both modes: the multi-touch block
-    // above actively grabs both points when the second finger lands.
+    // TUI mode (mouse tracking): accept + grab + forward as synthetic
+    // mouse/wheel events.  Normal mode: fall through to QQuickItem —
+    // accepting would break the Flickable's press-delay disambiguation
+    // (instant drag → pull-down, press-hold → selection).
 
     if (m_mouseTrackingActive) {
-        // TUI mode: claim the touch, disable the Flickable, forward as mouse.
-        // Single-finger drag is also converted to wheel events (buttons 4/5)
-        // so TUI apps can scroll content — Qt won't auto-synthesise wheel
-        // events because we accepted the touch to prevent Flickable steal.
         if (event->type() == QEvent::TouchBegin && points.size() == 1) {
             event->accept();
             setKeepMouseGrab(true);
@@ -1356,11 +1330,8 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
         handleMultiTouchEnd();
     }
 
-    // Disable the parent SilicaFlickable NOW, on first 2-finger contact.
-    // Sailfish's Flickable ignores setKeepTouchGrab and steals the gesture
-    // within ~2 touch updates — before our 40px scroll-commit threshold is
-    // reached. Toggling `interactive` off is the only reliable way to stop it
-    // claiming the sequence and opening the PullDownMenu.
+        // Disable the parent Flickable immediately — passive grabs aren't
+        // enough; SilicaFlickable steals the gesture before scroll-commit.
     Q_EMIT requestParentInteractive(false);
     m_multiTouchActive = true;
 

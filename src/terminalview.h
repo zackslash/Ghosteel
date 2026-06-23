@@ -154,10 +154,8 @@ Q_SIGNALS:
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
     void pinchingChanged(bool pinching);
     void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out
-    // Asks the embedding QML to toggle the parent SilicaFlickable's
-    // `interactive` flag. Emitted false at multi-touch begin so the Flickable
-    // stops stealing the gesture (which otherwise opens the PullDownMenu),
-    // and true at gesture end to restore pull-down behaviour.
+    // Toggle parent SilicaFlickable.interactive — emitted false on
+    // multi-touch/TUI begin, true on end.
     void requestParentInteractive(bool interactive);
 
 protected:
@@ -261,8 +259,6 @@ private:
     bool m_mouseButtonPressed = false;  // tracks any-button state for encoder
     QPointF m_touchStartPos;
 
-    // TUI single-finger drag-to-wheel conversion: accumulate vertical drag
-    // delta and emit wheel events (buttons 4/5) when the threshold is crossed.
     qreal m_tuiScrollAccumulator = 0;
     qreal m_tuiDragLastY = 0;
 
@@ -272,11 +268,9 @@ private:
     qreal m_scrollAccumulator = 0;
     qreal m_touchScrollAccumulator = 0;
 
-    // True between handleMultiTouchBegin and handleMultiTouchEnd. Used to
-    // detect the <2 → ≥2 finger transition independent of the Qt event type:
-    // when a second finger lands AFTER the first, the event arrives as a
-    // TouchUpdate (not TouchBegin), so we must start the gesture on the first
-    // ≥2-point event of any type — otherwise the Flickable is never disabled.
+    // True between handleMultiTouchBegin/End. Needed because Qt delivers
+    // TouchUpdate (not TouchBegin) when the second finger lands after the
+    // first — so we start the gesture on the first ≥2-point event of any type.
     bool m_multiTouchActive = false;
 
     // --- Pinch-to-zoom state ---
