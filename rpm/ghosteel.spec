@@ -31,6 +31,8 @@ BuildRequires:  desktop-file-utils
 BuildRequires:  xz
 BuildRequires:  patch
 
+%define uucode_hash uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9
+
 ExclusiveArch:  %arm aarch64 %ix86
 
 %description
@@ -45,7 +47,7 @@ Ghosteel terminal emulator for Sailfish OS, powered by libghostty.
 # SDK: ghostty/ populated by "method: tar" + git submodule update --init
 if [ -d ghostty/src ]; then
     for p in patches/*.patch; do
-        [ -f "$p" ] && patch -d ghostty -p1 < "$p"
+        [ -f "$p" ] && patch --forward -d ghostty -p1 < "$p"
     done
 fi
 
@@ -55,12 +57,11 @@ if [ -f "%{_sourcedir}/zig-x86_64-linux-0.15.2.tar.xz" ]; then
 fi
 
 # Set up Zig package cache (OBS only — Source2 is fetched by OBS before build)
-UUCODE_HASH="uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9"
-if [ -f "%{_sourcedir}/${UUCODE_HASH}.tar.gz" ]; then
+if [ -f "%{_sourcedir}/%{uucode_hash}.tar.gz" ]; then
     ZIG_CACHE="%{_builddir}/zig-cache"
-    mkdir -p "${ZIG_CACHE}/p/${UUCODE_HASH}"
-    tar -xzf "%{_sourcedir}/${UUCODE_HASH}.tar.gz" \
-        --strip-components=1 -C "${ZIG_CACHE}/p/${UUCODE_HASH}"
+    mkdir -p "${ZIG_CACHE}/p/%{uucode_hash}"
+    tar -xzf "%{_sourcedir}/%{uucode_hash}.tar.gz" \
+        --strip-components=1 -C "${ZIG_CACHE}/p/%{uucode_hash}"
 fi
 
 %build
@@ -87,20 +88,22 @@ fi
 
 # ── IDE flow bootstrap ──────────────────────────────────────────────
 # The Sailfish SDK IDE's "Build" button runs sfdk qmake, which executes
-# only the build section (skipping the prep step entirely).  With method: tar the source
-# tarball is created but never extracted, so the build directory is empty.
+# only the build section (skipping the prep step entirely).  With method: tar
+# the source tarball is created but never extracted, so the build directory
+# is empty.
 #
 # .sfdk/src is a symlink that sfdk creates pointing to the original
 # source directory on the host machine.  We symlink everything we need
 # from there so that qmake and the rest of the build can proceed.
 #
-# When sfdk build (full pipeline) runs, the prep step extracts the tarball and
-# lib/ already exists → this block is skipped.
+# When sfdk build (full pipeline) runs, the prep step extracts the tarball
+# and the library already exists → this block is skipped.
 #
-# Check lib/ (not ghosteel.pro) because a previous IDE build may have left
-# ghosteel.pro as a stale symlink while lib/ went missing or became stale.
+# Check for the actual library file (not just the directory) because a
+# previous IDE build may have left lib/ as a stale symlink while the
+# library itself went missing.
 # ─────────────────────────────────────────────────────────────────────
-if [ ! -e lib ] && [ -L .sfdk/src ]; then
+if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ] && [ -L .sfdk/src ]; then
     SRC="$(readlink -f .sfdk/src)"
     if [ -d "$SRC" ]; then
         echo "IDE build: linking source tree from $SRC"
@@ -155,9 +158,8 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
     fi
 
     # Offline build if OBS pre-fetched uucode into cache
-    UUCODE_HASH="uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9"
     SYSTEM_FLAG=""
-    if [ -d "%{_builddir}/zig-cache/p/${UUCODE_HASH}" ]; then
+    if [ -d "%{_builddir}/zig-cache/p/%{uucode_hash}" ]; then
         SYSTEM_FLAG="--system %{_builddir}/zig-cache/p"
     fi
 
