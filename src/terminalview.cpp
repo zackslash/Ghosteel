@@ -1287,7 +1287,7 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
     // Convert vertical drag delta to wheel events for TUI scroll.
     qreal deltaY = pt.pos().y() - m_tuiDragLastY;
     m_tuiDragLastY = pt.pos().y();
-    qreal newDelta = -deltaY / m_cellHeight; // negative: down-drag = scroll down
+    qreal newDelta = deltaY / m_cellHeight; // positive: down-drag = scroll up (natural scrolling)
     auto scrollResult = TextUtil::accumulateScroll(
         m_tuiScrollAccumulator, newDelta);
     m_tuiScrollAccumulator = scrollResult.accumulator;
