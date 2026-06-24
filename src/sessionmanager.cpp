@@ -658,9 +658,9 @@ void SessionManager::processCliArgs()
                     setActiveSessionIndex(named);
                 } else {
                     // Command exited or session is plain shell — replace with new session.
-                    // Remove the dead one first so the name is free.
-                    removeSession(named);
+                    // Create first so removeSession never hits the empty-list fallback.
                     createSessionWithCommand(m_cliSessionName, fullArgs);
+                    removeSession(named);
                 }
                 didSomething = true;
                 goto done;
@@ -728,8 +728,10 @@ void SessionManager::onNewInstanceConnection()
         // Data already in buffer or socket already closed — process now
         processMessage();
     } else {
-        // Wait for data to arrive
+        // Wait for data to arrive; disconnected handles the case where
+        // the client connects but never writes then drops the connection.
         connect(socket, &QLocalSocket::readyRead, this, processMessage);
+        connect(socket, &QLocalSocket::disconnected, this, processMessage);
     }
 }
 
