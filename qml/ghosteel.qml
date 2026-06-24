@@ -29,6 +29,6 @@ ApplicationWindow {
     Connections {
         target: SessionManager
         onShowTerminal: pageStack.pop(null)
-        onShowSessionList: pageStack.replace(Qt.resolvedUrl("pages/SessionPage.qml"))
+        onShowSessionList: pageStack.push(Qt.resolvedUrl("pages/SessionPage.qml"))
     }
 }

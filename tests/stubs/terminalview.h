@@ -92,7 +92,7 @@ public:
     Q_INVOKABLE void copySelection() {}
     Q_INVOKABLE void sendClipboardText(const QString &, const QString & = "c") {}
     Q_INVOKABLE void sendKey(int, int = 0) {}
-    Q_INVOKABLE void restartShell() { Q_EMIT shellRestarted(); }
+    Q_INVOKABLE void restartShell() { m_commandArgs.clear(); m_shellExited = false; Q_EMIT shellRestarted(); }
     Q_INVOKABLE void setActive(bool) {}
     Q_INVOKABLE QString workingDirectory() const { return m_workingDirectory; }
     Q_INVOKABLE void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
@@ -115,7 +115,8 @@ public:
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
     void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
-    void emitCommandExited(int exitCode) { Q_EMIT commandExited(exitCode); }
+    bool shellExited() const { return m_shellExited; }
+    void emitCommandExited(int exitCode) { m_shellExited = true; Q_EMIT commandExited(exitCode); }
 
 Q_SIGNALS:
     void fontSizeChanged();
@@ -155,6 +156,7 @@ private:
     QString m_workingDirectory;
     QString m_autorunCommand;
     QStringList m_commandArgs;
+    bool m_shellExited = false;
 
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;

@@ -217,16 +217,18 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
     m_sessions.append(info);
 
     // Auto-remove on exit; delay for errors so user sees the message.
-    // Skipped if user renames during the delay window (session is no longer anonymous).
+    // Success: only remove anonymous sessions (command finished normally).
+    // Error: remove all command sessions — the command couldn't run.
+    // Skipped if user taps terminal during delay (restartShell clears execArgs).
     connect(view, &TerminalView::commandExited, this, [this, sessionId = info.id](int exitCode) {
         int delay = (exitCode != 0) ? kCommandExitDisplayDelayMs : 0;
-        QTimer::singleShot(delay, this, [this, sessionId]() {
+        QTimer::singleShot(delay, this, [this, sessionId, exitCode]() {
             int idx = sessionIndexById(sessionId);
-            if (idx >= 0 && m_sessions[idx].isAnonymous()) {
+            if (idx < 0) return;
+            bool shouldRemove = (exitCode == 0) ? m_sessions[idx].isAnonymous()
+                                                : m_sessions[idx].isCommandSession();
+            if (shouldRemove) {
                 removeSession(idx);
-                // If other sessions remain, show the session list so the user
-                // can pick one.  If it was the last session, removeSession()
-                // already created a fallback and we stay on the terminal.
                 if (!m_sessions.isEmpty())
                     Q_EMIT showSessionList();
             }
@@ -278,12 +280,17 @@ void SessionManager::removeSession(int index)
         // Removed session was before active — shift index down
         m_activeSessionIndex--;
     } else if (wasActive) {
-        // Removed the active session — clamp to valid range
-        if (m_activeSessionIndex >= m_sessions.size())
-            m_activeSessionIndex = m_sessions.size() - 1;
+        // Active session removed — refined after rebuildSortedIndices() below.
+        m_activeSessionIndex = qBound(0, m_activeSessionIndex, m_sessions.size() - 1);
     }
 
     rebuildSortedIndices();
+
+    // When the active session was removed, pick the first session in
+    // the current sort order rather than blindly clamping the raw index.
+    // For "last used" sort, this selects the most recently used session.
+    if (wasActive && !m_sortedIndices.isEmpty())
+        m_activeSessionIndex = m_sortedIndices[0];
 
     // Emit signals after sorted indices are ready.
     // activeSessionIndexChanged must precede sessionSwitched.
@@ -646,7 +653,15 @@ void SessionManager::processCliArgs()
         if (!m_cliSessionName.isEmpty()) {
             int named = findSessionByName(m_cliSessionName);
             if (named >= 0) {
-                setActiveSessionIndex(named);
+                if (m_sessions[named].isCommandSession() && !m_sessions[named].view->shellExited()) {
+                    // Command still running — switch to it
+                    setActiveSessionIndex(named);
+                } else {
+                    // Command exited or session is plain shell — replace with new session.
+                    // Remove the dead one first so the name is free.
+                    removeSession(named);
+                    createSessionWithCommand(m_cliSessionName, fullArgs);
+                }
                 didSomething = true;
                 goto done;
             }

@@ -404,7 +404,7 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 2);
         QCOMPARE(mgr.sessionName(0), QStringLiteral("A"));
         QCOMPARE(mgr.sessionName(1), QStringLiteral("C"));
-        QCOMPARE(mgr.activeSessionIndex(), 1); // points to "C" which shifted into index 1
+        QCOMPARE(mgr.activeSessionIndex(), 0); // first in sort order (manual → raw 0)
     }
 
     void testRemoveActiveSessionFirstOfThree()
@@ -1555,7 +1555,59 @@ private slots:
         QCOMPARE(mgr.sessionCount(), countBefore);
     }
 
-    // --- processCliArgs() ---
+    void testNamedCommandSessionAutoRemovedOnError()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.createSessionWithCommand("htop", QStringList() << "htop");
+        int countBefore = mgr.sessionCount();
+        int idx = countBefore - 1;
+
+        TerminalView *view = mgr.sessionById(mgr.sessionId(idx));
+        QVERIFY(view);
+        view->emitCommandExited(127); // command not found
+
+        QThread::msleep(900);
+        QCoreApplication::processEvents();
+
+        // Named session removed on error. If it was the last session,
+        // removeSession() creates a fallback shell — so count may be 1.
+        int expected = (countBefore == 1) ? 1 : countBefore - 1;
+        QCOMPARE(mgr.sessionCount(), expected);
+    }
+
+    void testNamedSessionRerunsCommandAfterExit()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // First launch: create named session with command
+        mgr.setCliArgs("htop", QStringList(), "htop");
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionName(mgr.sessionCount() - 1), QStringLiteral("htop"));
+        QCOMPARE(mgr.sessionExecCommand(mgr.sessionCount() - 1), QStringLiteral("htop"));
+
+        // Command exits successfully — named session stays alive
+        int idx = mgr.sessionCount() - 1;
+        TerminalView *view = mgr.sessionById(mgr.sessionId(idx));
+        QVERIFY(view);
+        view->emitCommandExited(0);
+        QCoreApplication::processEvents();
+
+        // Session still exists, but shellExited is true
+        QVERIFY(view->shellExited());
+
+        // Second launch: same named session, same command
+        // Should remove the dead session and create a new one
+        int countBefore = mgr.sessionCount();
+        mgr.setCliArgs("htop", QStringList(), "htop");
+        mgr.processCliArgs();
+
+        // New session has the same name and command
+        QCOMPARE(mgr.sessionName(mgr.sessionCount() - 1), QStringLiteral("htop"));
+        QCOMPARE(mgr.sessionExecCommand(mgr.sessionCount() - 1), QStringLiteral("htop"));
+    }
 
     void testProcessCliArgsExecOnly()
     {

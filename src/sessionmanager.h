@@ -28,6 +28,7 @@ struct SessionInfo {
     TerminalView *view;
 
     bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
+    bool isCommandSession() const { return !execArgs.isEmpty(); }
 };
 
 class SessionManager : public QObject
