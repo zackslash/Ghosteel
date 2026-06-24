@@ -685,6 +685,10 @@ void TerminalView::sendKey(int qtKey, int modifiers)
 {
     resetBlinkOnInput();
 
+    // If scrolled up viewing history, scroll back to bottom so the user
+    // can see what they're typing (matches keyPressEvent behavior).
+    scrollViewportToBottom();
+
     GhosttyKey key = KeyMapping::mapQtKey(qtKey);
     // Accept GhosttyMods directly (not Qt modifier values)
     sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS, static_cast<GhosttyMods>(modifiers), QString());
