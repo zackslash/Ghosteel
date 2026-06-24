@@ -208,6 +208,17 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
             [this](const QString &text) {
         Q_EMIT clipboardTextReady(text);
     });
+
+    // When a command session's shell is restarted (user taps after exit),
+    // clear execArgs so isAnonymous() returns false and auto-remove skips it.
+    connect(view, &TerminalView::shellRestarted, this,
+            [this, sessionId]() {
+        int idx = sessionIndexById(sessionId);
+        if (idx >= 0) {
+            m_sessions[idx].execArgs.clear();
+            m_sessions[idx].execCommand.clear();
+        }
+    });
 }
 
 int SessionManager::findSessionByName(const QString &name) const
@@ -351,6 +362,12 @@ void SessionManager::removeSession(int index)
     QFile::remove(scrollbackFilePath(info.id));
 
     scheduleSave();
+
+    // If we just removed the last session, create a fresh shell so the
+    // user isn't staring at a blank screen with no way to interact.
+    if (m_sessions.isEmpty()) {
+        createSession();
+    }
 }
 
 // QML convenience wrapper — setActiveSessionIndex is a Q_PROPERTY setter,

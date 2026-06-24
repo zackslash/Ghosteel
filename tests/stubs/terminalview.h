@@ -92,7 +92,7 @@ public:
     Q_INVOKABLE void copySelection() {}
     Q_INVOKABLE void sendClipboardText(const QString &, const QString & = "c") {}
     Q_INVOKABLE void sendKey(int, int = 0) {}
-    Q_INVOKABLE void restartShell() {}
+    Q_INVOKABLE void restartShell() { Q_EMIT shellRestarted(); }
     Q_INVOKABLE void setActive(bool) {}
     Q_INVOKABLE QString workingDirectory() const { return m_workingDirectory; }
     Q_INVOKABLE void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
@@ -140,6 +140,7 @@ Q_SIGNALS:
     void navigateSession(int direction);
     void toggleKeybar();
     void commandExited(int exitCode);
+    void shellRestarted();
     void linkActivated(const QString &uri);
     void topPaddingChanged();
     void pinchingChanged(bool pinching);

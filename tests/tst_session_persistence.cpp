@@ -3,6 +3,7 @@
 #include <QTemporaryDir>
 #include <QSettings>
 #include <QSignalSpy>
+#include <QThread>
 #include <QDir>
 
 // Pull in the stub TerminalView (QObject-based, no Qt Quick dependency)
@@ -349,9 +350,11 @@ private slots:
 
         mgr.removeSession(0);
 
-        QCOMPARE(mgr.sessionCount(), 0);
-        QCOMPARE(mgr.activeSessionIndex(), -1);
-        QVERIFY(mgr.activeSession() == nullptr);
+        // Removing the last session creates a fallback shell session
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.activeSessionIndex(), 0);
+        QVERIFY(mgr.activeSession() != nullptr);
+        QVERIFY(mgr.sessionName(0).isEmpty() == false); // fallback has a default name
     }
 
     void testRemoveSessionBeforeActive()
@@ -1486,7 +1489,9 @@ private slots:
 
         // Process the queued singleShot(0) and verify removal
         QTest::qWait(50);
-        QCOMPARE(mgr.sessionCount(), countBefore - 1);
+        // If this was the last session, a fallback shell session is created
+        int expected = (countBefore == 1) ? 1 : countBefore - 1;
+        QCOMPARE(mgr.sessionCount(), expected);
     }
 
     void testAnonymousAutoRemoveOnErrorDelayed()
@@ -1509,7 +1514,9 @@ private slots:
         // Wait for the delay (kCommandExitDisplayDelayMs = 800 + margin)
         QTest::qWait(900);
 
-        QCOMPARE(mgr.sessionCount(), countBefore - 1);
+        // If this was the last session, a fallback shell session is created
+        int expected = (countBefore == 1) ? 1 : countBefore - 1;
+        QCOMPARE(mgr.sessionCount(), expected);
     }
 
     void testAnonymousAutoRemoveSkippedAfterRename()
@@ -1982,31 +1989,28 @@ private slots:
         mgr.restoreSessions();
 
         // Newlines should be stripped
+        int countBefore = mgr.sessionCount();
         mgr.setCliArgs(QString(), QStringList(), QStringLiteral("name\nwith\nnewlines"));
         mgr.processCliArgs();
-        QCOMPARE(mgr.sessionCount(), 1);
-        QString name = mgr.sessionName(0);
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        QString name = mgr.sessionName(mgr.sessionCount() - 1);
         QVERIFY(!name.contains('\n'));
         QVERIFY(!name.contains('\r'));
 
-        // Clean up
-        mgr.removeSession(0);
-
         // Colons should be stripped (IPC exec: protocol delimiter)
+        countBefore = mgr.sessionCount();
         mgr.setCliArgs(QString(), QStringList(), QStringLiteral("foo:bar"));
         mgr.processCliArgs();
-        QCOMPARE(mgr.sessionCount(), 1);
-        QCOMPARE(mgr.sessionName(0), QStringLiteral("foobar"));
-
-        // Clean up
-        mgr.removeSession(0);
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        QCOMPARE(mgr.sessionName(mgr.sessionCount() - 1), QStringLiteral("foobar"));
 
         // Long names should be truncated
+        countBefore = mgr.sessionCount();
         QString longName(200, QChar('x'));
         mgr.setCliArgs(QString(), QStringList(), longName);
         mgr.processCliArgs();
-        QCOMPARE(mgr.sessionCount(), 1);
-        QVERIFY(mgr.sessionName(0).length() <= 128);
+        QCOMPARE(mgr.sessionCount(), countBefore + 1);
+        QVERIFY(mgr.sessionName(mgr.sessionCount() - 1).length() <= 128);
     }
 
     void testRateLimitAtMaxSessions()
@@ -2046,6 +2050,77 @@ private slots:
         auto *view = mgr.createSessionWithCommand(QString(), QStringList() << "htop");
         QVERIFY(view == nullptr);
         QCOMPARE(mgr.sessionCount(), 100);
+    }
+
+    void testLastAnonymousSessionExitCreatesFallback()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create a single anonymous command session
+        mgr.createSessionWithCommand(QString(), QStringList() << "echo");
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // Simulate command exit (success) — triggers immediate auto-remove
+        auto *view = mgr.activeSession();
+        QVERIFY(view);
+        view->emitCommandExited(0);
+        QCoreApplication::processEvents();
+
+        // Should have created a fallback shell session, not 0 sessions
+        QCOMPARE(mgr.sessionCount(), 1);
+        // The fallback session should be a regular session (no execArgs)
+        QVERIFY(mgr.sessionExecCommand(0).isEmpty());
+    }
+
+    void testRestartShellDuringAutoRemoveDelayPreventsRemoval()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create an anonymous command session
+        mgr.createSessionWithCommand(QString(), QStringList() << "failing-cmd");
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // Simulate command exit with error — schedules 800ms auto-remove
+        auto *view = mgr.activeSession();
+        QVERIFY(view);
+        view->emitCommandExited(1);
+
+        // User taps terminal before the 800ms timer fires — restarts shell
+        view->restartShell();
+
+        // Now let the timer fire
+        QThread::msleep(900);
+        QCoreApplication::processEvents();
+
+        // Session should still exist — restartShell cleared execArgs,
+        // so isAnonymous() returned false and auto-remove was skipped.
+        QCOMPARE(mgr.sessionCount(), 1);
+    }
+
+    void testRestartShellBeforeImmediateAutoRemovePreventsRemoval()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create an anonymous command session
+        mgr.createSessionWithCommand(QString(), QStringList() << "quick-cmd");
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // Simulate command exit with success — schedules singleShot(0, ...)
+        auto *view = mgr.activeSession();
+        QVERIFY(view);
+        view->emitCommandExited(0);
+
+        // User taps terminal BEFORE processEvents() fires the 0ms timer
+        view->restartShell();
+
+        // Now let the 0ms timer fire
+        QCoreApplication::processEvents();
+
+        // Session should survive — restartShell cleared execArgs
+        QCOMPARE(mgr.sessionCount(), 1);
     }
 };
 

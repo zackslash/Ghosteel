@@ -390,6 +390,7 @@ void TerminalView::restartShell()
     m_shellExited = false;
     m_shellExitCode = 0;
     m_commandArgs.clear();
+    Q_EMIT shellRestarted();
     m_pty->stop();
     m_vt->destroy();
     setupTerminal();
