@@ -13,15 +13,27 @@
 #include <QFile>
 #include <QSaveFile>
 #include <QFileInfo>
+#include <QTimer>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <algorithm>
-
 #include <unistd.h>
+
+static constexpr int kMaxSessionCount = 100;
+
+// Delay before auto-removing an anonymous -e session on error,
+// so the user can see "Command not found" or the exit code.
+static constexpr int kCommandExitDisplayDelayMs = 800;
 
 SessionManager::SessionManager(QObject *parent)
     : SessionManager(Settings::instance(), parent)
 {}
+
+SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
+    : SessionManager(new Settings(settingsPath), parent)
+{
+    m_settings->setParent(this);
+}
 
 SessionManager::SessionManager(Settings *settings, QObject *parent)
     : QObject(parent)
@@ -141,6 +153,26 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
             [this](const QString &text) {
         Q_EMIT clipboardTextReady(text);
     });
+
+    // When a command session's shell is restarted (user taps after exit),
+    // clear execArgs so isCommandSession() returns false and auto-remove skips it.
+    connect(view, &TerminalView::shellRestarted, this,
+            [this, sessionId]() {
+        int idx = sessionIndexById(sessionId);
+        if (idx >= 0) {
+            m_sessions[idx].execArgs.clear();
+            m_sessions[idx].execCommand.clear();
+        }
+    });
+}
+
+int SessionManager::findSessionByName(const QString &name) const
+{
+    for (int i = 0; i < m_sessions.size(); i++) {
+        if (m_sessions[i].name == name)
+            return i;
+    }
+    return -1;
 }
 
 TerminalView* SessionManager::createSession()
@@ -152,31 +184,82 @@ TerminalView* SessionManager::createSession()
     info.id = m_nextSessionId++;
     info.name = tr("Session %1").arg(m_sessions.size() + 1);
     info.cachedWorkingDirectory = QDir::homePath();
-    info.autorunCommand = QString();
-    info.keybarOpen = true;
-    info.keyboardVisible = true;
     info.createdAt = QDateTime::currentMSecsSinceEpoch();
     info.lastUsedAt = info.createdAt;
     info.view = view;
 
-    int index = m_sessions.size();
+    m_sessions.append(info);
+    finishSessionCreation(view, info);
+    return view;
+}
+
+TerminalView* SessionManager::createSessionWithCommand(const QString &name, const QStringList &commandArgs)
+{
+    if (m_sessions.size() >= kMaxSessionCount) {
+        qWarning() << "Session limit reached (" << kMaxSessionCount << "), ignoring command";
+        return nullptr;
+    }
+
+    TerminalView *view = new TerminalView();
+
+    SessionInfo info;
+    info.id = m_nextSessionId++;
+    info.name = name;
+    info.cachedWorkingDirectory = QDir::homePath();
+    info.execCommand = commandArgs.isEmpty() ? QString() : commandArgs.first();
+    info.execArgs = commandArgs;
+    info.createdAt = QDateTime::currentMSecsSinceEpoch();
+    info.lastUsedAt = info.createdAt;
+    info.view = view;
+
+    view->setCommandArgs(commandArgs);
+
     m_sessions.append(info);
 
-    // Route this view's session-routed signals through the aggregated signals
+    // Auto-remove on exit; delay for errors so user sees the message.
+    // Success: only remove anonymous sessions (command finished normally).
+    // Error: remove all command sessions — the command couldn't run.
+    // Skipped if user taps terminal during delay (restartShell clears execArgs).
+    connect(view, &TerminalView::commandExited, this, [this, sessionId = info.id](int exitCode) {
+        int delay = (exitCode != 0) ? kCommandExitDisplayDelayMs : 0;
+        QTimer::singleShot(delay, this, [this, sessionId, exitCode]() {
+            int idx = sessionIndexById(sessionId);
+            if (idx < 0) return;
+            bool shouldRemove = (exitCode == 0) ? m_sessions[idx].isAnonymous()
+                                                : m_sessions[idx].isCommandSession();
+            if (shouldRemove) {
+                removeSession(idx);
+                if (!m_sessions.isEmpty())
+                    Q_EMIT showSessionList();
+            }
+        });
+    });
+
+    finishSessionCreation(view, info);
+    return view;
+}
+
+void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info)
+{
     connectSessionSignals(view, info.id);
-
-    // Rebuild sorted indices BEFORE emitting signals so that QML bindings
-    // (Repeater delegates calling displayToActual()) see valid mappings.
     rebuildSortedIndices();
-
+    int index = m_sessions.size() - 1;
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
-
-    // Auto-switch to the new session
     setActiveSessionIndex(index);
+}
 
-    return view;
+void SessionManager::switchToSessionByName(const QString &name)
+{
+    int idx = findSessionByName(name);
+    if (idx >= 0) {
+        setActiveSessionIndex(idx);
+    } else {
+        createSession();
+        int newIdx = m_sessions.size() - 1;
+        setSessionName(newIdx, name);
+    }
 }
 
 void SessionManager::removeSession(int index)
@@ -197,12 +280,17 @@ void SessionManager::removeSession(int index)
         // Removed session was before active — shift index down
         m_activeSessionIndex--;
     } else if (wasActive) {
-        // Removed the active session — clamp to valid range
-        if (m_activeSessionIndex >= m_sessions.size())
-            m_activeSessionIndex = m_sessions.size() - 1;
+        // Active session removed — refined after rebuildSortedIndices() below.
+        m_activeSessionIndex = qBound(0, m_activeSessionIndex, m_sessions.size() - 1);
     }
 
     rebuildSortedIndices();
+
+    // When the active session was removed, pick the first session in
+    // the current sort order rather than blindly clamping the raw index.
+    // For "last used" sort, this selects the most recently used session.
+    if (wasActive && !m_sortedIndices.isEmpty())
+        m_activeSessionIndex = m_sortedIndices[0];
 
     // Emit signals after sorted indices are ready.
     // activeSessionIndexChanged must precede sessionSwitched.
@@ -231,6 +319,12 @@ void SessionManager::removeSession(int index)
     QFile::remove(scrollbackFilePath(info.id));
 
     scheduleSave();
+
+    // If we just removed the last session, create a fresh shell so the
+    // user isn't staring at a blank screen with no way to interact.
+    if (m_sessions.isEmpty()) {
+        createSession();
+    }
 }
 
 // QML convenience wrapper — setActiveSessionIndex is a Q_PROPERTY setter,
@@ -312,6 +406,13 @@ QString SessionManager::sessionAutorunCommand(int index) const
     if (index < 0 || index >= m_sessions.size())
         return QString();
     return m_sessions.at(index).autorunCommand;
+}
+
+QString SessionManager::sessionExecCommand(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return QString();
+    return m_sessions.at(index).execCommand;
 }
 
 void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
@@ -411,30 +512,20 @@ void SessionManager::rebuildSortedIndices()
         return;
     }
 
-    int mode = m_settings->sessionSortMode();
-
-    // Manual mode: keep insertion order
-    if (mode == Settings::SortManual) {
-        m_sortedIndices.resize(m_sessions.size());
-        for (int i = 0; i < m_sessions.size(); i++)
-            m_sortedIndices[i] = i;
-        return;
-    }
-
-    // Build index list and sort
     m_sortedIndices.resize(m_sessions.size());
     for (int i = 0; i < m_sessions.size(); i++)
         m_sortedIndices[i] = i;
 
+    int mode = m_settings->sessionSortMode();
     if (mode == Settings::SortLastUsed) {
         std::stable_sort(m_sortedIndices.begin(), m_sortedIndices.end(),
                   [this](int a, int b) {
-            return m_sessions[a].lastUsedAt > m_sessions[b].lastUsedAt; // most recent first
+            return m_sessions[a].lastUsedAt > m_sessions[b].lastUsedAt;
         });
     } else if (mode == Settings::SortCreated) {
         std::stable_sort(m_sortedIndices.begin(), m_sortedIndices.end(),
                   [this](int a, int b) {
-            return m_sessions[a].createdAt > m_sessions[b].createdAt; // newest first
+            return m_sessions[a].createdAt > m_sessions[b].createdAt;
         });
     } else if (mode == Settings::SortAlphabetical) {
         std::stable_sort(m_sortedIndices.begin(), m_sortedIndices.end(),
@@ -442,6 +533,7 @@ void SessionManager::rebuildSortedIndices()
             return m_sessions[a].name.toLower() < m_sessions[b].name.toLower();
         });
     }
+    // SortManual: identity order from the initialization loop above
 }
 
 void SessionManager::removeSessionById(int id)
@@ -481,12 +573,15 @@ QString SessionManager::socketPath()
            + QStringLiteral("/ghosteel-singleton");
 }
 
-bool SessionManager::checkSingleInstance()
+bool SessionManager::checkSingleInstance(const QString &execCommand,
+                                         const QStringList &execArgs,
+                                         const QString &sessionName)
 {
     QLocalSocket socket;
     socket.connectToServer(socketPath());
     if (socket.waitForConnected(500)) {
-        socket.write("raise\n");
+        QByteArray msg = IpcMessage::encode(execCommand, execArgs, sessionName);
+        socket.write(msg);
         socket.waitForBytesWritten(1000);
         socket.disconnectFromServer();
         return true;
@@ -497,36 +592,30 @@ bool SessionManager::checkSingleInstance()
 void SessionManager::startSingleInstanceServer()
 {
     m_localServer = new QLocalServer(this);
+
+    auto failServer = [this]() {
+        delete m_localServer;
+        m_localServer = nullptr;
+    };
+
     if (!m_localServer->listen(socketPath())) {
-        // AddressInUse — either another instance is running (live socket)
-        // or a stale socket file remains from a crash.  Try connecting
-        // to distinguish: if the connect succeeds, the other instance is
-        // alive (shouldn't happen since checkSingleInstance() already
-        // caught it, but handle the race).  If the connect fails, the
-        // socket is stale and we can safely remove it.
         if (m_localServer->serverError() == QAbstractSocket::AddressInUseError) {
             QLocalSocket probe;
             probe.connectToServer(socketPath());
             if (probe.waitForConnected(200)) {
-                // Live instance exists — this shouldn't happen after
-                // checkSingleInstance(), but be safe.
                 qWarning() << "Ghosteel: Another instance detected via socket probe";
-                delete m_localServer;
-                m_localServer = nullptr;
+                failServer();
                 return;
             }
-            // Stale socket — remove and retry
             QLocalServer::removeServer(socketPath());
             if (!m_localServer->listen(socketPath())) {
                 qWarning() << "Ghosteel: Single-instance server failed:" << m_localServer->errorString();
-                delete m_localServer;
-                m_localServer = nullptr;
+                failServer();
                 return;
             }
         } else {
             qWarning() << "Ghosteel: Single-instance server failed:" << m_localServer->errorString();
-            delete m_localServer;
-            m_localServer = nullptr;
+            failServer();
             return;
         }
     }
@@ -534,40 +623,134 @@ void SessionManager::startSingleInstanceServer()
             this, &SessionManager::onNewInstanceConnection);
 }
 
+void SessionManager::setCliArgs(const QString &execCommand,
+                                const QStringList &execArgs,
+                                const QString &sessionName)
+{
+    m_cliExecCommand = execCommand;
+    m_cliExecArgs = execArgs;
+    m_cliSessionName = IpcMessage::sanitizeSessionName(sessionName);
+}
+
+void SessionManager::clearCliArgs()
+{
+    m_cliExecCommand.clear();
+    m_cliExecArgs.clear();
+    m_cliSessionName.clear();
+}
+
+void SessionManager::processCliArgs()
+{
+    if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty())
+        return;
+
+    bool didSomething = false;
+
+    if (!m_cliExecCommand.isEmpty()) {
+        QStringList fullArgs;
+        fullArgs << m_cliExecCommand << m_cliExecArgs;
+
+        if (!m_cliSessionName.isEmpty()) {
+            int named = findSessionByName(m_cliSessionName);
+            if (named >= 0) {
+                if (m_sessions[named].isCommandSession() && !m_sessions[named].view->shellExited()) {
+                    // Command still running — switch to it
+                    setActiveSessionIndex(named);
+                } else {
+                    // Command exited or session is plain shell — replace with new session.
+                    // Create first so removeSession never hits the empty-list fallback.
+                    createSessionWithCommand(m_cliSessionName, fullArgs);
+                    removeSession(named);
+                }
+                didSomething = true;
+                goto done;
+            }
+        }
+
+        for (int i = 0; i < m_sessions.size(); i++) {
+            if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullArgs) {
+                setActiveSessionIndex(i);
+                didSomething = true;
+                goto done;
+            }
+        }
+
+        createSessionWithCommand(m_cliSessionName, fullArgs);
+        didSomething = true;
+    } else if (!m_cliSessionName.isEmpty()) {
+        switchToSessionByName(m_cliSessionName);
+        didSomething = true;
+    }
+
+done:
+    clearCliArgs();
+    if (didSomething)
+        Q_EMIT showTerminal();
+}
+
+void SessionManager::raiseWindow()
+{
+    const auto windows = QGuiApplication::topLevelWindows();
+    if (!windows.isEmpty()) {
+        if (auto *window = windows.first()) {
+            window->raise();
+            window->requestActivate();
+        }
+    }
+}
+
 void SessionManager::onNewInstanceConnection()
 {
     QLocalSocket *socket = m_localServer->nextPendingConnection();
     if (!socket) return;
 
-    // Read data in the disconnected handler — by then all bytes are
-    // guaranteed to be in the buffer, avoiding partial-read issues.
-    connect(socket, &QLocalSocket::disconnected, this, [this, socket]() {
-        QByteArray data = socket->readAll();
-        if (data.trimmed() == "raise") {
-            const auto windows = QGuiApplication::topLevelWindows();
-            if (!windows.isEmpty()) {
-                if (auto *window = windows.first())
-                    window->requestActivate();
-            }
-        }
+    // Race: sender may have written and disconnected before we get here.
+    auto processMessage = [this, socket]() {
+        QByteArray data = socket->readAll().trimmed();
         socket->deleteLater();
-    });
+
+        IpcMessage parsed = IpcMessage::parse(data);
+        if (parsed.type == IpcMessage::Raise) {
+            raiseWindow();
+        } else if (parsed.type == IpcMessage::Switch) {
+            switchToSessionByName(parsed.sessionName);
+            raiseWindow();
+        } else if (parsed.type == IpcMessage::Exec) {
+            if (parsed.command.isEmpty()) return;
+            setCliArgs(parsed.command, parsed.args, parsed.sessionName);
+            processCliArgs();
+            // Delay raise to let QML process sessionCreated() signal
+            QTimer::singleShot(100, this, raiseWindow);
+        }
+    };
+
+    if (socket->bytesAvailable() > 0 || socket->state() == QLocalSocket::UnconnectedState) {
+        // Data already in buffer or socket already closed — process now
+        processMessage();
+    } else {
+        // Wait for data to arrive; disconnected handles the case where
+        // the client connects but never writes then drops the connection.
+        connect(socket, &QLocalSocket::readyRead, this, processMessage);
+        connect(socket, &QLocalSocket::disconnected, this, processMessage);
+    }
 }
 
 void SessionManager::saveSessions()
 {
     QSettings &s = m_settings->raw();
-    s.beginGroup(QStringLiteral("sessions"));
-    s.setValue(QStringLiteral("count"), m_sessions.size());
-    s.setValue(QStringLiteral("nextId"), m_nextSessionId);
-    s.setValue(QStringLiteral("activeIndex"), m_activeSessionIndex);
-    s.endGroup();
 
+    // Clear old session entries
     s.remove(QStringLiteral("sessionData"));
 
+    // Skip anonymous command sessions during save
+    int saveIndex = 0;
     for (int i = 0; i < m_sessions.size(); i++) {
         SessionInfo &info = m_sessions[i];
-        QString group = QStringLiteral("sessionData/session_%1").arg(i);
+
+        if (info.isAnonymous())
+            continue;
+
+        QString group = QStringLiteral("sessionData/session_%1").arg(saveIndex);
         s.beginGroup(group);
         s.setValue(QStringLiteral("id"), info.id);
         s.setValue(QStringLiteral("name"), info.name);
@@ -591,7 +774,18 @@ void SessionManager::saveSessions()
         s.setValue(QStringLiteral("createdAt"), info.createdAt);
         s.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
         s.endGroup();
+        saveIndex++;
     }
+
+    s.beginGroup(QStringLiteral("sessions"));
+    s.setValue(QStringLiteral("count"), saveIndex);
+    s.setValue(QStringLiteral("nextId"), m_nextSessionId);
+    
+    int activeSessionId = (m_activeSessionIndex >= 0
+                           && m_activeSessionIndex < m_sessions.size())
+                          ? m_sessions[m_activeSessionIndex].id : -1;
+    s.setValue(QStringLiteral("activeId"), activeSessionId);
+    s.endGroup();
 
     m_settings->save();
 }
@@ -701,13 +895,74 @@ int SessionManager::activeSessionFontSize() const
     return m_sessions[m_activeSessionIndex].fontSize;
 }
 
+QString SessionManager::sessionDisplayName(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return QString();
+    const SessionInfo &info = m_sessions.at(index);
+    if (!info.name.isEmpty())
+        return info.name;
+    if (!info.execArgs.isEmpty())
+        return info.execArgs.join(QLatin1Char(' '));
+    if (!info.execCommand.isEmpty())
+        return info.execCommand;
+    return tr("Session %1").arg(index + 1);
+}
+
+void SessionManager::restoreScrollbackForSession(TerminalView *view, int savedId)
+{
+    if (!m_settings->scrollbackPersistence())
+        return;
+
+    QString sbPath = scrollbackFilePath(savedId);
+    QFile sbFile(sbPath);
+    if (!sbFile.exists() || !sbFile.open(QIODevice::ReadOnly))
+        return;
+
+    if (sbFile.size() > 4 * 1024 * 1024) {
+        qWarning() << "Scrollback file too large, skipping:" << sbPath;
+        return;
+    }
+
+    QByteArray sbData = sbFile.readAll();
+    if (sbData.isEmpty())
+        return;
+
+    if (ScrollEncryptor::isEncryptedFormat(sbData) && m_encryptor && m_encryptor->isAvailable()) {
+        QByteArray restored = m_encryptor->decrypt(sbData);
+        if (!restored.isEmpty())
+            view->setPendingScrollback(restored);
+    } else if (ScrollEncryptor::isEncryptedFormat(sbData)) {
+        qWarning() << "Encrypted scrollback found but secrets daemon unavailable, skipping:" << sbPath;
+    }
+}
+
+int SessionManager::resolveActiveSession(int activeId, int legacyActiveIndex) const
+{
+    if (activeId >= 0) {
+        for (int i = 0; i < m_sessions.size(); i++) {
+            if (m_sessions[i].id == activeId)
+                return i;
+        }
+    } else if (legacyActiveIndex >= 0) {
+        if (legacyActiveIndex < m_sessions.size())
+            return legacyActiveIndex;
+    }
+    return -1;
+}
+
 bool SessionManager::restoreSessions()
 {
     QSettings &s = m_settings->raw();
     s.beginGroup(QStringLiteral("sessions"));
     int count = s.value(QStringLiteral("count"), 0).toInt();
     int nextId = s.value(QStringLiteral("nextId"), 1).toInt();
-    int activeIndex = s.value(QStringLiteral("activeIndex"), 0).toInt();
+    // activeId (new) with legacy activeIndex fallback
+    int activeId = s.value(QStringLiteral("activeId"), -1).toInt();
+    int legacyActiveIndex = -1;
+    if (activeId < 0) {
+        legacyActiveIndex = s.value(QStringLiteral("activeIndex"), 0).toInt();
+    }
     s.endGroup();
 
     if (count <= 0) {
@@ -716,8 +971,8 @@ bool SessionManager::restoreSessions()
     }
 
     // Sanity cap to protect against corrupted settings
-    if (count > 50)
-        count = 50;
+    if (count > kMaxSessionCount)
+        count = kMaxSessionCount;
 
     m_nextSessionId = nextId;
 
@@ -749,30 +1004,7 @@ bool SessionManager::restoreSessions()
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
 
-        if (m_settings->scrollbackPersistence()) {
-            QString sbPath = scrollbackFilePath(savedId);
-            QFile sbFile(sbPath);
-            if (sbFile.exists() && sbFile.open(QIODevice::ReadOnly)) {
-                if (sbFile.size() > 4 * 1024 * 1024) {
-                    qWarning() << "Scrollback file too large, skipping:" << sbPath;
-                } else {
-                    QByteArray sbData = sbFile.readAll();
-                    if (!sbData.isEmpty()) {
-                        // Only restore if encrypted and decryption succeeds.
-                        // Plaintext files are not accepted — encryption is mandatory.
-                        if (ScrollEncryptor::isEncryptedFormat(sbData)
-                                && m_encryptor && m_encryptor->isAvailable()) {
-                            QByteArray restored = m_encryptor->decrypt(sbData);
-                            if (!restored.isEmpty())
-                                view->setPendingScrollback(restored);
-                        } else if (ScrollEncryptor::isEncryptedFormat(sbData)) {
-                            qWarning() << "Encrypted scrollback found but secrets "
-                                          "daemon unavailable, skipping:" << sbPath;
-                        }
-                    }
-                }
-            }
-        }
+        restoreScrollbackForSession(view, savedId);
 
         SessionInfo info;
         info.id = savedId;
@@ -799,9 +1031,10 @@ bool SessionManager::restoreSessions()
         Q_EMIT sessionsChanged();
     }
 
-    // Restore active session index
-    if (activeIndex >= 0 && activeIndex < m_sessions.size())
-        setActiveSessionIndex(activeIndex);
+    // Restore active session by ID (or by legacy index)
+    int resolvedActive = resolveActiveSession(activeId, legacyActiveIndex);
+    if (resolvedActive >= 0)
+        setActiveSessionIndex(resolvedActive);
     else if (!m_sessions.isEmpty())
         setActiveSessionIndex(0);
 

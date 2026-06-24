@@ -21,5 +21,14 @@ ApplicationWindow {
         if (!SessionManager.restoreSessions()) {
             SessionManager.createSession()
         }
+        // Process CLI args (-e/--exec, -s/--session) after sessions are restored
+        SessionManager.processCliArgs()
+    }
+
+    // IPC exec: navigate to terminal so user sees the result
+    Connections {
+        target: SessionManager
+        onShowTerminal: pageStack.pop(null)
+        onShowSessionList: pageStack.push(Qt.resolvedUrl("pages/SessionPage.qml"))
     }
 }

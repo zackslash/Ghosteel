@@ -341,11 +341,20 @@ void TerminalView::setupTerminal()
         static_cast<uint32_t>(m_cellHeight),
         static_cast<uint32_t>(m_topPadding));
 
-    m_pty->setShellCommand(Settings::instance()->shellCommand());
-    if (!m_pty->startShell(m_cols, m_rows)) {
-        qWarning() << "Failed to start shell";
-        m_vt->destroy();
-        return;
+    if (m_commandArgs.isEmpty()) {
+        m_pty->setShellCommand(Settings::instance()->shellCommand());
+        if (!m_pty->startShell(m_cols, m_rows)) {
+            qWarning() << "Failed to start shell";
+            m_vt->destroy();
+            return;
+        }
+    } else {
+        if (!m_pty->startCommand(m_commandArgs.first(),
+                                 m_commandArgs.mid(1), m_cols, m_rows)) {
+            qWarning() << "Failed to start command";
+            m_vt->destroy();
+            return;
+        }
     }
 
     if (!m_autorunCommand.isEmpty()) {
@@ -369,6 +378,9 @@ void TerminalView::onShellExited(int exitCode)
     qInfo() << "Shell exited with code" << exitCode;
     m_shellExited = true;
     m_shellExitCode = exitCode;
+    if (!m_commandArgs.isEmpty()) {
+        Q_EMIT commandExited(exitCode);
+    }
     update();
 }
 
@@ -377,6 +389,8 @@ void TerminalView::restartShell()
     closeSearch(); // Clear stale search state before destroying terminal
     m_shellExited = false;
     m_shellExitCode = 0;
+    m_commandArgs.clear();
+    Q_EMIT shellRestarted();
     m_pty->stop();
     m_vt->destroy();
     setupTerminal();
@@ -1642,6 +1656,11 @@ void TerminalView::setWorkingDirectory(const QString &dir)
 void TerminalView::setAutorunCommand(const QString &cmd)
 {
     m_autorunCommand = cmd;
+}
+
+void TerminalView::setCommandArgs(const QStringList &args)
+{
+    m_commandArgs = args;
 }
 
 void TerminalView::setPendingScrollback(const QByteArray &data)

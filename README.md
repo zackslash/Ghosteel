@@ -4,9 +4,7 @@
 
 <h1 align="center">Ghosteel</h1>
 
-<p align="center">
-  Desktop-class terminal for SailfishOS, powered by <a href="https://github.com/ghostty-org/ghostty">Ghostty</a>'s VT engine. Truecolor, GPU-rendered, multi-session, TUI apps, encrypted scrollback.
-</p>
+Desktop-class terminal for SailfishOS, powered by <a href="https://github.com/ghostty-org/ghostty">Ghostty</a>'s VT engine. Truecolor, GPU-rendered, multi-session, TUI apps, encrypted scrollback.
 
 Ghosteel brings a modern terminal engine to SailfishOS. Most mobile terminals use
 legacy VT parsers with known limitations. Ghosteel uses the same engine that powers
@@ -33,6 +31,7 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 - **Ghostty VT engine**: full escape sequence support, 24-bit color, alternate screen buffer
 - **GPU rendering**: OpenGL ES 2.0/3.0 renderer with cursor trails shader support
 - **Multi-session**: create, name, switch, and persist sessions with per-session working directories
+- **[Command Sessions](#desktop-file-launchers)**: launch commands in new sessions (`ghosteel -e htop`), switch to named sessions (`ghosteel -s editor`), create .desktop file launchers for TUI apps
 - **Touch text selection**: long-press with Sailfish-style magnifier, velocity-aware hiding, double/triple tap
 - **Pinch-to-zoom**: two-finger pinch to adjust font size with live overlay, per-session font size, optional (off by default)
 - **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
@@ -48,6 +47,38 @@ Download the `.rpm` for your architecture from [Releases](https://github.com/zac
 
 ```bash
 devel-su pkcon install-local ./ghosteel-<version>.rpm
+```
+
+### Desktop file launchers
+
+Create `.desktop` files in `~/.local/share/applications/` to launch TUI apps directly into Ghosteel sessions:
+
+```ini
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+X-Nemo-Single-Instance=no
+Icon=ghosteel
+Exec=ghosteel -e top
+Name=Top
+
+[X-Sailjail]
+OrganizationName=com.zackslash
+ApplicationName=ghosteel
+Permissions=UserDirs;Secrets;
+Sandboxing=Disabled
+```
+
+Use `-s <name>` to give the session a persistent name (survives app restart):
+
+```ini
+Exec=ghosteel -s sysmon -e top
+```
+
+Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps. If you edit a desktop file that's already on the homescreen, restart lipstick for the launcher to pick up changes:
+
+```bash
+systemctl --user restart lipstick.service
 ```
 
 ## Build
@@ -69,7 +100,7 @@ mb2 build
 
 ## Architecture
 
-Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-vt` (Zig, static C library). Rendering via OpenGL ES. Supports Ghostty-compatible post-processing shaders on ES 3.0+. Native cover page, single-instance via D-Bus. Built for aarch64, armv7hl, and i486.
+Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-vt` (Zig, static C library). Rendering via OpenGL ES. Supports Ghostty-compatible post-processing shaders on ES 3.0+. Native cover page, single-instance via QLocalSocket IPC. Built for aarch64, armv7hl, and i486.
 
 ## Development
 
@@ -84,15 +115,7 @@ git submodule update --init
 
 The Ghostty submodule needs a patch for a Zig i386 C ABI bug. It's applied automatically by the spec during builds. For manual builds: `git -C ghostty apply patches/ghostty-i386-abi-fix.patch`
 
-### Hooks
-
-After cloning, enable the git hooks:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-This activates a pre-commit hook that blocks accidental commits of compiled `.a` files and ghostty submodule pointer changes (use `git commit --no-verify` for intentional submodule upgrades).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for git hooks and development guidelines.
 
 ## License
 

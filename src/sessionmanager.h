@@ -6,11 +6,21 @@
 #include <QVector>
 #include <QTimer>
 #include <QLocalServer>
+#include <QByteArray>
+#include <QStringList>
 
 class TerminalView;
 class ScrollEncryptor;
 class Settings;
 
+// Session taxonomy (two orthogonal dimensions):
+//
+//                    No command (execArgs empty)   Command (execArgs set)
+//  No name           Regular shell session         Anonymous command session
+//  Named             Named shell session           Named command session
+//
+// Auto-remove: exit 0 → anonymous only; exit ≠ 0 → all command sessions.
+// restartShell() clears execArgs → cancels pending auto-remove.
 struct SessionInfo {
     int id;
     QString name;
@@ -19,9 +29,14 @@ struct SessionInfo {
     bool keybarOpen = true;           // Whether the extra keys panel is open
     bool keyboardVisible = true;      // Whether the software keyboard is visible
     int fontSize = 0;                 // Per-session font size (0 = use global default)
+    QString execCommand;              // Command binary name from -e (display only)
+    QStringList execArgs;             // Full command args including binary (for reuse matching)
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
     TerminalView *view;
+
+    bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
+    bool isCommandSession() const { return !execArgs.isEmpty(); }
 };
 
 class SessionManager : public QObject
@@ -35,6 +50,7 @@ class SessionManager : public QObject
 public:
     explicit SessionManager(QObject *parent = nullptr);
     explicit SessionManager(Settings *settings, QObject *parent = nullptr);
+    explicit SessionManager(const QString &settingsPath, QObject *parent = nullptr);
     ~SessionManager();
 
     int activeSessionIndex() const { return m_activeSessionIndex; }
@@ -48,6 +64,8 @@ public:
     QQmlListProperty<TerminalView> sessions();
 
     Q_INVOKABLE TerminalView* createSession();
+    TerminalView* createSessionWithCommand(const QString &name, const QStringList &commandArgs);
+    Q_INVOKABLE void switchToSessionByName(const QString &name);
     Q_INVOKABLE void removeSession(int index);
     // QML convenience: setActiveSessionIndex is a Q_PROPERTY setter, not
     // Q_INVOKABLE, so QML needs this to call it by name.
@@ -62,6 +80,7 @@ public:
     Q_INVOKABLE bool restoreSessions(); // Returns true if sessions were restored
     Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
     Q_INVOKABLE QString sessionAutorunCommand(int index) const;
+    Q_INVOKABLE QString sessionExecCommand(int index) const;
     Q_INVOKABLE void setSessionAutorunCommand(int index, const QString &cmd);
     Q_INVOKABLE bool sessionKeybarOpen(int index) const;
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
@@ -70,6 +89,7 @@ public:
 
     Q_INVOKABLE void setActiveSessionFontSize(int size);
     Q_INVOKABLE int activeSessionFontSize() const;
+    Q_INVOKABLE QString sessionDisplayName(int index) const;
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
     Q_INVOKABLE int displayToActual(int displayIndex) const;
@@ -80,11 +100,20 @@ public:
     // Single-instance guard: returns true if another instance is already running.
     // Call before creating SessionManager. If true, a "raise" message was sent
     // to the existing instance and the caller should exit.
-    static bool checkSingleInstance();
+    static bool checkSingleInstance(const QString &execCommand = QString(),
+                                    const QStringList &execArgs = QStringList(),
+                                    const QString &sessionName = QString());
 
     // Start the single-instance socket server. Call after D-Bus registration
     // so that future instances can detect this one.
     void startSingleInstanceServer();
+
+    // Store CLI arguments for deferred processing after QML initialization.
+    void setCliArgs(const QString &execCommand, const QStringList &execArgs,
+                    const QString &sessionName);
+
+    // Called from QML after restoreSessions() to process deferred CLI args.
+    Q_INVOKABLE void processCliArgs();
 
 Q_SIGNALS:
     void activeSessionIndexChanged();
@@ -105,6 +134,8 @@ Q_SIGNALS:
     void clipboardReadRequest(int sessionId, const QString &kind);
     void clipboardTextReady(const QString &text);
     void sortOrderChanged();
+    void showTerminal(); // Request QML to navigate back to the terminal page
+    void showSessionList(); // Request QML to show session picker
 
 private:
     static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
@@ -119,6 +150,12 @@ private:
     // this manager's aggregated signals. Called from both create and restore
     // paths to keep the wiring in one place.
     void connectSessionSignals(TerminalView *view, int sessionId);
+    int findSessionByName(const QString &name) const;  // Returns m_sessions index, or -1
+    void finishSessionCreation(TerminalView *view, SessionInfo &info);
+    static void raiseWindow();
+    void clearCliArgs();
+    void restoreScrollbackForSession(TerminalView *view, int savedId);
+    int resolveActiveSession(int activeId, int legacyActiveIndex) const;
 
     // Scrollback persistence
     void saveScrollback();
@@ -147,6 +184,70 @@ private:
 
     // Scrollback encryption (Sailfish Secrets + Crypto)
     ScrollEncryptor *m_encryptor = nullptr;
+
+    // CLI arguments (set from main(), processed by processCliArgs() from QML)
+    QString m_cliExecCommand;
+    QStringList m_cliExecArgs;
+    QString m_cliSessionName;
+};
+
+// IPC protocol for single-instance communication.
+struct IpcMessage {
+    enum Type { Raise, Switch, Exec } type = Raise;
+    QString sessionName;
+    QString command;
+    QStringList args;
+
+    static constexpr int kMaxSessionNameLength = 128;
+
+    static QString sanitizeSessionName(const QString &name) {
+        QString clean = name;
+        clean.truncate(kMaxSessionNameLength);
+        clean.remove(QChar('\0'));
+        clean.remove(QChar('\n'));
+        clean.remove(QChar('\r'));
+        clean.remove(QChar(':')); // load-bearing: exec: protocol uses : as delimiter
+        return clean;
+    }
+
+    static IpcMessage parse(const QByteArray &raw) {
+        IpcMessage msg;
+        QList<QByteArray> parts = raw.split('\0');
+        QByteArray header = parts.isEmpty() ? QByteArray() : parts.first();
+
+        if (header == "raise") {
+            msg.type = Raise;
+        } else if (header.startsWith("switch:")) {
+            msg.type = Switch;
+            msg.sessionName = sanitizeSessionName(QString::fromUtf8(header.mid(7)));
+        } else if (header.startsWith("exec:")) {
+            msg.type = Exec;
+            QByteArray afterPrefix = header.mid(5);
+            int colonPos = afterPrefix.indexOf(':');
+            if (colonPos < 0) { msg.type = Raise; return msg; }
+            msg.sessionName = sanitizeSessionName(QString::fromUtf8(afterPrefix.left(colonPos)));
+            if (colonPos + 1 < afterPrefix.size())
+                msg.command = QString::fromUtf8(afterPrefix.mid(colonPos + 1));
+            for (int i = 1; i < parts.size(); i++)
+                if (!parts[i].isEmpty())
+                    msg.args.append(QString::fromUtf8(parts[i]));
+        }
+        return msg;
+    }
+
+    static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
+        if (!execCommand.isEmpty()) {
+            QByteArray cmdBytes = execCommand.toUtf8();
+            for (const QString &arg : execArgs) {
+                cmdBytes.append('\0');
+                cmdBytes.append(arg.toUtf8());
+            }
+            return (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
+        } else if (!sessionName.isEmpty()) {
+            return (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
+        }
+        return QByteArrayLiteral("raise\n");
+    }
 };
 
 #endif // SESSIONMANAGER_H

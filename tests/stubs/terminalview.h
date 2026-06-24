@@ -92,12 +92,14 @@ public:
     Q_INVOKABLE void copySelection() {}
     Q_INVOKABLE void sendClipboardText(const QString &, const QString & = "c") {}
     Q_INVOKABLE void sendKey(int, int = 0) {}
-    Q_INVOKABLE void restartShell() {}
+    Q_INVOKABLE void restartShell() { m_commandArgs.clear(); m_shellExited = false; Q_EMIT shellRestarted(); }
     Q_INVOKABLE void setActive(bool) {}
     Q_INVOKABLE QString workingDirectory() const { return m_workingDirectory; }
     Q_INVOKABLE void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
     Q_INVOKABLE void setAutorunCommand(const QString &cmd) { m_autorunCommand = cmd; }
     Q_INVOKABLE QString autorunCommand() const { return m_autorunCommand; }
+    void setCommandArgs(const QStringList &args) { m_commandArgs = args; }
+    QStringList commandArgs() const { return m_commandArgs; }
     Q_INVOKABLE void suppressNextKeyboardAutoShow() {}
     Q_INVOKABLE void setPendingScrollback(const QByteArray &) {}
     Q_INVOKABLE void openSearch() { m_searchActive = true; }
@@ -113,6 +115,8 @@ public:
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
     void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
+    bool shellExited() const { return m_shellExited; }
+    void emitCommandExited(int exitCode) { m_shellExited = true; Q_EMIT commandExited(exitCode); }
 
 Q_SIGNALS:
     void fontSizeChanged();
@@ -136,6 +140,8 @@ Q_SIGNALS:
     void pullDownZoneHeightChanged();
     void navigateSession(int direction);
     void toggleKeybar();
+    void commandExited(int exitCode);
+    void shellRestarted();
     void linkActivated(const QString &uri);
     void topPaddingChanged();
     void pinchingChanged(bool pinching);
@@ -149,6 +155,8 @@ private:
     QString m_selectedText;
     QString m_workingDirectory;
     QString m_autorunCommand;
+    QStringList m_commandArgs;
+    bool m_shellExited = false;
 
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;

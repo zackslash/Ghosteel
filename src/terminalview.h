@@ -84,6 +84,7 @@ public:
     Q_INVOKABLE QString workingDirectory() const; // Get CWD from /proc/<pid>/cwd
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     Q_INVOKABLE void setAutorunCommand(const QString &cmd);
+    void setCommandArgs(const QStringList &args);
     Q_INVOKABLE void suppressNextKeyboardAutoShow();
     void setPendingScrollback(const QByteArray &data); // Set VT data for restore on setupTerminal()
     Q_INVOKABLE void openSearch();
@@ -148,6 +149,8 @@ Q_SIGNALS:
     void pullDownZoneHeightChanged();
     void navigateSession(int direction);
     void toggleKeybar();
+    void commandExited(int exitCode);
+    void shellRestarted();
     void topPaddingChanged();
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
     void pinchingChanged(bool pinching);
@@ -306,6 +309,7 @@ private:
 
     // --- Autorun command (per-session startup command) ---
     QString m_autorunCommand;
+    QStringList m_commandArgs;  // If non-empty, startCommand() is used instead of startShell()
     static const int AutorunDelayMs = 500;
 
     // --- Suppress keyboard auto-show flag ---

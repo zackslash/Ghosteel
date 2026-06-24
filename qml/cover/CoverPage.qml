@@ -86,7 +86,7 @@ CoverBackground {
                         // when a session is renamed (even if the actual index
                         // didn't change, e.g. in manual sort mode).
                         var _ = _sortRevision
-                        return SessionManager.sessionName(parent.actualIndex)
+                        return SessionManager.sessionDisplayName(parent.actualIndex)
                     }
                     color: parent.isActive ? Theme.highlightColor : Theme.secondaryColor
                     font.pixelSize: Theme.fontSizeSmall

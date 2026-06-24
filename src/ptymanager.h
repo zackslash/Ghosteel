@@ -32,7 +32,11 @@ public:
     explicit PtyManager(QObject *parent = nullptr);
     ~PtyManager();
 
+    // Exit code emitted by shellExited() when exec() fails in the child
+    static constexpr int kExecFailedExitCode = -127;
+
     bool startShell(uint16_t cols, uint16_t rows);
+    bool startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows);
     void stop();
     bool writeData(const char *data, size_t len);
     void setShellCommand(const QString &cmd) { m_shellCommand = cmd; }
@@ -47,6 +51,9 @@ Q_SIGNALS:
 private:
     void ensureWriteNotifier();
     void drainWriteBuffer();
+    void setupChildProcess();
+    bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid);
+    bool startParentProcess(pid_t pid, int execPipe[2]);
 
     int m_ptyFd = -1;
     pid_t m_childPid = -1;
