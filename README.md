@@ -69,7 +69,11 @@ Permissions=UserDirs;Secrets;
 Sandboxing=Disabled
 ```
 
-Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps.
+Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps. After creating or editing desktop files, restart lipstick for the launcher to pick up changes:
+
+```bash
+systemctl --user restart lipstick.service
+```
 
 ## Build
 
