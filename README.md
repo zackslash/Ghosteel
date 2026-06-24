@@ -94,7 +94,7 @@ mb2 build
 
 ## Architecture
 
-Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-vt` (Zig, static C library). Rendering via OpenGL ES. Supports Ghostty-compatible post-processing shaders on ES 3.0+. Native cover page, single-instance via D-Bus. Built for aarch64, armv7hl, and i486.
+Built with Qt/QML and Sailfish Silica. Terminal engine is Ghostty's `libghostty-vt` (Zig, static C library). Rendering via OpenGL ES. Supports Ghostty-compatible post-processing shaders on ES 3.0+. Native cover page, single-instance via QLocalSocket IPC. Built for aarch64, armv7hl, and i486.
 
 ## Development
 
