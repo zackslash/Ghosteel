@@ -41,6 +41,12 @@ SessionManager::SessionManager(QObject *parent)
     : SessionManager(Settings::instance(), parent)
 {}
 
+SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
+    : SessionManager(new Settings(settingsPath), parent)
+{
+    m_settings->setParent(this);
+}
+
 SessionManager::SessionManager(Settings *settings, QObject *parent)
     : QObject(parent)
     , m_settings(settings)
@@ -220,6 +226,7 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
     info.cachedWorkingDirectory = QDir::homePath();
     info.commandSession = true;
     info.execCommand = commandArgs.isEmpty() ? QString() : commandArgs.first();
+    info.execArgs = commandArgs;
     info.createdAt = QDateTime::currentMSecsSinceEpoch();
     info.lastUsedAt = info.createdAt;
     info.view = view;
@@ -232,10 +239,8 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
     // Route this view's session-routed signals through the aggregated signals
     connectSessionSignals(view, info.id);
 
-    // Auto-remove anonymous command sessions when the command exits.
-    // On error (non-zero exit), brief delay so the user can see "Command not found" or exit code.
-    // Note: if the user renames the session during the delay, name.isEmpty() becomes false
-    // and auto-remove is skipped — this is desirable (user claimed the session).
+    // Auto-remove on exit; delay for errors so user sees the message.
+    // Skipped if user renames during the delay window (session is no longer anonymous).
     connect(view, &TerminalView::commandExited, this, [this, sessionId = info.id](int exitCode) {
         int delay = (exitCode != 0) ? kCommandExitDisplayDelayMs : 0;
         QTimer::singleShot(delay, this, [this, sessionId]() {
@@ -672,8 +677,12 @@ void SessionManager::processCliArgs()
 
         // Reuse an existing anonymous session that already runs the same command.
         // Skip named sessions — they should only be reused via the name path above.
+        // Match on full command (binary + args), not just binary name, so that
+        // "python3 -m http.server" and "python3 -m http.server 8080" get separate sessions.
+        QStringList fullCliArgs;
+        fullCliArgs << m_cliExecCommand << m_cliExecArgs;
         for (int i = 0; i < m_sessions.size(); i++) {
-            if (m_sessions[i].name.isEmpty() && m_sessions[i].execCommand == m_cliExecCommand) {
+            if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullCliArgs) {
                 setActiveSessionIndex(i);
                 m_cliExecCommand.clear();
                 m_cliExecArgs.clear();
@@ -690,7 +699,7 @@ void SessionManager::processCliArgs()
         switchToSessionByName(m_cliSessionName);
     }
 
-    // Clear so processCliArgs() is idempotent
+    
     m_cliExecCommand.clear();
     m_cliExecArgs.clear();
     m_cliSessionName.clear();
@@ -701,11 +710,7 @@ void SessionManager::onNewInstanceConnection()
     QLocalSocket *socket = m_localServer->nextPendingConnection();
     if (!socket) return;
 
-    // The sender (checkSingleInstance) writes data then disconnects/exits
-    // very quickly.  By the time we process newConnection, the data may
-    // already be in the buffer and the socket may already be closed.
-    // Handle both cases: read immediately if data is available, otherwise
-    // wait for readyRead.
+    // Race: sender may have written and disconnected before we get here.
     auto processMessage = [this, socket]() {
         QByteArray data = socket->readAll();
         socket->deleteLater();
@@ -805,8 +810,7 @@ void SessionManager::saveSessions()
     s.beginGroup(QStringLiteral("sessions"));
     s.setValue(QStringLiteral("count"), saveIndex);
     s.setValue(QStringLiteral("nextId"), m_nextSessionId);
-    // Save the active session's ID (not index) so that anonymous sessions
-    // being skipped doesn't corrupt the active session on restore.
+    
     int activeSessionId = (m_activeSessionIndex >= 0
                            && m_activeSessionIndex < m_sessions.size())
                           ? m_sessions[m_activeSessionIndex].id : -1;
@@ -927,7 +931,7 @@ bool SessionManager::restoreSessions()
     s.beginGroup(QStringLiteral("sessions"));
     int count = s.value(QStringLiteral("count"), 0).toInt();
     int nextId = s.value(QStringLiteral("nextId"), 1).toInt();
-    // Read activeId (new format) with fallback to activeIndex (old format)
+    // activeId (new) with legacy activeIndex fallback
     int activeId = s.value(QStringLiteral("activeId"), -1).toInt();
     int legacyActiveIndex = -1;
     if (activeId < 0) {

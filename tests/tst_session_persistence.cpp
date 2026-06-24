@@ -1698,6 +1698,56 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 2); // new session
     }
 
+    void testProcessCliArgsSameBinaryDifferentArgsNotReused()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create session with "python3 -m http.server"
+        mgr.setCliArgs("python3", QStringList() << "-m" << "http.server", QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // "python3 -m http.server 8080" should NOT reuse (different args)
+        mgr.setCliArgs("python3", QStringList() << "-m" << "http.server" << "8080", QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 2); // new session
+    }
+
+    void testProcessCliArgsSameFullCommandReuses()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create session with "python3 -m http.server"
+        mgr.setCliArgs("python3", QStringList() << "-m" << "http.server", QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        int activeAfterFirst = mgr.activeSessionIndex();
+
+        // Same full command should reuse
+        mgr.setCliArgs("python3", QStringList() << "-m" << "http.server", QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1); // still 1
+        QCOMPARE(mgr.activeSessionIndex(), activeAfterFirst); // same session
+    }
+
+    void testProcessCliArgsNoArgsVsArgsNotReused()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create session with "top" (no extra args)
+        mgr.setCliArgs("top", QStringList(), QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // "top -d 5" should NOT reuse the plain "top" session
+        mgr.setCliArgs("top", QStringList() << "-d" << "5", QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 2); // new session
+    }
+
     // --- saveSessions skips anonymous ---
 
     void testSaveSkipsAnonymousCommandSessions()

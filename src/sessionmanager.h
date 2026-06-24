@@ -20,7 +20,8 @@ struct SessionInfo {
     bool keyboardVisible = true;      // Whether the software keyboard is visible
     int fontSize = 0;                 // Per-session font size (0 = use global default)
     bool commandSession = false;      // true for -e sessions (affects exit behavior + persistence)
-    QString execCommand;              // Command binary name from -e
+    QString execCommand;              // Command binary name from -e (display only)
+    QStringList execArgs;             // Full command args including binary (for reuse matching)
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
     TerminalView *view;
@@ -39,6 +40,7 @@ class SessionManager : public QObject
 public:
     explicit SessionManager(QObject *parent = nullptr);
     explicit SessionManager(Settings *settings, QObject *parent = nullptr);
+    explicit SessionManager(const QString &settingsPath, QObject *parent = nullptr);
     ~SessionManager();
 
     int activeSessionIndex() const { return m_activeSessionIndex; }
@@ -99,8 +101,7 @@ public:
     void setCliArgs(const QString &execCommand, const QStringList &execArgs,
                     const QString &sessionName);
 
-    // Process stored CLI arguments: creates command sessions or switches
-    // to named sessions. Called from QML after restoreSessions().
+    // Called from QML after restoreSessions() to process deferred CLI args.
     Q_INVOKABLE void processCliArgs();
 
 Q_SIGNALS:

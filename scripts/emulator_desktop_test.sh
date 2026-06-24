@@ -36,7 +36,7 @@ fi
 
 if [[ "${1:-}" == "--clean" ]]; then
     echo "[1/2] Removing test desktop files..."
-    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f ~/$DESKTOP_DIR/ghosteel-top.desktop ~/$DESKTOP_DIR/ghosteel-lazygit.desktop ~/$DESKTOP_DIR/ghosteel-htop.desktop ~/$DESKTOP_DIR/ghosteel-sysmon.desktop"
+    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f ~/$DESKTOP_DIR/ghosteel-top.desktop ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop ~/$DESKTOP_DIR/ghosteel-top-slow.desktop ~/$DESKTOP_DIR/ghosteel-lazygit.desktop ~/$DESKTOP_DIR/ghosteel-htop.desktop ~/$DESKTOP_DIR/ghosteel-sysmon.desktop"
 
     echo "[2/2] Restarting lipstick..."
     ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "systemctl --user restart lipstick.service"
@@ -60,6 +60,42 @@ Icon=ghosteel
 Exec=ghosteel -e top
 Name=Top (Ghosteel)
 Comment=Run top in Ghosteel terminal
+
+[X-Sailjail]
+OrganizationName=com.zackslash
+ApplicationName=ghosteel
+Permissions=UserDirs;Secrets;
+Sandboxing=Disabled
+EOF
+
+# ghosteel-top-cpu.desktop — same binary, different args (should NOT reuse top session)
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+X-Nemo-Single-Instance=no
+Icon=ghosteel
+Exec=ghosteel -e top -o %CPU
+Name=Top CPU (Ghosteel)
+Comment=Top sorted by CPU usage
+
+[X-Sailjail]
+OrganizationName=com.zackslash
+ApplicationName=ghosteel
+Permissions=UserDirs;Secrets;
+Sandboxing=Disabled
+EOF
+
+# ghosteel-top-slow.desktop — same binary, different args (should NOT reuse top or top-cpu)
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-top-slow.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+X-Nemo-Single-Instance=no
+Icon=ghosteel
+Exec=ghosteel -e top -d 5
+Name=Top Slow (Ghosteel)
+Comment=Top with 5-second refresh
 
 [X-Sailjail]
 OrganizationName=com.zackslash
@@ -139,17 +175,22 @@ ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "systemctl --user restart lipstick.service"
 sleep 1
 
 echo ""
-echo "Done. Four desktop shortcuts installed:"
-echo "  Top (Ghosteel)      — anonymous exec: ghosteel -e top"
-echo "  Lazygit (Ghosteel)  — anonymous exec: ghosteel -e lazygit"
-echo "  Htop (Ghosteel)     — named session:  ghosteel -s htop -e htop"
-echo "  Sysmon (Ghosteel)   — named session:  ghosteel -s sysmon -e top"
+echo "Done. Six desktop shortcuts installed:"
+echo "  Top (Ghosteel)        — anonymous exec: ghosteel -e top"
+echo "  Top CPU (Ghosteel)    — anonymous exec: ghosteel -e top -o %CPU"
+echo "  Top Slow (Ghosteel)   — anonymous exec: ghosteel -e top -d 5"
+echo "  Lazygit (Ghosteel)    — anonymous exec: ghosteel -e lazygit"
+echo "  Htop (Ghosteel)       — named session:  ghosteel -s htop -e htop"
+echo "  Sysmon (Ghosteel)     — named session:  ghosteel -s sysmon -e top"
 echo ""
 echo "Test scenarios:"
 echo "  1. Cold start: kill ghosteel, tap any icon — should launch and run command"
 echo "  2. Warm start: with ghosteel running, tap 'Top' — should create new session"
 echo "  3. Reuse: tap 'Top' again — should switch to existing top session"
 echo "  4. Named reuse: tap 'Sysmon' — creates named session, tap again — reuses it"
-echo "  5. Independence: tap 'Top' then 'Sysmon' — two separate sessions with same command"
+echo "  5. Same binary, different args: tap 'Top' then 'Top CPU' — two SEPARATE sessions"
+echo "  6. Same binary, different args: tap 'Top CPU' then 'Top Slow' — two SEPARATE sessions"
+echo "  7. Args reuse: tap 'Top CPU' twice — second tap reuses existing Top CPU session"
+echo "  8. Independence: tap 'Top' then 'Sysmon' — two separate sessions with same command"
 echo ""
 echo "Clean up with: $0 --clean"

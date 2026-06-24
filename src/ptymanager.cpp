@@ -93,7 +93,6 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     }
 
     if (pid == 0) {
-        // Child process — close read end and set up environment
         ::close(execPipe[0]);
         setupChildProcess();
     }
@@ -122,7 +121,6 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         return false;
 
     if (pid == 0) {
-        // Child process — exec the shell
         execlp(shell, shell, nullptr);
         execlp("sh", "sh", nullptr);  // fallback
         int execErr = errno;
@@ -131,7 +129,6 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         _exit(127);
     }
 
-    // Parent process
     return startParentProcess(pid, execPipe);
 }
 
@@ -169,7 +166,6 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
         return false;
 
     if (pid == 0) {
-        // Child process — exec the command with arguments
         QByteArray cmdBytes = command.toUtf8();
         QList<QByteArray> argBytes;
         argBytes.append(cmdBytes);
@@ -189,7 +185,6 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
         _exit(127);
     }
 
-    // Parent process
     return startParentProcess(pid, execPipe);
 }
 
