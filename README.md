@@ -81,8 +81,6 @@ Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swa
 systemctl --user restart lipstick.service
 ```
 
-Note: literal `%` characters in Exec arguments must be escaped as `%%` per the Desktop Entry spec. For example, `Exec=ghosteel -e top -o %%CPU` passes `%CPU` to the command.
-
 ## Build
 
 Requires Sailfish OS SDK and Zig 0.15.2 (Ghostty is incompatible with 0.16+).
