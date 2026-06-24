@@ -13,6 +13,14 @@ class TerminalView;
 class ScrollEncryptor;
 class Settings;
 
+// Session taxonomy (two orthogonal dimensions):
+//
+//                    No command (execArgs empty)   Command (execArgs set)
+//  No name           Regular shell session         Anonymous command session
+//  Named             Named shell session           Named command session
+//
+// Auto-remove: exit 0 → anonymous only; exit ≠ 0 → all command sessions.
+// restartShell() clears execArgs → cancels pending auto-remove.
 struct SessionInfo {
     int id;
     QString name;

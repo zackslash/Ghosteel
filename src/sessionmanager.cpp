@@ -155,7 +155,7 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
     });
 
     // When a command session's shell is restarted (user taps after exit),
-    // clear execArgs so isAnonymous() returns false and auto-remove skips it.
+    // clear execArgs so isCommandSession() returns false and auto-remove skips it.
     connect(view, &TerminalView::shellRestarted, this,
             [this, sessionId]() {
         int idx = sessionIndexById(sessionId);
