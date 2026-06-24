@@ -36,7 +36,7 @@ fi
 
 if [[ "${1:-}" == "--clean" ]]; then
     echo "[1/2] Removing test desktop files..."
-    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f ~/$DESKTOP_DIR/ghosteel-top.desktop ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop ~/$DESKTOP_DIR/ghosteel-top-slow.desktop ~/$DESKTOP_DIR/ghosteel-lazygit.desktop ~/$DESKTOP_DIR/ghosteel-htop.desktop ~/$DESKTOP_DIR/ghosteel-sysmon.desktop"
+    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f ~/$DESKTOP_DIR/ghosteel-top.desktop ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop ~/$DESKTOP_DIR/ghosteel-top-slow.desktop ~/$DESKTOP_DIR/ghosteel-lazygit.desktop ~/$DESKTOP_DIR/ghosteel-htop.desktop ~/$DESKTOP_DIR/ghosteel-sysmon.desktop ~/$DESKTOP_DIR/ghosteel-fail.desktop /tmp/fail-after-3.sh"
 
     echo "[2/2] Restarting lipstick..."
     ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "systemctl --user restart lipstick.service"
@@ -69,14 +69,18 @@ EOF
 }
 
 echo "[1/4] Creating desktop files on emulator..."
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "mkdir -p ~/$DESKTOP_DIR" 
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "mkdir -p ~/$DESKTOP_DIR"
 
-create_desktop "ghosteel-top.desktop"      "ghosteel -e top"           "Top (Ghosteel)"      "Run top in Ghosteel terminal"
-create_desktop "ghosteel-top-cpu.desktop"  "ghosteel -e top -b -n 5"   "Top Batch (Ghosteel)" "Top in batch mode, 5 iterations"
-create_desktop "ghosteel-top-slow.desktop" "ghosteel -e top -d 5"      "Top Slow (Ghosteel)" "Top with 5-second refresh"
-create_desktop "ghosteel-lazygit.desktop"  "ghosteel -e lazygit"       "Lazygit (Ghosteel)"  "Run lazygit in Ghosteel terminal"
-create_desktop "ghosteel-htop.desktop"     "ghosteel -s htop -e htop"  "Htop (Ghosteel)"     "Named htop session in Ghosteel"
-create_desktop "ghosteel-sysmon.desktop"   "ghosteel -s sysmon -e top" "Sysmon (Ghosteel)"   "Named sysmon session in Ghosteel"
+# Create a script that sleeps then exits with error (for testing auto-remove + session list)
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "printf '#!/bin/sh\nsleep 3\nexit 1\n' > /tmp/fail-after-3.sh && chmod +x /tmp/fail-after-3.sh"
+
+create_desktop "ghosteel-top.desktop"      "ghosteel -e top"             "Top (Ghosteel)"      "Run top in Ghosteel terminal"
+create_desktop "ghosteel-top-cpu.desktop"  "ghosteel -e top -b -n 5"     "Top Batch (Ghosteel)" "Top in batch mode, 5 iterations"
+create_desktop "ghosteel-top-slow.desktop" "ghosteel -e top -d 5"        "Top Slow (Ghosteel)" "Top with 5-second refresh"
+create_desktop "ghosteel-lazygit.desktop"  "ghosteel -e lazygit"         "Lazygit (Ghosteel)"  "Run lazygit in Ghosteel terminal"
+create_desktop "ghosteel-htop.desktop"     "ghosteel -s htop -e htop"    "Htop (Ghosteel)"     "Named htop session in Ghosteel"
+create_desktop "ghosteel-sysmon.desktop"   "ghosteel -s sysmon -e top"   "Sysmon (Ghosteel)"   "Named sysmon session in Ghosteel"
+create_desktop "ghosteel-fail.desktop"     "ghosteel -e /tmp/fail-after-3.sh" "Fail Test (Ghosteel)" "Runs 3s then exits with error"
 
 echo "[2/4] Verifying desktop files..."
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "ls -la ~/$DESKTOP_DIR/ghosteel-*.desktop"
@@ -95,13 +99,14 @@ ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "systemctl --user restart lipstick.service"
 sleep 1
 
 echo ""
-echo "Done. Six desktop shortcuts installed:"
+echo "Done. Seven desktop shortcuts installed:"
 echo "  Top (Ghosteel)        — anonymous exec: ghosteel -e top"
 echo "  Top Batch (Ghosteel)  — anonymous exec: ghosteel -e top -b -n 5"
 echo "  Top Slow (Ghosteel)   — anonymous exec: ghosteel -e top -d 5"
 echo "  Lazygit (Ghosteel)    — anonymous exec: ghosteel -e lazygit"
 echo "  Htop (Ghosteel)       — named session:  ghosteel -s htop -e htop"
 echo "  Sysmon (Ghosteel)     — named session:  ghosteel -s sysmon -e top"
+echo "  Fail Test (Ghosteel)  — anonymous exec: /tmp/fail-after-3.sh (3s then exit 1)"
 echo ""
 echo "Test scenarios:"
 echo "  1. Cold start: kill ghosteel, tap any icon — should launch and run command"
@@ -112,5 +117,6 @@ echo "  5. Same binary, different args: tap 'Top' then 'Top Batch' — two SEPAR
 echo "  6. Same binary, different args: tap 'Top Batch' then 'Top Slow' — two SEPARATE sessions"
 echo "  7. Args reuse: tap 'Top Batch' twice — second tap reuses existing Top Batch session"
 echo "  8. Independence: tap 'Top' then 'Sysmon' — two separate sessions with same command"
+echo "  9. Auto-remove + session list: tap 'Fail Test' — runs 3s, shows error, then session list"
 echo ""
 echo "Clean up with: $0 --clean"

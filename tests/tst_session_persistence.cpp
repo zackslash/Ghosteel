@@ -2169,6 +2169,33 @@ private slots:
         QCOMPARE(parsedSwitch.type, IpcMessage::Switch);
         QCOMPARE(parsedSwitch.sessionName, QStringLiteral("editor"));
     }
+
+    void testAutoRemoveEmitsShowSessionList()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create a regular session first, then an anonymous command session
+        mgr.createSession();
+        mgr.createSessionWithCommand(QString(), QStringList() << "failing-cmd");
+        QCOMPARE(mgr.sessionCount(), 2);
+
+        QSignalSpy spy(&mgr, &SessionManager::showSessionList);
+
+        // Simulate command exit with error — schedules 800ms auto-remove
+        auto *view = mgr.activeSession();
+        QVERIFY(view);
+        view->emitCommandExited(1);
+
+        // Wait for the 800ms error delay to fire
+        QThread::msleep(900);
+        QCoreApplication::processEvents();
+
+        // Anonymous session removed, regular session remains
+        QCOMPARE(mgr.sessionCount(), 1);
+        // showSessionList should have been emitted
+        QCOMPARE(spy.count(), 1);
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)

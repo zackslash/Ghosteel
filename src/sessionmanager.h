@@ -126,6 +126,7 @@ Q_SIGNALS:
     void clipboardTextReady(const QString &text);
     void sortOrderChanged();
     void showTerminal(); // Request QML to navigate back to the terminal page
+    void showSessionList(); // Request QML to show session picker
 
 private:
     static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);

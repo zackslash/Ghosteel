@@ -224,6 +224,11 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
             int idx = sessionIndexById(sessionId);
             if (idx >= 0 && m_sessions[idx].isAnonymous()) {
                 removeSession(idx);
+                // If other sessions remain, show the session list so the user
+                // can pick one.  If it was the last session, removeSession()
+                // already created a fallback and we stay on the terminal.
+                if (!m_sessions.isEmpty())
+                    Q_EMIT showSessionList();
             }
         });
     });
