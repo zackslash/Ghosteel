@@ -188,9 +188,7 @@ Page {
 
                     // Session name (or exec command for -e sessions)
                     Label {
-                        text: sessionDelegate.sessionName.length > 0
-                              ? sessionDelegate.sessionName
-                              : sessionDelegate.execCommand
+                        text: SessionManager.sessionDisplayName(sessionDelegate.actualIndex)
                         color: sessionDelegate.highlighted
                                ? Theme.highlightColor
                                : Theme.primaryColor

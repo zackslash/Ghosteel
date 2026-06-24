@@ -880,6 +880,8 @@ QString SessionManager::sessionDisplayName(int index) const
     const SessionInfo &info = m_sessions.at(index);
     if (!info.name.isEmpty())
         return info.name;
+    if (!info.execArgs.isEmpty())
+        return info.execArgs.join(QLatin1Char(' '));
     if (!info.execCommand.isEmpty())
         return info.execCommand;
     return tr("Session %1").arg(index + 1);
