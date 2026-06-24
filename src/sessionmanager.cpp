@@ -657,7 +657,6 @@ void SessionManager::processCliArgs()
 {
     if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty())
         return;
-
     if (!m_cliExecCommand.isEmpty()) {
         QStringList fullArgs;
         fullArgs << m_cliExecCommand;
@@ -678,10 +677,14 @@ void SessionManager::onNewInstanceConnection()
     QLocalSocket *socket = m_localServer->nextPendingConnection();
     if (!socket) return;
 
-    // Read data in the disconnected handler — by then all bytes are
-    // guaranteed to be in the buffer, avoiding partial-read issues.
-    connect(socket, &QLocalSocket::disconnected, this, [this, socket]() {
+    // The sender (checkSingleInstance) writes data then disconnects/exits
+    // very quickly.  By the time we process newConnection, the data may
+    // already be in the buffer and the socket may already be closed.
+    // Handle both cases: read immediately if data is available, otherwise
+    // wait for readyRead.
+    auto processMessage = [this, socket]() {
         QByteArray data = socket->readAll();
+        socket->deleteLater();
         QString msg = QString::fromUtf8(data.trimmed());
 
         auto raiseWindow = []() {
@@ -722,8 +725,15 @@ void SessionManager::onNewInstanceConnection()
             // Delay raise to let QML process sessionCreated() signal
             QTimer::singleShot(100, this, raiseWindow);
         }
-        socket->deleteLater();
-    });
+    };
+
+    if (socket->bytesAvailable() > 0 || socket->state() == QLocalSocket::UnconnectedState) {
+        // Data already in buffer or socket already closed — process now
+        processMessage();
+    } else {
+        // Wait for data to arrive
+        connect(socket, &QLocalSocket::readyRead, this, processMessage);
+    }
 }
 
 void SessionManager::saveSessions()

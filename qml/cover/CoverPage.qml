@@ -87,6 +87,7 @@ CoverBackground {
                         // didn't change, e.g. in manual sort mode).
                         var _ = _sortRevision
                         return SessionManager.sessionName(parent.actualIndex)
+                               || SessionManager.sessionExecCommand(parent.actualIndex)
                     }
                     color: parent.isActive ? Theme.highlightColor : Theme.secondaryColor
                     font.pixelSize: Theme.fontSizeSmall

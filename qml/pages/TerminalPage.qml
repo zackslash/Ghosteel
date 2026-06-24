@@ -438,7 +438,7 @@ Page {
                 scrollIndicator.flash()
             // Show session indicator on launch so the user knows which session they're in
             var name = SessionManager.sessionName(idx)
-            sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+            sessionIndicator.show(name || SessionManager.sessionExecCommand(idx) || qsTr("Session %1").arg(idx + 1))
         }
     }
 
@@ -520,7 +520,7 @@ Page {
             // Show session switch indicator (only when multiple sessions exist)
             if (SessionManager.sessionCount > 1) {
                 var name = SessionManager.sessionName(index)
-                sessionIndicator.show(name || qsTr("Session %1").arg(index + 1))
+                sessionIndicator.show(name || SessionManager.sessionExecCommand(index) || qsTr("Session %1").arg(index + 1))
             }
         }
         onSessionRemoved: {
