@@ -47,116 +47,36 @@ fi
 
 # --- Install desktop files ---
 
+# Helper to create a desktop file on the emulator
+create_desktop() {
+    local file="$1" exec="$2" name="$3" comment="$4"
+    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/$file" <<EOF
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+X-Nemo-Single-Instance=no
+Icon=ghosteel
+Exec=$exec
+Name=$name
+Comment=$comment
+
+[X-Sailjail]
+OrganizationName=com.zackslash
+ApplicationName=ghosteel
+Permissions=UserDirs;Secrets;
+Sandboxing=Disabled
+EOF
+}
+
 echo "[1/4] Creating desktop files on emulator..."
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "mkdir -p ~/$DESKTOP_DIR" 
 
-# ghosteel-top.desktop — anonymous exec session
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-top.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-X-Nemo-Application-Type=silica-qt5
-X-Nemo-Single-Instance=no
-Icon=ghosteel
-Exec=ghosteel -e top
-Name=Top (Ghosteel)
-Comment=Run top in Ghosteel terminal
-
-[X-Sailjail]
-OrganizationName=com.zackslash
-ApplicationName=ghosteel
-Permissions=UserDirs;Secrets;
-Sandboxing=Disabled
-EOF
-
-# ghosteel-top-cpu.desktop — same binary, different args (should NOT reuse top session)
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-X-Nemo-Application-Type=silica-qt5
-X-Nemo-Single-Instance=no
-Icon=ghosteel
-Exec=ghosteel -e top -o %CPU
-Name=Top CPU (Ghosteel)
-Comment=Top sorted by CPU usage
-
-[X-Sailjail]
-OrganizationName=com.zackslash
-ApplicationName=ghosteel
-Permissions=UserDirs;Secrets;
-Sandboxing=Disabled
-EOF
-
-# ghosteel-top-slow.desktop — same binary, different args (should NOT reuse top or top-cpu)
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-top-slow.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-X-Nemo-Application-Type=silica-qt5
-X-Nemo-Single-Instance=no
-Icon=ghosteel
-Exec=ghosteel -e top -d 5
-Name=Top Slow (Ghosteel)
-Comment=Top with 5-second refresh
-
-[X-Sailjail]
-OrganizationName=com.zackslash
-ApplicationName=ghosteel
-Permissions=UserDirs;Secrets;
-Sandboxing=Disabled
-EOF
-
-# ghosteel-lazygit.desktop — anonymous exec session
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-lazygit.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-X-Nemo-Application-Type=silica-qt5
-X-Nemo-Single-Instance=no
-Icon=ghosteel
-Exec=ghosteel -e lazygit
-Name=Lazygit (Ghosteel)
-Comment=Run lazygit in Ghosteel terminal
-
-[X-Sailjail]
-OrganizationName=com.zackslash
-ApplicationName=ghosteel
-Permissions=UserDirs;Secrets;
-Sandboxing=Disabled
-EOF
-
-# ghosteel-htop.desktop — named session
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-htop.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-X-Nemo-Application-Type=silica-qt5
-X-Nemo-Single-Instance=no
-Icon=ghosteel
-Exec=ghosteel -s htop -e htop
-Name=Htop (Ghosteel)
-Comment=Named htop session in Ghosteel
-
-[X-Sailjail]
-OrganizationName=com.zackslash
-ApplicationName=ghosteel
-Permissions=UserDirs;Secrets;
-Sandboxing=Disabled
-EOF
-
-# ghosteel-sysmon.desktop — named session
-ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cat > ~/$DESKTOP_DIR/ghosteel-sysmon.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-X-Nemo-Application-Type=silica-qt5
-X-Nemo-Single-Instance=no
-Icon=ghosteel
-Exec=ghosteel -s sysmon -e top
-Name=Sysmon (Ghosteel)
-Comment=Named sysmon session in Ghosteel
-
-[X-Sailjail]
-OrganizationName=com.zackslash
-ApplicationName=ghosteel
-Permissions=UserDirs;Secrets;
-Sandboxing=Disabled
-EOF
+create_desktop "ghosteel-top.desktop"      "ghosteel -e top"           "Top (Ghosteel)"      "Run top in Ghosteel terminal"
+create_desktop "ghosteel-top-cpu.desktop"  "ghosteel -e top -o %CPU"   "Top CPU (Ghosteel)"  "Top sorted by CPU usage"
+create_desktop "ghosteel-top-slow.desktop" "ghosteel -e top -d 5"      "Top Slow (Ghosteel)" "Top with 5-second refresh"
+create_desktop "ghosteel-lazygit.desktop"  "ghosteel -e lazygit"       "Lazygit (Ghosteel)"  "Run lazygit in Ghosteel terminal"
+create_desktop "ghosteel-htop.desktop"     "ghosteel -s htop -e htop"  "Htop (Ghosteel)"     "Named htop session in Ghosteel"
+create_desktop "ghosteel-sysmon.desktop"   "ghosteel -s sysmon -e top" "Sysmon (Ghosteel)"   "Named sysmon session in Ghosteel"
 
 echo "[2/4] Verifying desktop files..."
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "ls -la ~/$DESKTOP_DIR/ghosteel-*.desktop"

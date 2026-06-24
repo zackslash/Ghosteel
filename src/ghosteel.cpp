@@ -63,6 +63,8 @@ int main(int argc, char *argv[])
     QStringList execArgs;
     QString sessionName;
 
+    // Scan argv manually.  -e/--exec consumes all remaining args (must be last).
+    // -s/--session takes one value.  Order matters: -s before -e.
     for (int i = 1; i < argc; i++) {
         QString arg = QString::fromLocal8Bit(argv[i]);
         if (arg == QStringLiteral("-h") || arg == QStringLiteral("--help")) {

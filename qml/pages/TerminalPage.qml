@@ -71,8 +71,7 @@ Page {
         onStateChanged: {
             if (Qt.application.state === Qt.ApplicationActive && terminal) {
                 var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
-                var name = SessionManager.sessionName(idx)
-                sessionIndicator.show(name || SessionManager.sessionExecCommand(idx) || qsTr("Session %1").arg(idx + 1))
+                sessionIndicator.show(SessionManager.sessionDisplayName(idx))
                 // Re-focus and restore keyboard state. The compositor
                 // deactivates the text input context when the app is
                 // backgrounded, same as drag-dismiss.
@@ -437,8 +436,7 @@ Page {
             if (keybar.open && keybarFlickable.contentWidth > keybarFlickable.width)
                 scrollIndicator.flash()
             // Show session indicator on launch so the user knows which session they're in
-            var name = SessionManager.sessionName(idx)
-            sessionIndicator.show(name || SessionManager.sessionExecCommand(idx) || qsTr("Session %1").arg(idx + 1))
+            sessionIndicator.show(SessionManager.sessionDisplayName(idx))
         }
     }
 
@@ -519,8 +517,7 @@ Page {
 
             // Show session switch indicator (only when multiple sessions exist)
             if (SessionManager.sessionCount > 1) {
-                var name = SessionManager.sessionName(index)
-                sessionIndicator.show(name || SessionManager.sessionExecCommand(index) || qsTr("Session %1").arg(index + 1))
+                sessionIndicator.show(SessionManager.sessionDisplayName(index))
             }
         }
         onSessionRemoved: {

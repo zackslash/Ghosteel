@@ -1933,19 +1933,18 @@ private slots:
     {
         SessionInfo info;
         info.id = 1;
-        info.commandSession = false;
         info.name = "test";
-        QCOMPARE(info.isAnonymous(), false);
+        QCOMPARE(info.isAnonymous(), false); // named session, no command
 
-        info.commandSession = true;
+        info.execArgs = QStringList() << "top";
         info.name = "test";
         QCOMPARE(info.isAnonymous(), false); // named command session
 
-        info.commandSession = true;
+        info.execArgs = QStringList() << "top";
         info.name = "";
         QCOMPARE(info.isAnonymous(), true); // anonymous command session
 
-        info.commandSession = false;
+        info.execArgs = QStringList();
         info.name = "";
         QCOMPARE(info.isAnonymous(), false); // regular session with empty name (edge case)
     }

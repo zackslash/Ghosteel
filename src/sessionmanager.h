@@ -19,14 +19,13 @@ struct SessionInfo {
     bool keybarOpen = true;           // Whether the extra keys panel is open
     bool keyboardVisible = true;      // Whether the software keyboard is visible
     int fontSize = 0;                 // Per-session font size (0 = use global default)
-    bool commandSession = false;      // true for -e sessions (affects exit behavior + persistence)
     QString execCommand;              // Command binary name from -e (display only)
     QStringList execArgs;             // Full command args including binary (for reuse matching)
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
     TerminalView *view;
 
-    bool isAnonymous() const { return commandSession && name.isEmpty(); }
+    bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
 };
 
 class SessionManager : public QObject
@@ -79,6 +78,7 @@ public:
 
     Q_INVOKABLE void setActiveSessionFontSize(int size);
     Q_INVOKABLE int activeSessionFontSize() const;
+    Q_INVOKABLE QString sessionDisplayName(int index) const;
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
     Q_INVOKABLE int displayToActual(int displayIndex) const;
@@ -138,6 +138,11 @@ private:
     // paths to keep the wiring in one place.
     void connectSessionSignals(TerminalView *view, int sessionId);
     int findSessionByName(const QString &name) const;  // Returns m_sessions index, or -1
+    void finishSessionCreation(TerminalView *view, SessionInfo &info);
+    static void raiseWindow();
+    void clearCliArgs();
+    void restoreScrollbackForSession(TerminalView *view, int savedId);
+    int resolveActiveSession(int activeId, int legacyActiveIndex) const;
 
     // Scrollback persistence
     void saveScrollback();
