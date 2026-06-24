@@ -49,6 +49,28 @@ Download the `.rpm` for your architecture from [Releases](https://github.com/zac
 devel-su pkcon install-local ./ghosteel-<version>.rpm
 ```
 
+### Desktop file launchers
+
+Create `.desktop` files in `~/.local/share/applications/` to launch TUI apps directly into Ghosteel sessions:
+
+```ini
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+X-Nemo-Single-Instance=no
+Icon=ghosteel
+Exec=ghosteel -e top
+Name=Top
+
+[X-Sailjail]
+OrganizationName=com.zackslash
+ApplicationName=ghosteel
+Permissions=UserDirs;Secrets;
+Sandboxing=Disabled
+```
+
+Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps.
+
 ## Build
 
 Requires Sailfish OS SDK and Zig 0.15.2 (Ghostty is incompatible with 0.16+).

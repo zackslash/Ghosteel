@@ -29,6 +29,7 @@ static QString sanitizeSessionName(const QString &name)
     clean.remove(QChar('\0'));
     clean.remove(QChar('\n'));
     clean.remove(QChar('\r'));
+    clean.remove(QChar(':')); // IPC exec: protocol uses : as delimiter
     return clean;
 }
 
@@ -686,8 +687,10 @@ void SessionManager::onNewInstanceConnection()
         auto raiseWindow = []() {
             const auto windows = QGuiApplication::topLevelWindows();
             if (!windows.isEmpty()) {
-                if (auto *window = windows.first())
+                if (auto *window = windows.first()) {
+                    window->raise();
                     window->requestActivate();
+                }
             }
         };
 
@@ -716,7 +719,8 @@ void SessionManager::onNewInstanceConnection()
 
             setCliArgs(command, args, sessionName);
             processCliArgs();
-            raiseWindow();
+            // Delay raise to let QML process sessionCreated() signal
+            QTimer::singleShot(100, this, raiseWindow);
         }
         socket->deleteLater();
     });

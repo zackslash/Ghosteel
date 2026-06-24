@@ -1869,6 +1869,15 @@ private slots:
         // Clean up
         mgr.removeSession(0);
 
+        // Colons should be stripped (IPC exec: protocol delimiter)
+        mgr.setCliArgs(QString(), QStringList(), QStringLiteral("foo:bar"));
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.sessionName(0), QStringLiteral("foobar"));
+
+        // Clean up
+        mgr.removeSession(0);
+
         // Long names should be truncated
         QString longName(200, QChar('x'));
         mgr.setCliArgs(QString(), QStringList(), longName);
