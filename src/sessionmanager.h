@@ -6,6 +6,8 @@
 #include <QVector>
 #include <QTimer>
 #include <QLocalServer>
+#include <QByteArray>
+#include <QStringList>
 
 class TerminalView;
 class ScrollEncryptor;
@@ -177,6 +179,65 @@ private:
     QString m_cliExecCommand;
     QStringList m_cliExecArgs;
     QString m_cliSessionName;
+};
+
+// IPC protocol for single-instance communication.
+// Moved to header for unit test access.
+struct IpcMessage {
+    enum Type { Raise, Switch, Exec } type = Raise;
+    QString sessionName;
+    QString command;
+    QStringList args;
+
+    static constexpr int kMaxSessionNameLength = 128;
+
+    static QString sanitizeSessionName(const QString &name) {
+        QString clean = name;
+        clean.truncate(kMaxSessionNameLength);
+        clean.remove(QChar('\0'));
+        clean.remove(QChar('\n'));
+        clean.remove(QChar('\r'));
+        clean.remove(QChar(':')); // load-bearing: exec: protocol uses : as delimiter
+        return clean;
+    }
+
+    static IpcMessage parse(const QByteArray &raw) {
+        IpcMessage msg;
+        QList<QByteArray> parts = raw.split('\0');
+        QByteArray header = parts.isEmpty() ? QByteArray() : parts.first();
+
+        if (header == "raise") {
+            msg.type = Raise;
+        } else if (header.startsWith("switch:")) {
+            msg.type = Switch;
+            msg.sessionName = sanitizeSessionName(QString::fromUtf8(header.mid(7)));
+        } else if (header.startsWith("exec:")) {
+            msg.type = Exec;
+            QList<QByteArray> headerParts = header.mid(5).split(':');
+            if (headerParts.size() < 2) { msg.type = Raise; return msg; }
+            msg.sessionName = sanitizeSessionName(QString::fromUtf8(headerParts[0]));
+            if (!headerParts[1].isEmpty())
+                msg.command = QString::fromUtf8(headerParts[1]);
+            for (int i = 1; i < parts.size(); i++)
+                if (!parts[i].isEmpty())
+                    msg.args.append(QString::fromUtf8(parts[i]));
+        }
+        return msg;
+    }
+
+    static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
+        if (!execCommand.isEmpty()) {
+            QByteArray cmdBytes = execCommand.toUtf8();
+            for (const QString &arg : execArgs) {
+                cmdBytes.append('\0');
+                cmdBytes.append(arg.toUtf8());
+            }
+            return (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
+        } else if (!sessionName.isEmpty()) {
+            return (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
+        }
+        return QByteArrayLiteral("raise\n");
+    }
 };
 
 #endif // SESSIONMANAGER_H

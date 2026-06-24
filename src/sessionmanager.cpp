@@ -20,65 +20,6 @@
 #include <unistd.h>
 
 static constexpr int kMaxSessionCount = 100;
-static constexpr int kMaxSessionNameLength = 128;
-
-static QString sanitizeSessionName(const QString &name)
-{
-    QString clean = name;
-    clean.truncate(kMaxSessionNameLength);
-    clean.remove(QChar('\0'));
-    clean.remove(QChar('\n'));
-    clean.remove(QChar('\r'));
-    clean.remove(QChar(':')); // load-bearing: IPC exec: protocol uses : as delimiter
-    return clean;
-}
-
-struct IpcMessage {
-    enum Type { Raise, Switch, Exec } type;
-    QString sessionName;
-    QString command;
-    QStringList args;
-
-    static IpcMessage parse(const QString &raw) {
-        IpcMessage msg;
-        if (raw == QStringLiteral("raise")) {
-            msg.type = Raise;
-        } else if (raw.startsWith(QStringLiteral("switch:"))) {
-            msg.type = Switch;
-            msg.sessionName = sanitizeSessionName(raw.mid(7));
-        } else if (raw.startsWith(QStringLiteral("exec:"))) {
-            msg.type = Exec;
-            QString rest = raw.mid(5);
-            int lastColon = rest.lastIndexOf(':');
-            if (lastColon < 0) { msg.type = Raise; return msg; } // malformed
-            msg.sessionName = sanitizeSessionName(rest.left(lastColon));
-            QByteArray commandBytes = rest.mid(lastColon + 1).toUtf8();
-            QList<QByteArray> parts = commandBytes.split('\0');
-            if (!parts.isEmpty() && !parts.first().isEmpty()) {
-                msg.command = QString::fromUtf8(parts.first());
-                for (int i = 1; i < parts.size(); i++) {
-                    if (!parts[i].isEmpty())
-                        msg.args.append(QString::fromUtf8(parts[i]));
-                }
-            }
-        }
-        return msg;
-    }
-
-    static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
-        if (!execCommand.isEmpty()) {
-            QByteArray cmdBytes = execCommand.toUtf8();
-            for (const QString &arg : execArgs) {
-                cmdBytes.append('\0');
-                cmdBytes.append(arg.toUtf8());
-            }
-            return (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
-        } else if (!sessionName.isEmpty()) {
-            return (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
-        }
-        return QByteArrayLiteral("raise\n");
-    }
-};
 
 // Delay before auto-removing an anonymous -e session on error,
 // so the user can see "Command not found" or the exit code.
@@ -676,7 +617,7 @@ void SessionManager::setCliArgs(const QString &execCommand,
 {
     m_cliExecCommand = execCommand;
     m_cliExecArgs = execArgs;
-    m_cliSessionName = sanitizeSessionName(sessionName);
+    m_cliSessionName = IpcMessage::sanitizeSessionName(sessionName);
 }
 
 void SessionManager::clearCliArgs()
@@ -745,11 +686,10 @@ void SessionManager::onNewInstanceConnection()
 
     // Race: sender may have written and disconnected before we get here.
     auto processMessage = [this, socket]() {
-        QByteArray data = socket->readAll();
+        QByteArray data = socket->readAll().trimmed();
         socket->deleteLater();
-        QString msg = QString::fromUtf8(data.trimmed());
 
-        IpcMessage parsed = IpcMessage::parse(msg);
+        IpcMessage parsed = IpcMessage::parse(data);
         if (parsed.type == IpcMessage::Raise) {
             raiseWindow();
         } else if (parsed.type == IpcMessage::Switch) {

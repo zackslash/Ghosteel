@@ -2122,6 +2122,53 @@ private slots:
         // Session should survive — restartShell cleared execArgs
         QCOMPARE(mgr.sessionCount(), 1);
     }
+
+    void testIpcMessageEncodeParseRoundTrip()
+    {
+        // Encode: ghosteel -e top -o %CPU
+        QByteArray wire = IpcMessage::encode("top", QStringList() << "-o" << "%CPU", "");
+        IpcMessage parsed = IpcMessage::parse(wire);
+        QCOMPARE(parsed.type, IpcMessage::Exec);
+        QCOMPARE(parsed.command, QStringLiteral("top"));
+        QCOMPARE(parsed.args.size(), 2);
+        QCOMPARE(parsed.args.at(0), QStringLiteral("-o"));
+        QCOMPARE(parsed.args.at(1), QStringLiteral("%CPU"));
+        QCOMPARE(parsed.sessionName, QString());
+
+        // Encode: ghosteel -e top -d 5
+        QByteArray wire2 = IpcMessage::encode("top", QStringList() << "-d" << "5", "");
+        IpcMessage parsed2 = IpcMessage::parse(wire2);
+        QCOMPARE(parsed2.type, IpcMessage::Exec);
+        QCOMPARE(parsed2.command, QStringLiteral("top"));
+        QCOMPARE(parsed2.args.size(), 2);
+        QCOMPARE(parsed2.args.at(0), QStringLiteral("-d"));
+        QCOMPARE(parsed2.args.at(1), QStringLiteral("5"));
+
+        // These two must NOT be equal — different args = different sessions
+        QVERIFY(parsed.args != parsed2.args);
+    }
+
+    void testIpcMessageExecWithSessionName()
+    {
+        QByteArray wire = IpcMessage::encode("htop", QStringList(), "htop");
+        IpcMessage parsed = IpcMessage::parse(wire);
+        QCOMPARE(parsed.type, IpcMessage::Exec);
+        QCOMPARE(parsed.command, QStringLiteral("htop"));
+        QCOMPARE(parsed.args.size(), 0);
+        QCOMPARE(parsed.sessionName, QStringLiteral("htop"));
+    }
+
+    void testIpcMessageRaiseAndSwitch()
+    {
+        QByteArray raise = IpcMessage::encode(QString(), QStringList(), QString());
+        IpcMessage parsedRaise = IpcMessage::parse(raise);
+        QCOMPARE(parsedRaise.type, IpcMessage::Raise);
+
+        QByteArray sw = IpcMessage::encode(QString(), QStringList(), "editor");
+        IpcMessage parsedSwitch = IpcMessage::parse(sw);
+        QCOMPARE(parsedSwitch.type, IpcMessage::Switch);
+        QCOMPARE(parsedSwitch.sessionName, QStringLiteral("editor"));
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)
