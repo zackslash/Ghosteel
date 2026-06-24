@@ -685,6 +685,10 @@ void TerminalView::sendKey(int qtKey, int modifiers)
 {
     resetBlinkOnInput();
 
+    // If scrolled up viewing history, scroll back to bottom so the user
+    // can see what they're typing (matches keyPressEvent behavior).
+    scrollViewportToBottom();
+
     GhosttyKey key = KeyMapping::mapQtKey(qtKey);
     // Accept GhosttyMods directly (not Qt modifier values)
     sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS, static_cast<GhosttyMods>(modifiers), QString());
@@ -1287,7 +1291,7 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
     // Convert vertical drag delta to wheel events for TUI scroll.
     qreal deltaY = pt.pos().y() - m_tuiDragLastY;
     m_tuiDragLastY = pt.pos().y();
-    qreal newDelta = -deltaY / m_cellHeight; // negative: down-drag = scroll down
+    qreal newDelta = deltaY / m_cellHeight; // positive: down-drag = scroll up (natural scrolling)
     auto scrollResult = TextUtil::accumulateScroll(
         m_tuiScrollAccumulator, newDelta);
     m_tuiScrollAccumulator = scrollResult.accumulator;

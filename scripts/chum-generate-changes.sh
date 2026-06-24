@@ -16,9 +16,9 @@ fi
 
 echo "Fetching releases from ${REPO}..."
 
-# Get all releases, oldest first
+# Get all releases, newest first (RPM changelog requires descending order)
 TAGS=$(gh release list --repo "$REPO" --limit 100 --json tagName,publishedAt \
-    | jq -r 'sort_by(.publishedAt) | .[] | .tagName')
+    | jq -r 'sort_by(.publishedAt) | reverse | .[] | .tagName')
 
 {
 for tag in $TAGS; do
@@ -39,7 +39,7 @@ for tag in $TAGS; do
         | sed 's/^\* /- /' \
         | sed 's/ by @[^ ]*//' \
         | sed 's/ in https:\/\/github.com\/[^ ]*//' \
-        | head -20)
+        | head -20 || true)
 
     # If no bullet points found, use a generic entry
     if [ -z "$CHANGES" ]; then
