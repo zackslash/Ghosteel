@@ -182,7 +182,6 @@ private:
 };
 
 // IPC protocol for single-instance communication.
-// Moved to header for unit test access.
 struct IpcMessage {
     enum Type { Raise, Switch, Exec } type = Raise;
     QString sessionName;
@@ -213,11 +212,12 @@ struct IpcMessage {
             msg.sessionName = sanitizeSessionName(QString::fromUtf8(header.mid(7)));
         } else if (header.startsWith("exec:")) {
             msg.type = Exec;
-            QList<QByteArray> headerParts = header.mid(5).split(':');
-            if (headerParts.size() < 2) { msg.type = Raise; return msg; }
-            msg.sessionName = sanitizeSessionName(QString::fromUtf8(headerParts[0]));
-            if (!headerParts[1].isEmpty())
-                msg.command = QString::fromUtf8(headerParts[1]);
+            QByteArray afterPrefix = header.mid(5);
+            int colonPos = afterPrefix.indexOf(':');
+            if (colonPos < 0) { msg.type = Raise; return msg; }
+            msg.sessionName = sanitizeSessionName(QString::fromUtf8(afterPrefix.left(colonPos)));
+            if (colonPos + 1 < afterPrefix.size())
+                msg.command = QString::fromUtf8(afterPrefix.mid(colonPos + 1));
             for (int i = 1; i < parts.size(); i++)
                 if (!parts[i].isEmpty())
                     msg.args.append(QString::fromUtf8(parts[i]));
