@@ -71,9 +71,9 @@ EOF
 echo "[1/4] Creating desktop files on emulator..."
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "mkdir -p ~/$DESKTOP_DIR" 
 
-create_desktop "ghosteel-top.desktop"      "ghosteel -e top"           "Top (Ghosteel)"      "Run top in Ghosteel terminal"
-create_desktop "ghosteel-top-cpu.desktop"  "ghosteel -e top -o %CPU"   "Top CPU (Ghosteel)"  "Top sorted by CPU usage"
-create_desktop "ghosteel-top-slow.desktop" "ghosteel -e top -d 5"      "Top Slow (Ghosteel)" "Top with 5-second refresh"
+create_desktop "ghosteel-top.desktop"      "ghosteel -e top"             "Top (Ghosteel)"      "Run top in Ghosteel terminal"
+create_desktop "ghosteel-top-cpu.desktop"  "ghosteel -e top -o %%CPU"   "Top CPU (Ghosteel)"  "Top sorted by CPU usage"
+create_desktop "ghosteel-top-slow.desktop" "ghosteel -e top -d 5"        "Top Slow (Ghosteel)" "Top with 5-second refresh"
 create_desktop "ghosteel-lazygit.desktop"  "ghosteel -e lazygit"       "Lazygit (Ghosteel)"  "Run lazygit in Ghosteel terminal"
 create_desktop "ghosteel-htop.desktop"     "ghosteel -s htop -e htop"  "Htop (Ghosteel)"     "Named htop session in Ghosteel"
 create_desktop "ghosteel-sysmon.desktop"   "ghosteel -s sysmon -e top" "Sysmon (Ghosteel)"   "Named sysmon session in Ghosteel"
