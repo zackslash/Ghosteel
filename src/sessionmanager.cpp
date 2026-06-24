@@ -658,6 +658,30 @@ void SessionManager::processCliArgs()
     if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty())
         return;
     if (!m_cliExecCommand.isEmpty()) {
+        // If a session name is given, try to reuse it (preserves the session)
+        if (!m_cliSessionName.isEmpty()) {
+            int named = findSessionByName(m_cliSessionName);
+            if (named >= 0) {
+                setActiveSessionIndex(named);
+                m_cliExecCommand.clear();
+                m_cliExecArgs.clear();
+                m_cliSessionName.clear();
+                return;
+            }
+        }
+
+        // Reuse an existing anonymous session that already runs the same command.
+        // Skip named sessions — they should only be reused via the name path above.
+        for (int i = 0; i < m_sessions.size(); i++) {
+            if (m_sessions[i].name.isEmpty() && m_sessions[i].execCommand == m_cliExecCommand) {
+                setActiveSessionIndex(i);
+                m_cliExecCommand.clear();
+                m_cliExecArgs.clear();
+                m_cliSessionName.clear();
+                return;
+            }
+        }
+
         QStringList fullArgs;
         fullArgs << m_cliExecCommand;
         fullArgs << m_cliExecArgs;

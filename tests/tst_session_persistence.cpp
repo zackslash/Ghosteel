@@ -1624,6 +1624,80 @@ private slots:
         QCOMPARE(view->commandArgs(), QStringList() << "python3" << "-m" << "http.server");
     }
 
+    void testProcessCliArgsReusesAnonymousSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // First call creates a new session
+        mgr.setCliArgs("top", QStringList(), QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        int activeAfterFirst = mgr.activeSessionIndex();
+        QCOMPARE(mgr.sessionExecCommand(activeAfterFirst), QStringLiteral("top"));
+
+        // Second call with same command should reuse (not create)
+        mgr.setCliArgs("top", QStringList(), QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1); // still 1
+        QCOMPARE(mgr.activeSessionIndex(), activeAfterFirst); // same session
+    }
+
+    void testProcessCliArgsReuseSkipsNamedSessions()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create a named session running "top"
+        mgr.createSessionWithCommand("sysmon", QStringList() << "top");
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // Anonymous "-e top" should NOT reuse the named "sysmon" session
+        mgr.setCliArgs("top", QStringList(), QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 2); // new session created
+        int activeAfter = mgr.activeSessionIndex();
+        QCOMPARE(mgr.sessionName(activeAfter), QString()); // anonymous
+        QCOMPARE(mgr.sessionExecCommand(activeAfter), QStringLiteral("top"));
+    }
+
+    void testProcessCliArgsNamedReuseByName()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create a named session
+        mgr.createSessionWithCommand("editor", QStringList() << "nvim");
+        QCOMPARE(mgr.sessionCount(), 1);
+        int namedIdx = mgr.activeSessionIndex();
+
+        // Create another session to change active
+        mgr.createSession();
+        QCOMPARE(mgr.activeSessionIndex(), 1); // now on regular session
+
+        // "-s editor -e nvim" should switch back to the named session (not create new)
+        mgr.setCliArgs("nvim", QStringList(), "editor");
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 2); // no new session
+        QCOMPARE(mgr.activeSessionIndex(), namedIdx); // switched to editor
+    }
+
+    void testProcessCliArgsDifferentCommandsNotReused()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Create session with "htop"
+        mgr.setCliArgs("htop", QStringList(), QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // "btop" should NOT reuse "htop" session
+        mgr.setCliArgs("btop", QStringList(), QString());
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 2); // new session
+    }
+
     // --- saveSessions skips anonymous ---
 
     void testSaveSkipsAnonymousCommandSessions()
