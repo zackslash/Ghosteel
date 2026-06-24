@@ -24,4 +24,10 @@ ApplicationWindow {
         // Process CLI args (-e/--exec, -s/--session) after sessions are restored
         SessionManager.processCliArgs()
     }
+
+    // IPC exec: navigate to terminal so user sees the result
+    Connections {
+        target: SessionManager
+        onShowTerminal: pageStack.pop(null)
+    }
 }

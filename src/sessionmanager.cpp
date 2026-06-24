@@ -56,8 +56,10 @@ struct IpcMessage {
             QList<QByteArray> parts = commandBytes.split('\0');
             if (!parts.isEmpty() && !parts.first().isEmpty()) {
                 msg.command = QString::fromUtf8(parts.first());
-                for (int i = 1; i < parts.size(); i++)
-                    msg.args.append(QString::fromUtf8(parts[i]));
+                for (int i = 1; i < parts.size(); i++) {
+                    if (!parts[i].isEmpty())
+                        msg.args.append(QString::fromUtf8(parts[i]));
+                }
             }
         }
         return msg;
@@ -66,8 +68,10 @@ struct IpcMessage {
     static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
         if (!execCommand.isEmpty()) {
             QByteArray cmdBytes = execCommand.toUtf8();
-            for (const QString &arg : execArgs)
-                cmdBytes.append('\0' + arg.toUtf8());
+            for (const QString &arg : execArgs) {
+                cmdBytes.append('\0');
+                cmdBytes.append(arg.toUtf8());
+            }
             return (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
         } else if (!sessionName.isEmpty()) {
             return (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
@@ -687,35 +691,40 @@ void SessionManager::processCliArgs()
     if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty())
         return;
 
+    bool didSomething = false;
+
     if (!m_cliExecCommand.isEmpty()) {
         QStringList fullArgs;
         fullArgs << m_cliExecCommand << m_cliExecArgs;
 
-        // Named session reuse by name
         if (!m_cliSessionName.isEmpty()) {
             int named = findSessionByName(m_cliSessionName);
             if (named >= 0) {
                 setActiveSessionIndex(named);
-                clearCliArgs();
-                return;
+                didSomething = true;
+                goto done;
             }
         }
 
-        // Anonymous reuse by full command — skips named sessions
         for (int i = 0; i < m_sessions.size(); i++) {
             if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullArgs) {
                 setActiveSessionIndex(i);
-                clearCliArgs();
-                return;
+                didSomething = true;
+                goto done;
             }
         }
 
         createSessionWithCommand(m_cliSessionName, fullArgs);
+        didSomething = true;
     } else if (!m_cliSessionName.isEmpty()) {
         switchToSessionByName(m_cliSessionName);
+        didSomething = true;
     }
 
+done:
     clearCliArgs();
+    if (didSomething)
+        Q_EMIT showTerminal();
 }
 
 void SessionManager::raiseWindow()
