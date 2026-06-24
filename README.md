@@ -69,7 +69,13 @@ Permissions=UserDirs;Secrets;
 Sandboxing=Disabled
 ```
 
-Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps. After creating or editing desktop files, restart lipstick for the launcher to pick up changes:
+Use `-s <name>` to give the session a persistent name (survives app restart):
+
+```ini
+Exec=ghosteel -s sysmon -e top
+```
+
+Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps. If you edit a desktop file that's already on the homescreen, restart lipstick for the launcher to pick up changes:
 
 ```bash
 systemctl --user restart lipstick.service
