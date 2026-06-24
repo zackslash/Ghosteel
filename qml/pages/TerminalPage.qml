@@ -72,7 +72,7 @@ Page {
             if (Qt.application.state === Qt.ApplicationActive && terminal) {
                 var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
                 var name = SessionManager.sessionName(idx)
-                sessionIndicator.show(name || qsTr("Session %1").arg(idx + 1))
+                sessionIndicator.show(name || SessionManager.sessionExecCommand(idx) || qsTr("Session %1").arg(idx + 1))
                 // Re-focus and restore keyboard state. The compositor
                 // deactivates the text input context when the app is
                 // backgrounded, same as drag-dismiss.
