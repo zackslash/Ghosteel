@@ -345,7 +345,17 @@ GLRenderer::Renderer::~Renderer()
     m_postShaders.clear();
 
     if (QOpenGLContext::currentContext()) {
-        cleanupKittyCache();
+        // Delete all kitty textures directly. Eviction logic (cleanupKittyCache)
+        // is irrelevant at teardown — we want to free everything, including
+        // textures deferred to m_kittyTexturesToDelete by the last frame's
+        // snapshotKittyGraphics call (which render() never got to drain).
+        for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it)
+            glDeleteTextures(1, &it.value().texture);
+        m_kittyTextures.clear();
+        for (GLuint tex : m_kittyTexturesToDelete)
+            glDeleteTextures(1, &tex);
+        m_kittyTexturesToDelete.clear();
+
         if (m_vbo.isCreated())
             m_vbo.destroy();
         if (m_flatVbo.isCreated())
