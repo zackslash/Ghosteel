@@ -678,10 +678,7 @@ void GLRenderer::Renderer::detectES300()
 
     m_es300 = true;
     qDebug() << "GLRenderer: ES 3.0 confirmed (probe shader compiled)";
-    // Marshal to the GUI thread — Settings is documented main-thread-only
-    // (settings.h:11-12). The queued call lands within a frame or two of
-    // the probe, imperceptible to the user; the QML settings page bindings
-    // aren't shown until well after init anyway.
+    // Marshal to the GUI thread — Settings is main-thread-only (settings.h:11-12)
     QMetaObject::invokeMethod(Settings::instance(),
         "setShaderPipelineAvailable", Qt::QueuedConnection, Q_ARG(bool, true));
 }
@@ -1699,7 +1696,6 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
 
     m_kittyFrameCounter++;
 
-    // Evict old textures periodically (deletion deferred to render thread)
     if (m_kittyFrameCounter % 60 == 0)
         cleanupKittyCache();
 
@@ -1768,7 +1764,6 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             ghostty_kitty_graphics_placement_get(iter,
                 GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &snap.yOffset);
 
-            // Check texture cache: determine if upload is needed
             if (m_kittyTextures.contains(snap.imageId)) {
                 size_t checkPixelsLen = 0;
                 ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &checkPixelsLen);
@@ -1827,7 +1822,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         if (snap.layer != layer)
             continue;
 
-        // Image was deleted from storage — evict from cache (deferred deletion)
+        // Image deleted from storage — evict from cache
         if (!snap.imageExists) {
             auto it = m_kittyTextures.find(snap.imageId);
             if (it != m_kittyTextures.end()) {
@@ -1844,7 +1839,6 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         const auto &info = snap.renderInfo;
         uint32_t xOffset = snap.xOffset, yOffset = snap.yOffset;
 
-        // Upload texture if not cached (cache miss or data changed)
         if (snap.needsUpload && !m_kittyTextures.contains(snap.imageId)) {
             const uint8_t *pixels = reinterpret_cast<const uint8_t*>(snap.pixelData.constData());
             size_t pixelsLen = snap.dataLen;
@@ -1907,13 +1901,11 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         if (!m_kittyTextures.contains(snap.imageId))
             continue;
 
-        // Compute destination rect
         float destX = static_cast<float>(info.viewport_col * m_cellWidth) + static_cast<float>(xOffset);
         float destY = m_topPadding + static_cast<float>(info.viewport_row * m_cellHeight) + static_cast<float>(yOffset);
         float destW = static_cast<float>(info.pixel_width);
         float destH = static_cast<float>(info.pixel_height);
 
-        // Compute UV from source rect
         float uvX0 = static_cast<float>(info.source_x) / static_cast<float>(imgW);
         float uvY0 = static_cast<float>(info.source_y) / static_cast<float>(imgH);
         float uvX1 = static_cast<float>(info.source_x + info.source_width) / static_cast<float>(imgW);
@@ -1930,7 +1922,6 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             uvY0 += uvScale * clippedPx;
         }
 
-        // Build quad vertices (pos2 + tex2 = 4 floats per vertex, 6 vertices)
         float x0 = destX, y0 = destY;
         float x1 = destX + destW, y1 = destY + destH;
 
@@ -1943,7 +1934,6 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             x0, y1, uvX0, uvY1,
         };
 
-        // Bind texture and draw
         if (!hasAnyPlacement) {
             m_kittyProgram->bind();
             m_kittyProgram->setUniformValue(m_kittyMatrixUniform, proj);

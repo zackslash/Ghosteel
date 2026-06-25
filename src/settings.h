@@ -100,9 +100,7 @@ public:
     void setCustomShaderPath(const QString &path);
 
     bool shaderPipelineAvailable() const { return m_shaderPipelineAvailable; }
-    // Q_INVOKABLE so GLRenderer can marshal the call to the GUI thread via
-    // QMetaObject::invokeMethod(..., Qt::QueuedConnection) after the ES 3.0
-    // probe runs on the render thread.
+    // Q_INVOKABLE — needed for cross-thread invokeMethod from the render thread
     Q_INVOKABLE void setShaderPipelineAvailable(bool available);
 
 
