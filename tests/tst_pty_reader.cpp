@@ -34,7 +34,12 @@ private slots:
         // Close write end to trigger EOF
         ::close(pipefd[1]);
 
-        QVERIFY(finishedSpy.wait(2000));
+        // readFinished may already have arrived before we get here (the
+        // reader thread's 200ms poll cycle can see EOF and emit before
+        // this call), so check the spy count first and only wait if it
+        // hasn't fired yet. Plain finishedSpy.wait() would time out and
+        // fail intermittently when the signal already arrived.
+        QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(2000));
         reader.wait(3000);
     }
 
@@ -68,7 +73,7 @@ private slots:
         QVERIFY(allData.contains("chunk2"));
 
         ::close(pipefd[1]);
-        QVERIFY(finishedSpy.wait(2000));
+        QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(2000));
         reader.wait(3000);
     }
 
@@ -85,7 +90,7 @@ private slots:
         // Close write end immediately — should trigger EOF
         ::close(pipefd[1]);
 
-        QVERIFY(finishedSpy.wait(2000));
+        QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(2000));
         reader.wait(3000);
     }
 
@@ -107,7 +112,7 @@ private slots:
 
         reader.requestInterruption();
 
-        QVERIFY(finishedSpy.wait(3000));
+        QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(3000));
         reader.wait(3000);
 
         ::close(pipefd[1]);
