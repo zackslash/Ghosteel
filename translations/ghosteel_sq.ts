@@ -95,11 +95,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Po shfaqen %1 e para nga %2 karaktere</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Sesion i panjohur</translation>
     </message>
 </context>
 <context>

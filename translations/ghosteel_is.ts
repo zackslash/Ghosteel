@@ -95,11 +95,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Sýni fyrstu %1 af %2 stöfum</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Óþekkt seta</translation>
     </message>
 </context>
 <context>

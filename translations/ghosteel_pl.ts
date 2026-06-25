@@ -96,11 +96,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetlanie pierwszych %1 z %2 znaków</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieznana sesja</translation>
     </message>
 </context>
 <context>

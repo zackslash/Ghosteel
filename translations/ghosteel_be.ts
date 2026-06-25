@@ -96,11 +96,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Паказ першых %1 з %2 знакаў</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Невядомы сеанс</translation>
     </message>
 </context>
 <context>

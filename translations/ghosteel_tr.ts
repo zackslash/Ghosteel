@@ -94,11 +94,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>İlk %1 / %2 karakter gösteriliyor</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilinmeyen oturum</translation>
     </message>
 </context>
 <context>

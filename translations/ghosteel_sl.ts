@@ -97,11 +97,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Prikaz prvih %1 od %2 znakov</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Neznana seja</translation>
     </message>
 </context>
 <context>

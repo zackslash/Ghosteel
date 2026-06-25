@@ -94,11 +94,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Első %1 megjelenítése a(z) %2 karakterből</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Ismeretlen munkamenet</translation>
     </message>
 </context>
 <context>

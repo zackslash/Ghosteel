@@ -96,11 +96,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Rodomi pirmieji %1 iš %2 simbolių</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Nežinoma sesija</translation>
     </message>
 </context>
 <context>
