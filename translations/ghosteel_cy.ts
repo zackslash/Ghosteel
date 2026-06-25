@@ -98,11 +98,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Yn dangos cyntaf %1 o %2 cymeriadau</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Sesiwn anhysbys</translation>
     </message>
 </context>
 <context>

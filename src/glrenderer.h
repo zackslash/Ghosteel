@@ -153,8 +153,9 @@ private:
         void createKittyShaders();
         void drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                                  const QMatrix4x4 &proj, int fboW, int fboH);
-        void syncKittyImages(GhosttyTerminal terminal, GhosttyVt *vt);
+        void snapshotKittyGraphics(GhosttyTerminal terminal, GhosttyVt *vt);
         void cleanupKittyCache();
+        void drainPendingKittyDeletions();
 
         QOpenGLShaderProgram *m_program = nullptr;
         QOpenGLBuffer m_vbo;
@@ -305,6 +306,25 @@ private:
         uint32_t m_kittyFrameCounter = 0;
         static const int MAX_KITTY_TEXTURES = 32;
         static const int KITTY_EVICTION_FRAMES = 120;
+
+        // Snapshot of kitty placement data (built in synchronize on GUI thread,
+        // consumed in render on render thread — avoids ghostty_terminal_get
+        // data race with vtWrite on the GUI thread).
+        struct KittyPlacementSnapshot {
+            GhosttyKittyPlacementLayer layer;
+            uint32_t imageId = 0;
+            uint32_t imgW = 0, imgH = 0;
+            uint32_t xOffset = 0, yOffset = 0;
+            GhosttyKittyGraphicsPlacementRenderInfo renderInfo;
+            bool imageExists = false;
+            bool needsUpload = false;
+            size_t dataLen = 0;
+            GhosttyKittyImageFormat format = GHOSTTY_KITTY_IMAGE_FORMAT_RGBA;
+            QByteArray pixelData;  // deep copy, only populated when needsUpload
+        };
+        QVector<KittyPlacementSnapshot> m_kittyPlacements;
+        bool m_kittyGraphicsEnabled = false;
+        QVector<GLuint> m_kittyTexturesToDelete;  // deferred GL deletions (GUI→render)
 
         // Kitty image shader (textured quad, premultiplied alpha)
         QOpenGLShaderProgram *m_kittyProgram = nullptr;

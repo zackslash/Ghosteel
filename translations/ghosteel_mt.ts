@@ -97,11 +97,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Juri l-ewwel %1 minn %2 karattri</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>Sessjoni mhux magħrufa</translation>
     </message>
 </context>
 <context>

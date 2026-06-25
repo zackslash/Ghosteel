@@ -95,11 +95,11 @@
     </message>
     <message>
         <source>Showing first %1 of %2 characters</source>
-        <translation type="unfinished"></translation>
+        <translation>ნაჩვენებია პირველი %1 %2 სიმბოლოდან</translation>
     </message>
     <message>
         <source>Unknown session</source>
-        <translation type="unfinished"></translation>
+        <translation>უცნობი სესია</translation>
     </message>
 </context>
 <context>

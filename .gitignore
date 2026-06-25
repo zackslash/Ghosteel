@@ -34,6 +34,7 @@ zig-deps-cache.tar.gz
 *.lib
 *.exe
 moc_*.cpp
+qrc_*.cpp
 Makefile
 documentation.list
 /ghosteel

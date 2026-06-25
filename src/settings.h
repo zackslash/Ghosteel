@@ -100,7 +100,8 @@ public:
     void setCustomShaderPath(const QString &path);
 
     bool shaderPipelineAvailable() const { return m_shaderPipelineAvailable; }
-    void setShaderPipelineAvailable(bool available);
+    // Q_INVOKABLE — needed for cross-thread invokeMethod from the render thread
+    Q_INVOKABLE void setShaderPipelineAvailable(bool available);
 
 
 Q_SIGNALS:
