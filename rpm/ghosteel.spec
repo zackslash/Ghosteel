@@ -35,19 +35,42 @@ BuildRequires:  patch
 
 ExclusiveArch:  %arm aarch64 %ix86
 
+%description
+Ghosteel brings a modern terminal engine to SailfishOS. Most mobile terminals
+use legacy VT parsers that struggle with complex TUI apps. Ghosteel uses the
+same engine that powers Ghostty, giving you accurate rendering for tmux,
+neovim, htop, and other TUI applications.
+
+- Ghostty VT engine with full escape sequence support, 24-bit truecolor
+- GPU rendering via OpenGL ES 2.0/3.0 with cursor trail shaders
+- Multi-session support with named sessions, switching, and persistence
+- Launch TUI apps from desktop shortcuts (ghosteel -e htop)
+- Touch text selection with Sailfish-style magnifier and double/triple tap
+- Pinch-to-zoom for font size adjustment, per-session
+- Configurable extra keys bar with sticky Ctrl/Alt, arrow keys, F1-F12
+- Automatic URL detection and hyperlinks, tap to open in browser
+- Inline images via Kitty Graphics Protocol with PNG decoding
+- Encrypted scrollback using AES-256 via Sailfish Secrets
+- Dark and Light color schemes with adjustable opacity
+
+Source code: https://github.com/zackslash/Ghosteel
+License: MIT
 %if 0%{?_chum}
 Title: Ghosteel Terminal
 Type: desktop-application
 Categories:
-  - Terminal
-  - System
+ - Terminal
+ - System
+PackageIcon: https://raw.githubusercontent.com/zackslash/Ghosteel/main/icons/full.png
+Screenshots:
+ - https://raw.githubusercontent.com/zackslash/Ghosteel/main/screenshots/screenshot-neofetch-device.png
+ - https://raw.githubusercontent.com/zackslash/Ghosteel/main/screenshots/screenshot-btop1-device.png
+ - https://raw.githubusercontent.com/zackslash/Ghosteel/main/screenshots/screenshot-sessions-device.png
+ - https://raw.githubusercontent.com/zackslash/Ghosteel/main/screenshots/screenshot-lazygit-device-fullscreen.png
+ - https://raw.githubusercontent.com/zackslash/Ghosteel/main/screenshots/screenshot-search-device.png
 Custom:
   Repo: https://github.com/zackslash/Ghosteel
 %endif
-
-%description
-Ghosteel terminal emulator for Sailfish OS, powered by libghostty.
-
 
 %prep
 %setup -q -n %{name}-%{version}
