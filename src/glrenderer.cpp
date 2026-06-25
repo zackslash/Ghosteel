@@ -16,6 +16,7 @@
 #include <QDateTime>
 #include <QFile>
 #include <QFont>
+#include <QMetaObject>
 
 // GLSL ES 1.00 shaders — textured cell quads with per-cell fg/bg colors
 // Cursor blink and style are handled in the fragment shader via uniforms to avoid
@@ -677,9 +678,12 @@ void GLRenderer::Renderer::detectES300()
 
     m_es300 = true;
     qDebug() << "GLRenderer: ES 3.0 confirmed (probe shader compiled)";
-    // Note: setShaderPipelineAvailable is a single bool write (atomic on ARM).
-    // Technically a render-thread write but practically safe.
-    Settings::instance()->setShaderPipelineAvailable(true);
+    // Marshal to the GUI thread — Settings is documented main-thread-only
+    // (settings.h:11-12). The queued call lands within a frame or two of
+    // the probe, imperceptible to the user; the QML settings page bindings
+    // aren't shown until well after init anyway.
+    QMetaObject::invokeMethod(Settings::instance(),
+        "setShaderPipelineAvailable", Qt::QueuedConnection, Q_ARG(bool, true));
 }
 
 // --- Phase 5B: Pipeline FBO (render-to-texture) ---
