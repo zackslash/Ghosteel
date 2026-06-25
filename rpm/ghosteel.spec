@@ -207,6 +207,15 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
     cd %{_builddir}/%{name}-%{version}
 fi
 
+# Inject version info (no .git/ in OBS tarballs, so git describe fails)
+# GIT_VERSION: use RPM version set by tar_git from git tag
+sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"%{version}\"/" ghosteel.pro
+# GHOSTTY_VERSION: extract from submodule commit pointer if available
+GHOSTTY_SHA=$(git ls-tree HEAD ghostty 2>/dev/null | awk '{print $3}' | cut -c1-9)
+if [ -n "$GHOSTTY_SHA" ]; then
+    sed -i "s|^GHOSTTY_VERSION = .*|GHOSTTY_VERSION = \"$GHOSTTY_SHA\"|" ghosteel.pro
+fi
+
 # Build Qt application
 %qmake5
 
