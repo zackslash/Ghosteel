@@ -1540,9 +1540,12 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_scrollOffset = scrollbar.offset;
     }
 
-    // Sync kitty graphics images (eviction, etc.)
+    // Snapshot kitty graphics enabled flag (avoids render-thread Settings access)
+    m_kittyGraphicsEnabled = Settings::instance()->kittyGraphics();
+
+    // Snapshot kitty placement data and sync texture cache (GUI thread — safe)
     if (m_terminalView && m_terminalView->vt())
-        syncKittyImages(m_terminalView->vt()->terminal(), m_terminalView->vt());
+        snapshotKittyGraphics(m_terminalView->vt()->terminal(), m_terminalView->vt());
 
     // Load/unload cursor trail shader based on setting
     // Custom shader path takes priority over cursor trails
@@ -1664,29 +1667,135 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
     }
 }
 
-void GLRenderer::Renderer::syncKittyImages(GhosttyTerminal terminal, GhosttyVt *vt)
+void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, GhosttyVt *vt)
 {
+    m_kittyPlacements.clear();
+
     if (!terminal || !vt)
         return;
 
-    Settings *settings = Settings::instance();
-    if (!settings || !settings->kittyGraphics()) {
-        if (!m_kittyTextures.isEmpty()) {
-            // Force-evict all textures when feature is disabled.
-            // Age-based eviction won't work because the frame counter
-            // is frozen while disabled, so do a hard clear.
-            for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it)
-                glDeleteTextures(1, &it.value().texture);
-            m_kittyTextures.clear();
-        }
+    if (!m_kittyGraphicsEnabled) {
+        // Feature disabled — queue all textures for deferred deletion.
+        // GL calls must happen on the render thread, not the GUI thread.
+        for (auto it = m_kittyTextures.constBegin(); it != m_kittyTextures.constEnd(); ++it)
+            m_kittyTexturesToDelete.append(it.value().texture);
+        m_kittyTextures.clear();
         return;
     }
 
     m_kittyFrameCounter++;
 
-    // Evict old textures periodically
+    // Evict old textures periodically (deletion deferred to render thread)
     if (m_kittyFrameCounter % 60 == 0)
         cleanupKittyCache();
+
+    // Snapshot placement data from the terminal (GUI thread — safe).
+    // The render thread will draw from this snapshot without touching
+    // ghostty_terminal_get, avoiding a data race with vtWrite.
+    GhosttyKittyGraphics graphics = nullptr;
+    ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_KITTY_GRAPHICS, &graphics);
+    if (!graphics)
+        return;
+
+    for (int layerIdx = 0; layerIdx < 2; ++layerIdx) {
+        GhosttyKittyPlacementLayer layer = (layerIdx == 0)
+            ? GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT
+            : GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT;
+
+        GhosttyKittyGraphicsPlacementIterator iter = nullptr;
+        if (ghostty_kitty_graphics_placement_iterator_new(nullptr, &iter) != GHOSTTY_SUCCESS)
+            continue;
+        if (ghostty_kitty_graphics_get(graphics,
+                GHOSTTY_KITTY_GRAPHICS_DATA_PLACEMENT_ITERATOR, &iter) != GHOSTTY_SUCCESS) {
+            ghostty_kitty_graphics_placement_iterator_free(iter);
+            continue;
+        }
+        ghostty_kitty_graphics_placement_iterator_set(iter,
+            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_ITERATOR_OPTION_LAYER, &layer);
+
+        while (ghostty_kitty_graphics_placement_next(iter)) {
+            bool isVirtual = false;
+            ghostty_kitty_graphics_placement_get(iter,
+                GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_IS_VIRTUAL, &isVirtual);
+            if (isVirtual)
+                continue;
+
+            KittyPlacementSnapshot snap;
+            snap.layer = layer;
+
+            ghostty_kitty_graphics_placement_get(iter,
+                GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_IMAGE_ID, &snap.imageId);
+            if (snap.imageId == 0)
+                continue;
+
+            GhosttyKittyGraphicsImage image = ghostty_kitty_graphics_image(graphics, snap.imageId);
+            if (!image) {
+                // Image deleted from storage — snapshot will trigger cache eviction
+                snap.imageExists = false;
+                m_kittyPlacements.append(snap);
+                continue;
+            }
+            snap.imageExists = true;
+
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_WIDTH, &snap.imgW);
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_HEIGHT, &snap.imgH);
+            if (snap.imgW == 0 || snap.imgH == 0)
+                continue;
+
+            GhosttyKittyGraphicsPlacementRenderInfo info = GHOSTTY_INIT_SIZED(GhosttyKittyGraphicsPlacementRenderInfo);
+            if (ghostty_kitty_graphics_placement_render_info(iter, image, terminal, &info) != GHOSTTY_SUCCESS)
+                continue;
+            if (!info.viewport_visible)
+                continue;
+            snap.renderInfo = info;
+
+            ghostty_kitty_graphics_placement_get(iter,
+                GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_X_OFFSET, &snap.xOffset);
+            ghostty_kitty_graphics_placement_get(iter,
+                GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &snap.yOffset);
+
+            // Check texture cache: determine if upload is needed
+            if (m_kittyTextures.contains(snap.imageId)) {
+                size_t checkPixelsLen = 0;
+                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &checkPixelsLen);
+                if (checkPixelsLen != m_kittyTextures[snap.imageId].dataLen) {
+                    // Image ID reused with different data — queue old texture for deletion
+                    m_kittyTexturesToDelete.append(m_kittyTextures[snap.imageId].texture);
+                    m_kittyTextures.remove(snap.imageId);
+                    snap.needsUpload = true;
+                }
+            } else {
+                snap.needsUpload = true;
+            }
+
+            if (snap.needsUpload) {
+                const uint8_t *pixels = nullptr;
+                size_t pixelsLen = 0;
+                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_PTR, &pixels);
+                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &pixelsLen);
+                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_FORMAT, &snap.format);
+                if (pixels && pixelsLen > 0) {
+                    snap.pixelData = QByteArray(reinterpret_cast<const char*>(pixels),
+                                                static_cast<int>(pixelsLen));
+                    snap.dataLen = pixelsLen;
+                } else {
+                    continue;  // No pixel data available
+                }
+            }
+
+            m_kittyPlacements.append(snap);
+        }
+        ghostty_kitty_graphics_placement_iterator_free(iter);
+    }
+}
+
+void GLRenderer::Renderer::drainPendingKittyDeletions()
+{
+    if (m_kittyTexturesToDelete.isEmpty())
+        return;
+    for (GLuint tex : m_kittyTexturesToDelete)
+        glDeleteTextures(1, &tex);
+    m_kittyTexturesToDelete.clear();
 }
 
 void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
@@ -1695,106 +1804,41 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
     if (!m_kittyProgram || !m_kittyProgram->isLinked())
         return;
 
-    Settings *settings = Settings::instance();
-    if (!settings || !settings->kittyGraphics())
+    if (!m_kittyGraphicsEnabled)
         return;
-
-    if (!m_terminalView || !m_terminalView->vt())
-        return;
-
-    GhosttyTerminal terminal = m_terminalView->vt()->terminal();
-    if (!terminal)
-        return;
-
-    GhosttyKittyGraphics graphics = nullptr;
-    ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_KITTY_GRAPHICS, &graphics);
-    if (!graphics)
-        return;
-
-    GhosttyKittyGraphicsPlacementIterator iter = nullptr;
-    // _new() allocates the iterator struct, _get() populates it in-place
-    // from the terminal's current placement data. Both are needed.
-    if (ghostty_kitty_graphics_placement_iterator_new(nullptr, &iter) != GHOSTTY_SUCCESS)
-        return;
-
-    if (ghostty_kitty_graphics_get(graphics,
-            GHOSTTY_KITTY_GRAPHICS_DATA_PLACEMENT_ITERATOR, &iter) != GHOSTTY_SUCCESS) {
-        ghostty_kitty_graphics_placement_iterator_free(iter);
-        return;
-    }
-
-    // Set layer filter
-    ghostty_kitty_graphics_placement_iterator_set(iter,
-        GHOSTTY_KITTY_GRAPHICS_PLACEMENT_ITERATOR_OPTION_LAYER, &layer);
 
     bool hasAnyPlacement = false;
 
-    while (ghostty_kitty_graphics_placement_next(iter)) {
-        bool isVirtual = false;
-        ghostty_kitty_graphics_placement_get(iter,
-            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_IS_VIRTUAL, &isVirtual);
-        if (isVirtual)
+    for (const auto &snap : m_kittyPlacements) {
+        if (snap.layer != layer)
             continue;
 
-        uint32_t imageId = 0;
-        ghostty_kitty_graphics_placement_get(iter,
-            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_IMAGE_ID, &imageId);
-        if (imageId == 0)
-            continue;
-
-        GhosttyKittyGraphicsImage image = ghostty_kitty_graphics_image(graphics, imageId);
-        if (!image) {
-            // Image was deleted from storage — evict from cache
-            auto it = m_kittyTextures.find(imageId);
+        // Image was deleted from storage — evict from cache (deferred deletion)
+        if (!snap.imageExists) {
+            auto it = m_kittyTextures.find(snap.imageId);
             if (it != m_kittyTextures.end()) {
-                glDeleteTextures(1, &it.value().texture);
+                m_kittyTexturesToDelete.append(it.value().texture);
                 m_kittyTextures.erase(it);
             }
             continue;
         }
 
-        uint32_t imgW = 0, imgH = 0;
-        ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_WIDTH, &imgW);
-        ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_HEIGHT, &imgH);
+        uint32_t imgW = snap.imgW, imgH = snap.imgH;
         if (imgW == 0 || imgH == 0)
             continue;
 
-        GhosttyKittyGraphicsPlacementRenderInfo info = GHOSTTY_INIT_SIZED(GhosttyKittyGraphicsPlacementRenderInfo);
-        if (ghostty_kitty_graphics_placement_render_info(iter, image, terminal, &info) != GHOSTTY_SUCCESS)
-            continue;
-        if (!info.viewport_visible)
-            continue;
+        const auto &info = snap.renderInfo;
+        uint32_t xOffset = snap.xOffset, yOffset = snap.yOffset;
 
-        uint32_t xOffset = 0, yOffset = 0;
-        ghostty_kitty_graphics_placement_get(iter,
-            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_X_OFFSET, &xOffset);
-        ghostty_kitty_graphics_placement_get(iter,
-            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &yOffset);
-
-        // Upload texture if not cached
-        // Also check for image ID reuse (data replaced since last cache)
-        if (m_kittyTextures.contains(imageId)) {
-            const uint8_t *checkPixels = nullptr;
-            size_t checkPixelsLen = 0;
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_PTR, &checkPixels);
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &checkPixelsLen);
-            if (checkPixelsLen != m_kittyTextures[imageId].dataLen) {
-                // Image ID reused with different data — evict old texture
-                glDeleteTextures(1, &m_kittyTextures[imageId].texture);
-                m_kittyTextures.remove(imageId);
-            }
-        }
-        if (!m_kittyTextures.contains(imageId)) {
-            const uint8_t *pixels = nullptr;
-            size_t pixelsLen = 0;
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_PTR, &pixels);
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &pixelsLen);
+        // Upload texture if not cached (cache miss or data changed)
+        if (snap.needsUpload && !m_kittyTextures.contains(snap.imageId)) {
+            const uint8_t *pixels = reinterpret_cast<const uint8_t*>(snap.pixelData.constData());
+            size_t pixelsLen = snap.dataLen;
 
             if (!pixels || pixelsLen == 0)
                 continue;
 
-            GhosttyKittyImageFormat fmt = GHOSTTY_KITTY_IMAGE_FORMAT_RGBA;
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_FORMAT, &fmt);
+            GhosttyKittyImageFormat fmt = snap.format;
 
             GLenum glFmt = GL_RGBA;
             bool convertedPixels = false;
@@ -1841,10 +1885,13 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             cached.height = imgH;
             cached.lastSeenFrame = m_kittyFrameCounter;
             cached.dataLen = pixelsLen;
-            m_kittyTextures.insert(imageId, cached);
-        } else {
-            m_kittyTextures[imageId].lastSeenFrame = m_kittyFrameCounter;
+            m_kittyTextures.insert(snap.imageId, cached);
+        } else if (m_kittyTextures.contains(snap.imageId)) {
+            m_kittyTextures[snap.imageId].lastSeenFrame = m_kittyFrameCounter;
         }
+
+        if (!m_kittyTextures.contains(snap.imageId))
+            continue;
 
         // Compute destination rect
         float destX = static_cast<float>(info.viewport_col * m_cellWidth) + static_cast<float>(xOffset);
@@ -1893,7 +1940,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             hasAnyPlacement = true;
         }
 
-        glBindTexture(GL_TEXTURE_2D, m_kittyTextures[imageId].texture);
+        glBindTexture(GL_TEXTURE_2D, m_kittyTextures[snap.imageId].texture);
 
         glVertexAttribPointer(m_kittyPositionAttr, 2, GL_FLOAT, GL_FALSE,
                               4 * sizeof(float), verts);
@@ -1909,8 +1956,6 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         glBindTexture(GL_TEXTURE_2D, 0);
         m_kittyProgram->release();
     }
-
-    ghostty_kitty_graphics_placement_iterator_free(iter);
 }
 
 void GLRenderer::Renderer::cleanupKittyCache()
@@ -1944,7 +1989,7 @@ void GLRenderer::Renderer::cleanupKittyCache()
     for (uint32_t id : toRemove) {
         auto it = m_kittyTextures.find(id);
         if (it != m_kittyTextures.end()) {
-            glDeleteTextures(1, &it.value().texture);
+            m_kittyTexturesToDelete.append(it.value().texture);
             m_kittyTextures.erase(it);
         }
     }
@@ -2170,6 +2215,9 @@ void GLRenderer::Renderer::render()
 {
     if (!m_initialized)
         initialize();
+
+    // Drain deferred kitty texture deletions (GL context is current on render thread)
+    drainPendingKittyDeletions();
 
     if (!m_program || !m_program->isLinked()) {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
