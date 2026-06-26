@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Ny session</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Session %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sessioner</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Inställningar</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Byt till session</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Dela markering</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Dölj sökning</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Sök i terminalen</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Öppna länk</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Öppna</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Avbryt</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Öppnas i webbläsaren</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Åtkomst till urklipp</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Skicka</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Neka</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Ett program i &quot;%1&quot; vill läsa ditt urklipp.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Ett terminalprogram vill läsa ditt urklipp.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Dölj</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Visa</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Visar första %1 av %2 tecken</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Okänd session</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell avslutades med kod %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Kommando hittades inte</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Standard: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Teckenstorlek</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Ljus</translation>
     </message>
@@ -538,8 +451,103 @@ Drivs av libghostty terminalmotor</translation>
         <translation>Zooma med nyp</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Ändra teckenstorlek med en tvåfingernyp-gest</translation>
+        <source>Default font size</source>
+        <translation>Standard teckenstorlek</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Ändra teckenstorlek i sessionen med en tvåfingernyp-gest</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Ny session</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Session %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sessioner</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Inställningar</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Byt till session</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Dela markering</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Dölj sökning</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Sök i terminalen</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Öppna länk</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Öppna</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Avbryt</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Öppnas i webbläsaren</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Åtkomst till urklipp</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Skicka</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Neka</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ett program i &quot;%1&quot; vill läsa ditt urklipp.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Ett terminalprogram vill läsa ditt urklipp.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Dölj</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Visa</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Visar första %1 av %2 tecken</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Okänd session</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Standard</translation>
     </message>
 </context>
 </TS>

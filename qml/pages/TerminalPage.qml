@@ -86,17 +86,16 @@ Page {
     }
 
     // Re-suppress keyboard when returning to this page (e.g. from Sessions page).
-    // When the user taps the same session, onSessionSwitched fires during the pop
-    // animation (page still Inactive) and consumes the suppress flag via
-    // forceActiveFocus(). Silica then fires focusInEvent when the page becomes
-    // Active, which calls im->show() since the flag is already consumed.
+    // onSessionSwitched may have consumed the suppress flag during the pop
+    // animation (page still Inactive). Re-apply before forceActiveFocus() to
+    // prevent im->show() when the session's keyboard is hidden.
     onStatusChanged: {
         if (status === PageStatus.Active && terminal) {
             var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
             if (!SessionManager.sessionKeyboardVisible(idx)) {
                 terminal.suppressNextKeyboardAutoShow()
-                terminal.forceActiveFocus()
             }
+            terminal.forceActiveFocus()
         }
     }
 
@@ -352,7 +351,7 @@ Page {
         t.pullDownZoneHeight = Theme.itemSizeLarge
     }
 
-    function attachTerminal(t) {
+    function attachTerminal(t, focus) {
         if (!t) return
         // Parent into container once — never reparent, just toggle visibility
         if (t.parent !== terminalContainer) {
@@ -361,10 +360,11 @@ Page {
         }
         t.visible = true
         t.opacity = 1
-        var sessionFontSize = SessionManager.activeSessionFontSize()
+        var sessionFontSize = SessionManager.activeSessionFontSize
         t.fontSize = sessionFontSize > 0 ? sessionFontSize : Settings.fontSize
         applyTerminalTheme(t)
-        t.forceActiveFocus()
+        if (focus !== false)
+            t.forceActiveFocus()
 
         // Connect signals if not already connected
         t.titleChanged.disconnect(updateWindowTitle)
@@ -493,7 +493,7 @@ Page {
                     newTerminal.suppressNextKeyboardAutoShow()
 
                 detachTerminal(terminal)
-                attachTerminal(newTerminal)
+                attachTerminal(newTerminal, status === PageStatus.Active)
             }
 
             currentSessionIndex = index
@@ -641,7 +641,7 @@ Page {
     function onZoomRequested(delta) {
         if (!terminal) return
         SessionManager.setActiveSessionFontSize(
-            Math.max(6, Math.min(32, terminal.fontSize + delta)))
+            Math.max(6, Math.min(32, terminal.fontSize + delta)), false)
     }
 
     function onPinchingChanged(pinching) {
@@ -649,8 +649,12 @@ Page {
             fontSizeOverlay.show()
         } else {
             fontSizeOverlay.hide()
-            if (terminal)
-                SessionManager.setActiveSessionFontSize(terminal.fontSize)
+            if (terminal) {
+                if (terminal.pinchAtDefault)
+                    SessionManager.setActiveSessionFontSize(0, false)
+                else
+                    SessionManager.setActiveSessionFontSize(terminal.fontSize, false)
+            }
         }
     }
 
@@ -870,7 +874,11 @@ Page {
             anchors.topMargin: Theme.paddingLarge
             color: Theme.highlightColor
             font.pixelSize: Theme.fontSizeExtraLarge
-            text: terminal ? terminal.fontSize + "pt" : ""
+            text: {
+                if (!terminal) return ""
+                if (terminal.pinchAtDefault) return qsTr("Default")
+                return terminal.fontSize + "pt"
+            }
         }
 
         Rectangle {
@@ -982,9 +990,9 @@ Page {
                                 var dir = keyDef.id === "prevSession" ? -1 : 1
                                 switchSession(dir)
                             } else if (keyDef.id === "zoomIn") {
-                                SessionManager.setActiveSessionFontSize(Math.min(32, terminal.fontSize + 1))
+                                SessionManager.setActiveSessionFontSize(Math.min(32, terminal.fontSize + 1), false)
                             } else if (keyDef.id === "zoomOut") {
-                                SessionManager.setActiveSessionFontSize(Math.max(6, terminal.fontSize - 1))
+                                SessionManager.setActiveSessionFontSize(Math.max(6, terminal.fontSize - 1), false)
                             }
                         }
 

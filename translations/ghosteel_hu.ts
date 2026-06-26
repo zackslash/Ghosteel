@@ -15,97 +15,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Új munkamenet</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>%1. munkamenet</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Munkamenetek</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Beállítások</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Váltás munkamenetre</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Kijelölés megosztása</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Keresés elrejtése</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Keresés a terminálban</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Hivatkozás megnyitása</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Megnyitás</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Mégse</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>A böngészőben nyílik meg</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Vágólap hozzáférés</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Küldés</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Elutasítás</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>A(z) &quot;%1&quot; program olvasni szeretné a vágólapot.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Egy terminálprogram olvasni szeretné a vágólapot.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Elrejtés</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Megjelenítés</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Első %1 megjelenítése a(z) %2 karakterből</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Ismeretlen munkamenet</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell kilépett %1 kóddal</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Parancs nem található</translation>
     </message>
 </context>
 <context>
@@ -355,10 +272,6 @@
         <translation>Alapértelmezett: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Betűméret</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Világos</translation>
     </message>
@@ -537,8 +450,103 @@ A libghostty terminálmotor hajtja</translation>
         <translation>Nagyítás csippentéssel</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Változtasd a betűméretet kétujjas csippentő kézmozdulattal</translation>
+        <source>Default font size</source>
+        <translation>Alapértelmezett betűméret</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Munkamenet betűméretének módosítása kétujjas csippentő mozdulattal</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Új munkamenet</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">%1. munkamenet</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Munkamenetek</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Beállítások</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Váltás munkamenetre</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Kijelölés megosztása</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Keresés elrejtése</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Keresés a terminálban</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Hivatkozás megnyitása</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Megnyitás</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Mégse</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>A böngészőben nyílik meg</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Vágólap hozzáférés</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Küldés</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Elutasítás</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>A(z) &quot;%1&quot; program olvasni szeretné a vágólapot.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Egy terminálprogram olvasni szeretné a vágólapot.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Elrejtés</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Megjelenítés</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Első %1 megjelenítése a(z) %2 karakterből</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Ismeretlen munkamenet</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Alapértelmezett</translation>
     </message>
 </context>
 </TS>

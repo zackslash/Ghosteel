@@ -2248,6 +2248,201 @@ private slots:
         // showSessionList should have been emitted
         QCOMPARE(spy.count(), 1);
     }
+
+    // --- Session-scoped font size tests ---
+
+    void testSetSessionFontSizeSessionOnly()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        TerminalView *view = mgr.createSession();
+        QCOMPARE(settings.fontSize(), 18); // global default
+
+        mgr.setActiveSessionFontSize(20, false);
+
+        QCOMPARE(mgr.activeSessionFontSize(), 20);
+        QCOMPARE(settings.fontSize(), 18); // global unchanged
+        QCOMPARE(view->fontSize(), 20);
+    }
+
+    void testSetSessionFontSizeUpdatesGlobal()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        TerminalView *view = mgr.createSession();
+        QCOMPARE(settings.fontSize(), 18);
+
+        mgr.setActiveSessionFontSize(20, true);
+
+        QCOMPARE(mgr.activeSessionFontSize(), 20);
+        QCOMPARE(settings.fontSize(), 20); // global updated
+        QCOMPARE(view->fontSize(), 20);
+    }
+
+    void testSetSessionFontSizeZeroResetsToDefault()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        TerminalView *view = mgr.createSession();
+
+        // Set explicit override with updateGlobal=false so global stays at 18
+        mgr.setActiveSessionFontSize(20, false);
+        QCOMPARE(mgr.activeSessionFontSize(), 20);
+        QCOMPARE(settings.fontSize(), 18);
+
+        // Reset to track global default
+        mgr.setActiveSessionFontSize(0);
+
+        QCOMPARE(mgr.activeSessionFontSize(), 0);
+        QCOMPARE(settings.fontSize(), 18); // global unchanged
+        QCOMPARE(view->fontSize(), settings.fontSize()); // view resolved to global
+    }
+
+    void testSetSessionFontSizeZeroNoOpWhenAlreadyZero()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        mgr.createSession(); // fontSize starts at 0 (track default)
+
+        QSignalSpy spy(&mgr, &SessionManager::activeSessionFontSizeChanged);
+
+        // Already 0 — should be a no-op with no signal
+        mgr.setActiveSessionFontSize(0);
+
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testSetSessionFontSizeDedupNoSignal()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        mgr.createSession();
+
+        // Set to 20 with updateGlobal=true
+        mgr.setActiveSessionFontSize(20, true);
+        QCOMPARE(settings.fontSize(), 20);
+
+        QSignalSpy spy(&mgr, &SessionManager::activeSessionFontSizeChanged);
+
+        // Set same value again — no signal, but global still synced
+        mgr.setActiveSessionFontSize(20, true);
+
+        QCOMPARE(spy.count(), 0);
+        QCOMPARE(settings.fontSize(), 20); // global still synced
+    }
+
+    void testActiveSessionFontSizeChangedSignal()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        mgr.createSession();
+
+        QSignalSpy spy(&mgr, &SessionManager::activeSessionFontSizeChanged);
+
+        // First set — signal emitted
+        mgr.setActiveSessionFontSize(22, false);
+        QCOMPARE(spy.count(), 1);
+
+        // Same value again — no signal (dedup)
+        mgr.setActiveSessionFontSize(22, false);
+        QCOMPARE(spy.count(), 1);
+
+        // Reset to default — signal emitted
+        mgr.setActiveSessionFontSize(0);
+        QCOMPARE(spy.count(), 2);
+    }
+
+    void testGlobalFontSizeChangePropagatesToTrackingSessions()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        // Create 2 sessions — both start with fontSize=0 (tracking default)
+        TerminalView *view0 = mgr.createSession();
+        TerminalView *view1 = mgr.createSession();
+        QCOMPARE(mgr.sessionCount(), 2);
+
+        // Change global default — both views should update
+        settings.setFontSize(24);
+        QCOMPARE(view0->fontSize(), 24);
+        QCOMPARE(view1->fontSize(), 24);
+
+        // Override session 0 with explicit size (don't touch global)
+        mgr.setActiveSessionIndex(0);
+        mgr.setActiveSessionFontSize(20, false);
+        QCOMPARE(view0->fontSize(), 20);
+        QCOMPARE(mgr.activeSessionFontSize(), 20);
+
+        // Change global again — session 0 stays overridden, session 1 tracks
+        settings.setFontSize(26);
+        QCOMPARE(view0->fontSize(), 20); // override preserved
+        QCOMPARE(view1->fontSize(), 26); // tracking updated
+    }
+
+    void testSavePreservesFontSizeZeroSentinel()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        // Create a session — fontSize defaults to 0 (track global)
+        mgr.createSession();
+        QCOMPARE(mgr.activeSessionFontSize(), 0);
+
+        // Trigger save via renaming (setActiveSessionFontSize(0) is a no-op when already 0)
+        mgr.setSessionName(0, "Saved");
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Read raw INI to verify fontSize persisted as 0
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            QCOMPARE(s.value("fontSize").toInt(), 0);
+            s.endGroup();
+        }
+
+        // Restore in a fresh SessionManager to verify the sentinel survives round-trip
+        SessionManager mgr2(m_settingsPath);
+        mgr2.restoreSessions();
+        QCOMPARE(mgr2.sessionCount(), 1);
+        QCOMPARE(mgr2.activeSessionFontSize(), 0);
+    }
+
+    void testSavePreservesExplicitFontSize()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        mgr.createSession();
+        mgr.setActiveSessionFontSize(20, false);
+        QCOMPARE(mgr.activeSessionFontSize(), 20);
+
+        // Trigger save via renaming and wait for debounce
+        mgr.setSessionName(0, "FontTest");
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Read raw INI to verify fontSize persisted as 20
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            QCOMPARE(s.value("fontSize").toInt(), 20);
+            s.endGroup();
+        }
+
+        // Restore in a fresh SessionManager
+        SessionManager mgr2(m_settingsPath);
+        mgr2.restoreSessions();
+        QCOMPARE(mgr2.sessionCount(), 1);
+        QCOMPARE(mgr2.activeSessionFontSize(), 20);
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)

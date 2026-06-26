@@ -18,97 +18,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nova seja</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Seja %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Seje</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Nastavitve</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Preklopi na sejo</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Deli izbor</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Skrij iskanje</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Išči v terminalu</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Odpri povezavo</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Odpri</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Prekliči</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Odprlo se bo v brskalniku</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Dostop do odložišča</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Pošlji</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Zavrni</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Program v &quot;%1&quot; želi brati vaše odložišče.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Terminalski program želi brati vaše odložišče.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Skrij</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Prikaži</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Prikaz prvih %1 od %2 znakov</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Neznana seja</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell končan s kodo %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Ukaz ni najden</translation>
     </message>
 </context>
 <context>
@@ -358,10 +275,6 @@
         <translation>Privzeto: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Velikost pisave</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Svetla</translation>
     </message>
@@ -540,8 +453,103 @@ Poganja terminalski pogon libghostty</translation>
         <translation>Povečaj s ščipanjem</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Spremenite velikost pisave z gesto ščipanja z dvema prstoma</translation>
+        <source>Default font size</source>
+        <translation>Privzeta velikost pisave</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Spremeni velikost pisave seje z gesto ščipanja z dvema prstoma</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nova seja</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Seja %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Seje</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Nastavitve</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Preklopi na sejo</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Deli izbor</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Skrij iskanje</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Išči v terminalu</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Odpri povezavo</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Odpri</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Prekliči</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Odprlo se bo v brskalniku</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Dostop do odložišča</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Pošlji</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Zavrni</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program v &quot;%1&quot; želi brati vaše odložišče.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminalski program želi brati vaše odložišče.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skrij</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Prikaži</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Prikaz prvih %1 od %2 znakov</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Neznana seja</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Privzeto</translation>
     </message>
 </context>
 </TS>

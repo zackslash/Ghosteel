@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Нова сесия</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Сесия %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Сесии</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Настройки</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Превключи към сесия</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Споделяне на избраното</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Скрий търсенето</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Търсене в терминала</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Отвори връзката</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Отвори</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Отказ</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Ще се отвори в браузъра</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Достъп до клипборда</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Изпрати</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Отказ</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Програма в &quot;%1&quot; иска да прочете клипборда ви.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Терминална програма иска да прочете клипборда ви.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Скрий</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Покажи</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Показване на първите %1 от %2 символа</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Неизвестна сесия</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell завърши с код %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Команда не е намерена</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>По подразбиране: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Размер на шрифта</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Светла</translation>
     </message>
@@ -538,8 +451,103 @@ Powered by libghostty terminal engine</source>
         <translation>Мащабиране с щипане</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Променяйте размера на шрифта с жест с два пръста</translation>
+        <source>Default font size</source>
+        <translation>Размер на шрифта по подразбиране</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Променя размера на шрифта на сесията с жест на прищипване с два пръста</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Нова сесия</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Сесия %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сесии</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Превключи към сесия</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Споделяне на избраното</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Скрий търсенето</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Търсене в терминала</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Отвори връзката</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Отвори</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отказ</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Ще се отвори в браузъра</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Достъп до клипборда</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Изпрати</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отказ</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Програма в &quot;%1&quot; иска да прочете клипборда ви.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Терминална програма иска да прочете клипборда ви.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скрий</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Покажи</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Показване на първите %1 от %2 символа</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Неизвестна сесия</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>По подразбиране</translation>
     </message>
 </context>
 </TS>

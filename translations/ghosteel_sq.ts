@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Sesioni i ri</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sesioni %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sesione</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Cilësimet</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Kalo te sesioni</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Ndaj përzgjedhjen</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Fshih kërkimin</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Kërko në terminal</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Hap lidhjen</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Hap</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Anulo</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Do të hapet në shfletues</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Qasje në të prerat</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Dërgo</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Moho</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Një program në &quot;%1&quot; dëshiron të lexojë të prerat tuaja.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Një program terminali dëshiron të lexojë të prerat tuaja.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Fshih</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Shfaq</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Po shfaqen %1 e para nga %2 karaktere</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Sesion i panjohur</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell përfundoi me kodin %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Komanda nuk u gjet</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Parazgjedhja: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Madhësia e shkronjave</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>E ndritshme</translation>
     </message>
@@ -538,8 +451,103 @@ Mundësuar nga motori i terminalit libghostty</translation>
         <translation>Zoom me shtrydhje</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Ndrysho madhësinë e shkronjave me gjest shtrydhjeje me dy gishta</translation>
+        <source>Default font size</source>
+        <translation>Madhësia parazgjedhur e shkronjave</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Ndrysho madhësinë e shkronjave të sesionit me gjest pinçimi me dy gishta</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Sesioni i ri</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sesioni %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sesione</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Cilësimet</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Kalo te sesioni</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Ndaj përzgjedhjen</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Fshih kërkimin</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Kërko në terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Hap lidhjen</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Hap</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anulo</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Do të hapet në shfletues</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Qasje në të prerat</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Dërgo</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Moho</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Një program në &quot;%1&quot; dëshiron të lexojë të prerat tuaja.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Një program terminali dëshiron të lexojë të prerat tuaja.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Fshih</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Shfaq</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Po shfaqen %1 e para nga %2 karaktere</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Sesion i panjohur</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Parazgjedhje</translation>
     </message>
 </context>
 </TS>

@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Neue Sitzung</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sitzung %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sitzungen</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Einstellungen</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Zu Sitzung wechseln</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Auswahl teilen</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Suche ausblenden</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Terminal durchsuchen</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Link öffnen</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Öffnen</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Abbrechen</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Wird im Browser geöffnet</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Zugriff auf Zwischenablage</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Senden</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Ablehnen</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Ein Programm in &quot;%1&quot; möchte Ihre Zwischenablage lesen.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Ein Terminalprogramm möchte Ihre Zwischenablage lesen.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Ausblenden</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Anzeigen</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Zeige erste %1 von %2 Zeichen</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Unbekannte Sitzung</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell mit Code %1 beendet</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Befehl nicht gefunden</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Standard: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Schriftgröße</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Hell</translation>
     </message>
@@ -538,8 +451,103 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
         <translation>Mit Pinch zoomen</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Schriftgröße mit einer Zweifinger-Pinch-Geste ändern</translation>
+        <source>Default font size</source>
+        <translation>Standard-Schriftgröße</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Schriftgröße der Sitzung mit einer Zweifinger-Pinch-Geste ändern</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Neue Sitzung</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sitzung %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sitzungen</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Zu Sitzung wechseln</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Auswahl teilen</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Suche ausblenden</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Terminal durchsuchen</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Link öffnen</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Öffnen</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Wird im Browser geöffnet</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Zugriff auf Zwischenablage</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senden</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ablehnen</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ein Programm in &quot;%1&quot; möchte Ihre Zwischenablage lesen.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Ein Terminalprogramm möchte Ihre Zwischenablage lesen.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ausblenden</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Anzeigen</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Zeige erste %1 von %2 Zeichen</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Unbekannte Sitzung</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Standard</translation>
     </message>
 </context>
 </TS>

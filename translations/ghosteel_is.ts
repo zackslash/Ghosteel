@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Ný seta</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Seta %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Setur</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Stillingar</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Skipta yfir í setu</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Deila vali</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Fela leit</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Leita í skjáhermi</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Opna tengil</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Opna</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Hætta við</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Opnast í vafra</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Aðgangur að klippiborði</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Senda</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Hafna</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Forrit í &quot;%1&quot; vill lesa klippiborðið þitt.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Skjáhermisforrit vill lesa klippiborðið þitt.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Fela</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Sýna</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Sýni fyrstu %1 af %2 stöfum</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Óþekkt seta</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell hætti með kóða %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Skipun fannst ekki</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Sjálfgefið: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Leturstærð</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Ljóst</translation>
     </message>
@@ -538,8 +451,103 @@ Keyrt af libghostty skjáhermisvél</translation>
         <translation>Aðdráttur með klemmu</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Breyttu leturstærð með tveggja-fingra klemmuhreyfingu</translation>
+        <source>Default font size</source>
+        <translation>Sjálfgefin stærð leturs</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Breyttu leturstærð setunnar með tveggja-fingra klemmuhreyfingu</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Ný seta</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Seta %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Setur</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Stillingar</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Skipta yfir í setu</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Deila vali</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Fela leit</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Leita í skjáhermi</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Opna tengil</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Opna</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Hætta við</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Opnast í vafra</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Aðgangur að klippiborði</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Senda</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Hafna</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Forrit í &quot;%1&quot; vill lesa klippiborðið þitt.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Skjáhermisforrit vill lesa klippiborðið þitt.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Fela</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Sýna</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Sýni fyrstu %1 af %2 stöfum</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Óþekkt seta</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Sjálfgefið</translation>
     </message>
 </context>
 </TS>

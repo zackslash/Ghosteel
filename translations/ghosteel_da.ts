@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Ny session</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Session %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sessioner</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Indstillinger</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Skift til session</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Del markering</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Skjul søgning</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Søg i terminalen</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Åbn link</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Åbn</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Annuller</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Åbnes i browseren</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Adgang til udklipsholder</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Send</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Afvis</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Et program i &quot;%1&quot; vil læse din udklipsholder.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Et terminalprogram vil læse din udklipsholder.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Skjul</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Vis</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Viser første %1 af %2 tegn</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Ukendt session</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell afsluttet med kode %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Kommando ikke fundet</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Standard: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Skriftstørrelse</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Lys</translation>
     </message>
@@ -538,8 +451,103 @@ Drevet af libghostty terminalmotor</translation>
         <translation>Zoom med knib</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Skift skriftstørrelse med en tofingerknib-bevægelse</translation>
+        <source>Default font size</source>
+        <translation>Standard skriftstørrelse</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Skift skriftstørrelse i sessionen med en tofingerknib-bevægelse</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Ny session</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Session %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sessioner</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Indstillinger</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Skift til session</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Del markering</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Skjul søgning</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Søg i terminalen</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Åbn link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Åbn</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Annuller</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Åbnes i browseren</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Adgang til udklipsholder</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Send</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Afvis</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Et program i &quot;%1&quot; vil læse din udklipsholder.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Et terminalprogram vil læse din udklipsholder.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skjul</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Vis</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Viser første %1 af %2 tegn</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Ukendt session</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Standard</translation>
     </message>
 </context>
 </TS>

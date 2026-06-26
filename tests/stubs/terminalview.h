@@ -28,6 +28,7 @@ class TerminalView : public QObject
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
     Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
     Q_PROPERTY(int pullDownZoneHeight READ pullDownZoneHeight WRITE setPullDownZoneHeight NOTIFY pullDownZoneHeightChanged)
+    Q_PROPERTY(bool pinchAtDefault READ pinchAtDefault NOTIFY pinchAtDefaultChanged)
 
 public:
     explicit TerminalView(QObject *parent = nullptr) : QObject(parent) {}
@@ -87,6 +88,7 @@ public:
     void setPullDownZoneHeight(int height) {
         if (m_pullDownZoneHeight != height) { m_pullDownZoneHeight = height; Q_EMIT pullDownZoneHeightChanged(); }
     }
+    bool pinchAtDefault() const { return m_pinchAtDefault; }
 
     Q_INVOKABLE void paste() {}
     Q_INVOKABLE void copySelection() {}
@@ -145,6 +147,7 @@ Q_SIGNALS:
     void linkActivated(const QString &uri);
     void topPaddingChanged();
     void pinchingChanged(bool pinching);
+    void pinchAtDefaultChanged(bool atDefault);
     void zoomRequested(int delta);
     void requestParentInteractive(bool interactive);
 
@@ -171,6 +174,7 @@ private:
     QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
     int m_topPadding = 12;
     int m_pullDownZoneHeight = 100;
+    bool m_pinchAtDefault = false;
 };
 
 #endif // TERMINALVIEW_H

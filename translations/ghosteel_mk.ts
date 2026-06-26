@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Нова сесија</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Сесија %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Сесии</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Поставки</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Префрли на сесија</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Сподели избор</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Скриј пребарување</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Пребарај во терминал</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Отвори врска</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Отвори</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Откажи</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Ќе се отвори во прелистувачот</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Пристап до таблата со исечоци</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Испрати</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Одбиј</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Програма во &quot;%1&quot; сака да ја прочита вашата табла со исечоци.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Терминална програма сака да ја прочита вашата табла со исечоци.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Скриј</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Прикажи</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Приказ на првите %1 од %2 знаци</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Непозната сесија</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell заврши со код %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Командата не е пронајдена</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Стандардно: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Големина на фонт</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Светло</translation>
     </message>
@@ -539,8 +452,103 @@ Powered by libghostty terminal engine</source>
         <translation>Зум со штипање</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Променете ја големината на фонтот со гест на штипање со два прста</translation>
+        <source>Default font size</source>
+        <translation>Стандардна големина на фонт</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Смени ја големината на фонтот на сесијата со гест на штипање со два прста</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Нова сесија</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Сесија %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сесии</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Поставки</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Префрли на сесија</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Сподели избор</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Скриј пребарување</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Пребарај во терминал</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Отвори врска</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Отвори</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Откажи</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Ќе се отвори во прелистувачот</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Пристап до таблата со исечоци</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Испрати</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Одбиј</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Програма во &quot;%1&quot; сака да ја прочита вашата табла со исечоци.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Терминална програма сака да ја прочита вашата табла со исечоци.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скриј</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Прикажи</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Приказ на првите %1 од %2 знаци</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Непозната сесија</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Стандардно</translation>
     </message>
 </context>
 </TS>

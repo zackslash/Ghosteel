@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 
 Page {
     id: sessionPage
+    objectName: "sessionPage"
     allowedOrientations: Orientation.All
 
     // Revision counter — bumped on sort/session changes to force

@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Sesiune nouă</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sesiunea %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sesiuni</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Setări</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Comută la sesiune</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Partajează selecția</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Ascunde căutarea</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Caută în terminal</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Deschide linkul</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Deschide</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Anulează</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Se va deschide în browser</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Acces la clipboard</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Trimite</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Refuză</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Un program în &quot;%1&quot; vrea să citească clipboard-ul dumneavoastră.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Un program de terminal vrea să citească clipboard-ul dumneavoastră.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Ascunde</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Afișează</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Se afișează primele %1 din %2 caractere</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Sesiune necunoscută</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell s-a încheiat cu codul %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Comandă negăsită</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Implicit: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Dimensiune font</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Luminos</translation>
     </message>
@@ -539,8 +452,103 @@ Propulsat de motorul de terminal libghostty</translation>
         <translation>Zoom cu ciupire</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Schimbă dimensiunea fontului cu un gest de ciupire cu două degete</translation>
+        <source>Default font size</source>
+        <translation>Mărime implicită a fontului</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Modifică mărimea fontului sesiunii cu un gest de ciupire cu două degete</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Sesiune nouă</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sesiunea %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sesiuni</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Setări</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Comută la sesiune</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Partajează selecția</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Ascunde căutarea</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Caută în terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Deschide linkul</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Deschide</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anulează</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Se va deschide în browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Acces la clipboard</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Trimite</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Refuză</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un program în &quot;%1&quot; vrea să citească clipboard-ul dumneavoastră.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un program de terminal vrea să citească clipboard-ul dumneavoastră.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ascunde</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Afișează</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Se afișează primele %1 din %2 caractere</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Sesiune necunoscută</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Implicit</translation>
     </message>
 </context>
 </TS>

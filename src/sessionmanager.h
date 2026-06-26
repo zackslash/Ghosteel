@@ -46,6 +46,7 @@ class SessionManager : public QObject
     Q_PROPERTY(int sessionCount READ sessionCount NOTIFY sessionCountChanged)
     Q_PROPERTY(QQmlListProperty<TerminalView> sessions READ sessions NOTIFY sessionsChanged)
     Q_PROPERTY(bool dbusRegistered READ dbusRegistered NOTIFY dbusRegisteredChanged)
+    Q_PROPERTY(int activeSessionFontSize READ activeSessionFontSize NOTIFY activeSessionFontSizeChanged)
 
 public:
     explicit SessionManager(QObject *parent = nullptr);
@@ -87,8 +88,9 @@ public:
     Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
     Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
 
-    Q_INVOKABLE void setActiveSessionFontSize(int size);
-    Q_INVOKABLE int activeSessionFontSize() const;
+    Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = true);
+    int activeSessionFontSize() const;
+    Q_INVOKABLE void resetAllSessionFontSizes();
     Q_INVOKABLE QString sessionDisplayName(int index) const;
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
@@ -128,6 +130,7 @@ Q_SIGNALS:
     void sessionKeyboardVisibleChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
     void dbusRegisteredChanged();
+    void activeSessionFontSizeChanged();
     // Aggregated notification signal — emitted for any session, not just the active one.
     // QML connects once to this instead of per-view.
     void desktopNotification(int sessionId, const QString &summary, const QString &body);

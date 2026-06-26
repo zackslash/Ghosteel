@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Saio berria</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>%1. saioa</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Saioak</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Ezarpenak</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Aldatu saiora</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Partekatu hautapena</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Ezkutatu bilaketa</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Bilatu terminalean</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Ireki esteka</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Ireki</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Utzi</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Nabigatzailean irekiko da</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Arbelera sarbidea</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Bidali</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Ukatu</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>&quot;%1&quot; programak zure arbela irakurri nahi du.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Terminal programa batek zure arbela irakurri nahi du.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Ezkutatu</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Erakutsi</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>%2 karakteretik lehenengo %1 erakusten</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Saio ezezaguna</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell-ek %1 kodearekin amaitu du</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Komandoa ez da aurkitu</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Lehenetsia: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Letra tamaina</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Argia</translation>
     </message>
@@ -538,8 +451,103 @@ libghostty terminal motorrak bultzatuta</translation>
         <translation>Zoom egin atximurkatuz</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Aldatu letra-tamaina bi hatzeko atximurka keinuarekin</translation>
+        <source>Default font size</source>
+        <translation>Letra-tamaina lehenetsia</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Aldatu saioaren letra-tamaina hatz batekiko pintzean bi hatzekin</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Saio berria</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">%1. saioa</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Saioak</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ezarpenak</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Aldatu saiora</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Partekatu hautapena</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Ezkutatu bilaketa</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Bilatu terminalean</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Ireki esteka</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Ireki</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Utzi</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Nabigatzailean irekiko da</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Arbelera sarbidea</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Bidali</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Ukatu</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; programak zure arbela irakurri nahi du.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminal programa batek zure arbela irakurri nahi du.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ezkutatu</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Erakutsi</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>%2 karakteretik lehenengo %1 erakusten</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Saio ezezaguna</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Lehenetsia</translation>
     </message>
 </context>
 </TS>

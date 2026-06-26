@@ -34,6 +34,7 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
     Q_PROPERTY(int pullDownZoneHeight READ pullDownZoneHeight WRITE setPullDownZoneHeight NOTIFY pullDownZoneHeightChanged)
+    Q_PROPERTY(bool pinchAtDefault READ pinchAtDefault NOTIFY pinchAtDefaultChanged)
 
 public:
     // Scrollback search match
@@ -74,6 +75,7 @@ public:
     void setMagnifierBorderColor(const QColor &color);
     int pullDownZoneHeight() const { return m_pullDownZoneHeight; }
     void setPullDownZoneHeight(int height);
+    bool pinchAtDefault() const { return m_pinchAtDefault; }
 
     Q_INVOKABLE void paste();         // Paste from system clipboard
     Q_INVOKABLE void copySelection(); // Copy terminal selection to clipboard
@@ -154,6 +156,7 @@ Q_SIGNALS:
     void topPaddingChanged();
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
     void pinchingChanged(bool pinching);
+    void pinchAtDefaultChanged(bool atDefault);
     void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out
     // Toggle parent SilicaFlickable.interactive — emitted false on
     // multi-touch/TUI begin, true on end.
@@ -289,6 +292,7 @@ private:
     int m_pinchBaseFontSize = 0;
     int m_lastAppliedFontSize = 0;
     int m_pinchCandidateFrames = 0;
+    bool m_pinchAtDefault = false;
     QPointF m_gestureInitialCentroid;
 
     static constexpr qreal PinchRatioThreshold = 1.12;

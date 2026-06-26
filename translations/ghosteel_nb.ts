@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Ny økt</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Økt %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Økter</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Innstillinger</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Bytt til økt</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Del markering</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Skjul søk</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Søk i terminalen</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Åpne lenke</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Åpne</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Avbryt</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Åpnes i nettleseren</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Tilgang til utklippstavle</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Send</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Avslå</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Et program i &quot;%1&quot; vil lese utklippstavlen din.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Et terminalprogram vil lese utklippstavlen din.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Skjul</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Vis</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Viser første %1 av %2 tegn</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Ukjent økt</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell avsluttet med kode %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Kommando ikke funnet</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Standard: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Skriftstørrelse</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Lys</translation>
     </message>
@@ -538,8 +451,103 @@ Drevet av libghostty terminalmotor</translation>
         <translation>Zoom med klyp</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Endre skriftstørrelse med en tofingerklype-bevegelse</translation>
+        <source>Default font size</source>
+        <translation>Standard skriftstørrelse</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Endre skriftstørrelsen i økten med en tofingerklype-bevegelse</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Ny økt</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Økt %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Økter</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Innstillinger</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Bytt til økt</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Del markering</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Skjul søk</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Søk i terminalen</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Åpne lenke</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Åpne</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Avbryt</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Åpnes i nettleseren</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Tilgang til utklippstavle</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Send</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Avslå</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Et program i &quot;%1&quot; vil lese utklippstavlen din.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Et terminalprogram vil lese utklippstavlen din.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skjul</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Vis</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Viser første %1 av %2 tegn</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Ukjent økt</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Standard</translation>
     </message>
 </context>
 </TS>

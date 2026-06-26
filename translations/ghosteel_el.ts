@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Νέα συνεδρία</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Συνεδρία %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Συνεδρίες</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Ρυθμίσεις</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Εναλλαγή σε συνεδρία</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Κοινή χρήση επιλογής</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Απόκρυψη αναζήτησης</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Αναζήτηση στο τερματικό</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Άνοιγμα συνδέσμου</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Άνοιγμα</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Ακύρωση</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Θα ανοίξει στον περιηγητή</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Πρόσβαση στο πρόχειρο</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Αποστολή</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Άρνηση</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Ένα πρόγραμμα στο &quot;%1&quot; θέλει να διαβάσει το πρόχειρό σας.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Ένα πρόγραμμα τερματικού θέλει να διαβάσει το πρόχειρό σας.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Απόκρυψη</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Εμφάνιση</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Εμφάνιση πρώτων %1 από %2 χαρακτήρων</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Άγνωστη συνεδρία</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Το Shell τερματίστηκε με κωδικό %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Η εντολή δεν βρέθηκε</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Προεπιλογή: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Μέγεθος γραμματοσειράς</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Φωτεινό</translation>
     </message>
@@ -538,8 +451,103 @@ Powered by libghostty terminal engine</source>
         <translation>Ζουμ με τσίμπημα</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Αλλάξτε το μέγεθος γραμματοσειράς με χειρονομία τσιμπήματος δύο δαχτύλων</translation>
+        <source>Default font size</source>
+        <translation>Προεπιλεγμένο μέγεθος γραμματοσειράς</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Αλλάξτε το μέγεθος γραμματοσειράς της συνεδρίας με χειρονομία τσιμπήματος δύο δαχτύλων</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Νέα συνεδρία</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Συνεδρία %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Συνεδρίες</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ρυθμίσεις</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Εναλλαγή σε συνεδρία</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Κοινή χρήση επιλογής</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Απόκρυψη αναζήτησης</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Αναζήτηση στο τερματικό</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Άνοιγμα συνδέσμου</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Άνοιγμα</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Ακύρωση</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Θα ανοίξει στον περιηγητή</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Πρόσβαση στο πρόχειρο</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Αποστολή</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Άρνηση</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ένα πρόγραμμα στο &quot;%1&quot; θέλει να διαβάσει το πρόχειρό σας.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Ένα πρόγραμμα τερματικού θέλει να διαβάσει το πρόχειρό σας.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Απόκρυψη</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Εμφάνιση</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Εμφάνιση πρώτων %1 από %2 χαρακτήρων</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Άγνωστη συνεδρία</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Προεπιλογή</translation>
     </message>
 </context>
 </TS>
