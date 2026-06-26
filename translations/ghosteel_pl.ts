@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nowa sesja</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sesja %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sesje</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Ustawienia</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Przełącz na sesję</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Udostępnij zaznaczenie</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Ukryj wyszukiwanie</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Szukaj w terminalu</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Otwórz link</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Otwórz</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Zostanie otwarte w przeglądarce</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Dostęp do schowka</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Wyślij</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Odmów</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Program w &quot;%1&quot; chce odczytać twój schowek.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Program terminalowy chce odczytać twój schowek.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Ukryj</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Pokaż</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Wyświetlanie pierwszych %1 z %2 znaków</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Nieznana sesja</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell zakończony z kodem %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Nie znaleziono polecenia</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Domyślne: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Rozmiar czcionki</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Jasny</translation>
     </message>
@@ -539,8 +452,103 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <translation>Powiększanie uszczypnięciem</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Zmień rozmiar czcionki gestem uszczypnięcia dwoma palcami</translation>
+        <source>Default font size</source>
+        <translation>Domyślny rozmiar czcionki</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Zmień rozmiar czcionki sesji za pomocą gestu uszczypnięcia dwoma palcami</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nowa sesja</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sesja %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sesje</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Przełącz na sesję</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Udostępnij zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Ukryj wyszukiwanie</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Szukaj w terminalu</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Otwórz link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Zostanie otwarte w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Dostęp do schowka</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Wyślij</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmów</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program w &quot;%1&quot; chce odczytać twój schowek.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Program terminalowy chce odczytać twój schowek.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Wyświetlanie pierwszych %1 z %2 znaków</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Nieznana sesja</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Domyślny</translation>
     </message>
 </context>
 </TS>

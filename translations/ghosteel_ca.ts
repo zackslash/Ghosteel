@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nova sessió</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sessió %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sessions</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Configuració</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Canviar a sessió</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Compartir selecció</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Amagar cerca</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Cercar al terminal</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Obre l&apos;enllaç</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Obre</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Cancel·la</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>S&apos;obrirà al navegador</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Accés al porta-retalls</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Enviar</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Denegar</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Un programa a &quot;%1&quot; vol llegir el vostre porta-retalls.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Un programa de terminal vol llegir el vostre porta-retalls.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Amagar</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Mostrar</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Mostrant els primers %1 de %2 caràcters</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Sessió desconeguda</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell finalitzat amb codi %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>No s'ha trobat l'ordre</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Predeterminat: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Mida de lletra</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Clar</translation>
     </message>
@@ -538,8 +451,103 @@ Impulsat pel motor de terminal libghostty</translation>
         <translation>Fes zoom pessigant</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Canvia la mida de la lletra amb un gest de pessic de dos dits</translation>
+        <source>Default font size</source>
+        <translation>Mida de lletra predeterminada</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Canvia la mida de lletra de la sessió amb un gest de pessic de dos dits</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nova sessió</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sessió %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sessions</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Configuració</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Canviar a sessió</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Compartir selecció</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Amagar cerca</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Cercar al terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Obre l&apos;enllaç</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Obre</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancel·la</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>S&apos;obrirà al navegador</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Accés al porta-retalls</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Denegar</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Un programa a &quot;%1&quot; vol llegir el vostre porta-retalls.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Un programa de terminal vol llegir el vostre porta-retalls.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Amagar</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Mostrar</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Mostrant els primers %1 de %2 caràcters</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Sessió desconeguda</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Predeterminat</translation>
     </message>
 </context>
 </TS>

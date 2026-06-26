@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nová relácia</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Relácia %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Relácie</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Nastavenia</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Prepnúť na reláciu</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Zdieľať výber</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Skryť hľadanie</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Hľadať v termináli</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Otvoriť odkaz</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Otvoriť</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Zrušiť</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Otvorí sa v prehliadači</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Prístup k schránke</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Odoslať</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Odmietnuť</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Program v &quot;%1&quot; chce čítať vašu schránku.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Terminálový program chce čítať vašu schránku.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Skryť</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Zobraziť</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Zobrazuje sa prvých %1 z %2 znakov</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Neznáma relácia</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell skončil s kódom %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Príkaz sa nenašiel</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Predvolené: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Veľkosť písma</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Svetlé</translation>
     </message>
@@ -539,8 +452,103 @@ Poháňané terminálovým enginom libghostty</translation>
         <translation>Priblíženie štipnutím</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Zmeňte veľkosť písma gestom štipnutia dvoma prstami</translation>
+        <source>Default font size</source>
+        <translation>Predvolená veľkosť písma</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Zmeňte veľkosť písma relácie gestom štipnutia dvoma prstami</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nová relácia</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Relácia %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Relácie</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Nastavenia</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Prepnúť na reláciu</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Zdieľať výber</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Skryť hľadanie</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Hľadať v termináli</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Otvoriť odkaz</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Otvoriť</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Zrušiť</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Otvorí sa v prehliadači</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Prístup k schránke</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Odoslať</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmietnuť</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Program v &quot;%1&quot; chce čítať vašu schránku.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminálový program chce čítať vašu schránku.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skryť</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Zobraziť</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Zobrazuje sa prvých %1 z %2 znakov</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Neznáma relácia</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Predvolené</translation>
     </message>
 </context>
 </TS>

@@ -1432,11 +1432,9 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
                 m_gestureMode = GestureMode::Pinching;
                 m_pinchBaseFontSize = m_fontSize;
                 m_lastAppliedFontSize = m_fontSize;
-                // Reset baseline to current distance so the scale starts at 1.0
-                // at the moment of commitment. The overlay shows the current
-                // font size and no change happens until the user pinches further,
-                // giving them a visible starting point to track from.
+                // Reset baseline so scale starts at 1.0 at commitment
                 m_pinchInitialDistance = currentDistance;
+                m_pinchAtDefault = false;
                 Q_EMIT pinchingChanged(true);
                 return;
             }
@@ -1465,12 +1463,29 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
         // delta. Exponent < 1 softens the response around scale=1.0 so small
         // finger movements no longer produce large font jumps.
         qreal dampedScale = std::pow(scale, PinchScaleExponent);
-        int targetSize = qRound(m_pinchBaseFontSize * dampedScale);
-        targetSize = qBound(6, targetSize, 32);
+        int rawTarget = qRound(m_pinchBaseFontSize * dampedScale);
 
-        if (targetSize != m_lastAppliedFontSize) {
-            setFontSize(targetSize);
-            m_lastAppliedFontSize = targetSize;
+        if (rawTarget <= 6) {
+            // Snap to global default — QML shows "Default", pinch-end stores 0
+            int defaultSize = Settings::instance()->fontSize();
+            if (defaultSize != m_lastAppliedFontSize) {
+                setFontSize(defaultSize);
+                m_lastAppliedFontSize = defaultSize;
+            }
+            if (!m_pinchAtDefault) {
+                m_pinchAtDefault = true;
+                Q_EMIT pinchAtDefaultChanged(true);
+            }
+        } else {
+            int targetSize = qBound(6, rawTarget, 32);
+            if (targetSize != m_lastAppliedFontSize) {
+                setFontSize(targetSize);
+                m_lastAppliedFontSize = targetSize;
+            }
+            if (m_pinchAtDefault) {
+                m_pinchAtDefault = false;
+                Q_EMIT pinchAtDefaultChanged(false);
+            }
         }
         return;
     }
@@ -1502,6 +1517,10 @@ void TerminalView::handleMultiTouchEnd()
 {
     if (m_gestureMode == GestureMode::Pinching) {
         Q_EMIT pinchingChanged(false);
+        if (m_pinchAtDefault) {
+            m_pinchAtDefault = false;
+            Q_EMIT pinchAtDefaultChanged(false);
+        }
     }
 
     // Restore the parent SilicaFlickable so single-finger pull-down works again.

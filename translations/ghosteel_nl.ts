@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nieuwe sessie</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sessie %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sessies</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Instellingen</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Naar sessie overschakelen</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Selectie delen</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Zoekopdracht verbergen</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Terminal doorzoeken</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Link openen</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Openen</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Annuleren</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Wordt geopend in de browser</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Toegang tot klembord</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Verzenden</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Weigeren</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Een programma in &quot;%1&quot; wil uw klembord lezen.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Een terminalprogramma wil uw klembord lezen.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Verbergen</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Weergeven</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Eerste %1 van %2 tekens weergeven</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Onbekende sessie</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell beëindigd met code %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Opdracht niet gevonden</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Standaard: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Lettergrootte</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Licht</translation>
     </message>
@@ -538,8 +451,103 @@ Aangedreven door de libghostty terminal-engine</translation>
         <translation>Zoomen met knijpen</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Wijzig de lettergrootte met een tweevinger-knijpgebaar</translation>
+        <source>Default font size</source>
+        <translation>Standaard lettergrootte</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Wijzig de lettergrootte van de sessie met een tweevinger-knijpgebaar</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nieuwe sessie</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sessie %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sessies</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Instellingen</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Naar sessie overschakelen</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Selectie delen</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Zoekopdracht verbergen</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Terminal doorzoeken</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Link openen</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Openen</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Annuleren</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Wordt geopend in de browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Toegang tot klembord</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Verzenden</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Weigeren</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Een programma in &quot;%1&quot; wil uw klembord lezen.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Een terminalprogramma wil uw klembord lezen.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Verbergen</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Weergeven</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Eerste %1 van %2 tekens weergeven</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Onbekende sessie</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Standaard</translation>
     </message>
 </context>
 </TS>

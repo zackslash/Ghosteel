@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nauja sesija</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sesija %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sesijos</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Nustatymai</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Perjungti į sesiją</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Bendrinti pasirinkimą</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Slėpti paiešką</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Ieškoti terminale</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Atidaryti nuorodą</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Atidaryti</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Atšaukti</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Atsidarys naršyklėje</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Prieiga prie iškarpinės</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Siųsti</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Atmesti</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Programa &quot;%1&quot; nori perskaityti jūsų iškarpinę.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Terminalo programa nori perskaityti jūsų iškarpinę.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Slėpti</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Rodyti</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Rodomi pirmieji %1 iš %2 simbolių</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Nežinoma sesija</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell baigėsi su kodu %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Komanda nerasta</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Numatytasis: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Šrifto dydis</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Šviesi</translation>
     </message>
@@ -539,8 +452,103 @@ Varomas libghostty terminalo variklio</translation>
         <translation>Mastelis suėmus</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Keiskite šrifto dydį dviejų pirštų suėmimo gestu</translation>
+        <source>Default font size</source>
+        <translation>Numatytasis šrifto dydis</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Pakeiskite sesijos šrifto dydį dviejų pirštų gnybtelėjimo gestu</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nauja sesija</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sesija %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sesijos</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Nustatymai</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Perjungti į sesiją</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Bendrinti pasirinkimą</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Slėpti paiešką</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Ieškoti terminale</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Atidaryti nuorodą</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Atidaryti</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Atšaukti</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Atsidarys naršyklėje</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Prieiga prie iškarpinės</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Siųsti</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Atmesti</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programa &quot;%1&quot; nori perskaityti jūsų iškarpinę.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminalo programa nori perskaityti jūsų iškarpinę.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Slėpti</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Rodyti</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Rodomi pirmieji %1 iš %2 simbolių</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Nežinoma sesija</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Numatytasis</translation>
     </message>
 </context>
 </TS>

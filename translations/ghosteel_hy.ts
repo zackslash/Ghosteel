@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Նոր նիստ</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Նիստ %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Նիստեր</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Կարգավորումներ</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Անցնել նիստին</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Կիսվել ընտրությամբ</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Թաքցնել որոնումը</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Որոնել տերմինալում</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Բացել հղումը</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Բացել</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Չեղարկել</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Կբացվի զննարկիչում</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Քլիփբորդի մուտք</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Ուղարկել</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Մերժել</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>&quot;%1&quot; ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Տերմինալ ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Թաքցնել</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Ցույց տալ</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Ցուցադրվում են առաջին %1-ը %2 նիշից</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Անհայտ նիստ</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell-ը ավարտվել է %1 կոդով</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Հրամանը չի գտնվել</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Լռելյայն: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Տառաչափ</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Լույս</translation>
     </message>
@@ -538,8 +451,103 @@ Powered by libghostty terminal engine</source>
         <translation>Մասշտաբում սեղմելով</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Փոխիր տառատեսակի չափը երկու մատով սեղմելու ժեստով</translation>
+        <source>Default font size</source>
+        <translation>Լռելյայն տառատեսակի չափ</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Փոխեք սեսիայի տառատեսակի չափը երկու մատով սեղմելու ժեստով</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Նոր նիստ</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Նիստ %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Նիստեր</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Կարգավորումներ</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Անցնել նիստին</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Կիսվել ընտրությամբ</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Թաքցնել որոնումը</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Որոնել տերմինալում</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Բացել հղումը</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Բացել</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Չեղարկել</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Կբացվի զննարկիչում</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Քլիփբորդի մուտք</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ուղարկել</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Մերժել</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Տերմինալ ծրագիրը ցանկանում է կարդալ ձեր քլիփբորդը։</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Թաքցնել</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Ցույց տալ</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Ցուցադրվում են առաջին %1-ը %2 նիշից</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Անհայտ նիստ</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Լռելյայն</translation>
     </message>
 </context>
 </TS>

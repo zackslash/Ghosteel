@@ -18,97 +18,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Sessjoni ġdida</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sessjoni %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sessjonijiet</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Settings</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Aqleb għas-sessjoni</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Aqsam l-għażla</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Aħbi t-tfittxija</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Fittex fit-terminal</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Iftaħ il-link</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Iftaħ</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Ikkanċella</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Jinfetaħ fil-browser</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Aċċess għall-clipboard</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Ibgħat</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Irrifjuta</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Programm fi &quot;%1&quot; irid jaqra l-clipboard tiegħek.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Programm terminal irid jaqra l-clipboard tiegħek.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Aħbi</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Uri</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Juri l-ewwel %1 minn %2 karattri</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Sessjoni mhux magħrufa</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell ħareġ bil-kodiċi %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Kmand ma nstabx</translation>
     </message>
 </context>
 <context>
@@ -358,10 +275,6 @@
         <translation>Default: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Daqs tal-font</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Ċar</translation>
     </message>
@@ -540,8 +453,103 @@ Mħaddem minn magna terminali libghostty</translation>
         <translation>Zoom biċċim</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Bidel id-daqs tal-font bi ġest ta' biċċim b'żewġ swaba'</translation>
+        <source>Default font size</source>
+        <translation>Daqs tal-font awtomatika</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Ibdel id-daqs tal-font tas-sessjoni b'ġest ta' pinċa b'żewġ swaba</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Sessjoni ġdida</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sessjoni %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sessjonijiet</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Settings</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Aqleb għas-sessjoni</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Aqsam l-għażla</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Aħbi t-tfittxija</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Fittex fit-terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Iftaħ il-link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Iftaħ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Ikkanċella</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Jinfetaħ fil-browser</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Aċċess għall-clipboard</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Ibgħat</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Irrifjuta</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programm fi &quot;%1&quot; irid jaqra l-clipboard tiegħek.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Programm terminal irid jaqra l-clipboard tiegħek.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Aħbi</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Uri</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Juri l-ewwel %1 minn %2 karattri</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Sessjoni mhux magħrufa</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Awtomatiku</translation>
     </message>
 </context>
 </TS>

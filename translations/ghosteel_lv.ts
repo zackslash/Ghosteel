@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Jauna sesija</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sesija %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sesijas</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Iestatījumi</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Pārslēgties uz sesiju</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Kopīgot atlasi</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Slēpt meklēšanu</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Meklēt terminālī</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Atvērt saiti</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Atvērt</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Atcelt</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Atvērsies pārlūkprogrammā</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Piekļuve starpliktuvei</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Sūtīt</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Noraidīt</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Programma &quot;%1&quot; vēlas lasīt jūsu starpliktuvi.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Termināla programma vēlas lasīt jūsu starpliktuvi.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Slēpt</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Rādīt</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Rāda pirmos %1 no %2 rakstzīmēm</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Nezināma sesija</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell beidzās ar kodu %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Komanda nav atrasta</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Noklusējums: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Fonta lielums</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Gaiša</translation>
     </message>
@@ -539,8 +452,103 @@ Darbina libghostty termināla dzinējs</translation>
         <translation>Tālummaiņa ar kniebšanu</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Mainiet fonta izmēru ar divu pirkstu kniebšanas žestu</translation>
+        <source>Default font size</source>
+        <translation>Noklusējuma fonta izmērs</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Mainiet sesijas fonta izmēru ar divu pirkstu kniebšanas žestu</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Jauna sesija</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sesija %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sesijas</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Iestatījumi</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Pārslēgties uz sesiju</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Kopīgot atlasi</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Slēpt meklēšanu</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Meklēt terminālī</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Atvērt saiti</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Atvērt</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Atcelt</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Atvērsies pārlūkprogrammā</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Piekļuve starpliktuvei</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Sūtīt</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Noraidīt</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programma &quot;%1&quot; vēlas lasīt jūsu starpliktuvi.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Termināla programma vēlas lasīt jūsu starpliktuvi.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Slēpt</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Rādīt</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Rāda pirmos %1 no %2 rakstzīmēm</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Nezināma sesija</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Noklusējums</translation>
     </message>
 </context>
 </TS>

@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Uus seanss</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Seanss %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Seansid</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Seaded</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Lülitu seansile</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Jaga valikut</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Peida otsing</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Otsi terminalist</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Ava link</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Ava</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Tühista</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Avaneb brauseris</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Lõikelauale juurdepääs</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Saada</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Keela</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Programm &quot;%1&quot; soovib lugeda teie lõikelauda.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Terminaliprogramm soovib lugeda teie lõikelauda.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Peida</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Näita</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Kuvatakse esimesed %1 märki %2 märgist</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Tundmatu seanss</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell lõpetas koodiga %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Käsku ei leitud</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Vaikimisi: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Fondi suurus</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Hele</translation>
     </message>
@@ -538,8 +451,103 @@ Toetab libghostty terminalimootorit</translation>
         <translation>Suumi näpistamisega</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Muuda kirja suurust kahe sõrme näpistamise liigutusega</translation>
+        <source>Default font size</source>
+        <translation>Vaikimisi fondi suurus</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Muuda seansi fondi suurust kahe sõrme näpistamisežestiga</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Uus seanss</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Seanss %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Seansid</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Seaded</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Lülitu seansile</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Jaga valikut</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Peida otsing</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Otsi terminalist</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Ava link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Ava</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Tühista</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Avaneb brauseris</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Lõikelauale juurdepääs</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Saada</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Keela</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Programm &quot;%1&quot; soovib lugeda teie lõikelauda.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Terminaliprogramm soovib lugeda teie lõikelauda.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Peida</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Näita</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Kuvatakse esimesed %1 märki %2 märgist</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Tundmatu seanss</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Vaikimisi</translation>
     </message>
 </context>
 </TS>

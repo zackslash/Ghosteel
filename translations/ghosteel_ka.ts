@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>ახალი სესია</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>სესია %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>სესიები</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>პარამეტრები</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>სესიაზე გადართვა</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>არჩევანის გაზიარება</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>ძიების დამალვა</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>ძიება ტერმინალში</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>ბმულის გახსნა</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>გახსნა</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>გაუქმება</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>გაიხსნება ბრაუზერში</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>ბუფერზე წვდომა</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>გაგზავნა</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>უარყოფა</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>პროგრამა &quot;%1&quot; სურს წაიკითხოს თქვენი ბუფერი.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>ტერმინალის პროგრამა სურს წაიკითხოს თქვენი ბუფერი.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>დამალვა</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>ჩვენება</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>ნაჩვენებია პირველი %1 %2 სიმბოლოდან</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>უცნობი სესია</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell დასრულდა კოდით %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>ბრძანება ვერ მოიძებნა</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>ნაგულისხმევი: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>ფონტის ზომა</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>ღია</translation>
     </message>
@@ -538,8 +451,103 @@ Powered by libghostty terminal engine</source>
         <translation>მასშტაბი ჩაჭერით</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>შეცვალე ფონტის ზომა ორი თითის ჩაჭერის ჟესტით</translation>
+        <source>Default font size</source>
+        <translation>ნაგულისხმევი ფონტის ზომა</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>შეცვალეთ სესიის ფონტის ზომა ორი თითის დაჭერის ჟესტით</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>ახალი სესია</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">სესია %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>სესიები</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>პარამეტრები</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>სესიაზე გადართვა</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>არჩევანის გაზიარება</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>ძიების დამალვა</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>ძიება ტერმინალში</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>ბმულის გახსნა</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>გახსნა</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>გაუქმება</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>გაიხსნება ბრაუზერში</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>ბუფერზე წვდომა</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>გაგზავნა</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>უარყოფა</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>პროგრამა &quot;%1&quot; სურს წაიკითხოს თქვენი ბუფერი.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>ტერმინალის პროგრამა სურს წაიკითხოს თქვენი ბუფერი.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>დამალვა</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>ჩვენება</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>ნაჩვენებია პირველი %1 %2 სიმბოლოდან</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>უცნობი სესია</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>ნაგულისხმევი</translation>
     </message>
 </context>
 </TS>

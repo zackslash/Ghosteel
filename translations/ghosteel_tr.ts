@@ -15,97 +15,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Yeni oturum</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Oturum %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Oturumlar</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Ayarlar</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Oturuma geç</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Seçimi paylaş</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Aramayı gizle</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Terminalde ara</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Bağlantıyı aç</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Aç</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>İptal</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Tarayıcıda açılacak</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Panoya erişim</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Gönder</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Reddet</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>&quot;%1&quot; içindeki bir program panonuzu okumak istiyor.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Bir terminal programı panonuzu okumak istiyor.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Gizle</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Göster</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>İlk %1 / %2 karakter gösteriliyor</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Bilinmeyen oturum</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell %1 koduyla sonlandı</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Komut bulunamadı</translation>
     </message>
 </context>
 <context>
@@ -355,10 +272,6 @@
         <translation>Varsayılan: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Yazı tipi boyutu</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Açık</translation>
     </message>
@@ -537,8 +450,103 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <translation>Kıstırarak yakınlaştır ve uzaklaştır</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>İki parmak kıstırma hareketiyle yazı boyutunu değiştir</translation>
+        <source>Default font size</source>
+        <translation>Varsayılan yazı tipi boyutu</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Oturumun yazı tipi boyutunu iki parmak kıstırma hareketiyle değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Yeni oturum</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Oturum %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Oturumlar</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ayarlar</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Oturuma geç</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Seçimi paylaş</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Aramayı gizle</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Terminalde ara</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Bağlantıyı aç</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Aç</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Tarayıcıda açılacak</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Panoya erişim</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Gönder</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Reddet</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>&quot;%1&quot; içindeki bir program panonuzu okumak istiyor.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Bir terminal programı panonuzu okumak istiyor.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Gizle</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Göster</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>İlk %1 / %2 karakter gösteriliyor</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Bilinmeyen oturum</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Varsayılan</translation>
     </message>
 </context>
 </TS>

@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Новый сеанс</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Сеанс %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Сеансы</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Настройки</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Перейти к сеансу</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Поделиться выделенным</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Скрыть поиск</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Поиск в терминале</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Открыть ссылку</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Открыть</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Отмена</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Откроется в браузере</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Доступ к буферу обмена</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Отправить</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Отклонить</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Программа в &quot;%1&quot; хочет прочитать ваш буфер обмена.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Терминальная программа хочет прочитать ваш буфер обмена.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Скрыть</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Показать</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Показаны первые %1 из %2 символов</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Неизвестный сеанс</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell завершился с кодом %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Команда не найдена</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>По умолчанию: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Размер шрифта</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Светлая</translation>
     </message>
@@ -539,8 +452,103 @@ Powered by libghostty terminal engine</source>
         <translation>Масштабирование щипком</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Изменяйте размер шрифта щипком двумя пальцами</translation>
+        <source>Default font size</source>
+        <translation>Размер шрифта по умолчанию</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Изменяйте размер шрифта сеанса жестом щипка двумя пальцами</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Новый сеанс</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Сеанс %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Сеансы</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Перейти к сеансу</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Поделиться выделенным</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Скрыть поиск</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Поиск в терминале</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Открыть ссылку</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Откроется в браузере</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Доступ к буферу обмена</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Отправить</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Программа в &quot;%1&quot; хочет прочитать ваш буфер обмена.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Терминальная программа хочет прочитать ваш буфер обмена.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скрыть</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Показать</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Показаны первые %1 из %2 символов</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Неизвестный сеанс</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>По умолчанию</translation>
     </message>
 </context>
 </TS>

@@ -47,6 +47,17 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
     connect(m_saveTimer, &QTimer::timeout, this, &SessionManager::saveSessions);
 
+    // When the global default font size changes, propagate it to every session
+    // that is tracking the default (fontSize == 0). Sessions with an explicit
+    // override are left alone.
+    connect(m_settings, &Settings::fontSizeChanged, this, [this]() {
+        int defaultSize = m_settings->fontSize();
+        for (SessionInfo &info : m_sessions) {
+            if (info.fontSize == 0 && info.view)
+                info.view->setFontSize(defaultSize);
+        }
+    });
+
     // Save sessions early on app quit — before QML engine destruction kills
     // the terminal views (and their shells), which would make /proc/<pid>/cwd
     // unreadable.
@@ -228,8 +239,9 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
             bool shouldRemove = (exitCode == 0) ? m_sessions[idx].isAnonymous()
                                                 : m_sessions[idx].isCommandSession();
             if (shouldRemove) {
+                bool wasActive = (idx == m_activeSessionIndex);
                 removeSession(idx);
-                if (!m_sessions.isEmpty())
+                if (wasActive && !m_sessions.isEmpty())
                     Q_EMIT showSessionList();
             }
         });
@@ -765,8 +777,10 @@ void SessionManager::saveSessions()
             cwd = QDir::homePath();
         s.setValue(QStringLiteral("workingDirectory"), cwd);
         s.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
-        // Read live font size from view before persisting
-        if (info.view)
+        // Persist per-session font size. When fontSize == 0 (track global
+        // default), don't read the live view size — that would clobber the
+        // sentinel with the resolved global value.
+        if (info.view && info.fontSize > 0)
             info.fontSize = info.view->fontSize();
         s.setValue(QStringLiteral("fontSize"), info.fontSize);
         s.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
@@ -876,16 +890,38 @@ void SessionManager::cleanupScrollbackFiles()
     }
 }
 
-void SessionManager::setActiveSessionFontSize(int size)
+void SessionManager::setActiveSessionFontSize(int size, bool updateGlobal)
 {
     if (m_activeSessionIndex < 0 || m_activeSessionIndex >= m_sessions.size())
         return;
-    size = qBound(6, size, 32);  // Clamp before storing — keeps INI clean
     SessionInfo &info = m_sessions[m_activeSessionIndex];
+
+    if (size == 0) {
+        // Reset to track global default — updateGlobal is N/A here:
+        // resetting to "track default" must never modify the global itself.
+        if (info.fontSize == 0)
+            return;
+        info.fontSize = 0;
+        if (info.view)
+            info.view->setFontSize(m_settings->fontSize());
+        Q_EMIT activeSessionFontSizeChanged();
+        scheduleSave();
+        return;
+    }
+
+    size = qBound(6, size, 32);
+    if (info.fontSize == size) {
+        // Value unchanged, but still sync global if requested
+        if (updateGlobal)
+            m_settings->setFontSize(size);
+        return;
+    }
     info.fontSize = size;
     if (info.view)
         info.view->setFontSize(size);
-    m_settings->setFontSize(size);  // Keep global default in sync for new sessions
+    if (updateGlobal)
+        m_settings->setFontSize(size);
+    Q_EMIT activeSessionFontSizeChanged();
     scheduleSave();
 }
 
@@ -894,6 +930,24 @@ int SessionManager::activeSessionFontSize() const
     if (m_activeSessionIndex < 0 || m_activeSessionIndex >= m_sessions.size())
         return 0;
     return m_sessions[m_activeSessionIndex].fontSize;
+}
+
+void SessionManager::resetAllSessionFontSizes()
+{
+    int defaultSize = m_settings->fontSize();
+    bool changed = false;
+    for (SessionInfo &info : m_sessions) {
+        if (info.fontSize != 0) {
+            info.fontSize = 0;
+            if (info.view)
+                info.view->setFontSize(defaultSize);
+            changed = true;
+        }
+    }
+    if (changed) {
+        Q_EMIT activeSessionFontSizeChanged();
+        scheduleSave();
+    }
 }
 
 QString SessionManager::sessionDisplayName(int index) const

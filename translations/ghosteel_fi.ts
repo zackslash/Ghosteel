@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Uusi istunto</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Istunto %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Istunnot</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Asetukset</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Vaihda istuntoon</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Jaa valinta</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Piilota haku</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Hae päätteestä</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Avaa linkki</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Avaa</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Peruuta</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Avautuu selaimessa</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Leikepöydän käyttöoikeus</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Lähetä</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Kiellä</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Ohjelma &quot;%1&quot; haluaa lukea leikepöytäsi.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Pääteohjelma haluaa lukea leikepöytäsi.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Piilota</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Näytä</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Näytetään ensimmäiset %1 / %2 merkistä</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Tuntematon istunto</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell päättyi koodilla %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Komentoa ei löytynyt</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Oletus: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Fonttikoko</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Vaalea</translation>
     </message>
@@ -538,8 +451,103 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <translation>Zoomaa nipistämällä</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Muuta fontin kokoa kahden sormen nipistys-eleellä</translation>
+        <source>Default font size</source>
+        <translation>Oletusfonttikoko</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Muuta istunnon fontin kokoa kahden sormen nipistys-eleellä</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Uusi istunto</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Istunto %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Istunnot</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Asetukset</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Vaihda istuntoon</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Jaa valinta</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Piilota haku</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Hae päätteestä</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Avaa linkki</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Avaa</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Avautuu selaimessa</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Leikepöydän käyttöoikeus</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Lähetä</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Kiellä</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Ohjelma &quot;%1&quot; haluaa lukea leikepöytäsi.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Pääteohjelma haluaa lukea leikepöytäsi.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Piilota</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Näytä</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Näytetään ensimmäiset %1 / %2 merkistä</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Tuntematon istunto</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Oletus</translation>
     </message>
 </context>
 </TS>

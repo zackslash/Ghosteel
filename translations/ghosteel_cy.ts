@@ -19,97 +19,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Sesiwn newydd</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sesiwn %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sesiynau</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Gosodiadau</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Newid i sesiwn</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Rhannu&apos;r dewis</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Cuddio chwilio</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Chwilio&apos;r derfynell</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Agor dolen</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Agor</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Canslo</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Bydd yn agor yn y porwr</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Mynediad i&apos;r clipfwrdd</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Anfon</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Gwrthod</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Mae rhaglen yn &quot;%1&quot; eisiau darllen eich clipfwrdd.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Mae rhaglen derfynell eisiau darllen eich clipfwrdd.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Cuddio</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Dangos</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Yn dangos cyntaf %1 o %2 cymeriadau</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Sesiwn anhysbys</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell wedi gorffen gyda chod %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Ni chanfuwyd y gorchymyn</translation>
     </message>
 </context>
 <context>
@@ -359,10 +276,6 @@
         <translation>Rhagosodiad: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Maint ffont</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Golau</translation>
     </message>
@@ -541,8 +454,103 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <translation>Chwyddo trwy bincio</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Newid maint y ffont â ystum pinio dau fys</translation>
+        <source>Default font size</source>
+        <translation>Maint ffont rhagosodedig</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Newid maint ffont y sesiwn gyda ystum gwasgu dau bys</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Sesiwn newydd</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sesiwn %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sesiynau</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Gosodiadau</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Newid i sesiwn</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Rhannu&apos;r dewis</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Cuddio chwilio</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Chwilio&apos;r derfynell</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Agor dolen</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Agor</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Canslo</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Bydd yn agor yn y porwr</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Mynediad i&apos;r clipfwrdd</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Anfon</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Gwrthod</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Mae rhaglen yn &quot;%1&quot; eisiau darllen eich clipfwrdd.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Mae rhaglen derfynell eisiau darllen eich clipfwrdd.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Cuddio</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Dangos</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Yn dangos cyntaf %1 o %2 cymeriadau</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Sesiwn anhysbys</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Rhagosodedig</translation>
     </message>
 </context>
 </TS>

@@ -17,7 +17,7 @@ Page {
                 text: qsTr("Reset to defaults")
                 onClicked: {
                     Settings.fontSize = 18           // Reset global default for new sessions
-                    SessionManager.setActiveSessionFontSize(18)  // Reset active session
+                    SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
                     schemeCombo.currentIndex = 0
@@ -120,11 +120,11 @@ Page {
             Slider {
                 id: fontSlider
                 width: parent.width
-                label: qsTr("Font size")
+                label: qsTr("Default font size")
                 minimumValue: 6
                 maximumValue: 32
                 stepSize: 1
-                value: SessionManager.activeSessionFontSize() > 0 ? SessionManager.activeSessionFontSize() : Settings.fontSize
+                value: SessionManager.activeSessionFontSize > 0 ? SessionManager.activeSessionFontSize : Settings.fontSize
                 valueText: {
                     if (value < 10) return qsTr("Tiny (%1)").arg(value)
                     if (value < 14) return qsTr("Small (%1)").arg(value)
@@ -134,13 +134,28 @@ Page {
                     return qsTr("Huge (%1)").arg(value)
                 }
 
-                onValueChanged: SessionManager.setActiveSessionFontSize(value)
+                // Guard: the value binding evaluates during component creation
+                // (before Component.onCompleted), which fires onValueChanged.
+                // Without this guard, opening the settings page when the session
+                // has a font size override would sync the global default to that
+                // override — undoing the session-only pinch/zoom behavior.
+                property bool initialized: false
+
+                onValueChanged: {
+                    if (!initialized) return
+                    if (value === Settings.fontSize)
+                        SessionManager.setActiveSessionFontSize(0)
+                    else
+                        SessionManager.setActiveSessionFontSize(value)
+                }
+
+                Component.onCompleted: initialized = true
             }
 
             TextSwitch {
                 id: pinchToZoomToggle
                 text: qsTr("Pinch to zoom")
-                description: qsTr("Change font size with a two-finger pinch gesture")
+                description: qsTr("Change font size of the session with a two-finger pinch gesture")
                 checked: Settings.pinchToZoom
                 onCheckedChanged: Settings.pinchToZoom = checked
             }

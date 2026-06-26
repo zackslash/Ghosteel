@@ -29,6 +29,12 @@ ApplicationWindow {
     Connections {
         target: SessionManager
         onShowTerminal: pageStack.pop(null)
-        onShowSessionList: pageStack.push(Qt.resolvedUrl("pages/SessionPage.qml"))
+        onShowSessionList: {
+            // Avoid pushing a duplicate SessionPage — the active anonymous
+            // session may exit while the user is already viewing the list.
+            if (pageStack.currentPage && pageStack.currentPage.objectName === "sessionPage")
+                return
+            pageStack.push(Qt.resolvedUrl("pages/SessionPage.qml"))
+        }
     }
 }

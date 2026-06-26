@@ -16,97 +16,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Nova sessão</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Sessão %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Sessões</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Definições</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Mudar para sessão</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Partilhar seleção</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Ocultar pesquisa</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Pesquisar no terminal</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Abrir link</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Abrir</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Cancelar</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Será aberto no navegador</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Acesso à área de transferência</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Enviar</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Negar</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Um programa em &quot;%1&quot; quer ler sua área de transferência.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Um programa de terminal quer ler sua área de transferência.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Ocultar</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Mostrar</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Mostrando os primeiros %1 de %2 caracteres</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Sessão desconhecida</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>Shell encerrado com código %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Comando não encontrado</translation>
     </message>
 </context>
 <context>
@@ -356,10 +273,6 @@
         <translation>Predefinição: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Tamanho da letra</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Claro</translation>
     </message>
@@ -538,8 +451,103 @@ Alimentado pelo motor de terminal libghostty</translation>
         <translation>Zoom com beliscão</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Altera o tamanho da fonte com um gesto de beliscão de dois dedos</translation>
+        <source>Default font size</source>
+        <translation>Tamanho da letra predefinido</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Altera o tamanho da fonte da sessão com um gesto de beliscão de dois dedos</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Nova sessão</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Sessão %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Sessões</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Definições</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Mudar para sessão</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Partilhar seleção</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Ocultar pesquisa</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Pesquisar no terminal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Abrir link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Abrir</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Será aberto no navegador</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Acesso à área de transferência</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Enviar</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Negar</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Um programa em &quot;%1&quot; quer ler sua área de transferência.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Um programa de terminal quer ler sua área de transferência.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ocultar</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Mostrar</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Mostrando os primeiros %1 de %2 caracteres</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Sessão desconhecida</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Predefinido</translation>
     </message>
 </context>
 </TS>

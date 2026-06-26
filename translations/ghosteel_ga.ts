@@ -17,97 +17,14 @@
     </message>
 </context>
 <context>
-    <name>TerminalPage</name>
-    <message>
-        <source>New session</source>
-        <translation>Seisiún nua</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation>Seisiún %1</translation>
-    </message>
-    <message>
-        <source>Sessions</source>
-        <translation>Seisiúin</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Socruithe</translation>
-    </message>
-    <message>
-        <source>Switch to session</source>
-        <translation>Athraigh go seisiún</translation>
-    </message>
-    <message>
-        <source>Share selection</source>
-        <translation>Roinn an roghnúchán</translation>
-    </message>
-    <message>
-        <source>Hide search</source>
-        <translation>Folaigh an cuardach</translation>
-    </message>
-    <message>
-        <source>Search terminal</source>
-        <translation>Cuardaigh sa teirminéal</translation>
-    </message>
-    <message>
-        <source>Open Link</source>
-        <translation>Oscail an nasc</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Oscail</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Cealaigh</translation>
-    </message>
-    <message>
-        <source>This will open in your browser</source>
-        <translation>Osclófar sa bhrabhsálaí é</translation>
-    </message>
-    <message>
-        <source>Clipboard access</source>
-        <translation>Rochtain ar an ngearrthaisce</translation>
-    </message>
-    <message>
-        <source>Send</source>
-        <translation>Seol</translation>
-    </message>
-    <message>
-        <source>Deny</source>
-        <translation>Diúltaigh</translation>
-    </message>
-    <message>
-        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
-        <translation>Tá clár i &quot;%1&quot; ag iarraidh do ghearrthaisce a léamh.</translation>
-    </message>
-    <message>
-        <source>A terminal program wants to read your clipboard.</source>
-        <translation>Tá clár teirminéil ag iarraidh do ghearrthaisce a léamh.</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Folaigh</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>Taispeáin</translation>
-    </message>
-    <message>
-        <source>Showing first %1 of %2 characters</source>
-        <translation>Ag taispeáint chéad %1 as %2 carachtar</translation>
-    </message>
-    <message>
-        <source>Unknown session</source>
-        <translation>Seisiún anaithnid</translation>
-    </message>
-</context>
-<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
         <translation>D&apos;éirigh Shell as le cód %1</translation>
+    </message>
+    <message>
+        <source>Command not found</source>
+        <translation>Níor aimsíodh an ordú</translation>
     </message>
 </context>
 <context>
@@ -357,10 +274,6 @@
         <translation>Réamhshocrú: /bin/sh</translation>
     </message>
     <message>
-        <source>Font size</source>
-        <translation>Méid an chló</translation>
-    </message>
-    <message>
         <source>Light</source>
         <translation>Solas</translation>
     </message>
@@ -539,8 +452,103 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
         <translation>Súmáil le pinc</translation>
     </message>
     <message>
-        <source>Change font size with a two-finger pinch gesture</source>
-        <translation>Athraigh méid an chló le gluaiseacht pinnte dhá mhéar</translation>
+        <source>Default font size</source>
+        <translation>Réamhshocrú méid cló</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation>Athraigh méid cló an tseisiúin le gotha pincín dhá mhéar</translation>
+    </message>
+</context>
+<context>
+    <name>TerminalPage</name>
+    <message>
+        <source>New session</source>
+        <translation>Seisiún nua</translation>
+    </message>
+    <message>
+        <source>Session %1</source>
+        <translation type="vanished">Seisiún %1</translation>
+    </message>
+    <message>
+        <source>Sessions</source>
+        <translation>Seisiúin</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Socruithe</translation>
+    </message>
+    <message>
+        <source>Switch to session</source>
+        <translation>Athraigh go seisiún</translation>
+    </message>
+    <message>
+        <source>Share selection</source>
+        <translation>Roinn an roghnúchán</translation>
+    </message>
+    <message>
+        <source>Hide search</source>
+        <translation>Folaigh an cuardach</translation>
+    </message>
+    <message>
+        <source>Search terminal</source>
+        <translation>Cuardaigh sa teirminéal</translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation>Oscail an nasc</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Oscail</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cealaigh</translation>
+    </message>
+    <message>
+        <source>This will open in your browser</source>
+        <translation>Osclófar sa bhrabhsálaí é</translation>
+    </message>
+    <message>
+        <source>Clipboard access</source>
+        <translation>Rochtain ar an ngearrthaisce</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Seol</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Diúltaigh</translation>
+    </message>
+    <message>
+        <source>A program in &quot;%1&quot; wants to read your clipboard.</source>
+        <translation>Tá clár i &quot;%1&quot; ag iarraidh do ghearrthaisce a léamh.</translation>
+    </message>
+    <message>
+        <source>A terminal program wants to read your clipboard.</source>
+        <translation>Tá clár teirminéil ag iarraidh do ghearrthaisce a léamh.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Folaigh</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Taispeáin</translation>
+    </message>
+    <message>
+        <source>Showing first %1 of %2 characters</source>
+        <translation>Ag taispeáint chéad %1 as %2 carachtar</translation>
+    </message>
+    <message>
+        <source>Unknown session</source>
+        <translation>Seisiún anaithnid</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Réamhshocrú</translation>
     </message>
 </context>
 </TS>
