@@ -885,6 +885,7 @@ void SessionManager::setActiveSessionFontSize(int size)
     info.fontSize = size;
     if (info.view)
         info.view->setFontSize(size);
+    m_settings->setFontSize(size);  // Keep global default in sync for new sessions
     scheduleSave();
 }
 
