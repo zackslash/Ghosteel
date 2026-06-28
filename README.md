@@ -43,7 +43,13 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 
 ## Install
 
-Download the `.rpm` for your architecture from [Releases](https://github.com/zackslash/Ghosteel/releases):
+**Recommended**: Install via [SailfishOS:Chum](https://sailfishos-chum.github.io/apps/ghosteel/):
+
+```bash
+devel-su pkcon install ghosteel
+```
+
+Also available from [OpenRepos](https://openrepos.net/content/zackslash/ghosteel-terminal) or [GitHub Releases](https://github.com/zackslash/Ghosteel/releases):
 
 ```bash
 devel-su pkcon install-local ./ghosteel-<version>.rpm
