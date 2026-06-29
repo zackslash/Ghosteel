@@ -43,7 +43,7 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 
 ## Install
 
-**Recommended**: Install via [SailfishOS:Chum](https://sailfishos-chum.github.io/apps/ghosteel/):
+**Recommended**: Install via [SailfishOS:Chum](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel):
 
 ```bash
 devel-su pkcon install ghosteel
