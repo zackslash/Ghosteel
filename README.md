@@ -12,6 +12,12 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 `tmux`, `neovim`, `htop`, and other TUI applications.
 
 <div align="center">
+
+[![SailfishOS:Chum](https://img.shields.io/badge/SailfishOS-Chum-1CA198)](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel)
+
+</div>
+
+<div align="center">
   <table>
     <tr>
       <td align="center"><img src="screenshots/screenshot-neofetch-device.png" width="180"></td>
@@ -43,7 +49,13 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 
 ## Install
 
-Download the `.rpm` for your architecture from [Releases](https://github.com/zackslash/Ghosteel/releases):
+**Recommended**: Install via [SailfishOS:Chum](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel):
+
+```bash
+devel-su pkcon install ghosteel
+```
+
+Also available from [OpenRepos](https://openrepos.net/content/zackslash/ghosteel-terminal) or [GitHub Releases](https://github.com/zackslash/Ghosteel/releases):
 
 ```bash
 devel-su pkcon install-local ./ghosteel-<version>.rpm
