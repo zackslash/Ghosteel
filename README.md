@@ -12,6 +12,12 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
 `tmux`, `neovim`, `htop`, and other TUI applications.
 
 <div align="center">
+
+[![SailfishOS:Chum](https://img.shields.io/badge/SailfishOS-Chum-1CA198)](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel)
+
+</div>
+
+<div align="center">
   <table>
     <tr>
       <td align="center"><img src="screenshots/screenshot-neofetch-device.png" width="180"></td>
