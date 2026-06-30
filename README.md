@@ -4,12 +4,9 @@
 
 <h1 align="center">Ghosteel</h1>
 
-Desktop-class terminal for SailfishOS, powered by <a href="https://github.com/ghostty-org/ghostty">Ghostty</a>'s VT engine. Truecolor, GPU-rendered, multi-session, TUI apps, encrypted scrollback.
+<p align="center"><strong>The <a href="https://github.com/ghostty-org/ghostty">Ghostty</a> terminal's VT engine, running on a Linux phone.</strong></p>
 
-Ghosteel brings a modern terminal engine to SailfishOS. Most mobile terminals use
-legacy VT parsers with known limitations. Ghosteel uses the same engine that powers
-[Ghostty](https://github.com/ghostty-org/ghostty), giving you accurate rendering for
-`tmux`, `neovim`, `htop`, and other TUI applications.
+<p align="center"><sub>Built for <a href="https://sailfishos.org/">Sailfish OS</a> · Truecolor · GPU-rendered · Multi-session · Encrypted scrollback</sub></p>
 
 <div align="center">
   <table>
@@ -25,6 +22,11 @@ legacy VT parsers with known limitations. Ghosteel uses the same engine that pow
     </tr>
   </table>
 </div>
+
+Ghosteel is a Sailfish OS terminal built on [Ghostty](https://github.com/ghostty-org/ghostty)'s VT engine.
+Most mobile terminals use older VT parsers that break on modern TUI apps. Using
+Ghostty's parser means `tmux`, `neovim`, `htop`, `btop` and `lazygit` render
+correctly, with truecolor and GPU rendering.
 
 ## Features
 
