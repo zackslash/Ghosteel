@@ -112,6 +112,10 @@ void TerminalView::geometryChanged(const QRectF &newGeometry,
 {
     QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
+    // Orientation change mid-swipe would mis-measure the commit fraction
+    // (computed from width() at release); cancelling is cheap hardening.
+    resetSessionSwipe();
+
     if (newGeometry.width() <= 0 || newGeometry.height() <= 0)
         return;
 
@@ -178,6 +182,10 @@ void TerminalView::focusInEvent(QFocusEvent *event)
 void TerminalView::focusOutEvent(QFocusEvent *event)
 {
     QQuickItem::focusOutEvent(event);
+
+    // App background / focus loss mid-swipe would otherwise leave the flag set
+    // and misclassify the next touch.
+    resetSessionSwipe();
 
     QInputMethod *im = QGuiApplication::inputMethod();
     if (im)
@@ -925,8 +933,22 @@ bool TerminalView::updateMagnifierVelocity(const QPointF &pos)
     return true; // show magnifier on first move
 }
 
+void TerminalView::resetSessionSwipe()
+{
+    if (!m_sessionSwiping)
+        return;
+    m_sessionSwiping = false;
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
+    Q_EMIT sessionSwipeCancelled();
+}
+
 void TerminalView::mousePressEvent(QMouseEvent *event)
 {
+    // A new press always supersedes a stale swipe (e.g. after a TouchCancel
+    // that never delivered a release).
+    resetSessionSwipe();
+
     if (m_shellExited) {
         restartShell();
         event->accept();
@@ -1073,6 +1095,30 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
         return;
     }
 
+    // Session-swipe classifier — runs only after every grabbing branch above
+    // has returned (NORMAL single-finger, pre-selection window).
+    if (!m_pendingLinkTap && !m_multiTouchActive && m_sessionSwipeEnabled
+        && m_gestureMode == GestureMode::Undecided && !m_sessionSwiping) {
+        QPointF delta = event->pos() - m_lastTapPos;   // m_lastTapPos set in press
+        if (qAbs(delta.x()) > SwipeMinHorizontalPx
+            && qAbs(delta.x()) > qAbs(delta.y()) * SwipeDominanceRatio) {
+            if (m_longPressTimerId) { killTimer(m_longPressTimerId); m_longPressTimerId = 0; }
+            m_sessionSwiping = true;
+            m_swipeStartX = event->pos().x();
+            // Mirror the multitouch pattern — lock BOTH mouse and touch grab so
+            // terminalFlickable can't steal the sequence mid-swipe (on Qt 5.6 /
+            // Sailfish, mouse grab alone does NOT stop touch stealing).
+            setKeepMouseGrab(true);
+            setKeepTouchGrab(true);
+            Q_EMIT sessionSwipeStarted();
+        }
+    }
+    if (m_sessionSwiping) {
+        Q_EMIT sessionSwipeProgress(event->pos().x() - m_swipeStartX);
+        event->accept();
+        return;
+    }
+
     QQuickItem::mouseMoveEvent(event);
 }
 
@@ -1081,6 +1127,21 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     if (m_longPressTimerId) {
         killTimer(m_longPressTimerId);
         m_longPressTimerId = 0;
+    }
+
+    // Session-swipe commit/cancel.
+    if (m_sessionSwiping) {
+        m_sessionSwiping = false;
+        setKeepMouseGrab(false);
+        setKeepTouchGrab(false);
+        qreal dx = event->pos().x() - m_swipeStartX;
+        if (qAbs(dx) > width() * SwipeCommitFraction) {
+            Q_EMIT sessionSwipeCommitted(dx < 0 ? 1 : -1);   // leftward → next session
+        } else {
+            Q_EMIT sessionSwipeCancelled();
+        }
+        event->accept();
+        return;
     }
 
     if (m_mouseTrackingActive) {
@@ -1276,12 +1337,15 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     // Normal mode: native fall-through — let Qt synthesise mouse events and
     // the Flickable handle pull-down disambiguation.
+    if (event->type() == QEvent::TouchCancel)
+        resetSessionSwipe();   // no release follows a cancel; keep the flag honest
     QQuickItem::touchEvent(event);
 }
 
 void TerminalView::handleTuiTouchBegin(QTouchEvent *event,
                                        const QTouchEvent::TouchPoint &pt)
 {
+    resetSessionSwipe();   // TUI path grabs everything; keep the swipe flag honest
     event->accept();
     setKeepMouseGrab(true);
     setKeepTouchGrab(true);
@@ -1347,6 +1411,8 @@ void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
 
 void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points)
 {
+    resetSessionSwipe();   // a second finger lands → abandon any in-progress swipe
+
     // Shell exited — ignore multi-touch, let it fall through to parent
     if (m_shellExited)
         return;

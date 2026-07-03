@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <ctime>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -300,8 +301,35 @@ void PtyManager::stop()
     // on read() of the same fd is undefined behavior on Linux.
     if (m_childPid > 0) {
         kill(m_childPid, SIGHUP);
+
+        // Bounded reaping loop. A single waitpid(WNOHANG) here would return 0
+        // (child not yet dead from the asynchronous SIGHUP) and we'd then
+        // clobber m_childPid, leaving a zombie the m_waitPidTimer can no
+        // longer match. Poll briefly instead: give the child up to ~500ms to
+        // terminate, then give up (kernel subreaper / init will reap if so
+        // configured; otherwise we log and accept the rare leak rather than
+        // block shutdown indefinitely).
+        constexpr int kMaxAttempts = 50;
+        constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
         int status = 0;
-        waitpid(m_childPid, &status, WNOHANG);
+        bool reaped = false;
+        for (int i = 0; i < kMaxAttempts; ++i) {
+            pid_t result = waitpid(m_childPid, &status, WNOHANG);
+            if (result > 0 || result < 0) {
+                reaped = true;
+                break;
+            }
+            // result == 0: child still alive. Sleep briefly and retry.
+            struct timespec ts;
+            ts.tv_sec = 0;
+            ts.tv_nsec = kSleepNs;
+            nanosleep(&ts, nullptr);
+        }
+        if (!reaped) {
+            qWarning("PtyManager::stop: child %ld did not exit within %dms; "
+                     "may leak as zombie", (long)m_childPid,
+                     kMaxAttempts * (int)(kSleepNs / 1000000));
+        }
         m_childPid = -1;
     }
 

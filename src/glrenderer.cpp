@@ -1335,6 +1335,43 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
 
     ghostty_render_state_row_cells_free(cells);
     ghostty_render_state_row_iterator_free(iterator);
+
+    // Fill the cell-grid leftover (width % cellWidth, often ~1px) so the FBO
+    // is bg-filled edge-to-edge — without this the transparent clear-color
+    // strip shows as a gap when content slides during a session swipe.
+    // Texcoord (0,0) → atlas reserved transparent pixel → bg-only output
+    // (same as empty cells). Strips split on the grid boundary to avoid
+    // double-applying the premultiplied bg at the corner.
+    float sAlpha = m_bgOpacity;
+    float spBgR = m_postBgR * sAlpha, spBgG = m_postBgG * sAlpha, spBgB = m_postBgB * sAlpha, spBgA = sAlpha;
+    float spFgR = m_postFgR, spFgG = m_postFgG, spFgB = m_postFgB, spFgA = 1.0f;
+
+    int gridW = m_cols * m_cellWidth;
+    int gridH = m_topPadding + m_rows * m_cellHeight;
+
+    // Right strip: columns beyond the grid, full viewport height.
+    if (m_viewportWidth > gridW && m_cellWidth > 0) {
+        float x0 = static_cast<float>(gridW), x1 = static_cast<float>(m_viewportWidth);
+        float y0 = 0.0f, y1 = static_cast<float>(m_viewportHeight);
+        m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+    }
+
+    // Bottom strip: rows beyond the grid, grid width only (the right strip covers the rest).
+    if (m_viewportHeight > gridH && m_cellHeight > 0) {
+        float x0 = 0.0f, x1 = static_cast<float>(gridW);
+        float y0 = static_cast<float>(gridH), y1 = static_cast<float>(m_viewportHeight);
+        m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+    }
 }
 
 void GLRenderer::Renderer::rebuildVBO()
@@ -1456,6 +1493,10 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 
     m_cols = cols;
     m_rows = rows;
+    // Terminal item size — cols/rows were derived from width()/height() in
+    // recalculateDimensions; needed by buildCellVertices for the edge-strip fill.
+    m_viewportWidth = static_cast<int>(m_terminalView->width());
+    m_viewportHeight = static_cast<int>(m_terminalView->height());
 
     // Update cursor state every frame (blink changes don't set dirty flag).
     // This is cheap — no vertex rebuild, just updating uniform values.

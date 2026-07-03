@@ -185,6 +185,8 @@ private:
         int m_topPadding = 0;
         int m_cols = 0;
         int m_rows = 0;
+        int m_viewportWidth = 0;   // terminal item size (logical px) — for edge-strip fill
+        int m_viewportHeight = 0;
         float m_bgOpacity = 1.0f;
         int m_cachedFontSize = 18;
         int m_lastMetricsGeneration = -1;

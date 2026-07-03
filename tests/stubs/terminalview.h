@@ -150,6 +150,10 @@ Q_SIGNALS:
     void pinchAtDefaultChanged(bool atDefault);
     void zoomRequested(int delta);
     void requestParentInteractive(bool interactive);
+    void sessionSwipeStarted();
+    void sessionSwipeProgress(qreal deltaX);
+    void sessionSwipeCommitted(int direction);
+    void sessionSwipeCancelled();
 
 private:
     int m_fontSize = 18;
