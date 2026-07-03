@@ -225,7 +225,7 @@ Page {
                     // Keep-awake badge icon
                     Image {
                         visible: sessionDelegate.keepAwake
-                        source: "image://theme/icon-m-alarm"
+                        source: "image://theme/icon-m-charging"
                         width: Theme.iconSizeSmall
                         height: Theme.iconSizeSmall
                         anchors.verticalCenter: parent.verticalCenter

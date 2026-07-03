@@ -101,7 +101,7 @@ CoverBackground {
                 // Keep-awake badge icon
                 Image {
                     visible: parent.keepAwake
-                    source: "image://theme/icon-m-alarm"
+                    source: "image://theme/icon-m-charging"
                     width: Theme.iconSizeSmall
                     height: Theme.iconSizeSmall
                     anchors.verticalCenter: parent.verticalCenter
