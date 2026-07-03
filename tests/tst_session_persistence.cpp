@@ -2443,6 +2443,131 @@ private slots:
         QCOMPARE(mgr2.sessionCount(), 1);
         QCOMPARE(mgr2.activeSessionFontSize(), 20);
     }
+
+    // --- Keep-awake aggregation tests ---
+
+    // Verifies the aggregation lifecycle: lock acquires on flag, releases on a
+    // plain-shell natural exit (B1 — the session lingers but the lock must go),
+    // and re-acquires when the shell is restarted (B2). This is the regression
+    // test the TerminalView::shellFinished signal + stub emitShellFinished()
+    // helper exist to drive.
+    void testKeepAwakeAggregationLifecycle()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.keepAwakeActive(), false);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 0);
+
+        TerminalView *view = mgr.createSession();
+        QVERIFY(view != nullptr);
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.keepAwakeActive(), false);
+
+        QSignalSpy activeSpy(&mgr, &SessionManager::keepAwakeActiveChanged);
+        QSignalSpy countSpy(&mgr, &SessionManager::keepAwakeActiveCountChanged);
+
+        // Flag the session -> aggregate lock acquires.
+        mgr.setSessionKeepAwake(0, true);
+        QCOMPARE(mgr.sessionKeepAwake(0), true);
+        QCOMPARE(mgr.keepAwakeActive(), true);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 1);
+        QCOMPARE(activeSpy.count(), 1);
+        QCOMPARE(countSpy.count(), 1);
+
+        // Plain-shell natural exit -> lock releases even though the session
+        // lingers in the list (commandExited is never emitted for plain shells,
+        // so no auto-remove fires).
+        int activeBefore = activeSpy.count();
+        view->emitShellFinished();
+        QCOMPARE(view->shellExited(), true);
+        QCOMPARE(mgr.keepAwakeActive(), false);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 0);
+        QCOMPARE(activeSpy.count(), activeBefore + 1);
+        QCOMPARE(mgr.sessionCount(), 1); // plain shell session is NOT auto-removed
+
+        // Restart the shell -> lock re-acquires (catches a missing
+        // shellRestarted call site in updateKeepAwakeLock()).
+        int activeBefore2 = activeSpy.count();
+        view->restartShell();
+        QCOMPARE(view->shellExited(), false);
+        QCOMPARE(mgr.keepAwakeActive(), true);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 1);
+        QCOMPARE(activeSpy.count(), activeBefore2 + 1);
+
+        // Clearing the flag releases the lock.
+        mgr.setSessionKeepAwake(0, false);
+        QCOMPARE(mgr.keepAwakeActive(), false);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 0);
+    }
+
+    // Two flagged sessions: one exiting leaves the lock held; the last exiting
+    // releases it; restarting one re-acquires with the correct count.
+    void testKeepAwakeMultiSessionAggregation()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        TerminalView *viewA = mgr.createSession();
+        TerminalView *viewB = mgr.createSession();
+        QCOMPARE(mgr.sessionCount(), 2);
+
+        mgr.setSessionKeepAwake(0, true);
+        mgr.setSessionKeepAwake(1, true);
+        QCOMPARE(mgr.keepAwakeActive(), true);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 2);
+
+        // One flagged session's shell exits -> lock stays held by the other.
+        viewA->emitShellFinished();
+        QCOMPARE(mgr.keepAwakeActive(), true);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 1);
+
+        // Last flagged session exits -> lock releases.
+        viewB->emitShellFinished();
+        QCOMPARE(mgr.keepAwakeActive(), false);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 0);
+
+        // Restart one flagged session -> re-acquires with count 1.
+        viewA->restartShell();
+        QCOMPARE(mgr.keepAwakeActive(), true);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 1);
+    }
+
+    // Verifies the keepAwake flag persists and that restore re-acquires the
+    // aggregate lock for the restored (alive) shell.
+    void testKeepAwakePersistenceRoundTrip()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        mgr.createSession();
+        QCOMPARE(mgr.keepAwakeActive(), false);
+        mgr.setSessionKeepAwake(0, true);
+        QCOMPARE(mgr.keepAwakeActive(), true);
+
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        // Persisted as keepAwake=true.
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            QCOMPARE(s.value("keepAwake").toBool(), true);
+            s.endGroup();
+        }
+
+        // Restore in a fresh manager -> flag restored and lock re-acquired.
+        SessionManager mgr2(m_settingsPath);
+        QSignalSpy restoredSpy(&mgr2, &SessionManager::sessionsRestored);
+        mgr2.restoreSessions();
+        QCOMPARE(mgr2.sessionCount(), 1);
+        QCOMPARE(mgr2.sessionKeepAwake(0), true);
+        QCOMPARE(mgr2.keepAwakeActive(), true);
+        QCOMPARE(mgr2.keepAwakeActiveCount(), 1);
+        QCOMPARE(restoredSpy.count(), 1);
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)

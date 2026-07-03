@@ -14,6 +14,7 @@ Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   libGLESv2
 Requires:   libEGL
 Requires:   nemo-qml-plugin-notifications-qt5
+Requires:   libkeepalive
 Requires:   sailfishsecretsdaemon
 Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default

@@ -119,6 +119,7 @@ public:
     void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
     bool shellExited() const { return m_shellExited; }
     void emitCommandExited(int exitCode) { m_shellExited = true; Q_EMIT commandExited(exitCode); }
+    void emitShellFinished() { m_shellExited = true; Q_EMIT shellFinished(); }
 
 Q_SIGNALS:
     void fontSizeChanged();
@@ -143,6 +144,7 @@ Q_SIGNALS:
     void navigateSession(int direction);
     void toggleKeybar();
     void commandExited(int exitCode);
+    void shellFinished();
     void shellRestarted();
     void linkActivated(const QString &uri);
     void topPaddingChanged();

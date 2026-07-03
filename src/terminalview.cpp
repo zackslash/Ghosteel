@@ -378,6 +378,7 @@ void TerminalView::onShellExited(int exitCode)
     qInfo() << "Shell exited with code" << exitCode;
     m_shellExited = true;
     m_shellExitCode = exitCode;
+    Q_EMIT shellFinished();
     if (!m_commandArgs.isEmpty()) {
         Q_EMIT commandExited(exitCode);
     }

@@ -173,8 +173,11 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
         if (idx >= 0) {
             m_sessions[idx].execArgs.clear();
             m_sessions[idx].execCommand.clear();
+            updateKeepAwakeLock();
         }
     });
+
+    connect(view, &TerminalView::shellFinished, this, &SessionManager::updateKeepAwakeLock);
 }
 
 int SessionManager::findSessionByName(const QString &name) const
@@ -260,6 +263,7 @@ void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info
     Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
     setActiveSessionIndex(index);
+    updateKeepAwakeLock();
 }
 
 void SessionManager::switchToSessionByName(const QString &name)
@@ -325,6 +329,8 @@ void SessionManager::removeSession(int index)
         info.view->cleanup();
         delete info.view;
     }
+
+    updateKeepAwakeLock();
 
     // Delete scrollback file for removed session (regardless of persistence
     // toggle — if the session is gone, the file has no reason to exist)
@@ -477,6 +483,25 @@ void SessionManager::setSessionKeyboardVisible(int index, bool visible)
     scheduleSave();
 }
 
+bool SessionManager::sessionKeepAwake(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return false;
+    return m_sessions[index].keepAwake;
+}
+
+void SessionManager::setSessionKeepAwake(int index, bool enabled)
+{
+    if (index < 0 || index >= m_sessions.size())
+        return;
+    if (m_sessions[index].keepAwake == enabled)
+        return;
+    m_sessions[index].keepAwake = enabled;
+    Q_EMIT sessionKeepAwakeChanged(index);
+    scheduleSave();
+    updateKeepAwakeLock();
+}
+
 int SessionManager::displayToActual(int displayIndex) const
 {
     if (m_sortedIndices.isEmpty()) {
@@ -502,6 +527,28 @@ int SessionManager::actualToDisplay(int actualIndex) const
             return i;
     }
     return -1;
+}
+
+void SessionManager::updateKeepAwakeLock()
+{
+    int count = 0;
+    for (const SessionInfo &info : m_sessions) {
+        if (info.keepAwake && info.view && !info.view->shellExited()) {
+            count++;
+        }
+    }
+
+    bool newActive = (count > 0);
+
+    if (newActive != m_keepAwakeActive) {
+        m_keepAwakeActive = newActive;
+        Q_EMIT keepAwakeActiveChanged();
+    }
+
+    if (count != m_keepAwakeActiveCount) {
+        m_keepAwakeActiveCount = count;
+        Q_EMIT keepAwakeActiveCountChanged();
+    }
 }
 
 int SessionManager::sortMode() const
@@ -785,6 +832,7 @@ void SessionManager::saveSessions()
         s.setValue(QStringLiteral("fontSize"), info.fontSize);
         s.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
         s.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
+        s.setValue(QStringLiteral("keepAwake"), info.keepAwake);
         s.setValue(QStringLiteral("createdAt"), info.createdAt);
         s.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
         s.endGroup();
@@ -1045,6 +1093,7 @@ bool SessionManager::restoreSessions()
         int fontSize = s.value(QStringLiteral("fontSize"), 0).toInt();
         bool keybarOpen = s.value(QStringLiteral("keybarOpen"), true).toBool();
         bool keyboardVisible = s.value(QStringLiteral("keyboardVisible"), true).toBool();
+        bool keepAwake = s.value(QStringLiteral("keepAwake"), false).toBool();
         qint64 createdAt = s.value(QStringLiteral("createdAt"), 0).toLongLong();
         qint64 lastUsedAt = s.value(QStringLiteral("lastUsedAt"), 0).toLongLong();
         s.endGroup();
@@ -1069,6 +1118,7 @@ bool SessionManager::restoreSessions()
         info.fontSize = fontSize;
         info.keybarOpen = keybarOpen;
         info.keyboardVisible = keyboardVisible;
+        info.keepAwake = keepAwake;
         info.createdAt = createdAt;
         info.lastUsedAt = lastUsedAt;
         info.view = view;
@@ -1095,6 +1145,7 @@ bool SessionManager::restoreSessions()
 
     m_sessionsLoaded = true;
     rebuildSortedIndices();
+    updateKeepAwakeLock();
     Q_EMIT sessionsRestored();
     return true;
 }

@@ -27,6 +27,7 @@ CoverBackground {
         onSortOrderChanged: _sortRevision++
         onActiveSessionIndexChanged: _sortRevision++
         onSessionNameChanged: _sortRevision++
+        onSessionKeepAwakeChanged: _sortRevision++
         // Rebuilds after remove/restore don't emit sortOrderChanged —
         // catch them via the post-rebuild signal.
         onSessionsChanged: _sortRevision++
@@ -53,6 +54,16 @@ CoverBackground {
             font.pixelSize: Theme.fontSizeExtraSmall
         }
 
+        // Keep-awake header hint
+        Label {
+            width: parent.width
+            visible: SessionManager.keepAwakeActive
+            text: qsTr("%n session(s) keeping device awake", "", SessionManager.keepAwakeActiveCount)
+            color: Theme.secondaryHighlightColor
+            font.pixelSize: Theme.fontSizeExtraSmall
+            font.italic: true
+        }
+
         Repeater {
             id: sessionRepeater
             model: _visibleCount
@@ -66,6 +77,14 @@ CoverBackground {
                     return SessionManager.displayToActual(index)
                 }
                 property bool isActive: actualIndex === SessionManager.activeSessionIndex
+                property bool keepAwake: {
+                    // Read _sortRevision so this binding re-evaluates on
+                    // keepAwake toggle — sessionKeepAwake is Q_INVOKABLE
+                    // so QML can't track it without an explicit dependency
+                    // (same workaround as actualIndex above).
+                    var _ = _sortRevision
+                    return SessionManager.sessionKeepAwake(actualIndex)
+                }
 
                 spacing: Theme.paddingSmall
                 width: parent.width
@@ -79,8 +98,17 @@ CoverBackground {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
+                // Keep-awake badge icon
+                Image {
+                    visible: parent.keepAwake
+                    source: "image://theme/icon-m-alarm"
+                    width: Theme.iconSizeSmall
+                    height: Theme.iconSizeSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
                 Label {
-                    width: parent.width - Theme.iconSizeSmall - Theme.paddingSmall
+                    width: parent.width - (Theme.iconSizeSmall * 2) - (Theme.paddingSmall * 2)
                     text: {
                         // Depend on _sortRevision so the binding re-evaluates
                         // when a session is renamed (even if the actual index

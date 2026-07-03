@@ -28,6 +28,7 @@ struct SessionInfo {
     QString autorunCommand;  // Command to run when session starts
     bool keybarOpen = true;           // Whether the extra keys panel is open
     bool keyboardVisible = true;      // Whether the software keyboard is visible
+    bool keepAwake = false;           // Keep CPU awake when app is backgrounded
     int fontSize = 0;                 // Per-session font size (0 = use global default)
     QString execCommand;              // Command binary name from -e (display only)
     QStringList execArgs;             // Full command args including binary (for reuse matching)
@@ -47,6 +48,8 @@ class SessionManager : public QObject
     Q_PROPERTY(QQmlListProperty<TerminalView> sessions READ sessions NOTIFY sessionsChanged)
     Q_PROPERTY(bool dbusRegistered READ dbusRegistered NOTIFY dbusRegisteredChanged)
     Q_PROPERTY(int activeSessionFontSize READ activeSessionFontSize NOTIFY activeSessionFontSizeChanged)
+    Q_PROPERTY(bool keepAwakeActive READ keepAwakeActive NOTIFY keepAwakeActiveChanged)
+    Q_PROPERTY(int keepAwakeActiveCount READ keepAwakeActiveCount NOTIFY keepAwakeActiveCountChanged)
 
 public:
     explicit SessionManager(QObject *parent = nullptr);
@@ -87,11 +90,16 @@ public:
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
     Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
     Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
+    Q_INVOKABLE bool sessionKeepAwake(int index) const;
+    Q_INVOKABLE void setSessionKeepAwake(int index, bool enabled);
 
     Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = true);
     int activeSessionFontSize() const;
     Q_INVOKABLE void resetAllSessionFontSizes();
     Q_INVOKABLE QString sessionDisplayName(int index) const;
+
+    bool keepAwakeActive() const { return m_keepAwakeActive; }
+    int keepAwakeActiveCount() const { return m_keepAwakeActiveCount; }
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
     Q_INVOKABLE int displayToActual(int displayIndex) const;
@@ -128,9 +136,12 @@ Q_SIGNALS:
     void sessionAutorunCommandChanged(int idx);
     void sessionKeybarOpenChanged(int idx);
     void sessionKeyboardVisibleChanged(int idx);
+    void sessionKeepAwakeChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
     void dbusRegisteredChanged();
     void activeSessionFontSizeChanged();
+    void keepAwakeActiveChanged();
+    void keepAwakeActiveCountChanged();
     // Aggregated notification signal — emitted for any session, not just the active one.
     // QML connects once to this instead of per-view.
     void desktopNotification(int sessionId, const QString &summary, const QString &body);
@@ -148,6 +159,7 @@ private:
     void saveSessions();
     void scheduleSave();
     void rebuildSortedIndices();
+    void updateKeepAwakeLock();
 
     // Connect a view's session-routed signals (notifications, clipboard) to
     // this manager's aggregated signals. Called from both create and restore
@@ -192,6 +204,10 @@ private:
     QString m_cliExecCommand;
     QStringList m_cliExecArgs;
     QString m_cliSessionName;
+
+    // Keep-awake aggregation state
+    bool m_keepAwakeActive = false;
+    int m_keepAwakeActiveCount = 0;
 };
 
 // IPC protocol for single-instance communication.

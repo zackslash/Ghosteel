@@ -90,6 +90,35 @@ Page {
         }
     }
 
+    // Keep-awake confirmation dialog
+    Component {
+        id: keepAwakeDialogComponent
+        Dialog {
+            id: keepAwakeDialog
+            property int sessionIndex: -1
+            onAccepted: {
+                SessionManager.setSessionKeepAwake(sessionIndex, true)
+            }
+            Column {
+                width: parent.width
+
+                DialogHeader {
+                    title: qsTr("Keep session running in background")
+                    acceptText: qsTr("Keep running")
+                }
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    color: Theme.primaryColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.WordWrap
+                    text: qsTr("This will keep the device's CPU awake even when the screen is off and Ghosteel is in the background, so commands in this session continue to run. This uses significantly more battery and prevents the device from sleeping. Only enable for sessions running long tasks (builds, downloads, sync, remote sessions).")
+                }
+            }
+        }
+    }
+
     SilicaListView {
         id: sessionList
         anchors {
@@ -109,6 +138,8 @@ Page {
             }
             onActiveSessionIndexChanged: _sortRevision++
             onSessionNameChanged: _sortRevision++
+            onSessionKeepAwakeChanged: _sortRevision++
+            onSessionsChanged: _sortRevision++
         }
 
         header: PageHeader {
@@ -143,6 +174,10 @@ Page {
             property string sessionName: SessionManager.sessionName(actualIndex)
             property string autorunCommand: SessionManager.sessionAutorunCommand(actualIndex)
             property string execCommand: SessionManager.sessionExecCommand(actualIndex)
+            property bool keepAwake: {
+                var _ = _sortRevision // force re-evaluation on toggle/sort (same workaround as actualIndex)
+                return SessionManager.sessionKeepAwake(actualIndex)
+            }
 
             onClicked: {
                 pageStack.pop()
@@ -184,6 +219,15 @@ Page {
                         color: sessionDelegate.highlighted
                                ? Theme.highlightColor
                                : Theme.primaryColor
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    // Keep-awake badge icon
+                    Image {
+                        visible: sessionDelegate.keepAwake
+                        source: "image://theme/icon-m-alarm"
+                        width: Theme.iconSizeSmall
+                        height: Theme.iconSizeSmall
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
@@ -248,6 +292,22 @@ Page {
                     }
                 }
                 MenuItem {
+                    text: sessionDelegate.keepAwake
+                          ? qsTr("Stop keeping in background")
+                          : qsTr("Keep running in background")
+                    onClicked: {
+                        if (sessionDelegate.keepAwake) {
+                            SessionManager.setSessionKeepAwake(actualIndex, false)
+                            flashToaster.show(qsTr("No longer keeping session awake"))
+                        } else {
+                            var dialog = keepAwakeDialogComponent.createObject(sessionPage, {
+                                sessionIndex: actualIndex
+                            })
+                            pageStack.push(dialog)
+                        }
+                    }
+                }
+                MenuItem {
                     text: qsTr("Remove")
                     enabled: SessionManager.sessionCount > 1
                     onClicked: {
@@ -271,6 +331,43 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    // Info toast — non-destructive feedback, not a Remorse
+    Rectangle {
+        id: flashToaster
+        anchors.centerIn: parent
+        width: flashLabel.width + Theme.paddingLarge * 4
+        height: flashLabel.height + Theme.paddingMedium * 2
+        radius: Theme.paddingSmall
+        color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
+        opacity: 0
+        visible: opacity > 0
+        z: 100
+
+        Behavior on opacity {
+            FadeAnimator { duration: 200 }
+        }
+
+        Label {
+            id: flashLabel
+            anchors.centerIn: parent
+            color: Theme.highlightColor
+            font.pixelSize: Theme.fontSizeMedium
+            text: ""
+        }
+
+        Timer {
+            id: flashTimer
+            interval: 1500
+            onTriggered: flashToaster.opacity = 0
+        }
+
+        function show(message) {
+            flashLabel.text = message
+            opacity = 1
+            flashTimer.restart()
+        }
     }
 
     // New session button at bottom

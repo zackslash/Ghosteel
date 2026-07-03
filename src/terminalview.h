@@ -152,6 +152,7 @@ Q_SIGNALS:
     void navigateSession(int direction);
     void toggleKeybar();
     void commandExited(int exitCode);
+    void shellFinished();
     void shellRestarted();
     void topPaddingChanged();
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
