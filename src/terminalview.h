@@ -35,6 +35,7 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
     Q_PROPERTY(int pullDownZoneHeight READ pullDownZoneHeight WRITE setPullDownZoneHeight NOTIFY pullDownZoneHeightChanged)
     Q_PROPERTY(bool pinchAtDefault READ pinchAtDefault NOTIFY pinchAtDefaultChanged)
+    Q_PROPERTY(bool sessionSwipeEnabled READ sessionSwipeEnabled WRITE setSessionSwipeEnabled NOTIFY sessionSwipeEnabledChanged)
 
 public:
     // Scrollback search match
@@ -56,6 +57,17 @@ public:
     void setTopPadding(int padding);
     int cellWidth() const { return m_cellWidth; }
     int cellHeight() const { return m_cellHeight; }
+
+    // Session-swipe gate. False when only one session exists so the classifier
+    // never kills the long-press (text-selection) timer for a gesture QML
+    // would reject anyway. Bound from QML via SessionManager.sessionCount.
+    bool sessionSwipeEnabled() const { return m_sessionSwipeEnabled; }
+    void setSessionSwipeEnabled(bool enabled) {
+        if (m_sessionSwipeEnabled != enabled) {
+            m_sessionSwipeEnabled = enabled;
+            Q_EMIT sessionSwipeEnabledChanged();
+        }
+    }
 
     QColor selectionHighlightColor() const { return m_selectionHighlightColor; }
     void setSelectionHighlightColor(const QColor &color);
@@ -162,6 +174,16 @@ Q_SIGNALS:
     // multi-touch/TUI begin, true on end.
     void requestParentInteractive(bool interactive);
 
+    // Session-swipe gesture (horizontal one-finger drag → switch session).
+    // QML drives the slide animation + switchSession() from these. Guarded:
+    // only emitted in NORMAL single-finger mode, pre-selection window, never
+    // during TUI/multitouch/handle/link.
+    void sessionSwipeStarted();
+    void sessionSwipeProgress(qreal deltaX);   // signed px from swipeStartX
+    void sessionSwipeCommitted(int direction); // +1 = next, -1 = previous
+    void sessionSwipeCancelled();
+    void sessionSwipeEnabledChanged();
+
 protected:
     void update(); // Override to emit contentChanged()
     void keyPressEvent(QKeyEvent *event) override;
@@ -204,6 +226,7 @@ private:
     void scrollToMatch(int index);
     void buildCellMapping();
     void scrollViewportToBottom();
+    void resetSessionSwipe(); // defensive — call from every path that abandons a gesture
 
     // --- Pinch-to-zoom gesture disambiguation ---
     void handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points);
@@ -299,6 +322,14 @@ private:
     static constexpr int PinchRatioFrames = 2;
     static constexpr qreal ScrollMinDistancePx = 40.0;
     static constexpr qreal PinchScaleExponent = 0.6; // <1 dampens; 0.5=sqrt, 1.0=linear
+
+    // --- Session-swipe gesture (horizontal one-finger drag → switch session) ---
+    bool    m_sessionSwiping = false;
+    bool    m_sessionSwipeEnabled = true; // QML-bound gate (false for single session)
+    qreal   m_swipeStartX    = 0.0;   // captured at classify time, not at press
+    static constexpr qreal SwipeMinHorizontalPx = 24.0; // < ScrollMinDistancePx (40)
+    static constexpr qreal SwipeDominanceRatio  = 1.5;  // |dx| must exceed |dy| * this
+    static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width → commit
 
     // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;
