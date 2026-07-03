@@ -54,14 +54,30 @@ CoverBackground {
             font.pixelSize: Theme.fontSizeExtraSmall
         }
 
-        // Keep-awake header hint
-        Label {
+        // Keep-awake status — compact icon-led line. The icon ties visually
+        // to the per-row badges; the terse text fits the narrow cover without
+        // truncating (the count is dropped to avoid redundancy with the
+        // session-count header and the badges, which already show which).
+        Row {
             width: parent.width
             visible: SessionManager.keepAwakeActive
-            text: qsTr("%n session(s) keeping device awake", "", SessionManager.keepAwakeActiveCount)
-            color: Theme.secondaryHighlightColor
-            font.pixelSize: Theme.fontSizeExtraSmall
-            font.italic: true
+            spacing: Theme.paddingSmall
+
+            Image {
+                source: "image://theme/icon-m-charging"
+                width: Theme.iconSizeSmall
+                height: Theme.iconSizeSmall
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Label {
+                width: parent.width - Theme.iconSizeSmall - Theme.paddingSmall
+                text: qsTr("Keeping device awake")
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                truncationMode: TruncationMode.Fade
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
 
         Repeater {
