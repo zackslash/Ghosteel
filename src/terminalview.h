@@ -227,6 +227,7 @@ private:
     void buildCellMapping();
     void scrollViewportToBottom();
     void resetSessionSwipe(); // defensive — call from every path that abandons a gesture
+    void resetTouchInteractionState(); // consolidate TouchCancel / release state resets
 
     // --- Pinch-to-zoom gesture disambiguation ---
     void handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points);

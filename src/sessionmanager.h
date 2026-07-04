@@ -8,10 +8,26 @@
 #include <QLocalServer>
 #include <QByteArray>
 #include <QStringList>
+#include <QPointer>
 
 class TerminalView;
 class ScrollEncryptor;
 class Settings;
+
+// Session scrollback lifecycle (restore → dirty → save):
+//   1. restoreSessions() creates each view, sets justRestored=true.
+//      Geometry-update repaints fire contentChanged immediately, but
+//      the handler no-ops while justRestored is true (avoids re-encrypting
+//      just-restored scrollback on launch).
+//   2. First real PTY byte arrives → titleChanged fires synchronously
+//      (inside vtWrite, before update() emits contentChanged) → clears
+//      justRestored. Subsequent contentChanged marks scrollbackDirty and
+//      schedules a debounced save.
+//   3. Debounce timer (500ms) or aboutToQuit → saveScrollbackIncremental()
+//      encrypts only dirty sessions, active session first.
+//   4. If encryption was unavailable at restore time, the file is queued
+//      in m_pendingScrollbackRestores and retried once when
+//      ScrollEncryptor::availabilityChanged fires.
 
 // Session taxonomy (two orthogonal dimensions):
 //
@@ -37,6 +53,8 @@ struct SessionInfo {
 
     bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
     bool isCommandSession() const { return !execArgs.isEmpty(); }
+    bool scrollbackDirty = false;  // True if scrollback changed since last encrypt+save
+    bool justRestored = false;     // True after restoreSessions(); skip dirty-marking until PTY data arrives
 };
 
 class SessionManager : public QObject
@@ -161,10 +179,18 @@ private:
     int resolveActiveSession(int activeId, int legacyActiveIndex) const;
 
     // Scrollback persistence
-    void saveScrollback();
+    void saveScrollbackIncremental();
+    void saveSessionScrollback(SessionInfo &info);
     void cleanupScrollbackFiles();
     QString scrollbackDir() const;
     QString scrollbackFilePath(int sessionId) const;
+
+    // Queued scrollback restores for when encryption becomes available
+    struct PendingScrollbackRestore {
+        QPointer<TerminalView> view;
+        int sessionId;
+    };
+    QVector<PendingScrollbackRestore> m_pendingScrollbackRestores;
 
 private Q_SLOTS:
     void onNewInstanceConnection();

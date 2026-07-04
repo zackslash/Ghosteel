@@ -142,7 +142,7 @@ Page {
     Notification {
         id: bellNotification
         appName: "Ghosteel"
-        summary: ""
+        summary: qsTr("Bell")
         body: ""
         urgency: Notification.Critical
         expireTimeout: 1
@@ -530,6 +530,14 @@ Page {
                 }
             }
 
+            // Reset sticky modifiers before switching. Modifiers are session-local —
+            // the user didn't press Ctrl/Alt in the new session, so don't carry them
+            // over. Without this, activeModifiers doesn't change on switch (no
+            // onActiveModifiersChanged fires), so the new terminal's stickyModifiers
+            // stays stale while the keybar still shows the old state.
+            ctrlActive = false
+            altActive = false
+
             var newTerminal = SessionManager.activeSession()
             var incomingSid = SessionManager.sessionId(index)
             if (newTerminal && newTerminal !== terminal) {
@@ -823,7 +831,12 @@ Page {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: keybar.top
+        anchors.bottom: parent.bottom
+        // Decouple from keybar's animated y to avoid per-frame terminal resize
+        // (C++ geometryChanged → PTY SIGWINCH) during the 200ms slide. The margin
+        // snaps to the keybar's resting height immediately; the keybar's own
+        // Behavior-on-y provides the visual slide on top (higher z).
+        anchors.bottomMargin: keybar.open ? keybar.height : 0
         contentHeight: height
 
         PullDownMenu {
@@ -959,7 +972,7 @@ Page {
         }
 
         // Transparent overlay that captures taps to dismiss search panel.
-        // Only enabled when search is open; passes the tap through to the terminal.
+        // Only enabled when search is open; consumes the tap to dismiss (does not pass through).
         MouseArea {
             anchors.fill: parent
             enabled: searchPanel.open
@@ -968,7 +981,6 @@ Page {
             onPressed: {
                 searchPanel.open = false
                 if (terminal) terminal.forceActiveFocus()
-                mouse.accepted = false // Let the terminal receive the event
             }
         }
     }
@@ -1149,7 +1161,8 @@ Page {
 
     // Extra terminal keys panel — plain Item (not DockedPanel, whose C++
     // drag-to-close cannot be reliably overridden from QML). We animate y
-    // manually; the terminal flickable anchors to keybar.top and tracks it.
+    // manually; the terminal flickable uses a static bottomMargin instead of
+    // anchoring to keybar.top, to avoid per-frame resize during the slide.
     Item {
         id: keybar
         anchors.left: parent.left

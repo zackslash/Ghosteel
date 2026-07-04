@@ -32,7 +32,8 @@ struct GlyphInfo {
 class GlyphAtlas : protected QOpenGLFunctions
 {
 public:
-    GlyphAtlas(int atlasWidth = 1024, int atlasHeight = 1024);
+    // 2048² default: 1024² was too small for CJK working sets, causing thrashing
+    GlyphAtlas(int atlasWidth = 2048, int atlasHeight = 2048);
     ~GlyphAtlas();
 
     void initialize();

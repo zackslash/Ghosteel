@@ -127,7 +127,8 @@ private:
         void buildOverlayVertices(int fboW, int fboH);
         void appendCircle(float cx, float cy, float radius, float r, float g, float b, float a, int segments = 24);
         void createMagShaders();
-        void createMagTexture();
+        void createBlitShader();
+        void blitPipelineToFbo(QOpenGLFramebufferObject *fbo);
         void buildMagnifierVertices(int fboW, int fboH);
 
         // Refactored render sub-methods
@@ -232,7 +233,6 @@ private:
         int m_draggingHandle = -1;
         QColor m_magnifierBorderColor;
         QPointF m_magnifierFingerPos;
-
         int m_scrollOffset = 0;
 
         struct LinkSpan { int startRow; int endRow; int startCol; int endCol; };
@@ -249,10 +249,11 @@ private:
 
         // Magnifier shader (textured rounded-rect with SDF clip)
         QOpenGLShaderProgram *m_magProgram = nullptr;
-        GLuint m_magnifierTex = 0;
         int m_magMatrixUniform = -1;
         int m_magTexUniform = -1;
         int m_magDestRectUniform = -1;
+        int m_magSrcRectUniform = -1;
+        int m_magSrcTexSizeUniform = -1;
         int m_magCornerRadiusUniform = -1;
         int m_magBorderColorUniform = -1;
         int m_magBorderWidthUniform = -1;
@@ -260,6 +261,13 @@ private:
         int m_magTexcoordAttr = -1;
         QVector<float> m_magVertices;
         int m_magVertexCount = 0;
+
+        // Blit shader uniforms
+        QOpenGLShaderProgram *m_blitProgram = nullptr;
+        int m_blitMatrixUniform = -1;
+        int m_blitTexUniform = -1;
+        int m_blitPositionAttr = -1;
+        int m_blitTexcoordAttr = -1;
 
         // Phase 5B: ES 3.0 post-processing pipeline
         bool m_es300 = false;

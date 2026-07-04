@@ -141,8 +141,10 @@ static const char *magFragmentShaderSource =
     "precision mediump float;\n"
     "varying vec2 v_texcoord;\n"
     "varying vec2 v_pos;\n"
-    "uniform sampler2D u_magnifierTex;\n"
+    "uniform sampler2D u_sceneTex;\n"
     "uniform vec4 u_destRect;\n"
+    "uniform vec4 u_srcRect;\n"
+    "uniform vec2 u_srcTexSize;\n"
     "uniform float u_cornerRadius;\n"
     "uniform vec4 u_borderColor;\n"
     "uniform float u_borderWidth;\n"
@@ -157,11 +159,31 @@ static const char *magFragmentShaderSource =
     "    vec2 halfSize = u_destRect.zw * 0.5;\n"
     "    float dist = roundedRectSDF(v_pos, center, halfSize, u_cornerRadius);\n"
     "    if (dist > 1.5) discard;\n"
-    "    vec4 texColor = texture2D(u_magnifierTex, v_texcoord);\n"
+    "    vec2 srcUV = (u_srcRect.xy + v_texcoord * u_srcRect.zw) / u_srcTexSize;\n"
+    "    vec4 texColor = texture2D(u_sceneTex, srcUV);\n"
     "    float edgeAlpha = smoothstep(0.0, 1.5, -dist);\n"
     "    float borderMask = smoothstep(u_borderWidth, u_borderWidth - 1.5, -dist);\n"
     "    vec4 color = mix(texColor, u_borderColor, borderMask);\n"
     "    gl_FragColor = vec4(color.rgb * edgeAlpha, color.a * edgeAlpha);\n"
+    "}\n";
+
+// Simple ES 2.0 blit shader — textured quad for pipeline FBO → Qt FBO copy
+static const char *blitVertexShaderSource =
+    "attribute vec2 position;\n"
+    "attribute vec2 texcoord;\n"
+    "uniform mat4 u_matrix;\n"
+    "varying vec2 v_texcoord;\n"
+    "void main() {\n"
+    "    gl_Position = u_matrix * vec4(position, 0.0, 1.0);\n"
+    "    v_texcoord = texcoord;\n"
+    "}\n";
+
+static const char *blitFragmentShaderSource =
+    "precision mediump float;\n"
+    "varying vec2 v_texcoord;\n"
+    "uniform sampler2D u_texture;\n"
+    "void main() {\n"
+    "    gl_FragColor = texture2D(u_texture, v_texcoord);\n"
     "}\n";
 
 // --- Phase 5B: ES 3.0 post-processing shaders ---
@@ -337,6 +359,7 @@ GLRenderer::Renderer::~Renderer()
     delete m_program;
     delete m_flatProgram;
     delete m_magProgram;
+    delete m_blitProgram;
     delete m_kittyProgram;
     m_kittyProgram = nullptr;
     delete m_postShader.program;
@@ -361,10 +384,6 @@ GLRenderer::Renderer::~Renderer()
             m_vbo.destroy();
         if (m_flatVbo.isCreated())
             m_flatVbo.destroy();
-        if (m_magnifierTex) {
-            glDeleteTextures(1, &m_magnifierTex);
-            m_magnifierTex = 0;
-        }
         destroyPipelineFbo();
         destroyPingPongFbo();
     }
@@ -381,7 +400,7 @@ void GLRenderer::Renderer::initialize()
     createFlatShaders();
     createFlatVBO();
     createMagShaders();
-    createMagTexture();
+    createBlitShader();
     createKittyShaders();
 
     detectES300();
@@ -503,8 +522,10 @@ void GLRenderer::Renderer::createMagShaders()
     }
 
     m_magMatrixUniform = m_magProgram->uniformLocation("u_matrix");
-    m_magTexUniform = m_magProgram->uniformLocation("u_magnifierTex");
+    m_magTexUniform = m_magProgram->uniformLocation("u_sceneTex");
     m_magDestRectUniform = m_magProgram->uniformLocation("u_destRect");
+    m_magSrcRectUniform = m_magProgram->uniformLocation("u_srcRect");
+    m_magSrcTexSizeUniform = m_magProgram->uniformLocation("u_srcTexSize");
     m_magCornerRadiusUniform = m_magProgram->uniformLocation("u_cornerRadius");
     m_magBorderColorUniform = m_magProgram->uniformLocation("u_borderColor");
     m_magBorderWidthUniform = m_magProgram->uniformLocation("u_borderWidth");
@@ -512,18 +533,77 @@ void GLRenderer::Renderer::createMagShaders()
     m_magTexcoordAttr = m_magProgram->attributeLocation("texcoord");
 }
 
-void GLRenderer::Renderer::createMagTexture()
+void GLRenderer::Renderer::createBlitShader()
 {
-    // POT 128×64: srcW=90 (MagnifierWidth/Zoom=180/2), srcH=50 (MagnifierHeight/Zoom=100/2), rounded up
-    glGenTextures(1, &m_magnifierTex);
-    glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // Allocate 128×64 RGBA texture (initial data is garbage, will be overwritten by glCopyTexSubImage2D)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    m_blitProgram = new QOpenGLShaderProgram;
+    if (!m_blitProgram->addShaderFromSourceCode(QOpenGLShader::Vertex, blitVertexShaderSource)) {
+        qWarning() << "GLRenderer: blit vertex shader compilation failed:" << m_blitProgram->log();
+        delete m_blitProgram;
+        m_blitProgram = nullptr;
+        return;
+    }
+    if (!m_blitProgram->addShaderFromSourceCode(QOpenGLShader::Fragment, blitFragmentShaderSource)) {
+        qWarning() << "GLRenderer: blit fragment shader compilation failed:" << m_blitProgram->log();
+        delete m_blitProgram;
+        m_blitProgram = nullptr;
+        return;
+    }
+    if (!m_blitProgram->link()) {
+        qWarning() << "GLRenderer: blit shader linking failed:" << m_blitProgram->log();
+        delete m_blitProgram;
+        m_blitProgram = nullptr;
+        return;
+    }
+
+    m_blitMatrixUniform = m_blitProgram->uniformLocation("u_matrix");
+    m_blitTexUniform = m_blitProgram->uniformLocation("u_texture");
+    m_blitPositionAttr = m_blitProgram->attributeLocation("position");
+    m_blitTexcoordAttr = m_blitProgram->attributeLocation("texcoord");
+}
+
+void GLRenderer::Renderer::blitPipelineToFbo(QOpenGLFramebufferObject *fbo)
+{
+    if (!m_blitProgram || !m_blitProgram->isLinked() || !m_pipelineTex)
+        return;
+
+    int w = fbo->width();
+    int h = fbo->height();
+
+    QMatrix4x4 proj;
+    proj.ortho(0, w, 0, h, -1, 1);
+
+    // Full-screen quad: 2 triangles, 6 vertices, each pos2+texcoord2 = 4 floats
+    float blitVerts[] = {
+        0.0f, 0.0f, 0.0f, 0.0f,
+        static_cast<float>(w), 0.0f, 1.0f, 0.0f,
+        static_cast<float>(w), static_cast<float>(h), 1.0f, 1.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        static_cast<float>(w), static_cast<float>(h), 1.0f, 1.0f,
+        0.0f, static_cast<float>(h), 0.0f, 1.0f,
+    };
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo->handle());
+    glViewport(0, 0, w, h);
+    glDisable(GL_BLEND);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_pipelineTex);
+
+    m_blitProgram->bind();
+    m_blitProgram->setUniformValue(m_blitMatrixUniform, proj);
+    m_blitProgram->setUniformValue(m_blitTexUniform, 0);
+
+    const int stride = 4 * sizeof(float);
+    glVertexAttribPointer(m_blitPositionAttr, 2, GL_FLOAT, GL_FALSE, stride, blitVerts);
+    glVertexAttribPointer(m_blitTexcoordAttr, 2, GL_FLOAT, GL_FALSE, stride, blitVerts + 2);
+    glEnableVertexAttribArray(m_blitPositionAttr);
+    glEnableVertexAttribArray(m_blitTexcoordAttr);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(m_blitPositionAttr);
+    glDisableVertexAttribArray(m_blitTexcoordAttr);
+
     glBindTexture(GL_TEXTURE_2D, 0);
+    m_blitProgram->release();
 }
 
 void GLRenderer::Renderer::createKittyShaders()
@@ -623,14 +703,12 @@ void GLRenderer::Renderer::buildMagnifierVertices(int fboW, int fboH)
     float dx1 = static_cast<float>(destX + TerminalView::MagnifierWidth);
     float dy1 = static_cast<float>(destY + TerminalView::MagnifierHeight);
 
-    // UV coords: source region mapped to 0-1 within the 128×64 texture
-    // srcW=90, srcH=50 are copied to texture starting at (0,0)
-    float texW = 128.0f;
-    float texH = 64.0f;
+    // UV coords: [0,1] maps the full magnifier quad; the shader maps this to
+    // the source rectangle within m_pipelineTex via u_srcRect / u_srcTexSize.
     float u0 = 0.0f;
     float v0 = 0.0f;
-    float u1 = static_cast<float>(srcW) / texW;  // 90/128
-    float v1 = static_cast<float>(srcH) / texH;   // 50/64
+    float u1 = 1.0f;
+    float v1 = 1.0f;
 
     // 2 triangles (6 vertices), each: pos2 + texcoord2 = 4 floats
     // Triangle 1: top-left, top-right, bottom-right
@@ -1306,6 +1384,10 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
                     cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
                     buf);
 
+                // TODO: Multi-codepoint grapheme clusters (e.g. family emoji 👨‍👩‍👧)
+                // span multiple graphemes but we only render buf[0] here.
+                // Full support requires iterating graphemesLen and emitting
+                // one quad per grapheme with fractional cell offsets.
                 const GlyphInfo &gi = m_atlas.glyph(buf[0], cellStyle.bold, cellStyle.italic);
                 u0 = gi.u0;
                 v0 = gi.v0;
@@ -1633,8 +1715,17 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
+        // Keep pipeline FBO alive if the magnifier needs it
+        if (!m_magnifierVisible) {
+            destroyPipelineFbo();
+            destroyPingPongFbo();
+        }
+    }
+
+    // Tear down pipeline FBO when magnifier was the only reason it existed
+    // (no post-processing active, magnifier now hidden)
+    if (!m_postShaderActive && !m_magnifierVisible && m_pipelineFbo) {
         destroyPipelineFbo();
-        destroyPingPongFbo();
     }
 
     GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
@@ -1650,7 +1741,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int fboH)
 {
     if (!m_magnifierVisible || !m_selecting || m_selStart == m_selEnd
-        || !m_magProgram || !m_magProgram->isLinked() || !m_magnifierTex)
+        || !m_magProgram || !m_magProgram->isLinked() || !m_pipelineTex)
         return;
 
     int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
@@ -1665,9 +1756,7 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
         srcY = qMax(0, srcY);
     }
 
-    glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, srcX, srcY, srcW, srcH);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // Sample directly from m_pipelineTex to avoid a TBDR pipeline stall (glCopyTexSubImage2D would flush the tiled renderer).
 
     buildMagnifierVertices(fboW, fboH);
 
@@ -1692,6 +1781,13 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
             static_cast<float>(TerminalView::MagnifierHeight));
         m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
 
+        // Source rectangle in m_pipelineTex and its dimensions (for UV normalization)
+        m_magProgram->setUniformValue(m_magSrcRectUniform,
+            static_cast<float>(srcX), static_cast<float>(srcY),
+            static_cast<float>(srcW), static_cast<float>(srcH));
+        m_magProgram->setUniformValue(m_magSrcTexSizeUniform,
+            static_cast<float>(m_pipelineTexW), static_cast<float>(m_pipelineTexH));
+
         float ba = m_magnifierBorderColor.alphaF();
         float br = m_magnifierBorderColor.redF() * ba;
         float bg = m_magnifierBorderColor.greenF() * ba;
@@ -1700,7 +1796,7 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
         m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_magnifierTex);
+        glBindTexture(GL_TEXTURE_2D, m_pipelineTex);
 
         const int magStride = 4 * sizeof(float);
         glVertexAttribPointer(m_magPositionAttr, 2, GL_FLOAT, GL_FALSE, magStride,
@@ -2212,9 +2308,6 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     // Kitty images: above-text layer (above overlays)
     drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
                         width, height);
-
-    // Magnifier
-    renderMagnifier(proj, width, height);
 }
 
 void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
@@ -2290,13 +2383,47 @@ void GLRenderer::Renderer::render()
 
     QOpenGLFramebufferObject *fbo = framebufferObject();
 
+    bool magnifierActive = m_magnifierVisible && m_selecting && m_selStart != m_selEnd;
+
     bool didPostProcess = false;
     if (m_postShaderActive && m_es300 && m_postShader.program) {
         didPostProcess = renderPostProcessPipeline(fbo);
     }
 
     if (!didPostProcess) {
-        renderDirectToFbo(fbo);
+        if (magnifierActive) {
+            // Magnifier samples m_pipelineTex, which only exists when post-processing
+            // is active. Create it on demand so the magnifier pass below has a source.
+            createPipelineFbo(fbo->width(), fbo->height());
+            if (m_pipelineFbo) {
+                // Always re-render the scene to the pipeline FBO so the
+                // magnifier shows live content (cursor blink, new output).
+                glBindFramebuffer(GL_FRAMEBUFFER, m_pipelineFbo);
+                glViewport(0, 0, fbo->width(), fbo->height());
+                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                drawScene(fbo->width(), fbo->height());
+                glDisable(GL_BLEND);
+                blitPipelineToFbo(fbo);
+            } else {
+                // Fallback: render directly (magnifier won't show if m_pipelineTex is null)
+                renderDirectToFbo(fbo);
+            }
+        } else {
+            renderDirectToFbo(fbo);
+        }
+    }
+
+    // Render the magnifier as a separate pass after the scene is in Qt's FBO.
+    // At this point Qt's FBO is the current render target and m_pipelineTex
+    // is NOT the current render target — safe to sample from without a
+    // self-texture feedback loop.
+    if (m_magnifierVisible && m_pipelineTex) {
+        QMatrix4x4 proj;
+        proj.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
+        renderMagnifier(proj, fbo->width(), fbo->height());
     }
 
     if (m_shellExited) {

@@ -42,10 +42,36 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
     m_encryptor = new ScrollEncryptor(this);
 
+    // Retry pending scrollback restores when encryption becomes available
+    connect(m_encryptor, &ScrollEncryptor::availabilityChanged, this, [this]() {
+        if (!m_encryptor->isAvailable()) {
+            // Encryption init failed — these scrollback files can't be
+            // restored; drop the pending list to avoid re-queuing.
+            if (!m_pendingScrollbackRestores.isEmpty())
+                qWarning() << "Ghosteel: Encryption unavailable, skipping"
+                           << m_pendingScrollbackRestores.size()
+                           << "pending scrollback restores";
+            m_pendingScrollbackRestores.clear();
+            return;
+        }
+        const auto pending = m_pendingScrollbackRestores;
+        m_pendingScrollbackRestores.clear();
+        for (const auto &p : pending) {
+            if (p.view)  // QPointer returns null if the object was deleted
+                restoreScrollbackForSession(p.view, p.sessionId);
+        }
+    });
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
-    connect(m_saveTimer, &QTimer::timeout, this, &SessionManager::saveSessions);
+    connect(m_saveTimer, &QTimer::timeout, this, [this]() {
+        saveSessions();
+        // Also encrypt scrollback incrementally for sessions whose content
+        // changed since the last save. By the time aboutToQuit fires, most
+        // sessions are already on disk — only a few remain dirty.
+        saveScrollbackIncremental();
+    });
 
     // When the global default font size changes, propagate it to every session
     // that is tracking the default (fontSize == 0). Sessions with an explicit
@@ -67,7 +93,10 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         timer.start();
         saveSessions();
         qint64 sessionMs = timer.elapsed();
-        saveScrollback();
+        // Most sessions' scrollback was already encrypted by the debounce
+        // timer. Only encrypt sessions that changed since the last save,
+        // processing the active session first for priority.
+        saveScrollbackIncremental();
         qint64 totalMs = timer.elapsed();
         if (totalMs > 1000)
             qWarning() << "Ghosteel: Quit save took" << totalMs << "ms"
@@ -168,12 +197,41 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
     // When a command session's shell is restarted (user taps after exit),
     // clear execArgs so isCommandSession() returns false and auto-remove skips it.
     connect(view, &TerminalView::shellRestarted, this,
-            [this, sessionId]() {
+        [this, sessionId]() {
         int idx = sessionIndexById(sessionId);
         if (idx >= 0) {
             m_sessions[idx].execArgs.clear();
             m_sessions[idx].execCommand.clear();
         }
+    });
+
+    // Track content changes for incremental scrollback encryption.
+    // Mark dirty on first content change; scheduleSave restarts the 500ms
+    // debounce timer, which will call saveScrollbackIncremental().
+    connect(view, &TerminalView::contentChanged, this,
+        [this, sessionId]() {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        // Skip geometry-update repaints that fire immediately after
+        // restoreSessions(). Cleared by titleChanged (real PTY data).
+        if (m_sessions[idx].justRestored)
+            return;
+        if (!m_sessions[idx].scrollbackDirty) {
+            m_sessions[idx].scrollbackDirty = true;
+            scheduleSave();
+        }
+    });
+
+    // Clear justRestored when real PTY data arrives. titleChanged fires
+    // during onPtyData() → vtWrite(), synchronously before the update()
+    // that emits contentChanged, so justRestored is cleared before the
+    // first data-driven contentChanged handler runs.
+    connect(view, &TerminalView::titleChanged, this,
+        [this, sessionId]() {
+        int idx = sessionIndexById(sessionId);
+        if (idx >= 0)
+            m_sessions[idx].justRestored = false;
     });
 }
 
@@ -821,48 +879,67 @@ QString SessionManager::scrollbackFilePath(int sessionId) const
     return scrollbackDir() + QStringLiteral("/session_%1.vt").arg(sessionId);
 }
 
-void SessionManager::saveScrollback()
+void SessionManager::saveSessionScrollback(SessionInfo &info)
+{
+    if (!info.view)
+        return;
+
+    uint16_t cols = 0, rows = 0;
+    QByteArray data = info.view->exportScrollback(cols, rows);
+    if (data.isEmpty()) {
+        info.scrollbackDirty = false;
+        return;
+    }
+
+    QByteArray output;
+    if (m_encryptor && m_encryptor->isAvailable())
+        output = m_encryptor->encrypt(data);
+    if (output.isEmpty()) {
+        qWarning() << "Ghosteel: Scrollback encryption failed for session"
+                   << info.id << ", skipping";
+        return; // Don't write plaintext to disk
+    }
+
+    // Atomic write via QSaveFile — commit() is a POSIX rename(),
+    // which is atomic on the same filesystem. No window where both
+    // old and new files are gone.
+    QSaveFile saveFile(scrollbackFilePath(info.id));
+    if (saveFile.open(QIODevice::WriteOnly)) {
+        if (saveFile.write(output) != -1) {
+            // fsync before rename to ensure data is on disk —
+            // protects against power loss between write and rename
+            ::fsync(saveFile.handle());
+            if (saveFile.commit()) {
+                info.scrollbackDirty = false;
+            } else {
+                qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
+            }
+        } else {
+            qWarning() << "Failed to write scrollback:" << saveFile.errorString();
+        }
+    }
+}
+
+void SessionManager::saveScrollbackIncremental()
 {
     if (!m_settings->scrollbackPersistence())
         return;
 
-    QString dir = scrollbackDir();
-    QDir().mkpath(dir);
+    QDir().mkpath(scrollbackDir());
 
-    for (const SessionInfo &info : m_sessions) {
-        if (!info.view)
+    // Process active session first for priority on quit
+    if (m_activeSessionIndex >= 0 && m_activeSessionIndex < m_sessions.size()) {
+        SessionInfo &info = m_sessions[m_activeSessionIndex];
+        if (info.scrollbackDirty)
+            saveSessionScrollback(info);
+    }
+
+    for (int i = 0; i < m_sessions.size(); i++) {
+        if (i == m_activeSessionIndex)
             continue;
-
-        uint16_t cols = 0, rows = 0;
-        QByteArray data = info.view->exportScrollback(cols, rows);
-        if (data.isEmpty())
-            continue;
-
-        QByteArray output;
-        if (m_encryptor && m_encryptor->isAvailable())
-            output = m_encryptor->encrypt(data);
-        if (output.isEmpty()) {
-            qWarning() << "Ghosteel: Scrollback encryption failed for session"
-                       << info.id << ", skipping";
-            continue; // Don't write plaintext to disk
-        }
-
-        // Atomic write via QSaveFile — commit() is a POSIX rename(),
-        // which is atomic on the same filesystem. No window where both
-        // old and new files are gone.
-        QSaveFile saveFile(scrollbackFilePath(info.id));
-        if (saveFile.open(QIODevice::WriteOnly)) {
-            if (saveFile.write(output) != -1) {
-                // fsync before rename to ensure data is on disk —
-                // protects against power loss between write and rename
-                ::fsync(saveFile.handle());
-                if (!saveFile.commit()) {
-                    qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
-                }
-            } else {
-                qWarning() << "Failed to write scrollback:" << saveFile.errorString();
-            }
-        }
+        SessionInfo &info = m_sessions[i];
+        if (info.scrollbackDirty)
+            saveSessionScrollback(info);
     }
 }
 
@@ -988,7 +1065,8 @@ void SessionManager::restoreScrollbackForSession(TerminalView *view, int savedId
         if (!restored.isEmpty())
             view->setPendingScrollback(restored);
     } else if (ScrollEncryptor::isEncryptedFormat(sbData)) {
-        qWarning() << "Encrypted scrollback found but secrets daemon unavailable, skipping:" << sbPath;
+        // Encryption not yet available — queue for retry after availabilityChanged
+        m_pendingScrollbackRestores.append({view, savedId});
     }
 }
 
@@ -1056,6 +1134,12 @@ bool SessionManager::restoreSessions()
         // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
+        // Apply persisted font size immediately so saveSessions() reads back
+        // the correct value for non-active sessions (not the stale default 18).
+        if (fontSize > 0)
+            view->setFontSize(fontSize);
+        else
+            view->setFontSize(m_settings->fontSize());
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
 
@@ -1074,6 +1158,10 @@ bool SessionManager::restoreSessions()
         info.view = view;
 
         m_sessions.append(info);
+
+        // Mark as just-restored so the contentChanged handler skips
+        // geometry-update repaints; cleared by titleChanged (real PTY data).
+        m_sessions.last().justRestored = true;
 
         // Route this view's session-routed signals through the aggregated signals
         connectSessionSignals(view, info.id);
