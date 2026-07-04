@@ -1104,7 +1104,7 @@ private slots:
 
         QVERIFY(createdAt > 0);
         QVERIFY(lastUsedAt > 0);
-        QCOMPARE(createdAt, lastUsedAt); // set at the same time
+        QVERIFY(lastUsedAt >= createdAt); // lastUsedAt is re-stamped on activation; createdAt is fixed at birth
     }
 
     void testTimestampsPersistAndRestore()
