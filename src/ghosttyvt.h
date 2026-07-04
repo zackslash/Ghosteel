@@ -13,6 +13,7 @@
 #include <ghostty/vt.h>
 
 #include <QObject>
+#include <QVector>
 #include <functional>
 #include <QStringList>
 
