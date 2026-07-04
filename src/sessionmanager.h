@@ -117,6 +117,10 @@ public:
     Q_INVOKABLE int sortMode() const;
     Q_INVOKABLE void setSortMode(int mode);
 
+    // Force any pending debounced sort-rebuild to fire now. Call when the
+    // session list becomes visible so the user never sees a stale order.
+    Q_INVOKABLE void flushSortRebuild();
+
     // Single-instance guard: returns true if another instance is already running.
     // Call before creating SessionManager. If true, a "raise" message was sent
     // to the existing instance and the caller should exit.
@@ -166,6 +170,7 @@ private:
     void saveSessions();
     void scheduleSave();
     void rebuildSortedIndices();
+    void scheduleSortRebuild();   // debounced rebuild — see .cpp
 
     // Connect a view's session-routed signals (notifications, clipboard) to
     // this manager's aggregated signals. Called from both create and restore
@@ -194,6 +199,7 @@ private:
 
 private Q_SLOTS:
     void onNewInstanceConnection();
+    void onSortRebuildTimer();
 
 private:
     QVector<SessionInfo> m_sessions;
@@ -204,6 +210,7 @@ private:
     // Session persistence
     Settings *m_settings = nullptr;
     QTimer *m_saveTimer = nullptr;
+    QTimer *m_sortRebuildTimer = nullptr;  // debounces MRU rebuild after navigation
     bool m_sessionsLoaded = false;
     bool m_savedOnQuit = false;
     bool m_dbusRegistered = false;

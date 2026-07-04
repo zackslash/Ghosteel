@@ -14,7 +14,10 @@ Page {
     property int _sortRevision: 0
 
     property string sortDescription: ""
-    Component.onCompleted: updateSortDescription()
+    Component.onCompleted: {
+        SessionManager.flushSortRebuild()
+        updateSortDescription()
+    }
     function updateSortDescription() {
         var mode = SessionManager.sortMode()
         if (mode === 1) sortDescription = qsTr("Sorted by last used")
