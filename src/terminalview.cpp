@@ -1863,7 +1863,7 @@ void TerminalView::buildCellMapping()
             const QString &line = m_searchCache[row];
             // Use the wide-spacer cache from extractSearchText() when available,
             // avoiding redundant ghostty_terminal_grid_ref calls per cell.
-            const QVector<bool> &spacers = m_vt->wideSpacerCache();
+            const QVector<QVector<bool>> &spacers = m_vt->wideSpacerCache();
             bool hasSpacerCache = (row < spacers.size()
                                    && spacers[row].size() == static_cast<int>(cols));
             for (int cell = 0; cell < static_cast<int>(cols); cell++) {
