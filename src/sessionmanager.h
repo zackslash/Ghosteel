@@ -55,6 +55,7 @@ struct SessionInfo {
     bool isCommandSession() const { return !execArgs.isEmpty(); }
     bool scrollbackDirty = false;  // True if scrollback changed since last encrypt+save
     bool justRestored = false;     // True after restoreSessions(); skip dirty-marking until PTY data arrives
+    qint64 lastScrollbackSaveMs = 0; // Epoch ms of last successful scrollback save (throttle under continuous output)
 };
 
 class SessionManager : public QObject
@@ -164,7 +165,8 @@ private:
     static QString socketPath();
 
     void saveSessions();
-    void scheduleSave();
+    void scheduleSave();           // metadata changed — arms timer + marks sessions dirty
+    void scheduleScrollbackSave(); // scrollback-only change — arms timer without settings rewrite
     void rebuildSortedIndices();
 
     // Connect a view's session-routed signals (notifications, clipboard) to
@@ -179,7 +181,7 @@ private:
     int resolveActiveSession(int activeId, int legacyActiveIndex) const;
 
     // Scrollback persistence
-    void saveScrollbackIncremental();
+    void saveScrollbackIncremental(bool force = false);
     void saveSessionScrollback(SessionInfo &info);
     void cleanupScrollbackFiles();
     QString scrollbackDir() const;
@@ -206,6 +208,7 @@ private:
     QTimer *m_saveTimer = nullptr;
     bool m_sessionsLoaded = false;
     bool m_savedOnQuit = false;
+    bool m_sessionsDirty = false;  // true when session metadata changed since last saveSessions()
     bool m_dbusRegistered = false;
 
     // Single-instance socket server
