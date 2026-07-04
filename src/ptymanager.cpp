@@ -54,9 +54,10 @@ void PtyReaderThread::run()
             ssize_t n = ::read(m_fd, buf, sizeof(buf));
             if (n > 0) {
                 // Backpressure: wait if consumer is behind (cap = 64 chunks ≈ 1 MB).
-                // loadRelaxed: counter only — no other memory published, so relaxed
-                // ordering is correct on both producer and consumer sides.
-                while (m_pendingEmits.loadRelaxed() >= 64) {
+                // load() is the relaxed load on Qt < 5.14; acquire/release ordering
+                // isn't needed since the counter carries no other memory (the actual
+                // data flows through Qt's queued connection which provides its own barriers).
+                while (m_pendingEmits.load() >= 64) {
                     usleep(1000); // 1 ms
                     if (isInterruptionRequested())
                         return;
