@@ -1443,6 +1443,19 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
         m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
     }
 
+    // Top strip: padding band above the grid (y in [0, m_topPadding]), grid width
+    // only — the right strip above already covers this band for x in [gridW, viewportWidth].
+    if (m_topPadding > 0 && m_cellWidth > 0) {
+        float x0 = 0.0f, x1 = static_cast<float>(gridW);
+        float y0 = 0.0f, y1 = static_cast<float>(m_topPadding);
+        m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+        m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+    }
+
     // Bottom strip: rows beyond the grid, grid width only (the right strip covers the rest).
     if (m_viewportHeight > gridH && m_cellHeight > 0) {
         float x0 = 0.0f, x1 = static_cast<float>(gridW);
@@ -2392,7 +2405,9 @@ void GLRenderer::Renderer::render()
     }
 
     if (!didPostProcess) {
-        if (magnifierActive) {
+        // Guard the detour on the blit shader: blitPipelineToFbo() silently no-ops
+        // without it, leaving the terminal blank.
+        if (magnifierActive && m_blitProgram && m_blitProgram->isLinked()) {
             // Magnifier samples m_pipelineTex, which only exists when post-processing
             // is active. Create it on demand so the magnifier pass below has a source.
             createPipelineFbo(fbo->width(), fbo->height());
