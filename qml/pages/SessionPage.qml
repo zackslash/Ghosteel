@@ -225,11 +225,15 @@ Page {
                     }
 
                     Image {
-                        visible: sessionDelegate.keepAwake
                         source: "image://theme/icon-m-charging"
                         width: Theme.iconSizeSmall
                         height: Theme.iconSizeSmall
+                        opacity: sessionDelegate.keepAwake ? 1 : 0
+                        visible: opacity > 0
                         anchors.verticalCenter: parent.verticalCenter
+                        Behavior on opacity {
+                            NumberAnimation { duration: 150 }
+                        }
                     }
 
                     // Session name (or exec command for -e sessions)
@@ -305,7 +309,6 @@ Page {
                     onClicked: {
                         if (sessionDelegate.keepAwake) {
                             SessionManager.setSessionKeepAwake(actualIndex, false)
-                            flashToaster.show(qsTr("No longer keeping session awake"))
                         } else {
                             var dialog = keepAwakeDialogComponent.createObject(sessionPage, {
                                 sessionIndex: actualIndex
@@ -338,43 +341,6 @@ Page {
         }
 
         VerticalScrollDecorator {}
-    }
-
-    // Info toast — non-destructive feedback, not a Remorse
-    Rectangle {
-        id: flashToaster
-        anchors.centerIn: parent
-        width: flashLabel.width + Theme.paddingLarge * 4
-        height: flashLabel.height + Theme.paddingMedium * 2
-        radius: Theme.paddingSmall
-        color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
-        opacity: 0
-        visible: opacity > 0
-        z: 100
-
-        Behavior on opacity {
-            FadeAnimator { duration: 200 }
-        }
-
-        Label {
-            id: flashLabel
-            anchors.centerIn: parent
-            color: Theme.highlightColor
-            font.pixelSize: Theme.fontSizeMedium
-            text: ""
-        }
-
-        Timer {
-            id: flashTimer
-            interval: 1500
-            onTriggered: flashToaster.opacity = 0
-        }
-
-        function show(message) {
-            flashLabel.text = message
-            opacity = 1
-            flashTimer.restart()
-        }
     }
 
     // New session button at bottom
