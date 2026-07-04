@@ -1726,6 +1726,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     // (no post-processing active, magnifier now hidden)
     if (!m_postShaderActive && !m_magnifierVisible && m_pipelineFbo) {
         destroyPipelineFbo();
+        destroyPingPongFbo();
     }
 
     GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;

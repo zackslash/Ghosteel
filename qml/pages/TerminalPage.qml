@@ -409,6 +409,13 @@ Page {
         t.sessionSwipeEnabled = SessionManager.sessionCount > 1
         terminal = t
         updateWindowTitle()
+
+        // Sync keybar modifier display to the incoming terminal's actual state.
+        // Without this, switching back to a session where Ctrl was toggled shows
+        // the keybar as inactive while the C++ side still applies the modifier.
+        var mods = t.stickyModifiers
+        ctrlActive = (mods & modsCtrl) !== 0
+        altActive = (mods & modsAlt) !== 0
     }
 
     function detachTerminal(t) {
@@ -538,11 +545,8 @@ Page {
                 }
             }
 
-            // Reset sticky modifiers before switching. Modifiers are session-local —
-            // the user didn't press Ctrl/Alt in the new session, so don't carry them
-            // over. Without this, activeModifiers doesn't change on switch (no
-            // onActiveModifiersChanged fires), so the new terminal's stickyModifiers
-            // stays stale while the keybar still shows the old state.
+            // Clear modifiers on switch-out; attachTerminal re-syncs from the
+            // incoming terminal's stickyModifiers on switch-in.
             ctrlActive = false
             altActive = false
 
