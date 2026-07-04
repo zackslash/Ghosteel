@@ -2518,6 +2518,45 @@ private slots:
                  "saveSessions should run after titleChanged clears justRestored and contentChanged fires");
     }
 
+    void testPtyDataClearsJustRestoredWithoutTitle()
+    {
+        // ptyDataReceived clears justRestored; subsequent contentChanged should
+        // trigger scheduleSave → saveSessions — even if titleChanged never fires
+        // (e.g. sh/dash, bare REPLs).
+        writeRawSessions({{"A", "/tmp"}});
+
+        bool fileExisted = false;
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+            QCOMPARE(mgr.sessionCount(), 1);
+
+            // Wait for the initial post-restore save to settle
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            // Remove settings file to detect if saveSessions runs again
+            QFile::remove(m_settingsPath);
+
+            TerminalView *view = mgr.activeSession();
+            QVERIFY(view);
+
+            // ptyDataReceived fires during real PTY data — clears justRestored
+            // WITHOUT titleChanged (simulates a shell that never sets a title)
+            view->emitPtyDataReceived();
+
+            // Now contentChanged should mark dirty and scheduleSave
+            view->emitContentChanged();
+
+            // Wait for debounce — save SHOULD fire
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            fileExisted = QFile::exists(m_settingsPath);
+        }
+        QVERIFY2(fileExisted,
+                 "saveSessions should run after ptyDataReceived clears justRestored and contentChanged fires");
+    }
+
     void testContentChangedSpamOnlyTransitionsDirtyOnce()
     {
         // Repeated contentChanged should only flip scrollbackDirty once;

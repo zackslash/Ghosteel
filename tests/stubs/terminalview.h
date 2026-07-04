@@ -117,6 +117,7 @@ public:
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
     void emitContentChanged() { Q_EMIT contentChanged(); }
+    void emitPtyDataReceived() { Q_EMIT ptyDataReceived(); }
     void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
     bool shellExited() const { return m_shellExited; }
     void emitCommandExited(int exitCode) { m_shellExited = true; Q_EMIT commandExited(exitCode); }
@@ -125,6 +126,7 @@ Q_SIGNALS:
     void fontSizeChanged();
     void titleChanged();
     void contentChanged();
+    void ptyDataReceived();
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);

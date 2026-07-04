@@ -968,9 +968,12 @@ Page {
             text: {
                 var dir = swipePanX < 0 ? 1 : -1   // leftward → next
                 var count = SessionManager.sessionCount
-                var curDisplay = SessionManager.actualToDisplay(SessionManager.activeSessionIndex)
-                var targetDisplay = ((curDisplay + dir) % count + count) % count
-                var name = SessionManager.sessionDisplayName(SessionManager.displayToActual(targetDisplay))
+                // Mirror switchSession(): navigate by ACTUAL (vector) index, not
+                // display index. Under SortLastUsed the display order shifts on
+                // every switch, so display-index math would name the wrong session.
+                var actualIdx = SessionManager.activeSessionIndex
+                var targetActual = ((actualIdx + dir) % count + count) % count
+                var name = SessionManager.sessionDisplayName(targetActual)
                 return dir > 0 ? (name + "  ›") : ("‹  " + name)
             }
             x: {

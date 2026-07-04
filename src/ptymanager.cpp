@@ -300,6 +300,30 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     return true;
 }
 
+bool PtyManager::reapPidBounded(pid_t pid)
+{
+    if (pid <= 0)
+        return true;
+
+    constexpr int kMaxAttempts = 50;
+    constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
+    int status = 0;
+    for (int i = 0; i < kMaxAttempts; ++i) {
+        pid_t result = waitpid(pid, &status, WNOHANG);
+        if (result > 0 || result < 0)
+            return true; // reaped or error/already gone
+        // result == 0: child still alive. Sleep briefly and retry.
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = kSleepNs;
+        nanosleep(&ts, nullptr);
+    }
+    qWarning("PtyManager::reapPidBounded: child %ld did not exit within %dms; "
+             "may leak as zombie", (long)pid,
+             kMaxAttempts * (int)(kSleepNs / 1000000));
+    return false;
+}
+
 void PtyManager::stop(bool synchronous)
 {
     if (m_execNotifier) {
@@ -317,6 +341,12 @@ void PtyManager::stop(bool synchronous)
         m_waitPidTimer->stop();
         m_waitPidTimer->deleteLater();
         m_waitPidTimer = nullptr;
+        // The timer was reaping this pid asynchronously; now that we're
+        // tearing down, reap synchronously to avoid orphaning it as a zombie.
+        if (m_pendingReapPid > 0) {
+            reapPidBounded(m_pendingReapPid);
+            m_pendingReapPid = -1;
+        }
     }
 
     // Kill child FIRST — this causes the slave side of the PTY to close,
@@ -365,6 +395,7 @@ void PtyManager::stop(bool synchronous)
         // with the new child's PID, so we always reap the correct process.
         if (m_childPid > 0) {
             pid_t oldPid = m_childPid;
+            m_pendingReapPid = oldPid;
             uint32_t gen = m_sessionGeneration;
             auto *timer = new QTimer(this);
             m_waitPidTimer = timer;
@@ -384,6 +415,8 @@ void PtyManager::stop(bool synchronous)
                 timer->deleteLater();
                 if (m_waitPidTimer == timer)
                     m_waitPidTimer = nullptr;
+                if (m_pendingReapPid == oldPid)
+                    m_pendingReapPid = -1;
                 // Only emit if this is still the current session generation
                 if (gen == m_sessionGeneration && result > 0) {
                     m_childPid = -1;
@@ -406,27 +439,7 @@ void PtyManager::stop(bool synchronous)
         // terminate, then give up (kernel subreaper / init will reap if so
         // configured; otherwise we log and accept the rare leak rather than
         // block shutdown indefinitely).
-        constexpr int kMaxAttempts = 50;
-        constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
-        int status = 0;
-        bool reaped = false;
-        for (int i = 0; i < kMaxAttempts; ++i) {
-            pid_t result = waitpid(m_childPid, &status, WNOHANG);
-            if (result > 0 || result < 0) {
-                reaped = true;
-                break;
-            }
-            // result == 0: child still alive. Sleep briefly and retry.
-            struct timespec ts;
-            ts.tv_sec = 0;
-            ts.tv_nsec = kSleepNs;
-            nanosleep(&ts, nullptr);
-        }
-        if (!reaped) {
-            qWarning("PtyManager::stop: child %ld did not exit within %dms; "
-                     "may leak as zombie", (long)m_childPid,
-                     kMaxAttempts * (int)(kSleepNs / 1000000));
-        }
+        reapPidBounded(m_childPid);
         m_childPid = -1;
     }
 

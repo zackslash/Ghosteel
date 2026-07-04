@@ -214,7 +214,8 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
         if (idx < 0)
             return;
         // Skip geometry-update repaints that fire immediately after
-        // restoreSessions(). Cleared by titleChanged (real PTY data).
+        // restoreSessions(). Cleared by titleChanged or ptyDataReceived
+        // (whichever fires first).
         if (m_sessions[idx].justRestored)
             return;
         if (!m_sessions[idx].scrollbackDirty) {
@@ -227,7 +228,17 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
     // during onPtyData() → vtWrite(), synchronously before the update()
     // that emits contentChanged, so justRestored is cleared before the
     // first data-driven contentChanged handler runs.
+    // ptyDataReceived fires earlier still (before vtWrite) and covers
+    // shells that never set a title (sh/dash, bare REPLs).
+    // Whichever fires first clears the flag — both paths are kept for
+    // robustness.
     connect(view, &TerminalView::titleChanged, this,
+        [this, sessionId]() {
+        int idx = sessionIndexById(sessionId);
+        if (idx >= 0)
+            m_sessions[idx].justRestored = false;
+    });
+    connect(view, &TerminalView::ptyDataReceived, this,
         [this, sessionId]() {
         int idx = sessionIndexById(sessionId);
         if (idx >= 0)
