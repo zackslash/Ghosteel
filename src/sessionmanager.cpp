@@ -73,16 +73,6 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         saveScrollbackIncremental();
     });
 
-    // Sort-order rebuild debounce. setActiveSessionIndex() bumps lastUsedAt
-    // and schedules (not performs) a rebuild so that rapid swipe navigation
-    // cycles through a stable display order. Fires ~1s after the last switch;
-    // direct rebuild callers (create/remove/rename/setSortMode/restore)
-    // cancel this timer since their synchronous rebuild supersedes it.
-    m_sortRebuildTimer = new QTimer(this);
-    m_sortRebuildTimer->setSingleShot(true);
-    m_sortRebuildTimer->setInterval(1000);
-    connect(m_sortRebuildTimer, &QTimer::timeout, this, &SessionManager::onSortRebuildTimer);
-
     // When the global default font size changes, propagate it to every session
     // that is tracking the default (fontSize == 0). Sessions with an explicit
     // override are left alone.
@@ -146,14 +136,12 @@ void SessionManager::setActiveSessionIndex(int index)
     if (m_activeSessionIndex == index)
         return;
 
-    // Bump last-used timestamp immediately, but DEFER rebuildSortedIndices()
-    // via a debounce timer. Rebuilding synchronously moves the just-activated
-    // session to display index 0 under SortLastUsed, breaking directional
-    // swipe navigation. The deferred rebuild keeps m_sortedIndices frozen for
-    // rapid swipe sequences. flushSortRebuild() forces it when the list shows.
+    // Update last-used timestamp and rebuild sort order BEFORE emitting
+    // signals, so QML bindings that call displayToActual() see the
+    // correct mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
-        scheduleSortRebuild();
+        rebuildSortedIndices();
     }
 
     m_activeSessionIndex = index;
@@ -589,8 +577,6 @@ void SessionManager::setSortMode(int mode)
 
 void SessionManager::rebuildSortedIndices()
 {
-    if (m_sortRebuildTimer)
-        m_sortRebuildTimer->stop();   // synchronous rebuild supersedes pending debounce
     if (m_sessions.isEmpty()) {
         m_sortedIndices.clear();
         return;
@@ -618,27 +604,6 @@ void SessionManager::rebuildSortedIndices()
         });
     }
     // SortManual: identity order from the initialization loop above
-}
-
-void SessionManager::scheduleSortRebuild()
-{
-    if (m_sortRebuildTimer)
-        m_sortRebuildTimer->start();
-}
-
-void SessionManager::onSortRebuildTimer()
-{
-    rebuildSortedIndices();
-    Q_EMIT sortOrderChanged();
-}
-
-void SessionManager::flushSortRebuild()
-{
-    if (m_sortRebuildTimer && m_sortRebuildTimer->isActive()) {
-        m_sortRebuildTimer->stop();
-        rebuildSortedIndices();
-        Q_EMIT sortOrderChanged();
-    }
 }
 
 void SessionManager::removeSessionById(int id)
