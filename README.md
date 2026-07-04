@@ -10,7 +10,7 @@
 
 <div align="center">
 
-[![SailfishOS:Chum](https://img.shields.io/badge/SailfishOS-Chum-1CA198)](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel)
+[![SailfishOS:Chum](https://img.shields.io/badge/SailfishOS-Chum-1CA198)](https://sailfishos-chum.github.io/apps/ghosteel/)
 
 </div>
 
@@ -51,7 +51,7 @@ correctly, with truecolor and GPU rendering.
 
 ## Install
 
-**Recommended**: Install via [SailfishOS:Chum](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel):
+**Recommended**: Install via [SailfishOS:Chum](https://sailfishos-chum.github.io/apps/ghosteel/):
 
 ```bash
 devel-su pkcon install ghosteel
