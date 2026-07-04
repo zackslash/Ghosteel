@@ -399,7 +399,7 @@ void TerminalView::restartShell()
     m_shellExitCode = 0;
     m_commandArgs.clear();
     Q_EMIT shellRestarted();
-    m_pty->stop();
+    m_pty->stop(false); // async reap — avoids 500ms GUI freeze on restart
     m_vt->destroy();
     setupTerminal();
     update();
@@ -421,11 +421,20 @@ void TerminalView::setActive(bool active)
 void TerminalView::update()
 {
     QQuickItem::update();
+    // contentChanged fires on every repaint, not just on real content changes.
+    // The sessionmanager handler debounces (500ms) and skips when scrollbackDirty
+    // is already set, so the cost is one save per dirty cycle. A proper fix would
+    // move this emission to explicit content-change sites (onPtyData, paste), but
+    // geometry updates (resize/restoreScrollback) also mutate terminal state and
+    // route through update(), making a clean split non-trivial.
     Q_EMIT contentChanged();
 }
 
 void TerminalView::paste()
 {
+    resetBlinkOnInput();
+    scrollViewportToBottom();
+
     QClipboard *clipboard = QGuiApplication::clipboard();
     QString text = clipboard->text(QClipboard::Clipboard);
     if (text.isEmpty())
@@ -528,6 +537,17 @@ void TerminalView::copySelection()
         while (ghostty_render_state_row_cells_next(cells)) {
             if (rowIdx == startRow && colIdx < startCol) { colIdx++; continue; }
             if (rowIdx == endRow && colIdx > endCol) break;
+
+            // Skip wide-char spacer cells (tail of CJK/emoji, head of RTL)
+            // to avoid injecting phantom spaces.
+            GhosttyCell rawCell = 0;
+            if (ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                    &rawCell) == GHOSTTY_SUCCESS
+                    && GhosttyVt::isWideSpacerCell(rawCell)) {
+                colIdx++;
+                continue;
+            }
 
             uint32_t graphemesLen = 0;
             ghostty_render_state_row_cells_get(cells,
@@ -734,7 +754,6 @@ void TerminalView::clearSelection()
             killTimer(m_longPressTimerId);
             m_longPressTimerId = 0;
         }
-        m_velocityInitialized = false;
         if (!m_selectedText.isEmpty()) {
             m_selectedText.clear();
             Q_EMIT selectedTextChanged();
@@ -899,40 +918,6 @@ int TerminalView::handleHitTest(const QPointF &pos) const
     return 0; // No hit
 }
 
-bool TerminalView::updateMagnifierVelocity(const QPointF &pos)
-{
-    // Minimum interval between velocity samples — skip sub-frame deltas
-    // that produce noisy velocity spikes from tiny position jitter
-    static const qint64 MinVelocityDtMs = 16;
-
-    if (m_velocityInitialized) {
-        qint64 now = QDateTime::currentMSecsSinceEpoch();
-        qint64 dt = now - m_lastMoveTime;
-        if (dt >= MinVelocityDtMs) {
-            qreal dist = QLineF(pos, m_lastMovePos).length();
-            qreal velocity = dist * 1000.0 / dt; // pixels per second
-            m_lastMoveTime = now;
-            m_lastMovePos = pos;
-            // Hysteresis: use different thresholds to prevent flicker
-            // when velocity oscillates around the boundary
-            if (m_magnifierVisible)
-                return velocity <= MagnifierVelocityHide;  // hide only above 600
-            else
-                return velocity < MagnifierVelocityShow;   // show only below 400
-        }
-        if (dt > 0) {
-            m_lastMoveTime = now;
-            m_lastMovePos = pos;
-        }
-        return m_magnifierVisible; // no change when dt is too small
-    }
-    // First move after activation — initialize velocity tracking
-    m_lastMoveTime = QDateTime::currentMSecsSinceEpoch();
-    m_lastMovePos = pos;
-    m_velocityInitialized = true;
-    return true; // show magnifier on first move
-}
-
 void TerminalView::resetSessionSwipe()
 {
     if (!m_sessionSwiping)
@@ -941,6 +926,18 @@ void TerminalView::resetSessionSwipe()
     setKeepMouseGrab(false);
     setKeepTouchGrab(false);
     Q_EMIT sessionSwipeCancelled();
+}
+
+void TerminalView::resetTouchInteractionState()
+{
+    if (m_longPressTimerId) {
+        killTimer(m_longPressTimerId);
+        m_longPressTimerId = 0;
+    }
+    if (m_selecting)
+        clearSelection();
+    m_pendingLinkTap = false;
+    m_draggingHandle = 0;
 }
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
@@ -989,7 +986,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             m_draggingHandle = handle;
             m_handlesVisible = false;
             m_magnifierVisible = true;
-            m_velocityInitialized = false;
             m_tapCount = 0; // Prevent phantom triple-tap after handle drag
             setKeepMouseGrab(true);
             event->accept();
@@ -1075,7 +1071,11 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
             m_selEnd = event->pos();
         }
 
-        m_magnifierVisible = updateMagnifierVelocity(event->pos());
+        // Magnifier stays visible for the whole drag — no velocity-based hiding.
+        // Visibility is bracketed by timerEvent (show on long-press fire) and
+        // mouseReleaseEvent (hide on release). Velocity gating caused flicker
+        // (hysteresis band sat inside typical drag velocity) and stuck-invisible
+        // when the finger stopped mid-drag (no move events to revive it).
 
         // Keep cursor blink paused during active selection to prevent
         // full redraws that cause magnifier flicker
@@ -1145,8 +1145,12 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     }
 
     if (m_mouseTrackingActive) {
-        sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
-                       event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
+        // Re-check live tracking state — the app may have disabled mouse
+        // tracking between press and release (e.g. htop exiting to shell).
+        if (m_vt->isMouseTracking()) {
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
+                           event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
+        }
 
         m_mouseButtonPressed = false;
         m_vt->setMouseButtonPressed(false);
@@ -1337,8 +1341,10 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     // Normal mode: native fall-through — let Qt synthesise mouse events and
     // the Flickable handle pull-down disambiguation.
-    if (event->type() == QEvent::TouchCancel)
+    if (event->type() == QEvent::TouchCancel) {
         resetSessionSwipe();   // no release follows a cancel; keep the flag honest
+        resetTouchInteractionState();
+    }
     QQuickItem::touchEvent(event);
 }
 
@@ -1608,8 +1614,6 @@ void TerminalView::timerEvent(QTimerEvent *event)
         m_longPressTimerId = 0;
         m_selecting = true;
         m_magnifierVisible = true;
-        // Initialize velocity tracking so first move doesn't use stale data
-        m_velocityInitialized = false;
         // Prevent parent SilicaFlickable from stealing the drag
         setKeepMouseGrab(true);
         update();
@@ -1822,9 +1826,17 @@ void TerminalView::buildCellMapping()
             mapping.resize(static_cast<int>(cols));
             int charIdx = 0;
             const QString &line = m_searchCache[row];
+            // Use the wide-spacer cache from extractSearchText() when available,
+            // avoiding redundant ghostty_terminal_grid_ref calls per cell.
+            const QVector<QVector<bool>> &spacers = m_vt->wideSpacerCache();
+            bool hasSpacerCache = (row < spacers.size()
+                                   && spacers[row].size() == static_cast<int>(cols));
             for (int cell = 0; cell < static_cast<int>(cols); cell++) {
                 mapping[cell] = charIdx;
-                if (GhosttyVt::isWideCharSpacer(terminal, static_cast<uint16_t>(cell), static_cast<uint32_t>(row))) {
+                bool isSpacer = hasSpacerCache
+                    ? spacers[row][cell]
+                    : GhosttyVt::isWideCharSpacer(terminal, static_cast<uint16_t>(cell), static_cast<uint32_t>(row));
+                if (isSpacer) {
                     continue;
                 }
                 if (charIdx < line.size())
@@ -1898,6 +1910,15 @@ void TerminalView::performSearch()
                 for (int cell = cellCol; cell < mapping.size(); cell++) {
                     if (mapping[cell] >= matchEnd)
                         break;
+                    cellWidth++;
+                }
+                // Extend cellWidth past a trailing wide-char spacer tail: the spacer
+                // shares the next cell's charIdx in the mapping (spacers don't advance it).
+                // Note: assumes TAIL spacers (CJK/emoji wide chars); HEAD spacers (rare RTL)
+                // would also satisfy mapping[tail]==mapping[tail+1] and may over-extend.
+                int tail = cellCol + cellWidth;
+                if (tail < mapping.size() && tail + 1 < mapping.size()
+                    && mapping[tail] == mapping[tail + 1]) {
                     cellWidth++;
                 }
                 if (cellWidth == 0)
@@ -2067,17 +2088,14 @@ void TerminalView::refreshLinks()
 
         uint16_t colIdx = 0;
         while (ghostty_render_state_row_cells_next(cells)) {
-            // Check wide char spacer via render state (not grid_ref)
+            // Skip wide char spacer via render state (not grid_ref)
             GhosttyCell rawCell = 0;
             if (ghostty_render_state_row_cells_get(
                     cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
-                    &rawCell) == GHOSTTY_SUCCESS && rawCell != 0) {
-                GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-                ghostty_cell_get(rawCell, GHOSTTY_CELL_DATA_WIDE, &wide);
-                if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD) {
-                    colIdx++;
-                    continue;
-                }
+                    &rawCell) == GHOSTTY_SUCCESS
+                    && GhosttyVt::isWideSpacerCell(rawCell)) {
+                colIdx++;
+                continue;
             }
 
             uint32_t graphemeLen = 0;

@@ -142,7 +142,7 @@ Page {
     Notification {
         id: bellNotification
         appName: "Ghosteel"
-        summary: ""
+        summary: qsTr("Bell")
         body: ""
         urgency: Notification.Critical
         expireTimeout: 1
@@ -409,6 +409,13 @@ Page {
         t.sessionSwipeEnabled = SessionManager.sessionCount > 1
         terminal = t
         updateWindowTitle()
+
+        // Sync keybar modifier display to the incoming terminal's actual state.
+        // Without this, switching back to a session where Ctrl was toggled shows
+        // the keybar as inactive while the C++ side still applies the modifier.
+        var mods = t.stickyModifiers
+        ctrlActive = (mods & modsCtrl) !== 0
+        altActive = (mods & modsAlt) !== 0
     }
 
     function detachTerminal(t) {
@@ -433,9 +440,17 @@ Page {
     function switchSession(direction) {
         var count = SessionManager.sessionCount
         if (count <= 1) return
-        var displayIdx = SessionManager.actualToDisplay(SessionManager.activeSessionIndex)
-        var nextDisplay = ((displayIdx + direction) % count + count) % count
-        SessionManager.switchToSession(nextDisplay)
+        // Navigate by ACTUAL (vector) index, not display index. Under
+        // SortLastUsed (the default), setActiveSessionIndex bumps lastUsedAt
+        // and rebuilds the sorted indices on every switch, so the just-
+        // activated session always lands at display index 0. Stepping the
+        // display index by +1 then forever selects display index 1 (2nd-most-
+        // recent), making "next" bounce between two sessions. Actual-index
+        // order only changes on add/remove, so both directions cycle through
+        // every session.
+        var actualIdx = SessionManager.activeSessionIndex
+        var nextActual = ((actualIdx + direction) % count + count) % count
+        SessionManager.activeSessionIndex = nextActual
     }
 
     Component.onCompleted: {
@@ -529,6 +544,11 @@ Page {
                     SessionManager.setSessionKeyboardVisible(currentSessionIndex, kbState)
                 }
             }
+
+            // Clear modifiers on switch-out; attachTerminal re-syncs from the
+            // incoming terminal's stickyModifiers on switch-in.
+            ctrlActive = false
+            altActive = false
 
             var newTerminal = SessionManager.activeSession()
             var incomingSid = SessionManager.sessionId(index)
@@ -823,7 +843,12 @@ Page {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: keybar.top
+        anchors.bottom: parent.bottom
+        // Decouple from keybar's animated y to avoid per-frame terminal resize
+        // (C++ geometryChanged → PTY SIGWINCH) during the 200ms slide. The margin
+        // snaps to the keybar's resting height immediately; the keybar's own
+        // Behavior-on-y provides the visual slide on top (higher z).
+        anchors.bottomMargin: keybar.open ? keybar.height : 0
         contentHeight: height
 
         PullDownMenu {
@@ -959,7 +984,7 @@ Page {
         }
 
         // Transparent overlay that captures taps to dismiss search panel.
-        // Only enabled when search is open; passes the tap through to the terminal.
+        // Only enabled when search is open; consumes the tap to dismiss (does not pass through).
         MouseArea {
             anchors.fill: parent
             enabled: searchPanel.open
@@ -968,7 +993,6 @@ Page {
             onPressed: {
                 searchPanel.open = false
                 if (terminal) terminal.forceActiveFocus()
-                mouse.accepted = false // Let the terminal receive the event
             }
         }
     }
@@ -1149,7 +1173,8 @@ Page {
 
     // Extra terminal keys panel — plain Item (not DockedPanel, whose C++
     // drag-to-close cannot be reliably overridden from QML). We animate y
-    // manually; the terminal flickable anchors to keybar.top and tracks it.
+    // manually; the terminal flickable uses a static bottomMargin instead of
+    // anchoring to keybar.top, to avoid per-frame resize during the slide.
     Item {
         id: keybar
         anchors.left: parent.left

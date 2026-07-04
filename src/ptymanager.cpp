@@ -21,12 +21,18 @@
 PtyReaderThread::PtyReaderThread(int fd, QObject *parent)
     : QThread(parent)
     , m_fd(fd)
+    , m_pendingEmits(0)
 {
+}
+
+void PtyReaderThread::consumeChunk()
+{
+    m_pendingEmits.fetchAndAddRelaxed(-1);
 }
 
 void PtyReaderThread::run()
 {
-    char buf[4096];
+    char buf[16 * 1024];
     struct pollfd pfd;
     pfd.fd = m_fd;
     pfd.events = POLLIN;
@@ -41,10 +47,23 @@ void PtyReaderThread::run()
         if (ret == 0)
             continue; // timeout, check interruption flag
 
+        if (pfd.revents & (POLLERR | POLLNVAL))
+            break;
+
         if (pfd.revents & (POLLIN | POLLHUP)) {
             ssize_t n = ::read(m_fd, buf, sizeof(buf));
             if (n > 0) {
+                // Backpressure: wait if consumer is behind (cap = 64 chunks ≈ 1 MB).
+                // load() is the relaxed load on Qt < 5.14; acquire/release ordering
+                // isn't needed since the counter carries no other memory (the actual
+                // data flows through Qt's queued connection which provides its own barriers).
+                while (m_pendingEmits.load() >= 64) {
+                    usleep(1000); // 1 ms
+                    if (isInterruptionRequested())
+                        return;
+                }
                 Q_EMIT dataReady(QByteArray(buf, n));
+                m_pendingEmits.fetchAndAddRelaxed(1);
             } else if (n == 0) {
                 break; // EOF — shell exited
             } else {
@@ -202,6 +221,11 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     m_readerThread = new PtyReaderThread(m_ptyFd, this);
     connect(m_readerThread, &PtyReaderThread::dataReady,
             this, &PtyManager::dataReady, Qt::QueuedConnection);
+    connect(m_readerThread, &PtyReaderThread::dataReady,
+            this, [this]() {
+                if (m_readerThread)
+                    m_readerThread->consumeChunk();
+            }, Qt::QueuedConnection);
     connect(m_readerThread, &PtyReaderThread::readFinished, this, [this]() {
         // Capture generation by value — if startShell()/startCommand() is called again,
         // the old timer will see a stale generation and bail out.
@@ -276,7 +300,7 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     return true;
 }
 
-void PtyManager::stop()
+void PtyManager::stop(bool synchronous)
 {
     if (m_execNotifier) {
         m_execNotifier->setEnabled(false);
@@ -301,7 +325,80 @@ void PtyManager::stop()
     // on read() of the same fd is undefined behavior on Linux.
     if (m_childPid > 0) {
         kill(m_childPid, SIGHUP);
+    }
 
+    if (!synchronous) {
+        // Async path (restartShell): tear down the reader thread and PTY fd
+        // without blocking, then set up an async timer to reap the child.
+        // This avoids freezing the GUI thread for up to 500 ms.
+
+        if (m_readerThread) {
+            // Disconnect signals first — prevents queued dataReady/readFinished
+            // from being delivered to a destroyed PtyManager after we return.
+            disconnect(m_readerThread, nullptr, this, nullptr);
+
+            // Ask the thread to exit at its next poll timeout (≤200 ms).
+            m_readerThread->requestInterruption();
+
+            // The thread will exit shortly (POLLNVAL from closed fd or
+            // interruption). deleteLater ensures the QThread object is
+            // properly cleaned up after exit, even though we no longer track
+            // it via m_readerThread.
+            connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
+            m_readerThread = nullptr;
+        }
+
+        if (m_ptyFd >= 0) {
+            if (m_writeNotifier) {
+                m_writeNotifier->setEnabled(false);
+                delete m_writeNotifier;
+                m_writeNotifier = nullptr;
+            }
+            resetWriteBuffer();
+            ::close(m_ptyFd);
+            m_ptyFd = -1;
+        }
+
+        // Set up an async reap timer — the child is dying from SIGHUP but
+        // may not have exited yet. Poll with WNOHANG every 100 ms.
+        // Capture the OLD pid BEFORE setupTerminal() can overwrite m_childPid
+        // with the new child's PID, so we always reap the correct process.
+        if (m_childPid > 0) {
+            pid_t oldPid = m_childPid;
+            uint32_t gen = m_sessionGeneration;
+            auto *timer = new QTimer(this);
+            m_waitPidTimer = timer;
+            connect(timer, &QTimer::timeout, this, [this, timer, gen, oldPid]() {
+                if (oldPid <= 0) {
+                    timer->stop();
+                    timer->deleteLater();
+                    return;
+                }
+                int status = 0;
+                pid_t result = ::waitpid(oldPid, &status, WNOHANG);
+                if (result == 0)
+                    return; // still running, try again next tick
+                // Reaped (result > 0) or error (result < 0, e.g. already
+                // reaped elsewhere). Clean up the timer either way.
+                timer->stop();
+                timer->deleteLater();
+                if (m_waitPidTimer == timer)
+                    m_waitPidTimer = nullptr;
+                // Only emit if this is still the current session generation
+                if (gen == m_sessionGeneration && result > 0) {
+                    m_childPid = -1;
+                    int exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+                    Q_EMIT shellExited(exitCode);
+                }
+            });
+            timer->start(100);
+        }
+        return;
+    }
+
+    // --- Synchronous path (destructor / cleanup) ---
+
+    if (m_childPid > 0) {
         // Bounded reaping loop. A single waitpid(WNOHANG) here would return 0
         // (child not yet dead from the asynchronous SIGHUP) and we'd then
         // clobber m_childPid, leaving a zombie the m_waitPidTimer can no
@@ -354,7 +451,7 @@ void PtyManager::stop()
                     delete m_writeNotifier;
                     m_writeNotifier = nullptr;
                 }
-                m_writeBuffer.clear();
+                resetWriteBuffer();
                 ::close(m_ptyFd);
                 m_ptyFd = -1;
             }
@@ -375,7 +472,7 @@ void PtyManager::stop()
             delete m_writeNotifier;
             m_writeNotifier = nullptr;
         }
-        m_writeBuffer.clear();
+        resetWriteBuffer();
 
         ::close(m_ptyFd);
         m_ptyFd = -1;
@@ -429,32 +526,38 @@ void PtyManager::ensureWriteNotifier()
     m_writeNotifier->setEnabled(true);
 }
 
+void PtyManager::resetWriteBuffer()
+{
+    m_writeBuffer.clear();
+    m_writeOffset = 0;
+}
+
 void PtyManager::drainWriteBuffer()
 {
-    if (m_ptyFd < 0 || m_writeBuffer.isEmpty()) {
+    if (m_ptyFd < 0 || m_writeOffset >= m_writeBuffer.size()) {
         if (m_writeNotifier)
             m_writeNotifier->setEnabled(false);
         return;
     }
 
-    const char *ptr = m_writeBuffer.constData();
-    size_t remaining = m_writeBuffer.size();
+    const char *ptr = m_writeBuffer.constData() + m_writeOffset;
+    size_t remaining = m_writeBuffer.size() - m_writeOffset;
 
     while (remaining > 0) {
         ssize_t n = ::write(m_ptyFd, ptr, remaining);
         if (n > 0) {
+            m_writeOffset += n;
             ptr += n;
             remaining -= n;
         } else if (n < 0) {
             if (errno == EINTR)
                 continue;
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // Still full — keep remaining in buffer
-                m_writeBuffer.remove(0, ptr - m_writeBuffer.constData());
+                // Still full — offset already reflects bytes written
                 return;
             }
             qWarning() << "PTY drain write failed:" << strerror(errno);
-            m_writeBuffer.clear();
+            resetWriteBuffer();
             if (m_writeNotifier)
                 m_writeNotifier->setEnabled(false);
             return;
@@ -462,7 +565,7 @@ void PtyManager::drainWriteBuffer()
     }
 
     // All data written — clear buffer and disable notifier
-    m_writeBuffer.clear();
+    resetWriteBuffer();
     if (m_writeNotifier)
         m_writeNotifier->setEnabled(false);
 }

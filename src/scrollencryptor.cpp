@@ -52,6 +52,7 @@ bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 #include <Sailfish/Crypto/result.h>
 
 #include <QDebug>
+#include <QTimer>
 #include <random>
 
 using Sailfish::Secrets::SecretManager;
@@ -70,9 +71,18 @@ ScrollEncryptor::ScrollEncryptor(QObject *parent)
     , m_secretManager(std::make_unique<SecretManager>())
     , m_cryptoManager(std::make_unique<CryptoManager>())
 {
+    // Defer initialization to next event-loop iteration so the UI can
+    // render the first frame before any blocking D-Bus calls.
+    m_available = false;
+    QTimer::singleShot(0, this, &ScrollEncryptor::initializeAsync);
+}
+
+void ScrollEncryptor::initializeAsync()
+{
     m_available = initializeEncryption();
     if (m_available)
         replenishIVs();
+    Q_EMIT availabilityChanged();
 }
 
 ScrollEncryptor::~ScrollEncryptor() = default;
@@ -281,11 +291,16 @@ QByteArray ScrollEncryptor::decrypt(const QByteArray &ciphertextWithHeader)
 // Stub implementation for non-Sailfish builds (tests, CI).
 // Encryption is unavailable; callers should skip encryption entirely.
 
-ScrollEncryptor::ScrollEncryptor(QObject *parent) : QObject(parent) {}
+#include <QTimer>
+
+ScrollEncryptor::ScrollEncryptor(QObject *parent) : QObject(parent) {
+    QTimer::singleShot(0, this, &ScrollEncryptor::initializeAsync);
+}
 ScrollEncryptor::~ScrollEncryptor() = default;
 bool ScrollEncryptor::isAvailable() const { return false; }
 QByteArray ScrollEncryptor::encrypt(const QByteArray &) { return QByteArray(); }
 QByteArray ScrollEncryptor::decrypt(const QByteArray &) { return QByteArray(); }
 void ScrollEncryptor::replenishIVs() {}
+void ScrollEncryptor::initializeAsync() { Q_EMIT availabilityChanged(); }
 
 #endif // SAILFISH_SECRETS

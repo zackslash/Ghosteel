@@ -13,6 +13,7 @@
 #include <ghostty/vt.h>
 
 #include <QObject>
+#include <QVector>
 #include <functional>
 #include <QStringList>
 
@@ -80,6 +81,10 @@ public:
     QStringList extractSearchText();
     bool isSearchTextDirty() const { return m_searchTextDirty; }
 
+    // Per-row wide-spacer cache populated by extractSearchText().
+    // m_wideSpacerCache[row][col] == true means the cell is a wide-char spacer.
+    const QVector<QVector<bool>>& wideSpacerCache() const { return m_wideSpacerCache; }
+
     // Scrollback persistence — export terminal content (scrollback + active) as
     // VT sequences that can be replayed to restore the terminal state.
     // Returns empty if on alternate screen (TUI apps) or terminal is null.
@@ -98,6 +103,10 @@ public:
     // Returns true if the cell at (col, row) is a wide-character spacer
     // (the invisible second half of a CJK/emoji character).
     static bool isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row);
+
+    // True if `cell` is a wide-char spacer (head or tail). Prefer this over
+    // isWideCharSpacer() when you already hold a cell, to avoid a redundant ghostty_terminal_grid_ref call.
+    static bool isWideSpacerCell(GhosttyCell cell);
 
 Q_SIGNALS:
     void titleChanged(const QString &title);
@@ -119,6 +128,9 @@ private:
     PtyWriteFn m_ptyWriteFn;
     bool m_needsEncoderSync = true; // Only sync encoders when terminal modes change
     bool m_searchTextDirty = true; // Set in vtWrite(), cleared by extractSearchText()
+
+    // Per-row wide-spacer cache, populated by extractSearchText(). See wideSpacerCache().
+    QVector<QVector<bool>> m_wideSpacerCache;
 
     // OSC 777 desktop notification scanner
     Osc777State m_osc777State = OSC777_IDLE;

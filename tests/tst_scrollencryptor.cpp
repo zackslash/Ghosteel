@@ -1,5 +1,6 @@
 #include <QtTest>
 #include <QByteArray>
+#include <QSignalSpy>
 #include "scrollencryptor.h"
 
 class TestScrollEncryptor : public QObject
@@ -156,6 +157,23 @@ private slots:
         // Unpad must recover original
         QByteArray recovered = ScrollEncryptor::pkcs7Unpad(padded);
         QCOMPARE(recovered, original);
+    }
+
+    void testAvailabilityChangedFiresAsync()
+    {
+        // After spinning the event loop, availabilityChanged should fire.
+        // In the non-SAILFISH_SECRETS stub build, isAvailable() is always false.
+        ScrollEncryptor encryptor;
+        QSignalSpy spy(&encryptor, &ScrollEncryptor::availabilityChanged);
+
+        // Signal should not have fired yet (timer is queued, not processed)
+        QCOMPARE(spy.count(), 0);
+
+        // Spin the event loop to let the singleShot(0) fire
+        QTest::qWait(50);
+
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(encryptor.isAvailable(), false);
     }
 };
 

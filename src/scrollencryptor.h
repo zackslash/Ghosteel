@@ -48,7 +48,13 @@ public:
     // D-Bus round-trips during aboutToQuit. Replenishes if below threshold.
     void replenishIVs();
 
+Q_SIGNALS:
+    void availabilityChanged();
+
 private:
+    // Emits availabilityChanged after async init.
+    void initializeAsync();
+
     bool initializeEncryption();
     bool ensureCollection();
     bool ensureKey();

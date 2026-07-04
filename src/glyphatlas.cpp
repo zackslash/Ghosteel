@@ -115,10 +115,11 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
                            : italic ? *m_fmItalic
                            : *m_fm;
 
+    QString str = QString::fromUcs4(&codepoint, 1);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-    int glyphWidth = fm.horizontalAdvance(QChar(codepoint));
+    int glyphWidth = fm.horizontalAdvance(str);
 #else
-    int glyphWidth = fm.width(QChar(codepoint));
+    int glyphWidth = fm.width(str);
 #endif
     int glyphHeight = fm.height();
 
@@ -141,7 +142,7 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
     painter.setFont(font);
     painter.setPen(Qt::white);
     painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.drawText(x, y + fm.ascent(), QChar(codepoint));
+    painter.drawText(x, y + fm.ascent(), str);
     painter.end();
 
     info.u0 = static_cast<float>(x) / m_atlasWidth;

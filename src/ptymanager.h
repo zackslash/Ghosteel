@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <QByteArray>
+#include <QAtomicInt>
 
 class QTimer;
 class QSocketNotifier;
@@ -13,6 +14,7 @@ class PtyReaderThread : public QThread
     Q_OBJECT
 public:
     explicit PtyReaderThread(int fd, QObject *parent = nullptr);
+    void consumeChunk();
 
 Q_SIGNALS:
     void dataReady(const QByteArray &data);
@@ -23,6 +25,7 @@ protected:
 
 private:
     int m_fd;
+    QAtomicInt m_pendingEmits;
 };
 
 class PtyManager : public QObject
@@ -37,7 +40,12 @@ public:
 
     bool startShell(uint16_t cols, uint16_t rows);
     bool startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows);
-    void stop();
+
+    // synchronous=true  — block until child is reaped (destructor path).
+    // synchronous=false — SIGHUP + async reap; use from restartShell() to
+    //                     avoid blocking the GUI thread.
+    void stop(bool synchronous = true);
+
     bool writeData(const char *data, size_t len);
     void setShellCommand(const QString &cmd) { m_shellCommand = cmd; }
     void setWorkingDirectory(const QString &dir) { m_workingDirectory = dir; }
@@ -51,6 +59,7 @@ Q_SIGNALS:
 private:
     void ensureWriteNotifier();
     void drainWriteBuffer();
+    void resetWriteBuffer();
     void setupChildProcess();
     bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid);
     bool startParentProcess(pid_t pid, int execPipe[2]);
@@ -69,6 +78,7 @@ private:
 
     // Non-blocking write buffer
     QByteArray m_writeBuffer;
+    int m_writeOffset = 0;
     QSocketNotifier *m_writeNotifier = nullptr;
 };
 
