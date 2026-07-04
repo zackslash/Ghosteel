@@ -364,6 +364,16 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     return result;
 }
 
+bool GhosttyVt::isWideSpacerCell(GhosttyCell cell)
+{
+    if (cell == 0)
+        return false;
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide);
+    return wide == GHOSTTY_CELL_WIDE_SPACER_TAIL
+        || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD;
+}
+
 bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row)
 {
     if (!terminal)
@@ -376,12 +386,9 @@ bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_
     if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS)
         return false;
     GhosttyCell cell = 0;
-    if (ghostty_grid_ref_cell(&ref, &cell) != GHOSTTY_SUCCESS || cell == 0)
+    if (ghostty_grid_ref_cell(&ref, &cell) != GHOSTTY_SUCCESS)
         return false;
-    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-    if (ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide) != GHOSTTY_SUCCESS)
-        return false;
-    return (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD);
+    return isWideSpacerCell(cell);
 }
 
 QString GhosttyVt::getHyperlinkAt(uint16_t col, uint32_t row) const
@@ -540,11 +547,16 @@ QStringList GhosttyVt::extractSearchText()
 
     QStringList result;
     result.reserve(static_cast<int>(totalRows));
+    m_wideSpacerCache.clear();
+    m_wideSpacerCache.reserve(static_cast<int>(totalRows));
     uint32_t graphemeBuf[128];
 
     for (size_t row = 0; row < totalRows; row++) {
         QString line;
         line.reserve(cols);
+        QVector<bool> rowSpacers;
+        rowSpacers.resize(static_cast<int>(cols));
+        rowSpacers.fill(false);
 
         for (uint16_t col = 0; col < cols; col++) {
             GhosttyPoint point = {};
@@ -558,9 +570,13 @@ QStringList GhosttyVt::extractSearchText()
                 continue;
             }
 
-            // Skip wide character spacer cells to avoid phantom spaces in search text
-            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+            // Reuse the grid ref above instead of isWideCharSpacer()'s second grid_ref.
+            GhosttyCell cell = 0;
+            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
+                    && isWideSpacerCell(cell)) {
+                rowSpacers[static_cast<int>(col)] = true;
                 continue;
+            }
 
             size_t graphemeLen = 0;
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
@@ -571,6 +587,7 @@ QStringList GhosttyVt::extractSearchText()
             }
         }
 
+        m_wideSpacerCache.append(rowSpacers);
         result.append(line);
     }
 

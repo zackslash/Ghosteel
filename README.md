@@ -10,7 +10,7 @@
 
 <div align="center">
 
-[![SailfishOS:Chum](https://img.shields.io/badge/SailfishOS-Chum-1CA198)](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel)
+[![SailfishOS:Chum](https://img.shields.io/badge/SailfishOS-Chum-1CA198)](https://sailfishos-chum.github.io/apps/ghosteel/)
 
 </div>
 
@@ -45,13 +45,13 @@ correctly, with truecolor and GPU rendering.
 - **Extra keys bar**: configurable sticky modifiers (Ctrl/Alt), arrow keys, F1-F12, PgUp/PgDn
 - **Link detection**: OSC 8 hyperlinks and automatic URL detection, tap to open in browser
 - **Inline images**: Kitty Graphics Protocol support, PNG decoding, configurable toggle
-- **Encrypted scrollback**: AES-256 encryption via Sailfish Secrets, configurable retention (7–365 days or disabled)
+- **Encrypted scrollback**: Encryption backed by Sailfish Secrets, configurable retention (7–365 days or disabled)
 - **2 color schemes**: Dark and Light, adjustable opacity
 - **35+ translations**
 
 ## Install
 
-**Recommended**: Install via [SailfishOS:Chum](https://build.sailfishos.org/package/show/sailfishos:chum/ghosteel):
+**Recommended**: Install via [SailfishOS:Chum](https://sailfishos-chum.github.io/apps/ghosteel/):
 
 ```bash
 devel-su pkcon install ghosteel

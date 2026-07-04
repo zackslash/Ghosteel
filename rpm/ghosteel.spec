@@ -51,11 +51,9 @@ neovim, htop, and other TUI applications.
 - Configurable extra keys bar with sticky Ctrl/Alt, arrow keys, F1-F12
 - Automatic URL detection and hyperlinks, tap to open in browser
 - Inline images via Kitty Graphics Protocol with PNG decoding
-- Encrypted scrollback using AES-256 via Sailfish Secrets
+- Encrypted scrollback, backed by Sailfish Secrets
 - Dark and Light color schemes with adjustable opacity
 
-Source code: https://github.com/zackslash/Ghosteel
-License: MIT
 %if 0%{?_chum}
 Title: Ghosteel Terminal
 Type: desktop-application
@@ -71,6 +69,7 @@ Screenshots:
  - https://raw.githubusercontent.com/zackslash/Ghosteel/main/screenshots/screenshot-search-device.png
 Custom:
   Repo: https://github.com/zackslash/Ghosteel
+  DescriptionMD: https://raw.githubusercontent.com/zackslash/Ghosteel/main/description.chum.md
 %endif
 
 %prep

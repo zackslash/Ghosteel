@@ -2568,6 +2568,274 @@ private slots:
         QCOMPARE(mgr2.keepAwakeActiveCount(), 1);
         QCOMPARE(restoredSpy.count(), 1);
     }
+
+    // --- scrollbackDirty pipeline tests (contentChanged / justRestored / titleChanged) ---
+
+    void testContentChangedBlockedByJustRestored()
+    {
+        // After restoreSessions(), justRestored=true. Emitting contentChanged
+        // should be a no-op (no scheduleSave) until titleChanged clears it.
+        writeRawSessions({{"A", "/tmp"}});
+
+        bool fileExisted = false;
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+            QCOMPARE(mgr.sessionCount(), 1);
+
+            // Wait for the initial post-restore save to settle
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            // Remove settings file to detect if saveSessions runs again
+            QFile::remove(m_settingsPath);
+
+            // Emit contentChanged while justRestored is still true (no titleChanged yet)
+            TerminalView *view = mgr.activeSession();
+            QVERIFY(view);
+            view->emitContentChanged();
+
+            // Wait for debounce — save should NOT fire because justRestored blocks it
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            // Capture file existence before destructor (destructor calls saveSessions)
+            fileExisted = QFile::exists(m_settingsPath);
+        }
+        // After block: mgr destroyed, destructor calls saveSessions which recreates file
+        QVERIFY2(!fileExisted,
+                 "saveSessions should not run when contentChanged fires with justRestored=true");
+    }
+
+    void testTitleChangedClearsJustRestoredThenContentTriggersSave()
+    {
+        // titleChanged clears justRestored; subsequent contentChanged should
+        // trigger scheduleSave → saveSessions.
+        writeRawSessions({{"A", "/tmp"}});
+
+        bool fileExisted = false;
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+            QCOMPARE(mgr.sessionCount(), 1);
+
+            // Wait for the initial post-restore save to settle
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            // Remove settings file to detect if saveSessions runs again
+            QFile::remove(m_settingsPath);
+
+            TerminalView *view = mgr.activeSession();
+            QVERIFY(view);
+
+            // titleChanged fires during real PTY data — clears justRestored
+            view->setTitle("new title");
+
+            // Now contentChanged should mark dirty and scheduleSave
+            view->emitContentChanged();
+
+            // Wait for debounce — save SHOULD fire
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            fileExisted = QFile::exists(m_settingsPath);
+        }
+        QVERIFY2(fileExisted,
+                 "saveSessions should run after titleChanged clears justRestored and contentChanged fires");
+    }
+
+    void testContentChangedSpamOnlyTransitionsDirtyOnce()
+    {
+        // Repeated contentChanged should only flip scrollbackDirty once;
+        // verify no crash and session data stays intact after the save.
+        writeRawSessions({{"A", "/tmp"}});
+
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+            QCOMPARE(mgr.sessionCount(), 1);
+
+            // Wait for initial post-restore save to settle
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            TerminalView *view = mgr.activeSession();
+            QVERIFY(view);
+
+            // Clear justRestored via titleChanged (simulates real PTY data)
+            view->setTitle("spam test");
+
+            // Emit contentChanged rapidly — should not crash or cause issues
+            for (int i = 0; i < 20; i++)
+                view->emitContentChanged();
+
+            // Wait for debounce — saveSessions runs once
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            // Verify session data is still intact (no corruption from rapid emits)
+            QCOMPARE(mgr.sessionCount(), 1);
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessions");
+            QCOMPARE(s.value("count").toInt(), 1);
+            s.endGroup();
+
+            s.beginGroup("sessionData/session_0");
+            QCOMPARE(s.value("name").toString(), QStringLiteral("A"));
+            s.endGroup();
+        }
+    }
+
+    void testJustRestoredBlocksMultipleSessions()
+    {
+        // Verify justRestored flag is per-session: contentChanged on session 0
+        // is blocked, but titleChanged on session 1 clears only session 1's flag.
+        writeRawSessions({{"A", "/tmp"}, {"B", "/home"}}, 0);
+
+        bool fileExisted = false;
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+            QCOMPARE(mgr.sessionCount(), 2);
+
+            // Wait for initial save
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            QFile::remove(m_settingsPath);
+
+            TerminalView *view0 = mgr.sessionById(mgr.sessionId(0));
+            TerminalView *view1 = mgr.sessionById(mgr.sessionId(1));
+            QVERIFY(view0);
+            QVERIFY(view1);
+
+            // Clear justRestored on session 1 only (via titleChanged)
+            view1->setTitle("B");
+
+            // Emit contentChanged on session 0 (still justRestored) — blocked
+            view0->emitContentChanged();
+
+            // Emit contentChanged on session 1 (justRestored cleared) — should save
+            view1->emitContentChanged();
+
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            fileExisted = QFile::exists(m_settingsPath);
+        }
+        QVERIFY2(fileExisted,
+                 "saveSessions should run when at least one session's justRestored is cleared");
+    }
+
+    // --- Non-active session font size restored ---
+
+    void testNonActiveSessionFontSizeRestored()
+    {
+        // All restored sessions should have their persisted fontSize applied
+        // to the view, not just the active one.
+        writeRawSessions({{"A", "/tmp"}, {"B", "/home"}, {"C", "/var"}}, 1);
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessionData/session_0");
+            s.setValue("fontSize", 20);
+            s.endGroup();
+            s.beginGroup("sessionData/session_1");
+            s.setValue("fontSize", 24);
+            s.endGroup();
+            s.beginGroup("sessionData/session_2");
+            s.setValue("fontSize", 16);
+            s.endGroup();
+            s.sync();
+        }
+
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionCount(), 3);
+        QCOMPARE(mgr.activeSessionIndex(), 1); // "B" is active
+
+        // Verify ALL views have correct font sizes — not just the active one
+        TerminalView *view0 = mgr.sessionById(mgr.sessionId(0));
+        TerminalView *view1 = mgr.sessionById(mgr.sessionId(1));
+        TerminalView *view2 = mgr.sessionById(mgr.sessionId(2));
+        QVERIFY(view0);
+        QVERIFY(view1);
+        QVERIFY(view2);
+
+        QCOMPARE(view0->fontSize(), 20); // non-active
+        QCOMPARE(view1->fontSize(), 24); // active
+        QCOMPARE(view2->fontSize(), 16); // non-active
+    }
+
+    void testNonActiveSessionFontSizeZeroUsesGlobalDefault()
+    {
+        // Sessions with fontSize=0 should get the global default applied
+        writeRawSessions({{"A", "/tmp"}, {"B", "/home"}}, 0);
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            // session_0: fontSize=0 (track global)
+            s.beginGroup("sessionData/session_0");
+            s.setValue("fontSize", 0);
+            s.endGroup();
+            // session_1: explicit fontSize=22
+            s.beginGroup("sessionData/session_1");
+            s.setValue("fontSize", 22);
+            s.endGroup();
+            s.sync();
+        }
+
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionCount(), 2);
+
+        TerminalView *view0 = mgr.sessionById(mgr.sessionId(0));
+        TerminalView *view1 = mgr.sessionById(mgr.sessionId(1));
+        QVERIFY(view0);
+        QVERIFY(view1);
+
+        // view0 should use the global default (18); view1 has explicit 22
+        QCOMPARE(view0->fontSize(), settings.fontSize()); // global default
+        QCOMPARE(view1->fontSize(), 22);
+    }
+
+    void testNonActiveSessionFontSizePersistsAndRestores()
+    {
+        // Create sessions with different font sizes, save, restore, verify
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+
+            mgr.createSession(); // session 0
+            mgr.createSession(); // session 1
+            mgr.createSession(); // session 2
+
+            mgr.setActiveSessionIndex(0);
+            mgr.setActiveSessionFontSize(20, false);
+            mgr.setActiveSessionIndex(1);
+            mgr.setActiveSessionFontSize(24, false);
+            mgr.setActiveSessionIndex(2);
+            mgr.setActiveSessionFontSize(16, false);
+
+            QTest::qWait(DEBOUNCE_WAIT_MS);
+        }
+
+        // Restore in a fresh SessionManager
+        Settings settings2(m_settingsPath);
+        SessionManager mgr2(&settings2);
+        mgr2.restoreSessions();
+        QCOMPARE(mgr2.sessionCount(), 3);
+
+        // ALL sessions should have their persisted font sizes
+        TerminalView *v0 = mgr2.sessionById(mgr2.sessionId(0));
+        TerminalView *v1 = mgr2.sessionById(mgr2.sessionId(1));
+        TerminalView *v2 = mgr2.sessionById(mgr2.sessionId(2));
+        QVERIFY(v0);
+        QVERIFY(v1);
+        QVERIFY(v2);
+
+        QCOMPARE(v0->fontSize(), 20);
+        QCOMPARE(v1->fontSize(), 24);
+        QCOMPARE(v2->fontSize(), 16);
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)

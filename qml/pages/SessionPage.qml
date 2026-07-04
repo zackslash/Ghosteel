@@ -8,6 +8,9 @@ Page {
 
     // Revision counter — bumped on sort/session changes to force
     // stale displayToActual() bindings to re-evaluate.
+    // Any binding that displays per-session data (name, working dir, etc.)
+    // MUST reference this via `var _ = sessionPage._sortRevision` to
+    // re-evaluate on reorder/rename. See existing usages for the pattern.
     property int _sortRevision: 0
 
     property string sortDescription: ""
@@ -233,7 +236,10 @@ Page {
 
                     // Session name (or exec command for -e sessions)
                     Label {
-                        text: SessionManager.sessionDisplayName(sessionDelegate.actualIndex)
+                        text: {
+                            var _ = sessionPage._sortRevision // force re-evaluation on sort change
+                            return SessionManager.sessionDisplayName(sessionDelegate.actualIndex)
+                        }
                         color: sessionDelegate.highlighted
                                ? Theme.highlightColor
                                : Theme.primaryColor
@@ -245,7 +251,10 @@ Page {
                 // Working directory subtitle
                 Label {
                     visible: text.length > 0
-                    text: SessionManager.sessionWorkingDirectory(actualIndex)
+                    text: {
+                        var _ = sessionPage._sortRevision // force re-evaluation on sort change
+                        return SessionManager.sessionWorkingDirectory(actualIndex)
+                    }
                     color: sessionDelegate.highlighted
                            ? Theme.secondaryHighlightColor
                            : Theme.secondaryColor
