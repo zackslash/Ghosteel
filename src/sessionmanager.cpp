@@ -224,14 +224,12 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
         }
     });
 
-    // Clear justRestored when real PTY data arrives. titleChanged fires
-    // during onPtyData() → vtWrite(), synchronously before the update()
-    // that emits contentChanged, so justRestored is cleared before the
-    // first data-driven contentChanged handler runs.
-    // ptyDataReceived fires earlier still (before vtWrite) and covers
-    // shells that never set a title (sh/dash, bare REPLs).
-    // Whichever fires first clears the flag — both paths are kept for
-    // robustness.
+    // justRestored must be cleared before the first data-driven contentChanged
+    // runs, or that handler will keep skipping saves. titleChanged (shells that
+    // set a title) fires synchronously from onPtyData → vtWrite, before the
+    // update() that emits contentChanged; ptyDataReceived fires earlier still
+    // (before vtWrite) and also covers title-less shells like sh/dash. Hence
+    // two connections — whichever fires first wins.
     connect(view, &TerminalView::titleChanged, this,
         [this, sessionId]() {
         int idx = sessionIndexById(sessionId);

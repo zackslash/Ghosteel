@@ -64,7 +64,7 @@ private:
     bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid);
     bool startParentProcess(pid_t pid, int execPipe[2]);
 
-    bool reapPidBounded(pid_t pid);
+    void reapPidBounded(pid_t pid);
 
     int m_ptyFd = -1;
     pid_t m_childPid = -1;

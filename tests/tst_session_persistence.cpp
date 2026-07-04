@@ -2541,8 +2541,7 @@ private slots:
             TerminalView *view = mgr.activeSession();
             QVERIFY(view);
 
-            // ptyDataReceived fires during real PTY data — clears justRestored
-            // WITHOUT titleChanged (simulates a shell that never sets a title)
+            // Clear via ptyDataReceived only (no titleChanged).
             view->emitPtyDataReceived();
 
             // Now contentChanged should mark dirty and scheduleSave

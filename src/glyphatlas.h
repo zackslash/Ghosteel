@@ -87,8 +87,7 @@ private:
     // Small persistent scratch for single-glyph rasterization; grown on demand, filled transparent per use.
     QImage m_glyphScratch;
 
-    // Tightly-packed per-glyph upload buffer. GL reads glyphWidth*4 bytes per row;
-    // m_glyphScratch is reused wider than many glyphs, so we must re-stride here.
+    // Per-glyph tightly-packed upload buffer; see rasterizeGlyph() for the re-stride rationale.
     QByteArray m_uploadBuf;
 };
 
