@@ -15,7 +15,7 @@ applications.
 - **Extra keys bar** — sticky Ctrl/Alt, arrow keys, F1–F12
 - **URL detection** — automatic hyperlinks, tap to open in the browser
 - **Inline images** — Kitty Graphics Protocol with PNG decoding
-- **Encrypted scrollback** — AES-256 via Sailfish Secrets
+- **Encrypted scrollback** — Encryption backed by Sailfish Secrets
 - **Color schemes** — Dark and Light with adjustable opacity
 
 ---
