@@ -321,7 +321,6 @@ void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info
     Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
     setActiveSessionIndex(index);
-    updateKeepAwakeLock();
 }
 
 void SessionManager::switchToSessionByName(const QString &name)
