@@ -66,7 +66,7 @@ class SessionManager : public QObject
     Q_PROPERTY(QQmlListProperty<TerminalView> sessions READ sessions NOTIFY sessionsChanged)
     Q_PROPERTY(bool dbusRegistered READ dbusRegistered NOTIFY dbusRegisteredChanged)
     Q_PROPERTY(int activeSessionFontSize READ activeSessionFontSize NOTIFY activeSessionFontSizeChanged)
-    Q_PROPERTY(bool keepAwakeActive READ keepAwakeActive NOTIFY keepAwakeActiveChanged)
+    Q_PROPERTY(bool keepAwakeActive READ keepAwakeActive NOTIFY keepAwakeActiveCountChanged)
     Q_PROPERTY(int keepAwakeActiveCount READ keepAwakeActiveCount NOTIFY keepAwakeActiveCountChanged)
 
 public:
@@ -116,7 +116,7 @@ public:
     Q_INVOKABLE void resetAllSessionFontSizes();
     Q_INVOKABLE QString sessionDisplayName(int index) const;
 
-    bool keepAwakeActive() const { return m_keepAwakeActive; }
+    bool keepAwakeActive() const { return m_keepAwakeActiveCount > 0; }
     int keepAwakeActiveCount() const { return m_keepAwakeActiveCount; }
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
@@ -158,7 +158,6 @@ Q_SIGNALS:
     void sessionsRestored(); // Emitted once after restoreSessions() completes
     void dbusRegisteredChanged();
     void activeSessionFontSizeChanged();
-    void keepAwakeActiveChanged();
     void keepAwakeActiveCountChanged();
     // Aggregated notification signal — emitted for any session, not just the active one.
     // QML connects once to this instead of per-view.
@@ -232,7 +231,6 @@ private:
     QString m_cliSessionName;
 
     // Keep-awake aggregation state
-    bool m_keepAwakeActive = false;
     int m_keepAwakeActiveCount = 0;
 };
 

@@ -54,10 +54,8 @@ CoverBackground {
             font.pixelSize: Theme.fontSizeExtraSmall
         }
 
-        // Keep-awake status — compact icon-led line. The icon ties visually
-        // to the per-row badges; the terse text fits the narrow cover without
-        // truncating (the count is dropped to avoid redundancy with the
-        // session-count header and the badges, which already show which).
+        // Compact status line — icon ties to the per-row badges; count omitted
+        // (redundant with the session-count header and the badges themselves).
         Row {
             width: parent.width
             visible: SessionManager.keepAwakeActive
@@ -114,7 +112,6 @@ CoverBackground {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                // Keep-awake badge icon
                 Image {
                     visible: parent.keepAwake
                     source: "image://theme/icon-m-charging"

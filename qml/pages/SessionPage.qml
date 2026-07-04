@@ -93,7 +93,6 @@ Page {
         }
     }
 
-    // Keep-awake confirmation dialog
     Component {
         id: keepAwakeDialogComponent
         Dialog {
@@ -225,7 +224,6 @@ Page {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    // Keep-awake badge icon
                     Image {
                         visible: sessionDelegate.keepAwake
                         source: "image://theme/icon-m-charging"

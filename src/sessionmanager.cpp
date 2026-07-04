@@ -596,13 +596,6 @@ void SessionManager::updateKeepAwakeLock()
         }
     }
 
-    bool newActive = (count > 0);
-
-    if (newActive != m_keepAwakeActive) {
-        m_keepAwakeActive = newActive;
-        Q_EMIT keepAwakeActiveChanged();
-    }
-
     if (count != m_keepAwakeActiveCount) {
         m_keepAwakeActiveCount = count;
         Q_EMIT keepAwakeActiveCountChanged();

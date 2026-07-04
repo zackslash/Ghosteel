@@ -2465,7 +2465,6 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 1);
         QCOMPARE(mgr.keepAwakeActive(), false);
 
-        QSignalSpy activeSpy(&mgr, &SessionManager::keepAwakeActiveChanged);
         QSignalSpy countSpy(&mgr, &SessionManager::keepAwakeActiveCountChanged);
 
         // Flag the session -> aggregate lock acquires.
@@ -2473,28 +2472,27 @@ private slots:
         QCOMPARE(mgr.sessionKeepAwake(0), true);
         QCOMPARE(mgr.keepAwakeActive(), true);
         QCOMPARE(mgr.keepAwakeActiveCount(), 1);
-        QCOMPARE(activeSpy.count(), 1);
         QCOMPARE(countSpy.count(), 1);
 
         // Plain-shell natural exit -> lock releases even though the session
         // lingers in the list (commandExited is never emitted for plain shells,
         // so no auto-remove fires).
-        int activeBefore = activeSpy.count();
+        int countBefore = countSpy.count();
         view->emitShellFinished();
         QCOMPARE(view->shellExited(), true);
         QCOMPARE(mgr.keepAwakeActive(), false);
         QCOMPARE(mgr.keepAwakeActiveCount(), 0);
-        QCOMPARE(activeSpy.count(), activeBefore + 1);
+        QCOMPARE(countSpy.count(), countBefore + 1);
         QCOMPARE(mgr.sessionCount(), 1); // plain shell session is NOT auto-removed
 
         // Restart the shell -> lock re-acquires (catches a missing
         // shellRestarted call site in updateKeepAwakeLock()).
-        int activeBefore2 = activeSpy.count();
+        int countBefore2 = countSpy.count();
         view->restartShell();
         QCOMPARE(view->shellExited(), false);
         QCOMPARE(mgr.keepAwakeActive(), true);
         QCOMPARE(mgr.keepAwakeActiveCount(), 1);
-        QCOMPARE(activeSpy.count(), activeBefore2 + 1);
+        QCOMPARE(countSpy.count(), countBefore2 + 1);
 
         // Clearing the flag releases the lock.
         mgr.setSessionKeepAwake(0, false);

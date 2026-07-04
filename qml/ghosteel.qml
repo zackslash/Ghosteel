@@ -23,9 +23,7 @@ ApplicationWindow {
         enabled: SessionManager.keepAwakeActive
     }
 
-    // Persistent low-priority notification while keep-awake is active.
-    // expireTimeout: 0 = never auto-close. (-1 means the notification manager
-    // picks a default expiry, which is NOT persistent.)
+    // expireTimeout: 0 = never auto-close. (-1 = manager default expiry, NOT persistent.)
     Notification {
         id: keepAwakeNotification
         appName: "Ghosteel"
@@ -36,11 +34,8 @@ ApplicationWindow {
 
     Connections {
         target: SessionManager
-        // Single handler covers all four transitions (0->1, 1->N, N->1, 1->0):
-        // keepAwakeActive is updated before keepAwakeActiveCountChanged emits,
-        // so this sees the correct active state in every case. publish() also
-        // auto-maintains replacesId as a side effect, so repeated posts update
-        // the existing notification in place — no manual ID tracking needed.
+        // publish() auto-maintains replacesId, so repeated posts update the
+        // existing notification in place — no manual ID tracking needed.
         onKeepAwakeActiveCountChanged: {
             if (SessionManager.keepAwakeActive) {
                 keepAwakeNotification.body = qsTr("Ghosteel is keeping the device awake — %n session(s) active.", "", SessionManager.keepAwakeActiveCount)
@@ -55,7 +50,7 @@ ApplicationWindow {
                         "path": "/com/zackslash.ghosteel",
                         "iface": "com.zackslash.ghosteel",
                         "method": "activateSession",
-                        // Jump to the active session. activateSession takes a session ID.
+                        // Land on the active session, not a keep-awake one.
                         "arguments": [SessionManager.sessionId(SessionManager.activeSessionIndex)]
                     }]
                 } else {
