@@ -754,7 +754,6 @@ void TerminalView::clearSelection()
             killTimer(m_longPressTimerId);
             m_longPressTimerId = 0;
         }
-        m_velocityInitialized = false;
         if (!m_selectedText.isEmpty()) {
             m_selectedText.clear();
             Q_EMIT selectedTextChanged();
@@ -919,40 +918,6 @@ int TerminalView::handleHitTest(const QPointF &pos) const
     return 0; // No hit
 }
 
-bool TerminalView::updateMagnifierVelocity(const QPointF &pos)
-{
-    // Minimum interval between velocity samples — skip sub-frame deltas
-    // that produce noisy velocity spikes from tiny position jitter
-    static const qint64 MinVelocityDtMs = 16;
-
-    if (m_velocityInitialized) {
-        qint64 now = QDateTime::currentMSecsSinceEpoch();
-        qint64 dt = now - m_lastMoveTime;
-        if (dt >= MinVelocityDtMs) {
-            qreal dist = QLineF(pos, m_lastMovePos).length();
-            qreal velocity = dist * 1000.0 / dt; // pixels per second
-            m_lastMoveTime = now;
-            m_lastMovePos = pos;
-            // Hysteresis: use different thresholds to prevent flicker
-            // when velocity oscillates around the boundary
-            if (m_magnifierVisible)
-                return velocity <= MagnifierVelocityHide;  // hide only above 600
-            else
-                return velocity < MagnifierVelocityShow;   // show only below 400
-        }
-        if (dt > 0) {
-            m_lastMoveTime = now;
-            m_lastMovePos = pos;
-        }
-        return m_magnifierVisible; // no change when dt is too small
-    }
-    // First move after activation — initialize velocity tracking
-    m_lastMoveTime = QDateTime::currentMSecsSinceEpoch();
-    m_lastMovePos = pos;
-    m_velocityInitialized = true;
-    return true; // show magnifier on first move
-}
-
 void TerminalView::resetSessionSwipe()
 {
     if (!m_sessionSwiping)
@@ -973,7 +938,6 @@ void TerminalView::resetTouchInteractionState()
         clearSelection();
     m_pendingLinkTap = false;
     m_draggingHandle = 0;
-    m_velocityInitialized = false;
 }
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
@@ -1022,7 +986,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             m_draggingHandle = handle;
             m_handlesVisible = false;
             m_magnifierVisible = true;
-            m_velocityInitialized = false;
             m_tapCount = 0; // Prevent phantom triple-tap after handle drag
             setKeepMouseGrab(true);
             event->accept();
@@ -1651,8 +1614,6 @@ void TerminalView::timerEvent(QTimerEvent *event)
         m_longPressTimerId = 0;
         m_selecting = true;
         m_magnifierVisible = true;
-        // Initialize velocity tracking so first move doesn't use stale data
-        m_velocityInitialized = false;
         // Prevent parent SilicaFlickable from stealing the drag
         setKeepMouseGrab(true);
         update();

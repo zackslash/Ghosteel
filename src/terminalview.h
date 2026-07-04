@@ -221,7 +221,7 @@ private:
     void selectWordAt(const QPointF &pos);
     void selectLineAt(const QPointF &pos);
     int handleHitTest(const QPointF &pos) const; // 0=none, 1=start, 2=end
-    bool updateMagnifierVelocity(const QPointF &pos); // returns true if magnifier should be visible
+
     void performSearch();
     void scrollToMatch(int index);
     void buildCellMapping();
@@ -268,14 +268,6 @@ private:
     int m_tapCount = 0;            // 1=single, 2=double, 3=triple
     static const int TapTimeoutMs = 300;   // ms between taps for double/triple
     static const int TapDistancePx = 30;   // max pixel distance between taps
-
-    // Velocity tracking for magnifier hiding during fast swipes
-    qint64 m_lastMoveTime = 0;
-    QPointF m_lastMovePos;
-    bool m_velocityInitialized = false;
-    // Hysteresis thresholds prevent flicker when velocity oscillates around the boundary
-    static const int MagnifierVelocityHide = 600; // px/s — hide above this
-    static const int MagnifierVelocityShow = 400;  // px/s — show below this
 
     // Selected text (exposed to QML for share action)
     QString m_selectedText;
