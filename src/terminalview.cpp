@@ -1108,7 +1108,11 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
             m_selEnd = event->pos();
         }
 
-        m_magnifierVisible = updateMagnifierVelocity(event->pos());
+        // Magnifier stays visible for the whole drag — no velocity-based hiding.
+        // Visibility is bracketed by timerEvent (show on long-press fire) and
+        // mouseReleaseEvent (hide on release). Velocity gating caused flicker
+        // (hysteresis band sat inside typical drag velocity) and stuck-invisible
+        // when the finger stopped mid-drag (no move events to revive it).
 
         // Keep cursor blink paused during active selection to prevent
         // full redraws that cause magnifier flicker
