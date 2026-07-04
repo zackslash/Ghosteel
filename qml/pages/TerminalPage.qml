@@ -433,9 +433,17 @@ Page {
     function switchSession(direction) {
         var count = SessionManager.sessionCount
         if (count <= 1) return
-        var displayIdx = SessionManager.actualToDisplay(SessionManager.activeSessionIndex)
-        var nextDisplay = ((displayIdx + direction) % count + count) % count
-        SessionManager.switchToSession(nextDisplay)
+        // Navigate by ACTUAL (vector) index, not display index. Under
+        // SortLastUsed (the default), setActiveSessionIndex bumps lastUsedAt
+        // and rebuilds the sorted indices on every switch, so the just-
+        // activated session always lands at display index 0. Stepping the
+        // display index by +1 then forever selects display index 1 (2nd-most-
+        // recent), making "next" bounce between two sessions. Actual-index
+        // order only changes on add/remove, so both directions cycle through
+        // every session.
+        var actualIdx = SessionManager.activeSessionIndex
+        var nextActual = ((actualIdx + direction) % count + count) % count
+        SessionManager.activeSessionIndex = nextActual
     }
 
     Component.onCompleted: {
