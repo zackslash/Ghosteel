@@ -42,26 +42,6 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
     m_encryptor = new ScrollEncryptor(this);
 
-    // Retry pending scrollback restores when encryption becomes available
-    connect(m_encryptor, &ScrollEncryptor::availabilityChanged, this, [this]() {
-        if (!m_encryptor->isAvailable()) {
-            // Encryption init failed — these scrollback files can't be
-            // restored; drop the pending list to avoid re-queuing.
-            if (!m_pendingScrollbackRestores.isEmpty())
-                qWarning() << "Ghosteel: Encryption unavailable, skipping"
-                           << m_pendingScrollbackRestores.size()
-                           << "pending scrollback restores";
-            m_pendingScrollbackRestores.clear();
-            return;
-        }
-        const auto pending = m_pendingScrollbackRestores;
-        m_pendingScrollbackRestores.clear();
-        for (const auto &p : pending) {
-            if (p.view)  // QPointer returns null if the object was deleted
-                restoreScrollbackForSession(p.view, p.sessionId);
-        }
-    });
-
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
@@ -79,6 +59,49 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         saveScrollbackIncremental();
     });
 
+    // Retry pending scrollback restores when encryption becomes available.
+    // The handler may run synchronously from initializeNow() below — m_saveTimer
+    // is created above so scheduleScrollbackSave() is safe to call from it.
+    connect(m_encryptor, &ScrollEncryptor::availabilityChanged, this, [this]() {
+        if (!m_encryptor->isAvailable()) {
+            // Encryption init failed — these scrollback files can't be
+            // restored; drop the pending list to avoid re-queuing.
+            if (!m_pendingScrollbackRestores.isEmpty())
+                qWarning() << "Ghosteel: Encryption unavailable, skipping"
+                           << m_pendingScrollbackRestores.size()
+                           << "pending scrollback restores";
+            m_pendingScrollbackRestores.clear();
+            return;
+        }
+        const auto pending = m_pendingScrollbackRestores;
+        m_pendingScrollbackRestores.clear();
+        for (const auto &p : pending) {
+            if (p.view)  // QPointer returns null if the object was deleted
+                restoreScrollbackForSession(p.view, p.sessionId);
+        }
+        // A scrollback save may have failed while encryption was unavailable,
+        // leaving sessions dirty with no timer armed (the failure path doesn't
+        // re-arm). Retry once encryption is ready.
+        if (m_settings->scrollbackPersistence()) {
+            bool anyDirty = false;
+            for (const SessionInfo &info : m_sessions) {
+                if (info.view && info.scrollbackDirty) {
+                    anyDirty = true;
+                    break;
+                }
+            }
+            if (anyDirty)
+                scheduleScrollbackSave();
+        }
+    });
+
+    // Without synchronous init, restoreSessions() runs before the event loop
+    // fires the deferred singleShot, so decrypting saved scrollback slips to
+    // availabilityChanged — which fires after setupTerminal() has consumed
+    // the (empty) pending buffer, silently dropping the restored content.
+    if (m_settings->scrollbackPersistence())
+        m_encryptor->initializeNow();
+
     // When the global default font size changes, propagate it to every session
     // that is tracking the default (fontSize == 0). Sessions with an explicit
     // override are left alone.
@@ -88,6 +111,24 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
             if (info.fontSize == 0 && info.view)
                 info.view->setFontSize(defaultSize);
         }
+    });
+
+    // Enabling scrollback persistence mid-session must re-arm the save timer:
+    // while the setting was off, content left scrollbackDirty true, but the
+    // save path returns early without arming the timer. Without this, that
+    // content only flushes at aboutToQuit — and is lost if the app is killed first.
+    connect(m_settings, &Settings::scrollbackPersistenceChanged, this, [this]() {
+        if (!m_settings->scrollbackPersistence() || !m_sessionsLoaded)
+            return;
+        bool any = false;
+        for (SessionInfo &info : m_sessions) {
+            if (info.view) {
+                info.scrollbackDirty = true;
+                any = true;
+            }
+        }
+        if (any)
+            scheduleScrollbackSave();
     });
 
     // Save sessions early on app quit — before QML engine destruction kills
@@ -116,8 +157,12 @@ SessionManager::~SessionManager()
     // Save final state if aboutToQuit hasn't already done it.
     // In production, aboutToQuit fires first (shells alive, CWD readable).
     // In tests or abnormal paths, this is the fallback (shells may be dead).
-    if (m_sessionsLoaded && !m_savedOnQuit)
+    if (m_sessionsLoaded && !m_savedOnQuit) {
         saveSessions();
+        // Views are still alive here (cleaned up below), so we can still flush
+        // the scrollback that aboutToQuit never got to save.
+        saveScrollbackIncremental(true);
+    }
 
     // Cleanly stop each session's PTY before deleting the view.
     // TerminalView owns PtyManager which owns PtyReaderThread.
