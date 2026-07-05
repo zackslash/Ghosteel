@@ -211,8 +211,8 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
     });
 
     // Track content changes for incremental scrollback encryption.
-    // Mark dirty on first content change; scheduleSave restarts the 500ms
-    // debounce timer, which will call saveScrollbackIncremental().
+    // Mark dirty on first content change; scheduleScrollbackSave restarts
+    // the 500ms debounce timer, which will call saveScrollbackIncremental().
     connect(view, &TerminalView::contentChanged, this,
         [this, sessionId]() {
         int idx = sessionIndexById(sessionId);
@@ -1231,6 +1231,10 @@ bool SessionManager::restoreSessions()
     else if (!m_sessions.isEmpty())
         setActiveSessionIndex(0);
 
+    // Reset the metadata-dirty flag: restore's trailing setActiveSessionIndex
+    // sets it via scheduleSave, but the just-loaded state is already on disk,
+    // so the next scrollback-only arm must not trigger a redundant saveSessions.
+    m_sessionsDirty = false;
     m_sessionsLoaded = true;
     rebuildSortedIndices();
     Q_EMIT sessionsRestored();

@@ -2449,12 +2449,15 @@ private slots:
     void testContentChangedBlockedByJustRestored()
     {
         // After restoreSessions(), justRestored=true. Emitting contentChanged
-        // should be a no-op (no scheduleSave) until titleChanged clears it.
+        // should be a no-op — neither saveSessions nor the scrollback save path
+        // should run — until titleChanged/ptyDataReceived clears it.
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
+        int exportCount = -1;
         {
             Settings settings(m_settingsPath);
+            settings.setScrollbackPersistence(true); // enable the scrollback save path under test
             SessionManager mgr(&settings);
             mgr.restoreSessions();
             QCOMPARE(mgr.sessionCount(), 1);
@@ -2468,28 +2471,34 @@ private slots:
             // Emit contentChanged while justRestored is still true (no titleChanged yet)
             TerminalView *view = mgr.activeSession();
             QVERIFY(view);
+            view->resetExportScrollbackCount();
             view->emitContentChanged();
 
-            // Wait for debounce — save should NOT fire because justRestored blocks it
+            // Wait for debounce — nothing should fire because justRestored blocks it
             QTest::qWait(DEBOUNCE_WAIT_MS + 100);
 
-            // Capture file existence before destructor (destructor calls saveSessions)
+            // Capture state before destructor (destructor calls saveSessions)
             fileExisted = QFile::exists(m_settingsPath);
+            exportCount = view->exportScrollbackCount();
         }
-        // After block: mgr destroyed, destructor calls saveSessions which recreates file
         QVERIFY2(!fileExisted,
                  "saveSessions should not run when contentChanged fires with justRestored=true");
+        QCOMPARE(exportCount, 0); // scrollback path also blocked by justRestored
     }
 
-    void testTitleChangedClearsJustRestoredThenContentTriggersSave()
+    void testContentChangedRunsScrollbackNotMetadata()
     {
-        // titleChanged clears justRestored; subsequent contentChanged should
-        // trigger scheduleSave → saveSessions.
+        // After justRestored is cleared (titleChanged), contentChanged marks
+        // scrollbackDirty and runs the scrollback save path — but it must NOT
+        // trigger saveSessions, because scrollback content is not session
+        // metadata. This is the Finding-2 flag-gating guarantee.
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
+        int exportCount = -1;
         {
             Settings settings(m_settingsPath);
+            settings.setScrollbackPersistence(true); // enable the scrollback save path under test
             SessionManager mgr(&settings);
             mgr.restoreSessions();
             QCOMPARE(mgr.sessionCount(), 1);
@@ -2505,29 +2514,35 @@ private slots:
 
             // titleChanged fires during real PTY data — clears justRestored
             view->setTitle("new title");
+            view->resetExportScrollbackCount();
 
-            // Now contentChanged should mark dirty and scheduleSave
+            // contentChanged marks dirty and arms the scrollback-only timer
             view->emitContentChanged();
 
-            // Wait for debounce — save SHOULD fire
+            // Wait for debounce — scrollback path runs, saveSessions must NOT
             QTest::qWait(DEBOUNCE_WAIT_MS + 100);
 
             fileExisted = QFile::exists(m_settingsPath);
+            exportCount = view->exportScrollbackCount();
         }
-        QVERIFY2(fileExisted,
-                 "saveSessions should run after titleChanged clears justRestored and contentChanged fires");
+        QVERIFY2(!fileExisted,
+                 "saveSessions must NOT run for scrollback-only contentChanged");
+        QVERIFY2(exportCount > 0,
+                 "scrollback save path should run after justRestored is cleared");
     }
 
-    void testPtyDataClearsJustRestoredWithoutTitle()
+    void testPtyDataClearsJustRestoredThenScrollbackNotMetadata()
     {
-        // ptyDataReceived clears justRestored; subsequent contentChanged should
-        // trigger scheduleSave → saveSessions — even if titleChanged never fires
-        // (e.g. sh/dash, bare REPLs).
+        // Same as above but justRestored is cleared by ptyDataReceived alone
+        // (sh/dash, bare REPLs that never set a title). The flag-gating
+        // guarantee must hold regardless of which signal cleared justRestored.
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
+        int exportCount = -1;
         {
             Settings settings(m_settingsPath);
+            settings.setScrollbackPersistence(true); // enable the scrollback save path under test
             SessionManager mgr(&settings);
             mgr.restoreSessions();
             QCOMPARE(mgr.sessionCount(), 1);
@@ -2543,17 +2558,19 @@ private slots:
 
             // Clear via ptyDataReceived only (no titleChanged).
             view->emitPtyDataReceived();
-
-            // Now contentChanged should mark dirty and scheduleSave
+            view->resetExportScrollbackCount();
             view->emitContentChanged();
 
-            // Wait for debounce — save SHOULD fire
+            // Wait for debounce — scrollback path runs, saveSessions must NOT
             QTest::qWait(DEBOUNCE_WAIT_MS + 100);
 
             fileExisted = QFile::exists(m_settingsPath);
+            exportCount = view->exportScrollbackCount();
         }
-        QVERIFY2(fileExisted,
-                 "saveSessions should run after ptyDataReceived clears justRestored and contentChanged fires");
+        QVERIFY2(!fileExisted,
+                 "saveSessions must NOT run for scrollback-only contentChanged");
+        QVERIFY2(exportCount > 0,
+                 "scrollback save path should run after ptyDataReceived clears justRestored");
     }
 
     void testContentChangedSpamOnlyTransitionsDirtyOnce()
@@ -2597,15 +2614,19 @@ private slots:
         }
     }
 
-    void testJustRestoredBlocksMultipleSessions()
+    void testContentChangedAcrossSessionsNoMetadataSave()
     {
-        // Verify justRestored flag is per-session: contentChanged on session 0
-        // is blocked, but titleChanged on session 1 clears only session 1's flag.
+        // Verify justRestored is per-session: contentChanged on a still-
+        // justRestored session is blocked (exportScrollback not called), while
+        // contentChanged on a cleared session runs the scrollback path. Either
+        // way, saveSessions must not run (scrollback is not metadata).
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}}, 0);
 
         bool fileExisted = false;
+        int exportCount0 = -1, exportCount1 = -1;
         {
             Settings settings(m_settingsPath);
+            settings.setScrollbackPersistence(true); // enable the scrollback save path under test
             SessionManager mgr(&settings);
             mgr.restoreSessions();
             QCOMPARE(mgr.sessionCount(), 2);
@@ -2623,18 +2644,89 @@ private slots:
             // Clear justRestored on session 1 only (via titleChanged)
             view1->setTitle("B");
 
+            view0->resetExportScrollbackCount();
+            view1->resetExportScrollbackCount();
+
             // Emit contentChanged on session 0 (still justRestored) — blocked
             view0->emitContentChanged();
-
-            // Emit contentChanged on session 1 (justRestored cleared) — should save
+            // Emit contentChanged on session 1 (justRestored cleared) — runs scrollback
             view1->emitContentChanged();
 
             QTest::qWait(DEBOUNCE_WAIT_MS + 100);
 
             fileExisted = QFile::exists(m_settingsPath);
+            exportCount0 = view0->exportScrollbackCount();
+            exportCount1 = view1->exportScrollbackCount();
+        }
+        QVERIFY2(!fileExisted,
+                 "saveSessions must NOT run for scrollback-only contentChanged");
+        QCOMPARE(exportCount0, 0); // session 0 still blocked by justRestored
+        QVERIFY2(exportCount1 > 0,
+                 "session 1 scrollback path should run after its justRestored cleared");
+    }
+
+    void testMetadataMutationTriggersSaveAfterScrollbackArm()
+    {
+        // After contentChanged armed the scrollback-only timer without setting
+        // m_sessionsDirty, a real metadata mutation must still set the flag and
+        // trigger saveSessions. Guards against the two schedule paths getting
+        // entangled so metadata stops persisting.
+        writeRawSessions({{"A", "/tmp"}});
+
+        bool fileExisted = false;
+        {
+            Settings settings(m_settingsPath);
+            SessionManager mgr(&settings);
+            mgr.restoreSessions();
+            QCOMPARE(mgr.sessionCount(), 1);
+
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+            QFile::remove(m_settingsPath);
+
+            TerminalView *view = mgr.activeSession();
+            QVERIFY(view);
+            view->setTitle("t");          // clear justRestored
+            view->emitContentChanged();   // scrollback-only arm (no metadata flag)
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            QVERIFY(!QFile::exists(m_settingsPath)); // no metadata save yet
+
+            mgr.setSessionName(0, "Renamed"); // metadata mutation
+            QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+            fileExisted = QFile::exists(m_settingsPath);
         }
         QVERIFY2(fileExisted,
-                 "saveSessions should run when at least one session's justRestored is cleared");
+                 "saveSessions must run after a metadata mutation even when "
+                 "a scrollback-only arm preceded it");
+    }
+
+    void testScrollbackThrottleSkipsWithinWindow()
+    {
+        // The per-session 5s scrollback throttle must skip a second save
+        // attempt inside the window. exportScrollback is called once on the
+        // first attempt (counter 1) and skipped on the second (stays 1).
+        // Uses a created (non-restored) session so justRestored is false.
+        Settings settings(m_settingsPath);
+        settings.setScrollbackPersistence(true); // enable the scrollback save path under test
+        SessionManager mgr(&settings);
+        mgr.restoreSessions(); // sets m_sessionsLoaded
+
+        TerminalView *view = mgr.createSession();
+        QVERIFY(view);
+
+        // Let createSession's metadata save settle (clears m_sessionsDirty)
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        view->resetExportScrollbackCount();
+
+        view->emitContentChanged(); // first: not throttled (lastScrollbackSaveMs==0)
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+        QCOMPARE(view->exportScrollbackCount(), 1);
+
+        view->emitContentChanged(); // second within 5s: throttled
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+        QCOMPARE(view->exportScrollbackCount(), 1);
     }
 
     // --- Non-active session font size restored ---
