@@ -107,7 +107,8 @@ public:
     Q_INVOKABLE bool sessionKeyboardVisible(int index) const;
     Q_INVOKABLE void setSessionKeyboardVisible(int index, bool visible);
 
-    Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = true);
+    // Per-session font change must not silently mutate the global default — leave updateGlobal false unless syncing is intended.
+    Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = false);
     int activeSessionFontSize() const;
     Q_INVOKABLE void resetAllSessionFontSizes();
     Q_INVOKABLE QString sessionDisplayName(int index) const;
