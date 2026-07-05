@@ -30,6 +30,10 @@ public:
     // Returns true if encryption subsystem initialized successfully.
     bool isAvailable() const;
 
+    // Initialize synchronously now, rather than from the constructor's deferred
+    // singleShot. Call before restoreSessions() — no-op if already initialized.
+    void initializeNow();
+
     // Encrypt plaintext. Returns binary blob with header, or empty on failure.
     // Caller should skip writing (no plaintext fallback).
     QByteArray encrypt(const QByteArray &plaintext);
