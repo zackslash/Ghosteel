@@ -167,6 +167,7 @@ Q_SIGNALS:
     void shellRestarted();
     void topPaddingChanged();
     void contentChanged(); // Emitted on every repaint — GL overlay trigger
+    void ptyDataReceived(); // Emitted when real PTY data arrives (before vtWrite)
     void pinchingChanged(bool pinching);
     void pinchAtDefaultChanged(bool atDefault);
     void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out

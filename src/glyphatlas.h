@@ -84,10 +84,10 @@ private:
 
     QHash<GlyphKey, GlyphInfo> m_cache;
 
-    // Staging image for uploading
-    QImage m_staging;
+    // Small persistent scratch for single-glyph rasterization; grown on demand, filled transparent per use.
+    QImage m_glyphScratch;
 
-    // Reusable upload buffer (avoids per-glyph QImage::copy allocation)
+    // Per-glyph tightly-packed upload buffer; see rasterizeGlyph() for the re-stride rationale.
     QByteArray m_uploadBuf;
 };
 

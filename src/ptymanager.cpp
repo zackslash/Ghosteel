@@ -231,6 +231,17 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         // the old timer will see a stale generation and bail out.
         uint32_t gen = m_sessionGeneration;
 
+        // Reap a pid queued by a previous stop(false) BEFORE cancelling its
+        // timer — otherwise the cancel orphans it as a zombie until the next
+        // stop() / ~PtyManager(). WNOHANG so we don't block the GUI thread; a
+        // still-living child leaves m_pendingReapPid set for stop() to handle.
+        if (m_pendingReapPid > 0) {
+            int pendingStatus = 0;
+            pid_t pendingResult = ::waitpid(m_pendingReapPid, &pendingStatus, WNOHANG);
+            if (pendingResult != 0)
+                m_pendingReapPid = -1; // reaped (>0) or already gone (<0)
+        }
+
         // Cancel any existing waitpid timer (safety)
         if (m_waitPidTimer) {
             m_waitPidTimer->stop();
@@ -300,6 +311,29 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     return true;
 }
 
+void PtyManager::reapPidBounded(pid_t pid)
+{
+    if (pid <= 0)
+        return;
+
+    constexpr int kMaxAttempts = 50;
+    constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
+    int status = 0;
+    for (int i = 0; i < kMaxAttempts; ++i) {
+        pid_t result = waitpid(pid, &status, WNOHANG);
+        if (result > 0 || result < 0)
+            return; // reaped or error/already gone
+        // result == 0: child still alive. Sleep briefly and retry.
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = kSleepNs;
+        nanosleep(&ts, nullptr);
+    }
+    qWarning("PtyManager::reapPidBounded: child %ld did not exit within %dms; "
+             "may leak as zombie", (long)pid,
+             kMaxAttempts * (int)(kSleepNs / 1000000));
+}
+
 void PtyManager::stop(bool synchronous)
 {
     if (m_execNotifier) {
@@ -318,6 +352,12 @@ void PtyManager::stop(bool synchronous)
         m_waitPidTimer->deleteLater();
         m_waitPidTimer = nullptr;
     }
+    // The async reap timer may have been tracking an old pid; reap it here
+    // regardless of timer state so it can't be orphaned as a zombie.
+    if (m_pendingReapPid > 0) {
+        reapPidBounded(m_pendingReapPid);
+        m_pendingReapPid = -1;
+    }
 
     // Kill child FIRST — this causes the slave side of the PTY to close,
     // which makes read() on the master fd return 0 (EOF), reliably waking
@@ -328,9 +368,10 @@ void PtyManager::stop(bool synchronous)
     }
 
     if (!synchronous) {
-        // Async path (restartShell): tear down the reader thread and PTY fd
-        // without blocking, then set up an async timer to reap the child.
-        // This avoids freezing the GUI thread for up to 500 ms.
+        // Async path (restartShell): tear down the reader thread and PTY fd with
+        // only a short bounded wait (≤100 ms) for the thread to exit, then set up
+        // an async timer to reap the child. Avoids the up-to-500 ms blocking reap
+        // that the synchronous path performs via reapPidBounded().
 
         if (m_readerThread) {
             // Disconnect signals first — prevents queued dataReady/readFinished
@@ -339,15 +380,15 @@ void PtyManager::stop(bool synchronous)
 
             // Ask the thread to exit at its next poll timeout (≤200 ms).
             m_readerThread->requestInterruption();
-
-            // The thread will exit shortly (POLLNVAL from closed fd or
-            // interruption). deleteLater ensures the QThread object is
-            // properly cleaned up after exit, even though we no longer track
-            // it via m_readerThread.
-            connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
-            m_readerThread = nullptr;
         }
 
+        // Close the fd BEFORE returning so the reader thread's poll() wakes
+        // immediately with POLLNVAL (not after the 200 ms timeout). Combined
+        // with the bounded wait below, this closes the fd-reuse race: without
+        // it, setupTerminal()/forkPtyProcess() could reuse the just-freed fd
+        // number for the new PTY before the old thread exits, letting the old
+        // thread poll()/read() the new PTY and silently drop the first bytes
+        // of the new shell's output.
         if (m_ptyFd >= 0) {
             if (m_writeNotifier) {
                 m_writeNotifier->setEnabled(false);
@@ -359,12 +400,26 @@ void PtyManager::stop(bool synchronous)
             m_ptyFd = -1;
         }
 
+        if (m_readerThread) {
+            // Bounded wait (thread normally exits in <1 ms via POLLNVAL). If the 100 ms
+            // safety net is exceeded, fall back to async cleanup — safe because the fd
+            // close above already broke the poll() loop, so the race window is closed.
+            if (m_readerThread->wait(100)) {
+                m_readerThread->deleteLater();
+            } else {
+                qWarning() << "PtyReaderThread did not exit after fd close; async cleanup";
+                connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
+            }
+            m_readerThread = nullptr;
+        }
+
         // Set up an async reap timer — the child is dying from SIGHUP but
         // may not have exited yet. Poll with WNOHANG every 100 ms.
         // Capture the OLD pid BEFORE setupTerminal() can overwrite m_childPid
         // with the new child's PID, so we always reap the correct process.
         if (m_childPid > 0) {
             pid_t oldPid = m_childPid;
+            m_pendingReapPid = oldPid;
             uint32_t gen = m_sessionGeneration;
             auto *timer = new QTimer(this);
             m_waitPidTimer = timer;
@@ -384,6 +439,8 @@ void PtyManager::stop(bool synchronous)
                 timer->deleteLater();
                 if (m_waitPidTimer == timer)
                     m_waitPidTimer = nullptr;
+                if (m_pendingReapPid == oldPid)
+                    m_pendingReapPid = -1;
                 // Only emit if this is still the current session generation
                 if (gen == m_sessionGeneration && result > 0) {
                     m_childPid = -1;
@@ -406,27 +463,7 @@ void PtyManager::stop(bool synchronous)
         // terminate, then give up (kernel subreaper / init will reap if so
         // configured; otherwise we log and accept the rare leak rather than
         // block shutdown indefinitely).
-        constexpr int kMaxAttempts = 50;
-        constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
-        int status = 0;
-        bool reaped = false;
-        for (int i = 0; i < kMaxAttempts; ++i) {
-            pid_t result = waitpid(m_childPid, &status, WNOHANG);
-            if (result > 0 || result < 0) {
-                reaped = true;
-                break;
-            }
-            // result == 0: child still alive. Sleep briefly and retry.
-            struct timespec ts;
-            ts.tv_sec = 0;
-            ts.tv_nsec = kSleepNs;
-            nanosleep(&ts, nullptr);
-        }
-        if (!reaped) {
-            qWarning("PtyManager::stop: child %ld did not exit within %dms; "
-                     "may leak as zombie", (long)m_childPid,
-                     kMaxAttempts * (int)(kSleepNs / 1000000));
-        }
+        reapPidBounded(m_childPid);
         m_childPid = -1;
     }
 

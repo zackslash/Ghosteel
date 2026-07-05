@@ -33,10 +33,10 @@ void GlyphAtlas::initialize()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    m_staging = QImage(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
-    m_staging.fill(Qt::transparent);
+    QImage staging(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
+    staging.fill(Qt::transparent);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_atlasWidth, m_atlasHeight,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, m_staging.constBits());
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, staging.constBits());
 
     m_initialized = true;
 
@@ -85,10 +85,11 @@ void GlyphAtlas::setFont(const QFont &font, int cellWidth, int cellHeight)
     m_rowHeight = 0;
 
     if (m_initialized) {
-        m_staging.fill(Qt::transparent);
+        QImage staging(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
+        staging.fill(Qt::transparent);
         glBindTexture(GL_TEXTURE_2D, m_texture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_atlasWidth, m_atlasHeight,
-                        GL_RGBA, GL_UNSIGNED_BYTE, m_staging.constBits());
+                        GL_RGBA, GL_UNSIGNED_BYTE, staging.constBits());
     }
 }
 
@@ -138,11 +139,19 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
         }
     }
 
-    QPainter painter(&m_staging);
+    // Ensure scratch is large enough for this glyph (grows monotonically, reused thereafter)
+    if (m_glyphScratch.width() < glyphWidth || m_glyphScratch.height() < glyphHeight) {
+        m_glyphScratch = QImage(qMax(m_glyphScratch.width(), glyphWidth),
+                                qMax(m_glyphScratch.height(), glyphHeight),
+                                QImage::Format_RGBA8888);
+    }
+    m_glyphScratch.fill(Qt::transparent);
+
+    QPainter painter(&m_glyphScratch);
     painter.setFont(font);
     painter.setPen(Qt::white);
     painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.drawText(x, y + fm.ascent(), str);
+    painter.drawText(0, fm.ascent(), str);
     painter.end();
 
     info.u0 = static_cast<float>(x) / m_atlasWidth;
@@ -154,15 +163,19 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
     info.width = glyphWidth;
     info.height = glyphHeight;
 
-    // Upload the dirty region to GPU using reusable buffer (avoids QImage::copy allocation)
-    Q_ASSERT(x + glyphWidth <= m_atlasWidth && y + glyphHeight <= m_atlasHeight);
-    int bpp = 4; // RGBA8888
-    int bytesPerLine = glyphWidth * bpp;
+    // Re-stride the glyph into a tightly-packed upload buffer.
+    // m_glyphScratch bytesPerLine may be wider than glyphWidth*4 (the scratch
+    // is reused at the width of the widest glyph seen so far), but GL reads
+    // exactly glyphWidth*4 bytes per row (no GL_UNPACK_ROW_LENGTH in GLES2).
+    const int bpp = 4;
+    const int bytesPerLine = glyphWidth * bpp;
     m_uploadBuf.resize(bytesPerLine * glyphHeight);
-    for (int row = 0; row < glyphHeight; row++) {
-        const uchar *src = m_staging.constScanLine(y + row) + x * bpp;
+    for (int row = 0; row < glyphHeight; ++row) {
+        const uchar *src = m_glyphScratch.constScanLine(row);
         memcpy(m_uploadBuf.data() + row * bytesPerLine, src, bytesPerLine);
     }
+
+    Q_ASSERT(x + glyphWidth <= m_atlasWidth && y + glyphHeight <= m_atlasHeight);
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, glyphWidth, glyphHeight,
                     GL_RGBA, GL_UNSIGNED_BYTE, m_uploadBuf.constData());
@@ -202,8 +215,9 @@ void GlyphAtlas::clearAtlas()
     m_packX = 1;
     m_packY = 0;
     m_rowHeight = 0;
-    m_staging.fill(Qt::transparent);
+    QImage staging(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
+    staging.fill(Qt::transparent);
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_atlasWidth, m_atlasHeight,
-                    GL_RGBA, GL_UNSIGNED_BYTE, m_staging.constBits());
+                    GL_RGBA, GL_UNSIGNED_BYTE, staging.constBits());
 }

@@ -372,6 +372,7 @@ void TerminalView::setupTerminal()
 
 void TerminalView::onPtyData(const QByteArray &data)
 {
+    Q_EMIT ptyDataReceived();
     m_vt->vtWrite(reinterpret_cast<const uint8_t *>(data.constData()),
                    data.size());
     m_linkScanDirty = true;

@@ -66,7 +66,13 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
     connect(m_saveTimer, &QTimer::timeout, this, [this]() {
-        saveSessions();
+        // Only rewrite the settings file when session metadata actually
+        // changed — a scrollback-only arm (scheduleScrollbackSave) leaves
+        // the flag false so continuous output doesn't fsync settings ~2x/sec.
+        if (m_sessionsDirty) {
+            saveSessions();
+            m_sessionsDirty = false;
+        }
         // Also encrypt scrollback incrementally for sessions whose content
         // changed since the last save. By the time aboutToQuit fires, most
         // sessions are already on disk — only a few remain dirty.
@@ -93,10 +99,9 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         timer.start();
         saveSessions();
         qint64 sessionMs = timer.elapsed();
-        // Most sessions' scrollback was already encrypted by the debounce
-        // timer. Only encrypt sessions that changed since the last save,
-        // processing the active session first for priority.
-        saveScrollbackIncremental();
+        // Catch sessions the debounce timer hasn't fired for yet; force=true
+        // bypasses the 5s throttle so nothing is lost on shutdown.
+        saveScrollbackIncremental(true);
         qint64 totalMs = timer.elapsed();
         if (totalMs > 1000)
             qWarning() << "Ghosteel: Quit save took" << totalMs << "ms"
@@ -206,28 +211,37 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
     });
 
     // Track content changes for incremental scrollback encryption.
-    // Mark dirty on first content change; scheduleSave restarts the 500ms
-    // debounce timer, which will call saveScrollbackIncremental().
+    // Mark dirty on first content change; scheduleScrollbackSave restarts
+    // the 500ms debounce timer, which will call saveScrollbackIncremental().
     connect(view, &TerminalView::contentChanged, this,
         [this, sessionId]() {
         int idx = sessionIndexById(sessionId);
         if (idx < 0)
             return;
         // Skip geometry-update repaints that fire immediately after
-        // restoreSessions(). Cleared by titleChanged (real PTY data).
+        // restoreSessions(). Cleared by titleChanged or ptyDataReceived
+        // (whichever fires first).
         if (m_sessions[idx].justRestored)
             return;
         if (!m_sessions[idx].scrollbackDirty) {
             m_sessions[idx].scrollbackDirty = true;
-            scheduleSave();
+            scheduleScrollbackSave();
         }
     });
 
-    // Clear justRestored when real PTY data arrives. titleChanged fires
-    // during onPtyData() → vtWrite(), synchronously before the update()
-    // that emits contentChanged, so justRestored is cleared before the
-    // first data-driven contentChanged handler runs.
+    // justRestored must be cleared before the first data-driven contentChanged
+    // runs, or that handler will keep skipping saves. titleChanged (shells that
+    // set a title) fires synchronously from onPtyData → vtWrite, before the
+    // update() that emits contentChanged; ptyDataReceived fires earlier still
+    // (before vtWrite) and also covers title-less shells like sh/dash. Hence
+    // two connections — whichever fires first wins.
     connect(view, &TerminalView::titleChanged, this,
+        [this, sessionId]() {
+        int idx = sessionIndexById(sessionId);
+        if (idx >= 0)
+            m_sessions[idx].justRestored = false;
+    });
+    connect(view, &TerminalView::ptyDataReceived, this,
         [this, sessionId]() {
         int idx = sessionIndexById(sessionId);
         if (idx >= 0)
@@ -864,6 +878,16 @@ void SessionManager::saveSessions()
 
 void SessionManager::scheduleSave()
 {
+    // Session metadata changed — ensure saveSessions() runs on the next fire.
+    m_sessionsDirty = true;
+    if (m_sessionsLoaded)
+        m_saveTimer->start();
+}
+
+void SessionManager::scheduleScrollbackSave()
+{
+    // Scrollback-only change — arm the timer for saveScrollbackIncremental()
+    // without forcing a settings rewrite (avoids fsync thrash under output).
     if (m_sessionsLoaded)
         m_saveTimer->start();
 }
@@ -920,27 +944,53 @@ void SessionManager::saveSessionScrollback(SessionInfo &info)
     }
 }
 
-void SessionManager::saveScrollbackIncremental()
+void SessionManager::saveScrollbackIncremental(bool force)
 {
     if (!m_settings->scrollbackPersistence())
         return;
 
     QDir().mkpath(scrollbackDir());
 
+    // Throttle scrollback saves under continuous output (tail -f, builds):
+    // exportScrollback + Sailfish-Secrets D-Bus + fsync is expensive on a
+    // handset, and contentChanged fires every repaint, so an unthrottled
+    // 500ms debounce would re-encrypt ~2x/sec. Cap each session to one save
+    // per kMinScrollbackIntervalMs; force=true (quit) bypasses it. A sporadic
+    // edit landing inside a window is deferred up to ~5s — acceptable for
+    // scrollback durability (quit always force-saves).
+    static constexpr qint64 kMinScrollbackIntervalMs = 5000;
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    bool anyThrottled = false;
+
+    auto trySave = [&](SessionInfo &info) {
+        if (!info.scrollbackDirty)
+            return;  // cheap pre-check; saveSessionScrollback does not re-check dirty
+        if (!force && info.lastScrollbackSaveMs > 0
+            && (now - info.lastScrollbackSaveMs) < kMinScrollbackIntervalMs) {
+            // Stay dirty; re-armed below for the next window.
+            anyThrottled = true;
+            return;
+        }
+        saveSessionScrollback(info);  // clears dirty on success
+        if (!info.scrollbackDirty)
+            info.lastScrollbackSaveMs = now;
+    };
+
     // Process active session first for priority on quit
-    if (m_activeSessionIndex >= 0 && m_activeSessionIndex < m_sessions.size()) {
-        SessionInfo &info = m_sessions[m_activeSessionIndex];
-        if (info.scrollbackDirty)
-            saveSessionScrollback(info);
-    }
+    if (m_activeSessionIndex >= 0 && m_activeSessionIndex < m_sessions.size())
+        trySave(m_sessions[m_activeSessionIndex]);
 
     for (int i = 0; i < m_sessions.size(); i++) {
         if (i == m_activeSessionIndex)
             continue;
-        SessionInfo &info = m_sessions[i];
-        if (info.scrollbackDirty)
-            saveSessionScrollback(info);
+        trySave(m_sessions[i]);
     }
+
+    // A throttled session is still dirty — re-arm so it's retried at the next
+    // window. Throttled sessions skip exportScrollback entirely, so the
+    // intervening 500ms fires stay cheap.
+    if (anyThrottled)
+        scheduleScrollbackSave();
 }
 
 void SessionManager::cleanupScrollbackFiles()
@@ -1181,6 +1231,10 @@ bool SessionManager::restoreSessions()
     else if (!m_sessions.isEmpty())
         setActiveSessionIndex(0);
 
+    // Reset the metadata-dirty flag: restore's trailing setActiveSessionIndex
+    // sets it via scheduleSave, but the just-loaded state is already on disk,
+    // so the next scrollback-only arm must not trigger a redundant saveSessions.
+    m_sessionsDirty = false;
     m_sessionsLoaded = true;
     rebuildSortedIndices();
     Q_EMIT sessionsRestored();
