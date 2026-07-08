@@ -18,5 +18,5 @@ if [ -z "$SHA" ]; then
     exit 1
 fi
 
-echo "$SHA" > "$REPO_DIR/rpm/ghostty-version"
-echo "Updated rpm/ghostty-version: $SHA"
+echo "$SHA" > "$REPO_DIR/ghostty.version"
+echo "Updated ghostty.version: $SHA"
