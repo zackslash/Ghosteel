@@ -209,8 +209,8 @@ fi
 # Inject version info (no .git/ in OBS tarballs, so git describe fails)
 # GIT_VERSION: use RPM version set by tar_git from git tag
 sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"%{version}\"/" ghosteel.pro
-# GHOSTTY_VERSION: read from rpm/ghostty-version (updated by scripts/update-ghostty-version.sh)
-GHOSTTY_SHA=$(cat rpm/ghostty-version 2>/dev/null || true)
+# GHOSTTY_VERSION: read from ghostty.version (updated by scripts/update-ghostty-version.sh)
+GHOSTTY_SHA=$(cat ghostty.version 2>/dev/null || true)
 if [ -n "$GHOSTTY_SHA" ]; then
     sed -i "s|^GHOSTTY_VERSION = .*|GHOSTTY_VERSION = \"$GHOSTTY_SHA\"|" ghosteel.pro
 fi
