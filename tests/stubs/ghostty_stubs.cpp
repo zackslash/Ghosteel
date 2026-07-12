@@ -1,14 +1,17 @@
-// Empty stub implementations of the Ghostty C API for test builds.
-//
-// These stubs allow ghosttyvt.cpp (and terminalview.cpp) to link without
-// the real libghostty-vt.a.  The stubs are never actually executed because
-// the OSC 777 tests never call create() — so m_terminal is null and the
-// if (m_terminal) guard at line 189 of ghosttyvt.cpp prevents the C API
-// call.
+// Stub implementations of the Ghostty C API for test builds, allowing
+// ghosttyvt.cpp (and terminalview.cpp) to link without the real
+// libghostty-vt.a. Most are no-ops; ghostty_terminal_mode_set records
+// its calls (see ghostty_stubs.h) for contract tests.
+
+#include "ghostty_stubs.h"
 
 #include <ghostty/vt.h>
 #include <string.h>
 #include <stdlib.h>
+#include <map>
+
+// Recorded mode-set calls for test inspection (see ghostty_stubs.h).
+static std::map<GhosttyMode, bool> g_stubs_modesSet;
 
 // ---- Terminal ----
 
@@ -62,9 +65,27 @@ GHOSTTY_API GhosttyResult ghostty_terminal_mode_get(
 }
 
 GHOSTTY_API GhosttyResult ghostty_terminal_mode_set(
-    GhosttyTerminal, GhosttyMode, bool)
+    GhosttyTerminal, GhosttyMode mode, bool value)
 {
+    g_stubs_modesSet[mode] = value;
     return GHOSTTY_SUCCESS;
+}
+
+// --- Test-visible recorder (declared in ghostty_stubs.h) ---
+
+extern "C" void ghostty_stubs_reset_modes(void)
+{
+    g_stubs_modesSet.clear();
+}
+
+extern "C" bool ghostty_stubs_mode_set_called(GhosttyMode mode, bool *out_value)
+{
+    auto it = g_stubs_modesSet.find(mode);
+    if (it == g_stubs_modesSet.end())
+        return false;
+    if (out_value)
+        *out_value = it->second;
+    return true;
 }
 
 GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref(
