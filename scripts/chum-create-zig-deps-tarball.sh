@@ -107,6 +107,31 @@ for i in $(seq 0 $((TOTAL - 1))); do
     fi
 done
 
+# ── Strip bloat never needed for a `zig build --system` release build ───
+# Only `zig build test` / docs / examples touch these; cutting them keeps
+# the cache under OBS's RPM build disk limit.
+echo ""
+echo "=== Stripping test/doc/example bloat ==="
+STRIP_NAMES=(
+    test tests Test
+    doc docs
+    example examples samples
+    fuzz fuzzing
+    reference
+    ci .ci .github
+    gnulib-tests gnulib-local
+    # gettext: only gettext-runtime/intl/ is used
+    gettext-tools libtextstyle
+    # libxml2: XML conformance test output
+    result xstc
+)
+BEFORE_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
+STRIP_REGEX="$(IFS='|'; echo "${STRIP_NAMES[*]}" | sed 's/\./\\./g')"
+find "${WORK_DIR}/p" -type d -regextype posix-extended \
+    -regex ".*/(${STRIP_REGEX})" -prune -exec rm -rf {} +
+AFTER_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
+echo "  Cache size: ${AFTER_SIZE} (was ${BEFORE_SIZE})"
+
 echo ""
 echo "Creating deps tarball: $DEPS_OUTPUT"
 tar -czf "$DEPS_OUTPUT" -C "${WORK_DIR}" p
