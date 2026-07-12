@@ -142,3 +142,15 @@ add_executable(tst_url_detection
 )
 target_link_libraries(tst_url_detection PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME UrlDetection COMMAND tst_url_detection)
+
+# --- Default terminal modes (grapheme cluster, cursor blinking) tests ---
+add_executable(tst_default_modes
+    tst_default_modes.cpp
+    ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
+)
+target_include_directories(tst_default_modes PRIVATE SYSTEM
+    ${CMAKE_SOURCE_DIR}/stubs
+)
+target_link_libraries(tst_default_modes PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME DefaultModes COMMAND tst_default_modes)

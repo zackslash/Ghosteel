@@ -72,6 +72,12 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     // Enable cursor blinking by default (Ghostty mode 12 defaults to false)
     ghostty_terminal_mode_set(m_terminal, GHOSTTY_MODE_CURSOR_BLINKING, true);
 
+    // Enable grapheme cluster mode (DEC 2027) so VS16 (U+FE0F) makes BMP emoji
+    // (☀☁⛈) 2 cells wide. Matches the Ghostty app default.
+    // NOTE: a hard reset (`reset` / ESC c) clears this; the C API has no
+    // default-modes field, so reset-resilience requires an upstream change.
+    ghostty_terminal_mode_set(m_terminal, GHOSTTY_MODE_GRAPHEME_CLUSTER, true);
+
     // Enable Kitty Graphics Protocol image storage (32 MiB per screen)
     uint64_t kittyLimit = 32 * 1024 * 1024;
     ghostty_terminal_set(m_terminal,
