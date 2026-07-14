@@ -6,11 +6,11 @@
 # Run this whenever the ghostty submodule is updated (new release, version bump, etc.)
 #
 # Usage: ./scripts/chum-create-zig-deps-tarball.sh [output-dir]
-# Default output: repo root
+# Default: rpm/ (spec expects Source1/Source2 there)
 #
 # Outputs:
-#   zig-x86_64-linux-<version>.tar.xz  (Zig compiler binary — upload as Source1)
-#   zig-deps-cache.tar.gz               (all Zig package deps — upload as Source2)
+#   zig-x86_64-linux-<version>.tar.xz  (Zig compiler)
+#   zig-deps-cache.tar.gz             (all Zig package deps)
 
 set -euo pipefail
 
@@ -20,7 +20,8 @@ ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERS
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GHOSTTY_DIR="${REPO_ROOT}/ghostty"
 PACKAGES_JSON="${GHOSTTY_DIR}/flatpak/zig-packages.json"
-OUTPUT_DIR="${1:-${REPO_ROOT}}"
+OUTPUT_DIR="${1:-${REPO_ROOT}/rpm}"
+mkdir -p "$OUTPUT_DIR"
 WORK_DIR=$(mktemp -d)
 
 ZIG_OUTPUT="${OUTPUT_DIR}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
@@ -108,8 +109,11 @@ for i in $(seq 0 $((TOTAL - 1))); do
 done
 
 # ── Strip bloat never needed for a `zig build --system` release build ───
-# Only `zig build test` / docs / examples touch these; cutting them keeps
-# the cache under OBS's RPM build disk limit.
+# Keeps the cache under OBS's RPM build disk limit.
+#
+# Some deps (e.g. libxev) openDir() these dirs at configure time, so
+# stripping a referenced name crashes `zig build` with FileNotFound.
+# Skip names referenced as string literals in the package's build.zig.
 echo ""
 echo "=== Stripping test/doc/example bloat ==="
 STRIP_NAMES=(
@@ -126,9 +130,18 @@ STRIP_NAMES=(
     result xstc
 )
 BEFORE_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-STRIP_REGEX="$(IFS='|'; echo "${STRIP_NAMES[*]}" | sed 's/\./\\./g')"
-find "${WORK_DIR}/p" -type d -regextype posix-extended \
-    -regex ".*/(${STRIP_REGEX})" -prune -exec rm -rf {} +
+for pkg in "${WORK_DIR}/p"/*/; do
+    [ -d "$pkg" ] || continue
+    for name in "${STRIP_NAMES[@]}"; do
+        # bare "name" or path form "name/..." → dir is needed at configure
+        # time; keep it to avoid an openDir FileNotFound crash.
+        if [ -f "${pkg}build.zig" ] && grep -qF -e "\"$name\"" -e "\"$name/" "${pkg}build.zig"; then
+            echo "  keeping $name/ in $(basename "$pkg") (referenced by build.zig)"
+            continue
+        fi
+        find "$pkg" -type d -name "$name" -prune -exec rm -rf {} +
+    done
+done
 AFTER_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
 echo "  Cache size: ${AFTER_SIZE} (was ${BEFORE_SIZE})"
 
