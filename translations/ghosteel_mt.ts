@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 sessjoni</numerusform>
+            <numerusform>%n sessjoni</numerusform>
             <numerusform>%n sessjoni</numerusform>
             <numerusform>%n sessjonijiet</numerusform>
             <numerusform>%n sessjonijiet</numerusform>
@@ -272,7 +272,7 @@
     </message>
     <message>
         <source>Default: /bin/sh</source>
-        <translation>Default: /bin/sh</translation>
+        <translation>Awtomatiku: /bin/sh</translation>
     </message>
     <message>
         <source>Light</source>
@@ -288,7 +288,7 @@
     </message>
     <message>
         <source>Settings</source>
-        <translation>Settings</translation>
+        <translation>Issettjar</translation>
     </message>
     <message>
         <source>Shell command</source>
@@ -457,8 +457,8 @@ Mħaddem minn magna terminali libghostty</translation>
         <translation>Daqs tal-font awtomatika</translation>
     </message>
     <message>
-        <source>Change font size of the session with a two-finger pinch gesture</source>
-        <translation>Ibdel id-daqs tal-font tas-sessjoni b'ġest ta' pinċa b'żewġ swaba</translation>
+        <source>Settings</source>
+        <translation>Issettjar</translation>
     </message>
 </context>
 <context>
@@ -468,16 +468,12 @@ Mħaddem minn magna terminali libghostty</translation>
         <translation>Sessjoni ġdida</translation>
     </message>
     <message>
-        <source>Session %1</source>
-        <translation type="vanished">Sessjoni %1</translation>
-    </message>
-    <message>
         <source>Sessions</source>
         <translation>Sessjonijiet</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation>Settings</translation>
+        <translation>Issettjar</translation>
     </message>
     <message>
         <source>Switch to session</source>

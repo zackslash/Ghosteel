@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 sesija</numerusform>
+            <numerusform>%n sesija</numerusform>
             <numerusform>%n sesijas</numerusform>
             <numerusform>%n sesiju</numerusform>
         </translation>
@@ -465,10 +465,6 @@ Darbina libghostty termināla dzinējs</translation>
     <message>
         <source>New session</source>
         <translation>Jauna sesija</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Sesija %1</translation>
     </message>
     <message>
         <source>Sessions</source>

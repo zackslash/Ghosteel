@@ -10,7 +10,8 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 oturum</numerusform>
+            <numerusform>%n oturum</numerusform>
+            <numerusform>%n oturum</numerusform>
         </translation>
     </message>
 </context>
@@ -463,10 +464,6 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
     <message>
         <source>New session</source>
         <translation>Yeni oturum</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Oturum %1</translation>
     </message>
     <message>
         <source>Sessions</source>

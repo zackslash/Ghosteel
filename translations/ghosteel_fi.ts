@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 istunto</numerusform>
+            <numerusform>%n istunto</numerusform>
             <numerusform>%n istuntoa</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Käyttää libghostty-pääteohjelmaa</translation>
     <message>
         <source>New session</source>
         <translation>Uusi istunto</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Istunto %1</translation>
     </message>
     <message>
         <source>Sessions</source>

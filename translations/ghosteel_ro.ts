@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 sesiune</numerusform>
+            <numerusform>%n sesiune</numerusform>
             <numerusform>%n sesiuni</numerusform>
             <numerusform>%n sesiuni</numerusform>
         </translation>
@@ -465,10 +465,6 @@ Propulsat de motorul de terminal libghostty</translation>
     <message>
         <source>New session</source>
         <translation>Sesiune nouă</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Sesiunea %1</translation>
     </message>
     <message>
         <source>Sessions</source>

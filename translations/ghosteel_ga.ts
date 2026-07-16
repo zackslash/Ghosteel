@@ -10,9 +10,9 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 seisiún</numerusform>
-            <numerusform>2 sheisiún</numerusform>
             <numerusform>%n seisiún</numerusform>
+            <numerusform>%n sheisiún</numerusform>
+            <numerusform>%n seisiúin</numerusform>
         </translation>
     </message>
 </context>
@@ -465,10 +465,6 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
     <message>
         <source>New session</source>
         <translation>Seisiún nua</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Seisiún %1</translation>
     </message>
     <message>
         <source>Sessions</source>

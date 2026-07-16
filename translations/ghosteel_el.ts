@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 συνεδρία</numerusform>
+            <numerusform>%n συνεδρία</numerusform>
             <numerusform>%n συνεδρίες</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>New session</source>
         <translation>Νέα συνεδρία</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Συνεδρία %1</translation>
     </message>
     <message>
         <source>Sessions</source>
