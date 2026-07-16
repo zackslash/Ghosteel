@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 munkamenet</numerusform>
+            <numerusform>%n munkamenet</numerusform>
         </translation>
     </message>
 </context>
@@ -463,10 +463,6 @@ A libghostty terminálmotor hajtja</translation>
     <message>
         <source>New session</source>
         <translation>Új munkamenet</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">%1. munkamenet</translation>
     </message>
     <message>
         <source>Sessions</source>

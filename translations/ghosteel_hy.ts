@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 նիստ</numerusform>
+            <numerusform>%n նիստ</numerusform>
             <numerusform>%n նիստ</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>New session</source>
         <translation>Նոր նիստ</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Նիստ %1</translation>
     </message>
     <message>
         <source>Sessions</source>

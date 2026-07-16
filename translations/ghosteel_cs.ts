@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 relace</numerusform>
+            <numerusform>%n relace</numerusform>
             <numerusform>%n relace</numerusform>
             <numerusform>%n relací</numerusform>
         </translation>
@@ -465,10 +465,6 @@ Poháněno terminálovým enginem libghostty</translation>
     <message>
         <source>New session</source>
         <translation>Nová relace</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Relace %1</translation>
     </message>
     <message>
         <source>Sessions</source>

@@ -10,8 +10,8 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>0 sesiwn</numerusform>
-            <numerusform>1 sesiwn</numerusform>
+            <numerusform>%n sesiwn</numerusform>
+            <numerusform>%n sesiwn</numerusform>
             <numerusform>%n sesiwn</numerusform>
             <numerusform>%n sesiwn</numerusform>
             <numerusform>%n sesiynau</numerusform>
@@ -467,10 +467,6 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>New session</source>
         <translation>Sesiwn newydd</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Sesiwn %1</translation>
     </message>
     <message>
         <source>Sessions</source>

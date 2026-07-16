@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 saio</numerusform>
+            <numerusform>%n saio</numerusform>
             <numerusform>%n saio</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ libghostty terminal motorrak bultzatuta</translation>
     <message>
         <source>New session</source>
         <translation>Saio berria</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">%1. saioa</translation>
     </message>
     <message>
         <source>Sessions</source>

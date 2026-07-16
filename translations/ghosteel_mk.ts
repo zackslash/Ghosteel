@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 сесија</numerusform>
+            <numerusform>%n сесија</numerusform>
             <numerusform>%n сесии</numerusform>
             <numerusform>%n сесии</numerusform>
         </translation>
@@ -465,10 +465,6 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>New session</source>
         <translation>Нова сесија</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Сесија %1</translation>
     </message>
     <message>
         <source>Sessions</source>
