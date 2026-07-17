@@ -19,7 +19,9 @@ void GhosteelAdapter::activateSession(int sessionId)
         return;
     }
 
-    m_manager->switchToSession(index);
+    // index is an actual m_sessions index — don't hand it to switchToSession(),
+    // which expects a display (sorted) index.
+    m_manager->setActiveSessionIndex(index);
 
     // Raise the application window to the foreground
     const auto windows = QGuiApplication::topLevelWindows();
