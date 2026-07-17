@@ -154,3 +154,10 @@ target_include_directories(tst_default_modes PRIVATE SYSTEM
 )
 target_link_libraries(tst_default_modes PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME DefaultModes COMMAND tst_default_modes)
+
+# --- Kitty PNG dimension-cap guard tests ---
+add_executable(tst_kitty_image_guard
+    tst_kitty_image_guard.cpp
+)
+target_link_libraries(tst_kitty_image_guard PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME KittyImageGuard COMMAND tst_kitty_image_guard)
