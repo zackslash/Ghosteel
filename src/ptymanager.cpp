@@ -87,7 +87,8 @@ PtyManager::~PtyManager()
     stop();
 }
 
-bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid)
+bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid,
+                                const char *workingDir, const char *homeDir)
 {
     m_sessionGeneration++;
 
@@ -104,6 +105,19 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     }
     fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
 
+    // Set child env in the parent: forkpty() copies environ into the child, and
+    // execlp/execvp pass it on. glibc setenv mallocs — not async-signal-safe — so
+    // it must not run between fork and exec (QSG render thread / a still-live prior
+    // PtyReaderThread can hold the allocator lock across the fork).
+    setenv("TERM", "xterm-256color", 1);
+    {
+        // Point at the parent of shell-integration/ so shell-integration scripts
+        // resolve via ${GHOSTTY_RESOURCES_DIR}/shell-integration/<shell>/...
+        QByteArray resourceDir = QDir::toNativeSeparators(
+            QStringLiteral("/usr/share/" APP_NAME)).toUtf8();
+        setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
+    }
+
     pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
     if (pid < 0) {
         qWarning() << "forkpty failed:" << strerror(errno);
@@ -111,17 +125,20 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
         ::close(execPipe[1]);
         return false;
     }
-
     if (pid == 0) {
         ::close(execPipe[0]);
-        setupChildProcess();
+        setupChildProcess(workingDir, homeDir);
     }
-
     return true;
 }
 
 bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 {
+    // Pre-fork precompute: between forkpty() and exec() the child may only use
+    // async-signal-safe calls. The QSG render thread and an exiting previous
+    // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
+    // (including setenv) here can deadlock. Build all child inputs on this stack.
+
     // Determine shell — prefer configured command, then $SHELL, then /bin/sh
     const char *shell = nullptr;
     QByteArray shellBytes;
@@ -135,9 +152,17 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
             shell = "/bin/sh";
     }
 
+    const char *homeDir = getenv("HOME");
+    QByteArray workingDirBytes;
+    const char *workingDir = nullptr;
+    if (!m_workingDirectory.isEmpty()) {
+        workingDirBytes = m_workingDirectory.toUtf8();
+        workingDir = workingDirBytes.constData();
+    }
+
     int execPipe[2];
     pid_t pid;
-    if (!forkPtyProcess(cols, rows, execPipe, pid))
+    if (!forkPtyProcess(cols, rows, execPipe, pid, workingDir, homeDir))
         return false;
 
     if (pid == 0) {
@@ -152,51 +177,47 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     return startParentProcess(pid, execPipe);
 }
 
-void PtyManager::setupChildProcess()
+// Runs in CHILD between fork and exec — async-signal-safe calls only.
+void PtyManager::setupChildProcess(const char *workingDir, const char *homeDir)
 {
     setsid();
-
-    // Change to working directory if specified (for session restore)
-    if (!m_workingDirectory.isEmpty()) {
-        QByteArray dirBytes = m_workingDirectory.toUtf8();
-        if (chdir(dirBytes.constData()) != 0) {
-            // Fallback to home directory if saved path no longer exists
-            const char *home = getenv("HOME");
-            if (home)
-                (void)chdir(home);
-        }
+    if (workingDir && workingDir[0]) {
+        if (chdir(workingDir) != 0 && homeDir)
+            (void)chdir(homeDir);
     }
-
-    setenv("TERM", "xterm-256color", 1);
-
-    // Set GHOSTTY_RESOURCES_DIR for shell integration scripts.
-    // The scripts are installed at /usr/share/<APP_NAME>/shell-integration/
-    // but GHOSTTY_RESOURCES_DIR should point to the parent so that
-    // scripts reference ${GHOSTTY_RESOURCES_DIR}/shell-integration/bash/...
-    QByteArray resourceDir = QDir::toNativeSeparators(
-        QStringLiteral("/usr/share/" APP_NAME)).toUtf8();
-    setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
 }
 
 bool PtyManager::startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows)
 {
+    // Pre-fork precompute: between forkpty() and exec() the child may only use
+    // async-signal-safe calls. The QSG render thread and an exiting previous
+    // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
+    // (including setenv) here can deadlock. Build all child inputs on this stack.
+    QByteArray cmdBytes = command.toUtf8();
+    QList<QByteArray> argBytes;
+    argBytes.append(cmdBytes);
+    for (const QString &arg : args)
+        argBytes.append(arg.toUtf8());
+
+    QVector<const char *> argv(argBytes.size() + 1);
+    for (int i = 0; i < argBytes.size(); ++i)
+        argv[i] = argBytes[i].constData();
+    argv[argBytes.size()] = nullptr;
+
+    const char *homeDir = getenv("HOME");
+    QByteArray workingDirBytes;
+    const char *workingDir = nullptr;
+    if (!m_workingDirectory.isEmpty()) {
+        workingDirBytes = m_workingDirectory.toUtf8();
+        workingDir = workingDirBytes.constData();
+    }
+
     int execPipe[2];
     pid_t pid;
-    if (!forkPtyProcess(cols, rows, execPipe, pid))
+    if (!forkPtyProcess(cols, rows, execPipe, pid, workingDir, homeDir))
         return false;
 
     if (pid == 0) {
-        QByteArray cmdBytes = command.toUtf8();
-        QList<QByteArray> argBytes;
-        argBytes.append(cmdBytes);
-        for (const QString &arg : args)
-            argBytes.append(arg.toUtf8());
-
-        QVector<const char *> argv(argBytes.size() + 1);
-        for (int i = 0; i < argBytes.size(); ++i)
-            argv[i] = argBytes[i].constData();
-        argv[argBytes.size()] = nullptr;
-
         execvp(cmdBytes.constData(), const_cast<char *const *>(argv.data()));
 
         int execErr = errno;
@@ -382,13 +403,14 @@ void PtyManager::stop(bool synchronous)
             m_readerThread->requestInterruption();
         }
 
-        // Close the fd BEFORE returning so the reader thread's poll() wakes
-        // immediately with POLLNVAL (not after the 200 ms timeout). Combined
-        // with the bounded wait below, this closes the fd-reuse race: without
-        // it, setupTerminal()/forkPtyProcess() could reuse the just-freed fd
-        // number for the new PTY before the old thread exits, letting the old
-        // thread poll()/read() the new PTY and silently drop the first bytes
-        // of the new shell's output.
+        // Close the old PTY fd so it isn't leaked into the new session. (NB:
+        // on Linux, close() in this thread does NOT wake the old reader's in-
+        // flight poll() — fds are process-shared and poll binds to the file at
+        // entry; POLLNVAL would surface only on a *subsequent* poll() call.)
+        // The old thread instead exits via its 200 ms timeout + the flag set
+        // by requestInterruption() above; the disconnect() above ensures any
+        // straggling emissions go nowhere. Those, not the close(), neutralize
+        // the fd-reuse race with the new PTY.
         if (m_ptyFd >= 0) {
             if (m_writeNotifier) {
                 m_writeNotifier->setEnabled(false);
@@ -401,9 +423,10 @@ void PtyManager::stop(bool synchronous)
         }
 
         if (m_readerThread) {
-            // Bounded wait (thread normally exits in <1 ms via POLLNVAL). If the 100 ms
-            // safety net is exceeded, fall back to async cleanup — safe because the fd
-            // close above already broke the poll() loop, so the race window is closed.
+            // The old thread's poll timeout (200 ms) exceeds this 100 ms wait, so the
+            // async deleteLater-on-finished path below is the expected restart path —
+            // not an exceptional fallback (the loop's flag check gates read(), so the
+            // thread can't touch a reused fd number).
             if (m_readerThread->wait(100)) {
                 m_readerThread->deleteLater();
             } else {
