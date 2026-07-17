@@ -154,3 +154,10 @@ target_include_directories(tst_default_modes PRIVATE SYSTEM
 )
 target_link_libraries(tst_default_modes PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME DefaultModes COMMAND tst_default_modes)
+
+# --- Glyph cache key (cluster + single-cp) logic tests ---
+add_executable(tst_glyph_cache_key
+    tst_glyph_cache_key.cpp
+)
+target_link_libraries(tst_glyph_cache_key PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
+add_test(NAME GlyphCacheKey COMMAND tst_glyph_cache_key)
