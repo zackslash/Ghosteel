@@ -60,8 +60,8 @@ private:
     void ensureWriteNotifier();
     void drainWriteBuffer();
     void resetWriteBuffer();
-    void setupChildProcess();
-    bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid);
+    void setupChildProcess(const char *workingDir, const char *homeDir);
+    bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid, const char *workingDir, const char *homeDir);
     bool startParentProcess(pid_t pid, int execPipe[2]);
 
     void reapPidBounded(pid_t pid);

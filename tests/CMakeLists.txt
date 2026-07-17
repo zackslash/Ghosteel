@@ -161,3 +161,10 @@ add_executable(tst_terminal_width
 )
 target_link_libraries(tst_terminal_width PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME TerminalWidth COMMAND tst_terminal_width)
+
+# --- Kitty PNG dimension-cap guard tests ---
+add_executable(tst_kitty_image_guard
+    tst_kitty_image_guard.cpp
+)
+target_link_libraries(tst_kitty_image_guard PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME KittyImageGuard COMMAND tst_kitty_image_guard)
