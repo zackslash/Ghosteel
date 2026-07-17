@@ -305,6 +305,11 @@ int SessionManager::findSessionByName(const QString &name) const
 
 TerminalView* SessionManager::createSession()
 {
+    if (m_sessions.size() >= kMaxSessionCount) {
+        qWarning() << "Session limit reached (" << kMaxSessionCount << "), ignoring new session";
+        return nullptr;
+    }
+
     // Create a new TerminalView as a child of this manager
     TerminalView *view = new TerminalView();
 
