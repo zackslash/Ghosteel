@@ -154,3 +154,10 @@ target_include_directories(tst_default_modes PRIVATE SYSTEM
 )
 target_link_libraries(tst_default_modes PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME DefaultModes COMMAND tst_default_modes)
+
+# --- Terminal character width (East Asian Width) tests ---
+add_executable(tst_terminal_width
+    tst_terminal_width.cpp
+)
+target_link_libraries(tst_terminal_width PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME TerminalWidth COMMAND tst_terminal_width)
