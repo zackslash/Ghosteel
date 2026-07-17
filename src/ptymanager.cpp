@@ -382,13 +382,14 @@ void PtyManager::stop(bool synchronous)
             m_readerThread->requestInterruption();
         }
 
-        // Close the fd BEFORE returning so the reader thread's poll() wakes
-        // immediately with POLLNVAL (not after the 200 ms timeout). Combined
-        // with the bounded wait below, this closes the fd-reuse race: without
-        // it, setupTerminal()/forkPtyProcess() could reuse the just-freed fd
-        // number for the new PTY before the old thread exits, letting the old
-        // thread poll()/read() the new PTY and silently drop the first bytes
-        // of the new shell's output.
+        // Close the old PTY fd so it isn't leaked into the new session. (NB:
+        // on Linux, close() in this thread does NOT wake the old reader's in-
+        // flight poll() — fds are process-shared and poll binds to the file at
+        // entry; POLLNVAL would surface only on a *subsequent* poll() call.)
+        // The old thread instead exits via its 200 ms timeout + the flag set
+        // by requestInterruption() above; the disconnect() above ensures any
+        // straggling emissions go nowhere. Those, not the close(), neutralize
+        // the fd-reuse race with the new PTY.
         if (m_ptyFd >= 0) {
             if (m_writeNotifier) {
                 m_writeNotifier->setEnabled(false);
@@ -401,9 +402,10 @@ void PtyManager::stop(bool synchronous)
         }
 
         if (m_readerThread) {
-            // Bounded wait (thread normally exits in <1 ms via POLLNVAL). If the 100 ms
-            // safety net is exceeded, fall back to async cleanup — safe because the fd
-            // close above already broke the poll() loop, so the race window is closed.
+            // The old thread's poll timeout (200 ms) exceeds this 100 ms wait, so the
+            // async deleteLater-on-finished path below is the expected restart path —
+            // not an exceptional fallback (the loop's flag check gates read(), so the
+            // thread can't touch a reused fd number).
             if (m_readerThread->wait(100)) {
                 m_readerThread->deleteLater();
             } else {
