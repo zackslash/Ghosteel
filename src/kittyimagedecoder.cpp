@@ -1,4 +1,5 @@
 #include "kittyimagedecoder.h"
+#include "kittyimageguard.h"
 
 #include <QImage>
 #include <QDebug>
@@ -15,18 +16,19 @@ static bool decodePngCallback(void* /*userdata*/,
     if (data_len > static_cast<size_t>(std::numeric_limits<int>::max()))
         return false;
 
+    // Reject PNG decompression bombs before decode (see kittyimageguard.h).
+    if (kittyPngExceedsDimCap(data, data_len, KITTY_MAX_IMAGE_DIM)) {
+        qWarning() << "Kitty image decoder: rejected PNG with dimensions exceeding"
+                   << KITTY_MAX_IMAGE_DIM << "px";
+        return false;
+    }
+
     // Load PNG from raw bytes
     QByteArray pngData(reinterpret_cast<const char*>(data), static_cast<int>(data_len));
     QImage img;
     if (!img.loadFromData(pngData, "PNG")) {
         qWarning() << "Kitty image decoder: failed to load PNG";
         return false;
-    }
-
-    // Cap dimensions to avoid GPU memory exhaustion
-    if (img.width() > KITTY_MAX_IMAGE_DIM || img.height() > KITTY_MAX_IMAGE_DIM) {
-        img = img.scaled(KITTY_MAX_IMAGE_DIM, KITTY_MAX_IMAGE_DIM,
-                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
 
     // Convert to RGBA8888
