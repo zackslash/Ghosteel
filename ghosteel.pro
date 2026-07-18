@@ -83,6 +83,7 @@ SOURCES += \
     src/settings.cpp \
     src/terminalview.cpp \
     src/terminalview_links.cpp \
+    src/terminalview_search.cpp \
     src/textutil.cpp
 
 DISTFILES += qml/ghosteel.qml \
