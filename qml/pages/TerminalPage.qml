@@ -1017,6 +1017,13 @@ Page {
             if (!open && terminal) {
                 terminal.closeSearch()
             }
+            updateSearchPanelHeight()
+        }
+        onHeightChanged: updateSearchPanelHeight()
+
+        function updateSearchPanelHeight() {
+            if (terminal)
+                terminal.searchPanelHeight = open ? height : 0
         }
 
         Row {
