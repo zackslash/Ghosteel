@@ -1693,6 +1693,30 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         }
     }
 
+    // Consume the "settled" flag — it's only a hint. Re-validate against current
+    // GUI-thread state; custom-shader path or overlay may have changed since
+    // render() set it.
+    if (m_shouldStopAnimTimer) {
+        m_shouldStopAnimTimer = false;  // always consume, even if we skip the stop
+        // Custom shaders read iTime — stopping the timer would freeze them.
+        if (q->m_wantsCursorTrails
+                && q->m_customShaderPath.isEmpty()
+                && !m_selecting && !m_searchActive
+                && !m_magnifierVisible && !m_shellExited
+                && q->m_shaderAnimTimer.isActive()) {
+            q->m_shaderAnimTimer.stop();
+        }
+    }
+
+    // Start here (not from render()) so the first trail frame lands in this
+    // same sync→render cycle.
+    if (m_cursorMoved
+            && q->m_wantsCursorTrails
+            && q->m_customShaderPath.isEmpty()
+            && !q->m_shaderAnimTimer.isActive()) {
+        q->m_shaderAnimTimer.start(33, q);
+    }
+
     // Cache scrollbar offset for use in render() — avoids calling
     // ghostty_terminal_get() from the render thread (data race with GUI thread).
     if (m_terminalView && m_terminalView->vt()) {
@@ -2208,6 +2232,11 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
     bool overlayActive = m_selecting || m_searchActive || m_magnifierVisible || m_shellExited;
     bool canSkipPipeline = m_animationSettled && !m_gridDirty && !overlayActive;
     m_gridDirty = false;
+
+    // Safe to set unconditionally — synchronize() re-validates, and the next
+    // render() overwrites this if conditions change.
+    if (canSkipPipeline)
+        m_shouldStopAnimTimer = true;
 
     // Create/resize pipeline FBO
     int oldPipeW = m_pipelineTexW, oldPipeH = m_pipelineTexH;
