@@ -17,6 +17,9 @@
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <algorithm>
+#include <cerrno>
+#include <cstring>
+#include <fcntl.h>
 #include <unistd.h>
 
 static constexpr int kMaxSessionCount = 100;
@@ -985,6 +988,16 @@ void SessionManager::saveSessionScrollback(SessionInfo &info)
             ::fsync(saveFile.handle());
             if (saveFile.commit()) {
                 info.scrollbackDirty = false;
+                // fsync the parent directory so the rename's dirent update
+                // survives a power loss (file content is already durable).
+                int dirFd = ::open(scrollbackDir().toUtf8().constData(), O_RDONLY);
+                if (dirFd >= 0) {
+                    if (::fsync(dirFd) != 0)
+                        qWarning() << "Scrollback: dir fsync failed:" << std::strerror(errno);
+                    ::close(dirFd);
+                } else {
+                    qWarning() << "Scrollback: dir fsync open failed:" << std::strerror(errno);
+                }
             } else {
                 qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
             }

@@ -2,11 +2,13 @@
 
 #include <QStandardPaths>
 #include <QFile>
+#include <QFileInfo>
 #include <QDebug>
 
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 #include <unistd.h>
 
 Settings::Settings(QObject *parent)
@@ -89,6 +91,17 @@ void Settings::save()
             qWarning() << "Settings: atomic save failed:" << std::strerror(errno);
             QFile::remove(tmpPath);
             m_settings.sync();
+        } else {
+            // fsync the parent directory so the rename's dirent update
+            // survives a power loss (file content is already durable).
+            int dirFd = ::open(QFileInfo(path).absolutePath().toUtf8().constData(), O_RDONLY);
+            if (dirFd >= 0) {
+                if (::fsync(dirFd) != 0)
+                    qWarning() << "Settings: dir fsync failed:" << std::strerror(errno);
+                ::close(dirFd);
+            } else {
+                qWarning() << "Settings: dir fsync open failed:" << std::strerror(errno);
+            }
         }
     } else {
         m_settings.sync();
