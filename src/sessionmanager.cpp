@@ -118,8 +118,15 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     // save path returns early without arming the timer. Without this, that
     // content only flushes at aboutToQuit — and is lost if the app is killed first.
     connect(m_settings, &Settings::scrollbackPersistenceChanged, this, [this]() {
-        if (!m_settings->scrollbackPersistence() || !m_sessionsLoaded)
+        if (!m_settings->scrollbackPersistence()) {
+            // Purge all scrollback files immediately. Not gated on m_sessionsLoaded:
+            // files exist on disk regardless of session state (privacy expectation).
+            cleanupScrollbackFiles(true);
             return;
+        }
+        if (!m_sessionsLoaded)
+            return;
+        // Enabled — re-arm dirty sessions + schedule a save.
         bool any = false;
         for (SessionInfo &info : m_sessions) {
             if (info.view) {
@@ -129,6 +136,14 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         }
         if (any)
             scheduleScrollbackSave();
+    });
+
+    connect(m_settings, &Settings::scrollbackRetentionDaysChanged, this, [this]() {
+        // Reducing retention should purge now-overage files immediately.
+        // No-op when persistence is off (the disable handler already purged everything).
+        if (!m_settings->scrollbackPersistence())
+            return;
+        cleanupScrollbackFiles();  // mtime-gated
     });
 
     // Save sessions early on app quit — before QML engine destruction kills
@@ -1043,7 +1058,7 @@ void SessionManager::saveScrollbackIncremental(bool force)
         scheduleScrollbackSave();
 }
 
-void SessionManager::cleanupScrollbackFiles()
+void SessionManager::cleanupScrollbackFiles(bool purgeAll)
 {
     int retentionDays = m_settings->scrollbackRetentionDays();
     QDir dir(scrollbackDir());
@@ -1055,7 +1070,7 @@ void SessionManager::cleanupScrollbackFiles()
     for (const QFileInfo &fi : files) {
         if (fi.fileName().startsWith(QStringLiteral("session_"))) {
             if (fi.fileName().endsWith(QStringLiteral(".vt"))) {
-                if (fi.lastModified() < cutoff)
+                if (purgeAll || fi.lastModified() < cutoff)
                     QFile::remove(fi.absoluteFilePath());
             } else {
                 // Orphaned QSaveFile temp file from a crash during write.
