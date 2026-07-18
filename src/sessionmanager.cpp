@@ -815,26 +815,28 @@ void SessionManager::processCliArgs()
                     removeSession(named);
                 }
                 didSomething = true;
-                goto done;
             }
         }
 
-        for (int i = 0; i < m_sessions.size(); i++) {
-            if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullArgs) {
-                setActiveSessionIndex(i);
-                didSomething = true;
-                goto done;
+        if (!didSomething) {
+            for (int i = 0; i < m_sessions.size(); i++) {
+                if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullArgs) {
+                    setActiveSessionIndex(i);
+                    didSomething = true;
+                    break;
+                }
             }
         }
 
-        createSessionWithCommand(m_cliSessionName, fullArgs);
-        didSomething = true;
+        if (!didSomething) {
+            createSessionWithCommand(m_cliSessionName, fullArgs);
+            didSomething = true;
+        }
     } else if (!m_cliSessionName.isEmpty()) {
         switchToSessionByName(m_cliSessionName);
         didSomething = true;
     }
 
-done:
     clearCliArgs();
     if (didSomething)
         Q_EMIT showTerminal();
