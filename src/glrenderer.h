@@ -208,6 +208,13 @@ private:
         bool m_animationSettled = false;
         bool m_gridDirty = true;
 
+        // Cross-thread flag: render thread requests GUI thread to stop the shader
+        // animation timer once the trail has fully settled and the frame is static.
+        // Consumed in synchronize() where QBasicTimer can be safely touched (owned
+        // by GUI-thread GLRenderer) and GUI-thread-only state is re-checked. Plain
+        // bool is safe — synchronize() blocks render thread (memory barrier).
+        bool m_shouldStopAnimTimer = false;
+
         TerminalView *m_terminalView = nullptr;
 
         bool m_selecting = false;
