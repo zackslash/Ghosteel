@@ -713,7 +713,7 @@ Page {
     function onZoomRequested(delta) {
         if (!terminal) return
         SessionManager.setActiveSessionFontSize(
-            Math.max(6, Math.min(32, terminal.fontSize + delta)), false)
+            Math.max(Settings.minFontSize, Math.min(Settings.maxFontSize, terminal.fontSize + delta)), false)
     }
 
     function onPinchingChanged(pinching) {
@@ -1158,7 +1158,7 @@ Page {
             Rectangle {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width * Math.max(0, Math.min(1, ((terminal ? terminal.fontSize : 6) - 6) / (32 - 6)))
+                width: parent.width * Math.max(0, Math.min(1, ((terminal ? terminal.fontSize : Settings.minFontSize) - Settings.minFontSize) / (Settings.maxFontSize - Settings.minFontSize)))
                 height: parent.height
                 radius: height / 2
                 color: Theme.highlightColor
@@ -1255,9 +1255,9 @@ Page {
                                 var dir = keyDef.id === "prevSession" ? -1 : 1
                                 switchSession(dir)
                             } else if (keyDef.id === "zoomIn") {
-                                SessionManager.setActiveSessionFontSize(Math.min(32, terminal.fontSize + 1), false)
+                                SessionManager.setActiveSessionFontSize(Math.min(Settings.maxFontSize, terminal.fontSize + 1), false)
                             } else if (keyDef.id === "zoomOut") {
-                                SessionManager.setActiveSessionFontSize(Math.max(6, terminal.fontSize - 1), false)
+                                SessionManager.setActiveSessionFontSize(Math.max(Settings.minFontSize, terminal.fontSize - 1), false)
                             }
                         }
 

@@ -1116,7 +1116,7 @@ void SessionManager::setActiveSessionFontSize(int size, bool updateGlobal)
         return;
     }
 
-    size = qBound(6, size, 32);
+    size = qBound(Settings::kMinFontSize, size, Settings::kMaxFontSize);
     if (info.fontSize == size) {
         // Value unchanged, but still sync global if requested
         if (updateGlobal)

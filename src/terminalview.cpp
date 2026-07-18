@@ -1550,7 +1550,7 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
                 Q_EMIT pinchAtDefaultChanged(true);
             }
         } else {
-            int targetSize = qBound(6, rawTarget, 32);
+            int targetSize = qBound(Settings::kMinFontSize, rawTarget, Settings::kMaxFontSize);
             if (targetSize != m_lastAppliedFontSize) {
                 setFontSize(targetSize);
                 m_lastAppliedFontSize = targetSize;
