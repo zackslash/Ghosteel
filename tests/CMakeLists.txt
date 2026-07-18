@@ -168,3 +168,10 @@ add_executable(tst_kitty_image_guard
 )
 target_link_libraries(tst_kitty_image_guard PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME KittyImageGuard COMMAND tst_kitty_image_guard)
+
+# --- Glyph cache key (cluster + single-cp) logic tests ---
+add_executable(tst_glyph_cache_key
+    tst_glyph_cache_key.cpp
+)
+target_link_libraries(tst_glyph_cache_key PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
+add_test(NAME GlyphCacheKey COMMAND tst_glyph_cache_key)

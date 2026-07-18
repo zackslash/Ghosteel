@@ -1341,6 +1341,23 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
         int x = 0;
         int colIdx = 0;
         while (ghostty_render_state_row_cells_next(cells)) {
+            // === WIDE FLAG ===
+            GhosttyCell rawCell = 0;
+            GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+            if (ghostty_render_state_row_cells_get(cells,
+                    GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW, &rawCell) == GHOSTTY_SUCCESS
+                    && rawCell != 0) {
+                ghostty_cell_get(rawCell, GHOSTTY_CELL_DATA_WIDE, &wide);
+            }
+
+            // === SPACER_TAIL SKIP ===
+            // The preceding WIDE_WIDE head already emitted a 2-cell quad covering
+            // this spacer's screen position (head advanced x by 2*cellWidth).
+            // Do NOT advance x — bare continue.
+            if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL) {
+                continue;
+            }
+
             GhosttyColorRgb cellBg;
             float cBgR = bgR, cBgG = bgG, cBgB = bgB;
             if (ghostty_render_state_row_cells_get(
@@ -1372,6 +1389,7 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
             float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
             float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
 
+            // === GLYPH LOOKUP (single-cp hot path vs cluster path) ===
             uint32_t graphemesLen = 0;
             ghostty_render_state_row_cells_get(
                 cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
@@ -1384,20 +1402,18 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
                     cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
                     buf);
 
-                // TODO: Multi-codepoint grapheme clusters (e.g. family emoji 👨‍👩‍👧)
-                // span multiple graphemes but we only render buf[0] here.
-                // Full support requires iterating graphemesLen and emitting
-                // one quad per grapheme with fractional cell offsets.
-                const GlyphInfo &gi = m_atlas.glyph(buf[0], cellStyle.bold, cellStyle.italic);
-                u0 = gi.u0;
-                v0 = gi.v0;
-                u1 = gi.u1;
-                v1 = gi.v1;
+                // Single-codepoint hot path (ASCII/CJK) vs multi-cp cluster path.
+                const GlyphInfo &gi = (graphemesLen == 1)
+                    ? m_atlas.glyph(buf[0], cellStyle.bold, cellStyle.italic)
+                    : m_atlas.glyphCluster(buf, graphemesLen, cellStyle.bold, cellStyle.italic);
+                u0 = gi.u0; v0 = gi.v0; u1 = gi.u1; v1 = gi.v1;
             }
 
+            // === QUAD EMISSION — width from grid wide flag ===
+            int cellSpan = (wide == GHOSTTY_CELL_WIDE_WIDE) ? 2 : 1;
             float x0 = static_cast<float>(x);
             float y0 = static_cast<float>(y);
-            float x1 = static_cast<float>(x + m_cellWidth);
+            float x1 = static_cast<float>(x + cellSpan * m_cellWidth);
             float y1 = static_cast<float>(y + m_cellHeight);
 
             m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
@@ -1407,8 +1423,8 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
             m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
             m_cellVertices.append({x0, y1, u0, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
 
-            x += m_cellWidth;
-            colIdx++;
+            x += cellSpan * m_cellWidth;
+            colIdx += cellSpan;
         }
 
         y += m_cellHeight;

@@ -55,6 +55,7 @@ void GlyphAtlas::destroy()
         m_texture = 0;
     }
     m_cache.clear();
+    m_clusterCache.clear();
     m_initialized = false;
 }
 
@@ -80,6 +81,7 @@ void GlyphAtlas::setFont(const QFont &font, int cellWidth, int cellHeight)
     m_ascent = m_fm->ascent();
 
     m_cache.clear();
+    m_clusterCache.clear();
     m_packX = 1;
     m_packY = 0;
     m_rowHeight = 0;
@@ -103,6 +105,22 @@ const GlyphInfo &GlyphAtlas::glyph(uint codepoint, bool bold, bool italic)
     GlyphInfo info;
     rasterizeGlyph(codepoint, bold, italic, info);
     return m_cache.insert(key, info).value();
+}
+
+const GlyphInfo &GlyphAtlas::glyphCluster(const uint32_t *buf, uint32_t len,
+                                          bool bold, bool italic)
+{
+    if (len < 2 || len > uint32_t(ClusterKey::INLINE_MAX))
+        return glyph(buf[0], bold, italic);   // fallback: base codepoint only
+
+    ClusterKey key(buf, len, bold, italic);
+    auto it = m_clusterCache.find(key);
+    if (it != m_clusterCache.end())
+        return it.value();
+
+    GlyphInfo info;
+    rasterizeCluster(key, info);
+    return m_clusterCache.insert(key, info).value();
 }
 
 void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInfo &info)
@@ -181,6 +199,79 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
                     GL_RGBA, GL_UNSIGNED_BYTE, m_uploadBuf.constData());
 }
 
+void GlyphAtlas::rasterizeCluster(const ClusterKey &key, GlyphInfo &info)
+{
+    const QFont &font = (key.bold && key.italic) ? m_fontBoldItalic
+                      : key.bold ? m_fontBold
+                      : key.italic ? m_fontItalic
+                      : m_font;
+    const QFontMetrics &fm = (key.bold && key.italic) ? *m_fmBoldItalic
+                           : key.bold ? *m_fmBold
+                           : key.italic ? *m_fmItalic
+                           : *m_fm;
+
+    QString str = QString::fromUcs4(key.codepoints, key.len);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+    int glyphWidth = fm.horizontalAdvance(str);
+#else
+    int glyphWidth = fm.width(str);
+#endif
+    int glyphHeight = fm.height();
+
+    if (glyphWidth < 1)  glyphWidth  = 1;
+    if (glyphHeight < 1) glyphHeight = 1;
+
+    int x, y;
+    if (!allocateSlot(glyphWidth, glyphHeight, x, y)) {
+        // Atlas full — clear and re-rasterize lazily
+        qWarning() << "GlyphAtlas: atlas full, clearing and reinitializing";
+        clearAtlas();
+        if (!allocateSlot(glyphWidth, glyphHeight, x, y)) {
+            // Still can't fit — return placeholder
+            info = {0, 0, 0, 0, m_cellWidth, m_ascent, 0, 0};
+            return;
+        }
+    }
+
+    // Ensure scratch is large enough for this cluster (grows monotonically, reused thereafter)
+    if (m_glyphScratch.width() < glyphWidth || m_glyphScratch.height() < glyphHeight) {
+        m_glyphScratch = QImage(qMax(m_glyphScratch.width(), glyphWidth),
+                                qMax(m_glyphScratch.height(), glyphHeight),
+                                QImage::Format_RGBA8888);
+    }
+    m_glyphScratch.fill(Qt::transparent);
+
+    QPainter painter(&m_glyphScratch);
+    painter.setFont(font);
+    painter.setPen(Qt::white);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.drawText(0, fm.ascent(), str);
+    painter.end();
+
+    info.u0 = static_cast<float>(x) / m_atlasWidth;
+    info.v0 = static_cast<float>(y) / m_atlasHeight;
+    info.u1 = static_cast<float>(x + glyphWidth) / m_atlasWidth;
+    info.v1 = static_cast<float>(y + glyphHeight) / m_atlasHeight;
+    info.advance = glyphWidth;
+    info.ascent = fm.ascent();
+    info.width = glyphWidth;
+    info.height = glyphHeight;
+
+    // Re-stride into a tightly-packed upload buffer (same rationale as rasterizeGlyph).
+    const int bpp = 4;
+    const int bytesPerLine = glyphWidth * bpp;
+    m_uploadBuf.resize(bytesPerLine * glyphHeight);
+    for (int row = 0; row < glyphHeight; ++row) {
+        const uchar *src = m_glyphScratch.constScanLine(row);
+        memcpy(m_uploadBuf.data() + row * bytesPerLine, src, bytesPerLine);
+    }
+
+    Q_ASSERT(x + glyphWidth <= m_atlasWidth && y + glyphHeight <= m_atlasHeight);
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, glyphWidth, glyphHeight,
+                    GL_RGBA, GL_UNSIGNED_BYTE, m_uploadBuf.constData());
+}
+
 bool GlyphAtlas::allocateSlot(int glyphWidth, int glyphHeight, int &x, int &y)
 {
     // Simple shelf packing: advance cursor, wrap to next row when needed
@@ -212,6 +303,7 @@ void GlyphAtlas::bind()
 void GlyphAtlas::clearAtlas()
 {
     m_cache.clear();
+    m_clusterCache.clear();
     m_packX = 1;
     m_packY = 0;
     m_rowHeight = 0;
