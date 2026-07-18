@@ -66,6 +66,7 @@ HEADERS += \
     src/ptymanager.h \
     src/scrollencryptor.h \
     src/sessionmanager.h \
+    src/sessionstore.h \
     src/settings.h \
     src/terminalview.h \
     src/textutil.h
@@ -81,6 +82,7 @@ SOURCES += \
     src/ptymanager.cpp \
     src/scrollencryptor.cpp \
     src/sessionmanager.cpp \
+    src/sessionstore.cpp \
     src/settings.cpp \
     src/terminalview.cpp \
     src/terminalview_links.cpp \

@@ -1,4 +1,5 @@
 #include "sessionmanager.h"
+#include "sessionstore.h"
 #include "terminalview.h"
 #include "ptymanager.h"
 #include "settings.h"
@@ -44,6 +45,7 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
 {
     // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
     m_encryptor = new ScrollEncryptor(this);
+    m_store = std::make_unique<SessionStore>(m_settings, m_encryptor);
 
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
@@ -53,13 +55,14 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         // changed — a scrollback-only arm (scheduleScrollbackSave) leaves
         // the flag false so continuous output doesn't fsync settings ~2x/sec.
         if (m_sessionsDirty) {
-            saveSessions();
+            m_store->saveSessionsMetadata(m_sessions, m_activeSessionIndex, m_nextSessionId);
             m_sessionsDirty = false;
         }
         // Also encrypt scrollback incrementally for sessions whose content
         // changed since the last save. By the time aboutToQuit fires, most
         // sessions are already on disk — only a few remain dirty.
-        saveScrollbackIncremental();
+        if (m_store->saveScrollbackIncremental(m_sessions, m_activeSessionIndex))
+            scheduleScrollbackSave();
     });
 
     // Retry pending scrollback restores when encryption becomes available.
@@ -80,7 +83,7 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         m_pendingScrollbackRestores.clear();
         for (const auto &p : pending) {
             if (p.view)  // QPointer returns null if the object was deleted
-                restoreScrollbackForSession(p.view, p.sessionId);
+                m_store->restoreScrollbackForSession(p.view, p.sessionId, m_pendingScrollbackRestores);
         }
         // A scrollback save may have failed while encryption was unavailable,
         // leaving sessions dirty with no timer armed (the failure path doesn't
@@ -124,7 +127,7 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         if (!m_settings->scrollbackPersistence()) {
             // Purge all scrollback files immediately. Not gated on m_sessionsLoaded:
             // files exist on disk regardless of session state (privacy expectation).
-            cleanupScrollbackFiles(true);
+            m_store->cleanupScrollbackFiles(true);
             return;
         }
         if (!m_sessionsLoaded)
@@ -146,7 +149,7 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         // No-op when persistence is off (the disable handler already purged everything).
         if (!m_settings->scrollbackPersistence())
             return;
-        cleanupScrollbackFiles();  // mtime-gated
+        m_store->cleanupScrollbackFiles();  // mtime-gated
     });
 
     // Save sessions early on app quit — before QML engine destruction kills
@@ -156,11 +159,11 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
             this, [this]() {
         QElapsedTimer timer;
         timer.start();
-        saveSessions();
+        m_store->saveSessionsMetadata(m_sessions, m_activeSessionIndex, m_nextSessionId);
         qint64 sessionMs = timer.elapsed();
         // Catch sessions the debounce timer hasn't fired for yet; force=true
         // bypasses the 5s throttle so nothing is lost on shutdown.
-        saveScrollbackIncremental(true);
+        m_store->saveScrollbackIncremental(m_sessions, m_activeSessionIndex, true);
         qint64 totalMs = timer.elapsed();
         if (totalMs > 1000)
             qWarning() << "Ghosteel: Quit save took" << totalMs << "ms"
@@ -176,10 +179,10 @@ SessionManager::~SessionManager()
     // In production, aboutToQuit fires first (shells alive, CWD readable).
     // In tests or abnormal paths, this is the fallback (shells may be dead).
     if (m_sessionsLoaded && !m_savedOnQuit) {
-        saveSessions();
+        m_store->saveSessionsMetadata(m_sessions, m_activeSessionIndex, m_nextSessionId);
         // Views are still alive here (cleaned up below), so we can still flush
         // the scrollback that aboutToQuit never got to save.
-        saveScrollbackIncremental(true);
+        m_store->saveScrollbackIncremental(m_sessions, m_activeSessionIndex, true);
     }
 
     // Cleanly stop each session's PTY before deleting the view.
@@ -468,7 +471,7 @@ void SessionManager::removeSession(int index)
 
     // Delete scrollback file for removed session (regardless of persistence
     // toggle — if the session is gone, the file has no reason to exist)
-    QFile::remove(scrollbackFilePath(info.id));
+    QFile::remove(m_store->scrollbackFilePath(info.id));
 
     scheduleSave();
 
@@ -889,66 +892,9 @@ void SessionManager::onNewInstanceConnection()
     }
 }
 
-void SessionManager::saveSessions()
-{
-    QSettings &s = m_settings->raw();
-
-    // Clear old session entries
-    s.remove(QStringLiteral("sessionData"));
-
-    // Skip anonymous command sessions during save
-    int saveIndex = 0;
-    for (int i = 0; i < m_sessions.size(); i++) {
-        SessionInfo &info = m_sessions[i];
-
-        if (info.isAnonymous())
-            continue;
-
-        QString group = QStringLiteral("sessionData/session_%1").arg(saveIndex);
-        s.beginGroup(group);
-        s.setValue(QStringLiteral("id"), info.id);
-        s.setValue(QStringLiteral("name"), info.name);
-        // Use live CWD from /proc if shell is running, otherwise use cached value
-        if (info.view) {
-            QString liveCwd = info.view->workingDirectory();
-            if (!liveCwd.isEmpty())
-                info.cachedWorkingDirectory = liveCwd;
-        }
-        QString cwd = info.cachedWorkingDirectory;
-        if (cwd.isEmpty())
-            cwd = QDir::homePath();
-        s.setValue(QStringLiteral("workingDirectory"), cwd);
-        s.setValue(QStringLiteral("autorunCommand"), info.autorunCommand);
-        // Persist per-session font size. When fontSize == 0 (track global
-        // default), don't read the live view size — that would clobber the
-        // sentinel with the resolved global value.
-        if (info.view && info.fontSize > 0)
-            info.fontSize = info.view->fontSize();
-        s.setValue(QStringLiteral("fontSize"), info.fontSize);
-        s.setValue(QStringLiteral("keybarOpen"), info.keybarOpen);
-        s.setValue(QStringLiteral("keyboardVisible"), info.keyboardVisible);
-        s.setValue(QStringLiteral("createdAt"), info.createdAt);
-        s.setValue(QStringLiteral("lastUsedAt"), info.lastUsedAt);
-        s.endGroup();
-        saveIndex++;
-    }
-
-    s.beginGroup(QStringLiteral("sessions"));
-    s.setValue(QStringLiteral("count"), saveIndex);
-    s.setValue(QStringLiteral("nextId"), m_nextSessionId);
-    
-    int activeSessionId = (m_activeSessionIndex >= 0
-                           && m_activeSessionIndex < m_sessions.size())
-                          ? m_sessions[m_activeSessionIndex].id : -1;
-    s.setValue(QStringLiteral("activeId"), activeSessionId);
-    s.endGroup();
-
-    m_settings->save();
-}
-
 void SessionManager::scheduleSave()
 {
-    // Session metadata changed — ensure saveSessions() runs on the next fire.
+    // Session metadata changed — ensure the timer fires to flush via m_store->saveSessionsMetadata().
     m_sessionsDirty = true;
     if (m_sessionsLoaded)
         m_saveTimer->start();
@@ -960,141 +906,6 @@ void SessionManager::scheduleScrollbackSave()
     // without forcing a settings rewrite (avoids fsync thrash under output).
     if (m_sessionsLoaded)
         m_saveTimer->start();
-}
-
-QString SessionManager::scrollbackDir() const
-{
-    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-           + QStringLiteral("/scrollback");
-}
-
-QString SessionManager::scrollbackFilePath(int sessionId) const
-{
-    return scrollbackDir() + QStringLiteral("/session_%1.vt").arg(sessionId);
-}
-
-void SessionManager::saveSessionScrollback(SessionInfo &info)
-{
-    if (!info.view)
-        return;
-
-    uint16_t cols = 0, rows = 0;
-    QByteArray data = info.view->exportScrollback(cols, rows);
-    if (data.isEmpty()) {
-        info.scrollbackDirty = false;
-        return;
-    }
-
-    QByteArray output;
-    if (m_encryptor && m_encryptor->isAvailable())
-        output = m_encryptor->encrypt(data);
-    if (output.isEmpty()) {
-        qWarning() << "Ghosteel: Scrollback encryption failed for session"
-                   << info.id << ", skipping";
-        return; // Don't write plaintext to disk
-    }
-
-    // Atomic write via QSaveFile — commit() is a POSIX rename(),
-    // which is atomic on the same filesystem. No window where both
-    // old and new files are gone.
-    QSaveFile saveFile(scrollbackFilePath(info.id));
-    if (saveFile.open(QIODevice::WriteOnly)) {
-        if (saveFile.write(output) != -1) {
-            // fsync before rename to ensure data is on disk —
-            // protects against power loss between write and rename
-            ::fsync(saveFile.handle());
-            if (saveFile.commit()) {
-                info.scrollbackDirty = false;
-                // fsync the parent directory so the rename's dirent update
-                // survives a power loss (file content is already durable).
-                int dirFd = ::open(scrollbackDir().toUtf8().constData(), O_RDONLY);
-                if (dirFd >= 0) {
-                    if (::fsync(dirFd) != 0)
-                        qWarning() << "Scrollback: dir fsync failed:" << std::strerror(errno);
-                    ::close(dirFd);
-                } else {
-                    qWarning() << "Scrollback: dir fsync open failed:" << std::strerror(errno);
-                }
-            } else {
-                qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
-            }
-        } else {
-            qWarning() << "Failed to write scrollback:" << saveFile.errorString();
-        }
-    }
-}
-
-void SessionManager::saveScrollbackIncremental(bool force)
-{
-    if (!m_settings->scrollbackPersistence())
-        return;
-
-    QDir().mkpath(scrollbackDir());
-
-    // Throttle scrollback saves under continuous output (tail -f, builds):
-    // exportScrollback + Sailfish-Secrets D-Bus + fsync is expensive on a
-    // handset, and contentChanged fires every repaint, so an unthrottled
-    // 500ms debounce would re-encrypt ~2x/sec. Cap each session to one save
-    // per kMinScrollbackIntervalMs; force=true (quit) bypasses it. A sporadic
-    // edit landing inside a window is deferred up to ~5s — acceptable for
-    // scrollback durability (quit always force-saves).
-    static constexpr qint64 kMinScrollbackIntervalMs = 5000;
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    bool anyThrottled = false;
-
-    auto trySave = [&](SessionInfo &info) {
-        if (!info.scrollbackDirty)
-            return;  // cheap pre-check; saveSessionScrollback does not re-check dirty
-        if (!force && info.lastScrollbackSaveMs > 0
-            && (now - info.lastScrollbackSaveMs) < kMinScrollbackIntervalMs) {
-            // Stay dirty; re-armed below for the next window.
-            anyThrottled = true;
-            return;
-        }
-        saveSessionScrollback(info);  // clears dirty on success
-        if (!info.scrollbackDirty)
-            info.lastScrollbackSaveMs = now;
-    };
-
-    // Process active session first for priority on quit
-    if (m_activeSessionIndex >= 0 && m_activeSessionIndex < m_sessions.size())
-        trySave(m_sessions[m_activeSessionIndex]);
-
-    for (int i = 0; i < m_sessions.size(); i++) {
-        if (i == m_activeSessionIndex)
-            continue;
-        trySave(m_sessions[i]);
-    }
-
-    // A throttled session is still dirty — re-arm so it's retried at the next
-    // window. Throttled sessions skip exportScrollback entirely, so the
-    // intervening 500ms fires stay cheap.
-    if (anyThrottled)
-        scheduleScrollbackSave();
-}
-
-void SessionManager::cleanupScrollbackFiles(bool purgeAll)
-{
-    int retentionDays = m_settings->scrollbackRetentionDays();
-    QDir dir(scrollbackDir());
-    if (!dir.exists())
-        return;
-
-    QDateTime cutoff = QDateTime::currentDateTime().addDays(-retentionDays);
-    const QFileInfoList files = dir.entryInfoList(QDir::Files);
-    for (const QFileInfo &fi : files) {
-        if (fi.fileName().startsWith(QStringLiteral("session_"))) {
-            if (fi.fileName().endsWith(QStringLiteral(".vt"))) {
-                if (purgeAll || fi.lastModified() < cutoff)
-                    QFile::remove(fi.absoluteFilePath());
-            } else {
-                // Orphaned QSaveFile temp file from a crash during write.
-                // These have random suffixes (e.g. session_1.vt.aBcDeF).
-                // Safe to remove — they're never read on restore.
-                QFile::remove(fi.absoluteFilePath());
-            }
-        }
-    }
 }
 
 void SessionManager::setActiveSessionFontSize(int size, bool updateGlobal)
@@ -1171,35 +982,6 @@ QString SessionManager::sessionDisplayName(int index) const
     return tr("Session %1").arg(index + 1);
 }
 
-void SessionManager::restoreScrollbackForSession(TerminalView *view, int savedId)
-{
-    if (!m_settings->scrollbackPersistence())
-        return;
-
-    QString sbPath = scrollbackFilePath(savedId);
-    QFile sbFile(sbPath);
-    if (!sbFile.exists() || !sbFile.open(QIODevice::ReadOnly))
-        return;
-
-    if (sbFile.size() > 4 * 1024 * 1024) {
-        qWarning() << "Scrollback file too large, skipping:" << sbPath;
-        return;
-    }
-
-    QByteArray sbData = sbFile.readAll();
-    if (sbData.isEmpty())
-        return;
-
-    if (ScrollEncryptor::isEncryptedFormat(sbData) && m_encryptor && m_encryptor->isAvailable()) {
-        QByteArray restored = m_encryptor->decrypt(sbData);
-        if (!restored.isEmpty())
-            view->setPendingScrollback(restored);
-    } else if (ScrollEncryptor::isEncryptedFormat(sbData)) {
-        // Encryption not yet available — queue for retry after availabilityChanged
-        m_pendingScrollbackRestores.append({view, savedId});
-    }
-}
-
 int SessionManager::resolveActiveSession(int activeId, int legacyActiveIndex) const
 {
     if (activeId >= 0) {
@@ -1239,7 +1021,7 @@ bool SessionManager::restoreSessions()
 
     m_nextSessionId = nextId;
 
-    cleanupScrollbackFiles();
+    m_store->cleanupScrollbackFiles();
 
     for (int i = 0; i < count; i++) {
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
@@ -1264,7 +1046,7 @@ bool SessionManager::restoreSessions()
         // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
-        // Apply persisted font size immediately so saveSessions() reads back
+        // Apply persisted font size immediately so the save path reads back the correct value
         // the correct value for non-active sessions (not the stale default 18).
         if (fontSize > 0)
             view->setFontSize(fontSize);
@@ -1273,7 +1055,7 @@ bool SessionManager::restoreSessions()
         if (!autorun.isEmpty())
             view->setAutorunCommand(autorun);
 
-        restoreScrollbackForSession(view, savedId);
+        m_store->restoreScrollbackForSession(view, savedId, m_pendingScrollbackRestores);
 
         SessionInfo info;
         info.id = savedId;
@@ -1313,7 +1095,7 @@ bool SessionManager::restoreSessions()
 
     // Reset the metadata-dirty flag: restore's trailing setActiveSessionIndex
     // sets it via scheduleSave, but the just-loaded state is already on disk,
-    // so the next scrollback-only arm must not trigger a redundant saveSessions.
+    // so the next scrollback-only arm must not trigger a redundant metadata save.
     m_sessionsDirty = false;
     m_sessionsLoaded = true;
     rebuildSortedIndices();
