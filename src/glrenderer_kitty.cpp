@@ -127,11 +127,17 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             ghostty_kitty_graphics_placement_get(iter,
                 GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &snap.yOffset);
 
+            // Ghostty exposes a per-image generation stamp (GHOSTTY_KITTY_IMAGE_DATA_GENERATION)
+            // that changes whenever pixel contents change — even when dimensions, format,
+            // and data length are identical (e.g. an app re-uploading under the same image
+            // ID). Keying staleness on dataLen misses those updates and renders stale pixels.
+            uint64_t gen = 0;
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_GENERATION, &gen);
+            snap.generation = gen;
+
             if (m_kittyTextures.contains(snap.imageId)) {
-                size_t checkPixelsLen = 0;
-                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &checkPixelsLen);
-                if (checkPixelsLen != m_kittyTextures[snap.imageId].dataLen) {
-                    // Image ID reused with different data — queue old texture for deletion
+                if (gen != m_kittyTextures[snap.imageId].generation) {
+                    // Image ID reused, or contents changed — queue old texture for deletion
                     m_kittyTexturesToDelete.append(m_kittyTextures[snap.imageId].texture);
                     m_kittyTextures.remove(snap.imageId);
                     snap.needsUpload = true;
@@ -199,6 +205,22 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         if (imgW == 0 || imgH == 0)
             continue;
 
+        // Clamp against GL_MAX_TEXTURE_SIZE (queried lazily on the render thread).
+        // Without this, a malicious/buggy VT can request enormous dimensions and
+        // overflow size_t (4*W*H wraps on 32-bit ARM) in the gray→RGBA conversion
+        // below, causing a heap over-read before glTexImage2D ever rejects it.
+        if (m_maxTextureSize == 0) {
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
+            if (m_maxTextureSize <= 0)
+                m_maxTextureSize = 2048; // sane fallback if the query fails
+        }
+        if (imgW > static_cast<uint32_t>(m_maxTextureSize)
+            || imgH > static_cast<uint32_t>(m_maxTextureSize)) {
+            qWarning() << "Kitty image" << snap.imageId << "dimensions" << imgW << "x" << imgH
+                       << "exceed GL_MAX_TEXTURE_SIZE" << m_maxTextureSize << "; skipping upload";
+            continue;
+        }
+
         const auto &info = snap.renderInfo;
         uint32_t xOffset = snap.xOffset, yOffset = snap.yOffset;
 
@@ -210,6 +232,22 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                 continue;
 
             GhosttyKittyImageFormat fmt = snap.format;
+
+            // Validate the source buffer has enough bytes for the declared
+            // format/dimensions before any read (gray→RGBA loop or glTexImage2D).
+            // Guards against truncated payloads and, with the clamp above, the
+            // size_t overflow case on 32-bit ARM.
+            size_t srcBpp = 4;
+            if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_RGB) srcBpp = 3;
+            else if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY) srcBpp = 1;
+            else if (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY_ALPHA) srcBpp = 2;
+            size_t requiredSrcBytes = static_cast<size_t>(imgW) * static_cast<size_t>(imgH) * srcBpp;
+            if (pixelsLen < requiredSrcBytes) {
+                qWarning() << "Kitty image" << snap.imageId << "buffer truncated:" << pixelsLen
+                           << "bytes, need" << requiredSrcBytes << "for" << imgW << "x" << imgH
+                           << "; skipping upload";
+                continue;
+            }
 
             GLenum glFmt = GL_RGBA;
             bool convertedPixels = false;
@@ -251,8 +289,17 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            // GL_UNPACK_ALIGNMENT defaults to 4, but the GL_RGB path uploads
+            // tightly-packed rows (width*3 bytes). For any width not divisible by
+            // 4, GL would read past each row's end — over-reading the heap buffer.
+            // Alignment=1 is correct for all our formats here (RGBA is 4-byte
+            // aligned regardless).
+            GLint prevUnpackAlignment = 4;
+            glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpackAlignment);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             glTexImage2D(GL_TEXTURE_2D, 0, glFmt, imgW, imgH, 0,
                          glFmt, GL_UNSIGNED_BYTE, pixels);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpackAlignment);
             glBindTexture(GL_TEXTURE_2D, 0);
             if (convertedPixels)
                 free(const_cast<uint8_t*>(pixels));
@@ -262,7 +309,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             cached.width = imgW;
             cached.height = imgH;
             cached.lastSeenFrame = m_kittyFrameCounter;
-            cached.dataLen = pixelsLen;
+            cached.generation = snap.generation;
             m_kittyTextures.insert(snap.imageId, cached);
         } else if (m_kittyTextures.contains(snap.imageId)) {
             m_kittyTextures[snap.imageId].lastSeenFrame = m_kittyFrameCounter;
