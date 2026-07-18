@@ -269,6 +269,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 
     bool cursorVisible = false, cursorInViewport = false;
     bool cursorBlinking = true;
+    bool cursorWideTail = false;
     uint16_t cursorX = 0, cursorY = 0;
     GhosttyRenderStateCursorVisualStyle cursorStyle = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE, &cursorVisible);
@@ -278,6 +279,9 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X, &cursorX);
         ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &cursorY);
         ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE, &cursorStyle);
+        // Cursor X sits on the spacer-tail of a wide char (head at X-1).
+        // See ghostty src/renderer/generic.zig:2521-2534.
+        ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_WIDE_TAIL, &cursorWideTail);
     }
 
     // Read blink state from TerminalView (single source of truth)
@@ -317,16 +321,33 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 
     // Update cursor state every frame (blink changes don't set dirty flag).
     // This is cheap — no vertex rebuild, just updating uniform values.
-    int newCursorX = static_cast<int>(cursorX);
-    int newCursorY = static_cast<int>(cursorY);
-    // Guard: m_cursorX starts at kCursorUnset, skip first-frame spurious move
-    if (m_cursorX != kCursorUnset && (newCursorX != static_cast<int>(m_cursorX) || newCursorY != static_cast<int>(m_cursorY))) {
-        m_prevCursorX = static_cast<int>(m_cursorX);
-        m_prevCursorY = static_cast<int>(m_cursorY);
-        m_cursorMoved = true;
+    //
+    // Only update m_cursorX/m_cursorY when ghostty is actually tracking the
+    // cursor (visible + in viewport). When hidden, ghostty leaves cursorX/
+    // cursorY at default (0,0); writing that would flag a spurious move from
+    // the real position to (0,0) and fire a trail leg to the top-left.
+    bool cursorTracked = cursorVisible && cursorInViewport;
+    if (cursorTracked) {
+        // Shift X to the wide-char head when on a spacer-tail so the shader
+        // cursor test ([cursorPos.x, cursorPos.x + cursorWidth)) covers both cells.
+        int effectiveX = static_cast<int>(cursorX);
+        int newWidth = 1;
+        if (cursorWideTail && effectiveX > 0) {
+            effectiveX -= 1;
+            newWidth = 2;
+        }
+        int newCursorX = effectiveX;
+        int newCursorY = static_cast<int>(cursorY);
+        // Guard: m_cursorX starts at kCursorUnset, skip first-frame spurious move
+        if (m_cursorX != kCursorUnset && (newCursorX != static_cast<int>(m_cursorX) || newCursorY != static_cast<int>(m_cursorY))) {
+            m_prevCursorX = static_cast<int>(m_cursorX);
+            m_prevCursorY = static_cast<int>(m_cursorY);
+            m_cursorMoved = true;
+        }
+        m_cursorX = static_cast<float>(newCursorX);
+        m_cursorY = static_cast<float>(newCursorY);
+        m_cursorWidth = newWidth;
     }
-    m_cursorX = static_cast<float>(cursorX);
-    m_cursorY = static_cast<float>(cursorY);
     bool cursorEffective = cursorVisible && cursorInViewport && cursorBlinkVisible;
     if (cursorEffective != m_cursorVisible)
         m_gridDirty = true; // blink toggle needs redraw
@@ -676,6 +697,7 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     m_program->setUniformValue(m_matrixUniform, proj);
     m_program->setUniformValue(m_atlasUniform, 0);
     m_program->setUniformValue(m_cursorPosUniform, m_cursorX, m_cursorY);
+    m_program->setUniformValue(m_cursorWidthUniform, static_cast<float>(m_cursorWidth));
     m_program->setUniformValue(m_cellSizeUniform,
                                static_cast<float>(m_cellWidth),
                                static_cast<float>(m_cellHeight));

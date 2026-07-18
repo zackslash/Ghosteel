@@ -340,6 +340,15 @@ bool GhosttyVt::isWideSpacerCell(GhosttyCell cell)
         || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD;
 }
 
+bool GhosttyVt::isWideSpacerTailCell(GhosttyCell cell)
+{
+    if (cell == 0)
+        return false;
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide);
+    return wide == GHOSTTY_CELL_WIDE_SPACER_TAIL;
+}
+
 bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row)
 {
     if (!terminal)
@@ -513,16 +522,11 @@ QStringList GhosttyVt::extractSearchText()
 
     QStringList result;
     result.reserve(static_cast<int>(totalRows));
-    m_wideSpacerCache.clear();
-    m_wideSpacerCache.reserve(static_cast<int>(totalRows));
     uint32_t graphemeBuf[128];
 
     for (size_t row = 0; row < totalRows; row++) {
         QString line;
         line.reserve(cols);
-        QVector<bool> rowSpacers;
-        rowSpacers.resize(static_cast<int>(cols));
-        rowSpacers.fill(false);
 
         for (uint16_t col = 0; col < cols; col++) {
             GhosttyPoint point = {};
@@ -540,7 +544,6 @@ QStringList GhosttyVt::extractSearchText()
             GhosttyCell cell = 0;
             if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
                     && isWideSpacerCell(cell)) {
-                rowSpacers[static_cast<int>(col)] = true;
                 continue;
             }
 
@@ -553,7 +556,6 @@ QStringList GhosttyVt::extractSearchText()
             }
         }
 
-        m_wideSpacerCache.append(rowSpacers);
         result.append(line);
     }
 

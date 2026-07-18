@@ -164,6 +164,7 @@ private:
         int m_matrixUniform = -1;
         int m_atlasUniform = -1;
         int m_cursorPosUniform = -1;
+        int m_cursorWidthUniform = -1;
         int m_cellSizeUniform = -1;
         int m_cursorBlinkUniform = -1;
         int m_cursorStyleUniform = -1;
@@ -196,6 +197,7 @@ private:
         float m_cursorY = kCursorUnset;
         bool m_cursorVisible = false;
         int m_cursorStyle = 0; // 0=none, 1=block, 2=bar, 3=underline, 4=hollow
+        int m_cursorWidth = 1; // Cell span: 1 = narrow, 2 = wide (surrogate/CJK)
         int m_prevCursorX = -1; // matches kCursorUnset sentinel
         int m_prevCursorY = -1;
         float m_cursorChangeTime = 0.0f;

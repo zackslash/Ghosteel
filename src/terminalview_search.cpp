@@ -40,9 +40,12 @@ void TerminalView::closeSearch()
 
 void TerminalView::buildCellMapping()
 {
-    // Build cell-to-character index mapping for CJK/emoji support.
-    // Wide chars (CJK/emoji) take 2 cells but produce 1 QChar;
-    // without this mapping, search highlights would be wrong.
+    // Wide chars take 2 cells; supplementary-plane codepoints (emoji)
+    // expand to 2 QChars (surrogate pair) in the QString. Each cell's
+    // mapping must reflect the actual QChar count of its grapheme cluster,
+    // or every subsequent cell in the row will be mis-aligned.
+    // Mirrors refreshLinks() (terminalview_links.cpp:96-110) which emits
+    // supplementary codepoints as two QChars pointing at the same cell.
     m_cellMapping.clear();
     m_cellMapping.reserve(m_searchCache.size());
     size_t totalRows = 0;
@@ -57,27 +60,43 @@ void TerminalView::buildCellMapping()
         return;
     }
     const int colsInt = static_cast<int>(cols);
+    uint32_t graphemeBuf[128];
     for (int row = 0; row < m_searchCache.size(); row++) {
         QVector<int> mapping;
         if (row < static_cast<int>(totalRows)) {
             mapping.resize(colsInt);
             int charIdx = 0;
             const QString &line = m_searchCache[row];
-            // Use the wide-spacer cache from extractSearchText() when available,
-            // avoiding redundant ghostty_terminal_grid_ref calls per cell.
-            const QVector<QVector<bool>> &spacers = m_vt->wideSpacerCache();
-            bool hasSpacerCache = (row < spacers.size()
-                                   && spacers[row].size() == colsInt);
             for (int cell = 0; cell < colsInt; cell++) {
                 mapping[cell] = charIdx;
-                bool isSpacer = hasSpacerCache
-                    ? spacers[row][cell]
-                    : GhosttyVt::isWideCharSpacer(terminal, static_cast<uint16_t>(cell), static_cast<uint32_t>(row));
-                if (isSpacer) {
+
+                GhosttyPoint point = {};
+                point.tag = GHOSTTY_POINT_TAG_SCREEN;
+                point.value.coordinate.x = static_cast<uint16_t>(cell);
+                point.value.coordinate.y = static_cast<uint32_t>(row);
+                GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+                if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS)
+                    continue;
+
+                // Spacers carry no grapheme — charIdx stays put for the next cell.
+                GhosttyCell cellData = 0;
+                if (ghostty_grid_ref_cell(&ref, &cellData) == GHOSTTY_SUCCESS
+                        && GhosttyVt::isWideSpacerCell(cellData)) {
                     continue;
                 }
+
+                // Count QChars the cell contributes to the QString:
+                // BMP codepoint = 1, supplementary (e.g. emoji) = 2 (surrogate pair).
+                int advance = 1; // blank cell — extractSearchText appends one space
+                size_t graphemeLen = 0;
+                if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
+                        == GHOSTTY_SUCCESS && graphemeLen > 0) {
+                    advance = 0;
+                    for (size_t g = 0; g < graphemeLen; ++g)
+                        advance += (graphemeBuf[g] > 0xFFFF) ? 2 : 1;
+                }
                 if (charIdx < line.size())
-                    charIdx++;
+                    charIdx = std::min(charIdx + advance, line.size());
             }
         }
         m_cellMapping.append(mapping);
@@ -227,8 +246,37 @@ void TerminalView::scrollToMatch(int index)
     }
 }
 
+void TerminalView::refreshSearchCachePreservingMatch()
+{
+    int prevRow = (m_currentMatchIndex >= 0 && m_currentMatchIndex < m_searchMatches.size())
+        ? m_searchMatches[m_currentMatchIndex].row : -1;
+
+    m_searchCache = m_vt->extractSearchText();
+    buildCellMapping();
+    performSearch();
+
+    if (prevRow >= 0) {
+        int bestIdx = -1;
+        int bestDist = -1;
+        for (int i = 0; i < m_searchMatches.size(); ++i) {
+            int d = m_searchMatches[i].row - prevRow;
+            if (d < 0) d = -d;
+            if (bestDist < 0 || d < bestDist) {
+                bestDist = d;
+                bestIdx = i;
+            }
+        }
+        m_currentMatchIndex = bestIdx;
+    }
+}
+
 void TerminalView::findNext()
 {
+    // Live PTY output or a resize may have invalidated the cache; refresh
+    // before navigating so matches reflect the current terminal state.
+    if (m_vt && m_vt->isSearchTextDirty())
+        refreshSearchCachePreservingMatch();
+
     if (m_searchMatches.isEmpty())
         return;
 
@@ -240,6 +288,9 @@ void TerminalView::findNext()
 
 void TerminalView::findPrevious()
 {
+    if (m_vt && m_vt->isSearchTextDirty())
+        refreshSearchCachePreservingMatch();
+
     if (m_searchMatches.isEmpty())
         return;
 
