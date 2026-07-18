@@ -610,7 +610,10 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
             // Skip wide character spacer cells — they have no text content
             // but would otherwise be exported as phantom spaces.
-            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+            // Reuse the grid ref above instead of isWideCharSpacer()'s second grid_ref.
+            GhosttyCell cell = 0;
+            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
+                    && isWideSpacerCell(cell))
                 continue;
 
             size_t graphemeLen = 0;
