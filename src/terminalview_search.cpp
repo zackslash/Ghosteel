@@ -170,6 +170,21 @@ void TerminalView::performSearch()
     Q_EMIT currentMatchIndexChanged();
 }
 
+void TerminalView::setSearchPanelHeight(int height)
+{
+    if (m_searchPanelHeight == height)
+        return;
+    m_searchPanelHeight = height;
+    Q_EMIT searchPanelHeightChanged();
+
+    // Panel height changed mid-search (e.g. navButtons appeared after the
+    // first match resolved). Re-run the scroll so the current match lands
+    // below the now-current panel size instead of the stale value used at
+    // setSearchPattern time.
+    if (m_searchActive && m_currentMatchIndex >= 0)
+        scrollToMatch(m_currentMatchIndex);
+}
+
 void TerminalView::scrollToMatch(int index)
 {
     if (index < 0 || index >= m_searchMatches.size() || !m_vt || !m_vt->terminal())
@@ -180,16 +195,27 @@ void TerminalView::scrollToMatch(int index)
     GhosttyTerminalScrollbar scrollbar = {};
     ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
 
-    int matchRow = match.row;
-    int viewTop = static_cast<int>(scrollbar.offset);
-    int viewLen = static_cast<int>(scrollbar.len);
+    const int matchRow = match.row;
+    const int viewTop = static_cast<int>(scrollbar.offset);
+    const int viewLen = static_cast<int>(scrollbar.len);
 
-    if (viewLen > 0 && matchRow >= viewTop && matchRow < viewTop + viewLen)
+    // The top-docked search panel overlays the terminal in QML, hiding the
+    // topmost rows even though ghostty still reports them as on-screen —
+    // exclude them from the visible range below.
+    const int obscuredRows = (m_searchPanelHeight > 0 && m_cellHeight > 0)
+        ? (m_searchPanelHeight + m_cellHeight - 1) / m_cellHeight
+        : 0;
+    const int visibleTop = viewTop + obscuredRows;
+
+    if (viewLen > 0 && matchRow >= visibleTop && matchRow < viewTop + viewLen)
         return;
 
-    // Center the match row in the viewport.
+    // Center the match in the viewport; when the panel covers more than half
+    // the viewport, place the match just below the panel so the very overlay
+    // we're compensating for doesn't re-hide it.
     const int halfView = viewLen / 2;
-    const int targetTop = std::max(0, matchRow - halfView);
+    const int desiredOffset = std::max(halfView, obscuredRows);
+    const int targetTop = std::max(0, matchRow - desiredOffset);
     const int delta = targetTop - viewTop;
 
     if (delta != 0) {

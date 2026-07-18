@@ -24,6 +24,7 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
+    Q_PROPERTY(int searchPanelHeight READ searchPanelHeight WRITE setSearchPanelHeight NOTIFY searchPanelHeightChanged)
     Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
@@ -57,6 +58,11 @@ public:
     void setTopPadding(int padding);
     int cellWidth() const { return m_cellWidth; }
     int cellHeight() const { return m_cellHeight; }
+
+    // Height of the top-docked search panel (0 when closed). Consumed by
+    // scrollToMatch() to exclude rows hidden behind it from the visible range.
+    int searchPanelHeight() const { return m_searchPanelHeight; }
+    void setSearchPanelHeight(int height);
 
     // Session-swipe gate. False when only one session exists so the classifier
     // never kills the long-press (text-selection) timer for a gesture QML
@@ -152,6 +158,7 @@ Q_SIGNALS:
     void linkActivated(const QString &uri);
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
+    void searchPanelHeightChanged();
     void selectionHighlightColorChanged();
     void selectionHandleColorChanged();
     void selectionHandleBorderColorChanged();
@@ -354,6 +361,7 @@ private:
     QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
+    int m_searchPanelHeight = 0;
 
     // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
     QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport

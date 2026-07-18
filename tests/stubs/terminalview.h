@@ -18,6 +18,7 @@ class TerminalView : public QObject
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
+    Q_PROPERTY(int searchPanelHeight READ searchPanelHeight WRITE setSearchPanelHeight NOTIFY searchPanelHeightChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
     Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
@@ -47,6 +48,10 @@ public:
     int searchMatchCount() const { return 0; }
     int currentMatchIndex() const { return m_currentMatchIndex; }
     bool searchActive() const { return m_searchActive; }
+    int searchPanelHeight() const { return m_searchPanelHeight; }
+    void setSearchPanelHeight(int height) {
+        if (m_searchPanelHeight != height) { m_searchPanelHeight = height; Q_EMIT searchPanelHeightChanged(); }
+    }
 
     QColor selectionHighlightColor() const { return m_selectionHighlightColor; }
     void setSelectionHighlightColor(const QColor &color) {
@@ -141,6 +146,7 @@ Q_SIGNALS:
     void selectedTextChanged();
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
+    void searchPanelHeightChanged();
     void selectionHighlightColorChanged();
     void selectionHandleColorChanged();
     void selectionHandleBorderColorChanged();
@@ -178,6 +184,7 @@ private:
 
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;
+    int m_searchPanelHeight = 0;
 
     QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);
     QColor m_selectionHandleColor = QColor(255, 255, 255, 200);
