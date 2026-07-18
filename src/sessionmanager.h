@@ -184,7 +184,7 @@ private:
     // Scrollback persistence
     void saveScrollbackIncremental(bool force = false);
     void saveSessionScrollback(SessionInfo &info);
-    void cleanupScrollbackFiles();
+    void cleanupScrollbackFiles(bool purgeAll = false);
     QString scrollbackDir() const;
     QString scrollbackFilePath(int sessionId) const;
 
