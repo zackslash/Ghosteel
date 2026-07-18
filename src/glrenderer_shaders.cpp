@@ -37,6 +37,7 @@ static const char *fragmentShaderSource =
     "varying float v_deco;\n"
     "uniform sampler2D u_atlas;\n"
     "uniform vec2 u_cursorPos;\n"
+    "uniform float u_cursorWidth;\n"
     "uniform vec2 u_cellSize;\n"
     "uniform float u_cursorBlink;\n"
     "uniform float u_cursorStyle;\n"
@@ -47,26 +48,32 @@ static const char *fragmentShaderSource =
     "    vec2 adj_cell = v_cell - vec2(0.0, u_topPadding);\n"
     "    if (u_cursorBlink > 0.5 && u_cellSize.x > 0.0) {\n"
     "        vec2 cellCoord = floor(adj_cell / u_cellSize);\n"
-    "        if (cellCoord == u_cursorPos) {\n"
+    // Wide-char cursor: u_cursorPos.x is the head column, u_cursorWidth is
+    // 1.0 (narrow) or 2.0 (wide). The fragment is inside the cursor when
+    // cellCoord.x spans [u_cursorPos.x, u_cursorPos.x + u_cursorWidth).
+    "        if (cellCoord.y == u_cursorPos.y &&\n"
+    "            cellCoord.x >= u_cursorPos.x &&\n"
+    "            cellCoord.x < u_cursorPos.x + u_cursorWidth) {\n"
+    // cx/cy are measured from the cursor's top-left (not the cell's), so
+    // BAR/HOLLOW render at the cursor's edges across both wide cells.
+    "            float cursorW = u_cursorWidth * u_cellSize.x;\n"
+    "            float cx = adj_cell.x - u_cursorPos.x * u_cellSize.x;\n"
+    "            float cy = adj_cell.y - cellCoord.y * u_cellSize.y;\n"
     "            if (u_cursorStyle < 1.5) {\n"
     "                fg = v_bg_color;\n"
     "                bg = v_fg_color;\n"
     "            } else if (u_cursorStyle < 2.5) {\n"
-    "                float cx = adj_cell.x - cellCoord.x * u_cellSize.x;\n"
     "                if (cx < 2.0) {\n"
     "                    gl_FragColor = v_fg_color;\n"
     "                    return;\n"
     "                }\n"
     "            } else if (u_cursorStyle < 3.5) {\n"
-    "                float cy = adj_cell.y - cellCoord.y * u_cellSize.y;\n"
     "                if (cy > u_cellSize.y - 2.0) {\n"
     "                    gl_FragColor = v_fg_color;\n"
     "                    return;\n"
     "                }\n"
     "            } else {\n"
-    "                float cx = adj_cell.x - cellCoord.x * u_cellSize.x;\n"
-    "                float cy = adj_cell.y - cellCoord.y * u_cellSize.y;\n"
-    "                if (cx < 1.0 || cx > u_cellSize.x - 1.0 ||\n"
+    "                if (cx < 1.0 || cx > cursorW - 1.0 ||\n"
     "                    cy < 1.0 || cy > u_cellSize.y - 1.0) {\n"
     "                    gl_FragColor = v_fg_color;\n"
     "                    return;\n"
@@ -259,6 +266,7 @@ void GLRenderer::Renderer::createShaders()
     m_matrixUniform = m_program->uniformLocation("u_matrix");
     m_atlasUniform = m_program->uniformLocation("u_atlas");
     m_cursorPosUniform = m_program->uniformLocation("u_cursorPos");
+    m_cursorWidthUniform = m_program->uniformLocation("u_cursorWidth");
     m_cellSizeUniform = m_program->uniformLocation("u_cellSize");
     m_cursorBlinkUniform = m_program->uniformLocation("u_cursorBlink");
     m_cursorStyleUniform = m_program->uniformLocation("u_cursorStyle");
@@ -503,12 +511,14 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW
     // Cursor uniforms — Ghostty shader expects (x, y_top, w, h)
     // In our Y-up ortho, cy = row*cellHeight + topPadding is the bottom edge.
     // Add cellHeight to get the top edge (higher Y in Y-up = top of cell).
+    // Width is m_cursorWidth cells (1 narrow / 2 wide) so the trail rect
+    // matches the wide-char cursor block.
     if (loc.iCurrentCursor >= 0) {
         float cx = m_cursorX * m_cellWidth;
         float cy = m_cursorY * m_cellHeight + m_topPadding + static_cast<float>(m_cellHeight);
         shader.program->setUniformValue(loc.iCurrentCursor,
             cx, cy,
-            static_cast<float>(m_cellWidth),
+            static_cast<float>(m_cursorWidth * m_cellWidth),
             static_cast<float>(m_cellHeight));
     }
     if (loc.iPreviousCursor >= 0) {

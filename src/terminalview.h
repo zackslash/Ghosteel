@@ -233,6 +233,10 @@ private:
     void performSearch();
     void scrollToMatch(int index);
     void buildCellMapping();
+    // Re-extract the search cache after the terminal changed (resize or live
+    // PTY output), then re-run performSearch() keeping m_currentMatchIndex on
+    // the match nearest to the previously-current match's row.
+    void refreshSearchCachePreservingMatch();
     void scrollViewportToBottom();
     void resetSessionSwipe(); // defensive — call from every path that abandons a gesture
     void resetTouchInteractionState(); // consolidate TouchCancel / release state resets

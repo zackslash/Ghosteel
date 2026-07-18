@@ -150,6 +150,8 @@ void TerminalView::recalculateDimensions()
                 ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
                                         m_cellWidth, m_cellHeight);
 
+                m_vt->markSearchTextDirty(); // reflow moves search offsets
+
                 // Update mouse encoder geometry
                 m_vt->updateMouseEncoderSize(
                     static_cast<uint32_t>(width()),
@@ -565,8 +567,21 @@ void TerminalView::copySelection()
             colIdx++;
         }
 
-        if (rowIdx < endRow)
-            text += QLatin1Char('\n');
+        if (rowIdx < endRow) {
+            // Skip the newline on soft-wrapped rows so a visual continuation of
+            // one logical line doesn't get split on paste.
+            // Mirrors exportScrollback (ghosttyvt.cpp:632-648) and refreshLinks
+            // (terminalview_links.cpp:62-69).
+            bool isWrapped = false;
+            GhosttyRow rawRow = 0;
+            if (ghostty_render_state_row_get(iterator,
+                                             GHOSTTY_RENDER_STATE_ROW_DATA_RAW,
+                                             &rawRow) == GHOSTTY_SUCCESS) {
+                ghostty_row_get(rawRow, GHOSTTY_ROW_DATA_WRAP, &isWrapped);
+            }
+            if (!isWrapped)
+                text += QLatin1Char('\n');
+        }
 
         rowIdx++;
     }
@@ -804,15 +819,37 @@ void TerminalView::selectWordAt(const QPointF &pos)
     // Check if the tapped cell is a word character
     // First, get the grapheme at the tapped column
     auto getGraphemeAt = [&](int c) -> uint32_t {
+        if (c < 0 || c >= m_cols)
+            return 0;
         if (ghostty_render_state_row_cells_select(cells, static_cast<uint16_t>(c)) != GHOSTTY_SUCCESS)
             return 0;
         uint32_t len = 0;
         ghostty_render_state_row_cells_get(cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &len);
+        // Spacers carry no grapheme — walk LEFT to the head cell of the wide
+        // char and return its codepoint. SPACER_TAIL only; SPACER_HEAD's head
+        // is on the next row, so a left-walk would land on the wrong cell.
+        // Mirrors the spacer-handling pattern in refreshLinks
+        // (terminalview_links.cpp:78-85).
+        while (len == 0 && c > 0) {
+            GhosttyCell rawCell = 0;
+            if (ghostty_render_state_row_cells_get(
+                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                    &rawCell) != GHOSTTY_SUCCESS
+                    || !GhosttyVt::isWideSpacerTailCell(rawCell)) {
+                return 0; // genuinely empty cell, or SPACER_HEAD (head is on the next row)
+            }
+            c--;
+            if (ghostty_render_state_row_cells_select(cells, static_cast<uint16_t>(c)) != GHOSTTY_SUCCESS)
+                return 0;
+            ghostty_render_state_row_cells_get(cells,
+                GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &len);
+        }
         if (len == 0)
             return 0;
         uint32_t buf[128];
         if (len > 128) return 0;
-        ghostty_render_state_row_cells_get(cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, buf);
+        ghostty_render_state_row_cells_get(cells,
+            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, buf);
         return buf[0]; // base codepoint
     };
 
