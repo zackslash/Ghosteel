@@ -76,6 +76,7 @@ SOURCES += \
     src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \
     src/glrenderer.cpp \
+    src/glrenderer_kitty.cpp \
     src/glyphatlas.cpp \
     src/keymapping.cpp \
     src/kittyimagedecoder.cpp \
