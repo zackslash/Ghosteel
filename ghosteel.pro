@@ -84,6 +84,7 @@ SOURCES += \
     src/sessionmanager.cpp \
     src/sessionstore.cpp \
     src/settings.cpp \
+    src/singleinstance.cpp \
     src/terminalview.cpp \
     src/terminalview_links.cpp \
     src/terminalview_search.cpp \

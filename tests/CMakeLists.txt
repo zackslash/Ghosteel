@@ -25,6 +25,7 @@ add_executable(tst_session_persistence
     tst_session_persistence.cpp
     ${CMAKE_SOURCE_DIR}/../src/sessionmanager.cpp
     ${CMAKE_SOURCE_DIR}/../src/sessionstore.cpp
+    ${CMAKE_SOURCE_DIR}/../src/singleinstance.cpp
     ${CMAKE_SOURCE_DIR}/../src/settings.cpp
     ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
     ${CMAKE_SOURCE_DIR}/stubs/terminalview.cpp
