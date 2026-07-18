@@ -434,6 +434,11 @@ void PtyManager::stop(bool synchronous)
                 m_readerThread->deleteLater();
             } else {
                 qWarning() << "PtyReaderThread did not exit after fd close; async cleanup";
+                // Detach from parent so ~PtyManager doesn't try to delete a
+                // still-running QThread (would abort: "QThread: Destroyed
+                // while thread is still running"). The finished→deleteLater
+                // connection below owns lifecycle once the thread exits.
+                m_readerThread->setParent(nullptr);
                 connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
             }
             m_readerThread = nullptr;

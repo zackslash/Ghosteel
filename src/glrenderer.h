@@ -317,12 +317,15 @@ private:
             GLuint texture;
             uint32_t width, height;
             uint32_t lastSeenFrame;
-            size_t dataLen;  // track for replacement detection
+            uint64_t generation;  // per-image stamp from ghostty; changed gen ⇒ re-upload
         };
         QHash<uint32_t, KittyCachedTexture> m_kittyTextures;
         uint32_t m_kittyFrameCounter = 0;
         static const int MAX_KITTY_TEXTURES = 32;
         static const int KITTY_EVICTION_FRAMES = 120;
+        // Queried lazily on the render thread (first kitty upload) to clamp
+        // image dimensions against GL_MAX_TEXTURE_SIZE before allocation.
+        GLint m_maxTextureSize = 0;
 
         // Snapshot of kitty placement data (built in synchronize on GUI thread,
         // consumed in render on render thread — avoids ghostty_terminal_get
@@ -336,6 +339,7 @@ private:
             bool imageExists = false;
             bool needsUpload = false;
             size_t dataLen = 0;
+            uint64_t generation = 0;
             GhosttyKittyImageFormat format = GHOSTTY_KITTY_IMAGE_FORMAT_RGBA;
             QByteArray pixelData;  // deep copy, only populated when needsUpload
         };
