@@ -2038,6 +2038,13 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                     pixels = rgba;
                     glFmt = GL_RGBA;
                     convertedPixels = true;
+                } else {
+                    // Falling through would pass the undersized gray buffer to
+                    // glTexImage2D (expects RGBA), causing a heap over-read.
+                    qWarning() << "Kitty image: failed to allocate" << convertedLen
+                               << "bytes for gray→RGBA conversion (image"
+                               << snap.imageId << imgW << "x" << imgH << ")";
+                    continue;
                 }
             }
 
