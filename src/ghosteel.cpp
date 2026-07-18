@@ -27,6 +27,7 @@
 #undef emit
 #endif
 
+#include "bellfeedback.h"
 #include "ghosteeladapter.h"
 #include "kittyimagedecoder.h"
 
@@ -112,6 +113,10 @@ int main(int argc, char *argv[])
     // Expose SessionManager singleton to QML
     SessionManager *sessionManager = new SessionManager(app.data());
     view->rootContext()->setContextProperty(QStringLiteral("SessionManager"), sessionManager);
+
+    // Expose the bell feedback (ngfd client) to QML
+    BellFeedback *bellFeedback = new BellFeedback(app.data());
+    view->rootContext()->setContextProperty(QStringLiteral("bellFeedback"), bellFeedback);
 
     // Store CLI args for deferred processing after QML restoreSessions()
     if (!execCommand.isEmpty() || !sessionName.isEmpty())

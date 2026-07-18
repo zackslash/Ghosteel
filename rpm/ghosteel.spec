@@ -17,6 +17,7 @@ Requires:   nemo-qml-plugin-notifications-qt5
 Requires:   sailfishsecretsdaemon
 Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default
+Requires:   libngf-qt5
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5DBus)
@@ -29,6 +30,7 @@ BuildRequires:  pkgconfig(freetype2)
 BuildRequires:  pkgconfig(harfbuzz)
 BuildRequires:  pkgconfig(sailfishsecrets)
 BuildRequires:  pkgconfig(sailfishcrypto)
+BuildRequires:  pkgconfig(ngf-qt5)
 BuildRequires:  desktop-file-utils
 BuildRequires:  xz
 BuildRequires:  patch

@@ -20,6 +20,10 @@ DEFINES += SAILFISH_SECRETS
 INCLUDEPATH += /usr/include/Sailfish
 LIBS += -lsailfishsecrets -lsailfishcrypto
 
+# Non-graphical feedback daemon (ngfd) client for the terminal bell
+INCLUDEPATH += /usr/include/ngf-qt5
+LIBS += -lngf-qt5
+
 # Centralized app identity — change these to rename the app
 APP_NAME = $$TARGET
 APP_ORG = com.zackslash
@@ -56,6 +60,7 @@ LIBS += -lpthread -lm -ldl -lutil -lrt -lGLESv2 -lEGL
 RESOURCES += shaders/shaders.qrc
 
 HEADERS += \
+    src/bellfeedback.h \
     src/ghosteeladapter.h \
     src/ghosttyvt.h \
     src/glrenderer.h \
@@ -72,6 +77,7 @@ HEADERS += \
     src/textutil.h
 
 SOURCES += \
+    src/bellfeedback.cpp \
     src/ghosteel.cpp \
     src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \

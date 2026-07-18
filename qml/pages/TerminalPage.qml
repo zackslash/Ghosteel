@@ -1,7 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
-import QtMultimedia 5.0
 import Nemo.Notifications 1.0
 import com.zackslash.ghosteel 1.0
 import "KeyCatalog.js" as KeyCatalog
@@ -131,12 +130,6 @@ Page {
     property int pendingClipboardSessionId: -1
     property string pendingClipboardSessionName: ""
     property bool clipboardDialogActive: false  // Guards against stacking read dialogs
-
-    // Bell sound for terminal BEL character
-    SoundEffect {
-        id: bellSound
-        source: "/usr/share/sounds/jolla-ambient/stereo/jolla-notification.wav"
-    }
 
     // Haptic feedback notification — publishing a notification triggers system vibration
     Notification {
@@ -678,7 +671,7 @@ Page {
 
         // Sound: mode 2 or 3
         if (mode === 2 || mode === 3) {
-            bellSound.play()
+            bellFeedback.playBell()
         }
     }
 
