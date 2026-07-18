@@ -1,47 +1,7 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 
-// Compute terminal display width of a QString. CJK and non-ASCII chars
-// count as 2 columns; surrogate pairs (emoji) also count as 2.
-static int computeDisplayWidth(const QString &str) {
-    int width = 0;
-    for (int i = 0; i < str.size(); i++) {
-        QChar ch = str.at(i);
-        if (ch.isHighSurrogate() && i + 1 < str.size()
-                && str.at(i + 1).isLowSurrogate()) {
-            ++i;
-            width += 2;
-        } else {
-            width += (ch.unicode() > 127) ? 2 : 1;
-        }
-    }
-    return width;
-}
-
-// Return the substring of str that fits within maxDisplayWidth columns,
-// using the same width rules as computeDisplayWidth(). If nothing fits
-// (maxDisplayWidth <= 0), return one character so progress is always made.
-static QString fitToDisplayWidth(const QString &str, int maxDisplayWidth) {
-    int width = 0;
-    for (int i = 0; i < str.size(); i++) {
-        QChar ch = str.at(i);
-        int charDisplayW;
-        if (ch.isHighSurrogate() && i + 1 < str.size()
-                && str.at(i + 1).isLowSurrogate()) {
-            charDisplayW = 2;
-            if (width + charDisplayW > maxDisplayWidth)
-                return str.left(i);
-            width += charDisplayW;
-            ++i;
-        } else {
-            charDisplayW = (ch.unicode() > 127) ? 2 : 1;
-            if (width + charDisplayW > maxDisplayWidth)
-                return str.left(i);
-            width += charDisplayW;
-        }
-    }
-    return str;
-}
+#include "terminalwidth.h"
 
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
@@ -729,7 +689,10 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         while (trimmed.endsWith('\r'))
             trimmed.chop(1);
 
-        if (cursorX > 0 && cursorX >= trimmed.size()) {
+        // Compare cursor column (cells) against the prompt's display width,
+        // not its UTF-8 byte count — multibyte prompts otherwise defeat the
+        // duplicate-prompt strip.
+        if (cursorX > 0 && cursorX >= terminalStringWidth(QString::fromUtf8(trimmed))) {
             // Cursor is at or past end of last line — it's an un-typed prompt.
             // Strip the last line entirely.
             if (lastNl >= 0)
@@ -808,7 +771,7 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
                     if (segment.isEmpty()) {
                         segment = str.left(1);
                     }
-                    int width = computeDisplayWidth(segment);
+                    int width = terminalStringWidth(segment);
                     replayData.append(segment.toUtf8());
                     // If segment fills full column width, pending wrap handles
                     // the line break — just send \r to position at col 0.
@@ -823,7 +786,7 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
                 replayData.append(line);
                 // If line fills full column width, pending wrap is set — use \r only.
                 // Compute display width (not byte count) for CJK correctness.
-                int lineDisplayW = computeDisplayWidth(QString::fromUtf8(line));
+                int lineDisplayW = terminalStringWidth(QString::fromUtf8(line));
                 if (lineDisplayW > 0 && lineDisplayW % targetCols == 0)
                     replayData.append("\r");
                 else
