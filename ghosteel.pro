@@ -60,6 +60,7 @@ HEADERS += \
     src/ghosttyvt.h \
     src/glrenderer.h \
     src/glyphatlas.h \
+    src/ipcmessage.h \
     src/keymapping.h \
     src/kittyimagedecoder.h \
     src/ptymanager.h \
