@@ -29,6 +29,8 @@ class Settings : public QObject
     Q_PROPERTY(int clipboardReadPolicy READ clipboardReadPolicy WRITE setClipboardReadPolicy NOTIFY clipboardReadPolicyChanged)
     Q_PROPERTY(QString customShaderPath READ customShaderPath WRITE setCustomShaderPath NOTIFY customShaderPathChanged)
     Q_PROPERTY(bool shaderPipelineAvailable READ shaderPipelineAvailable NOTIFY shaderPipelineAvailableChanged)
+    Q_PROPERTY(int minFontSize READ minFontSize CONSTANT)
+    Q_PROPERTY(int maxFontSize READ maxFontSize CONSTANT)
 
 public:
     // Session sort modes — values must match SessionPage.qml
@@ -37,6 +39,11 @@ public:
 
 public:
     static Settings *instance();
+
+    // setFontSize intentionally does NOT clamp — "raw store, clamp-at-consume"
+    // (see tst_settings_behavior).
+    static constexpr int kMinFontSize = 6;
+    static constexpr int kMaxFontSize = 32;
 
     // Test constructor: allows injecting a custom settings path
     explicit Settings(const QString &settingsPath, QObject *parent = nullptr);
@@ -50,6 +57,8 @@ public:
 
     int fontSize() const { return m_fontSize; }
     void setFontSize(int size);
+    int minFontSize() const { return kMinFontSize; }
+    int maxFontSize() const { return kMaxFontSize; }
 
     QString fontFamily() const { return m_fontFamily; }
     void setFontFamily(const QString &family);

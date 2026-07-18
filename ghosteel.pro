@@ -60,11 +60,13 @@ HEADERS += \
     src/ghosttyvt.h \
     src/glrenderer.h \
     src/glyphatlas.h \
+    src/ipcmessage.h \
     src/keymapping.h \
     src/kittyimagedecoder.h \
     src/ptymanager.h \
     src/scrollencryptor.h \
     src/sessionmanager.h \
+    src/sessionstore.h \
     src/settings.h \
     src/terminalview.h \
     src/textutil.h
@@ -74,14 +76,23 @@ SOURCES += \
     src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \
     src/glrenderer.cpp \
+    src/glrenderer_geometry.cpp \
+    src/glrenderer_kitty.cpp \
+    src/glrenderer_pipeline.cpp \
+    src/glrenderer_shaders.cpp \
     src/glyphatlas.cpp \
     src/keymapping.cpp \
     src/kittyimagedecoder.cpp \
     src/ptymanager.cpp \
     src/scrollencryptor.cpp \
     src/sessionmanager.cpp \
+    src/sessionstore.cpp \
     src/settings.cpp \
+    src/singleinstance.cpp \
     src/terminalview.cpp \
+    src/terminalview_links.cpp \
+    src/terminalview_search.cpp \
+    src/terminalview_touch.cpp \
     src/textutil.cpp
 
 DISTFILES += qml/ghosteel.qml \

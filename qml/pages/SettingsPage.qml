@@ -121,8 +121,8 @@ Page {
                 id: fontSlider
                 width: parent.width
                 label: qsTr("Default font size")
-                minimumValue: 6
-                maximumValue: 32
+                minimumValue: Settings.minFontSize
+                maximumValue: Settings.maxFontSize
                 stepSize: 1
                 value: Settings.fontSize
                 valueText: {
