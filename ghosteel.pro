@@ -82,6 +82,7 @@ SOURCES += \
     src/sessionmanager.cpp \
     src/settings.cpp \
     src/terminalview.cpp \
+    src/terminalview_links.cpp \
     src/textutil.cpp
 
 DISTFILES += qml/ghosteel.qml \
