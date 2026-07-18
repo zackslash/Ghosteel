@@ -8,20 +8,11 @@
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QDir>
-#include <QLocalSocket>
-#include <QWindow>
-#include <QGuiApplication>
 #include <QFile>
-#include <QSaveFile>
-#include <QFileInfo>
 #include <QTimer>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <algorithm>
-#include <cerrno>
-#include <cstring>
-#include <fcntl.h>
-#include <unistd.h>
 
 static constexpr int kMaxSessionCount = 100;
 
