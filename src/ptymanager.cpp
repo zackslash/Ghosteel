@@ -73,7 +73,10 @@ void PtyReaderThread::run()
             }
         }
     }
-    Q_EMIT readFinished();
+    // Suppress on interruption: stop() has already disconnected, so the emit
+    // would be discarded and the reaper isn't needed.
+    if (!isInterruptionRequested())
+        Q_EMIT readFinished();
 }
 
 // PtyManager
