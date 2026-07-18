@@ -78,6 +78,7 @@ SOURCES += \
     src/glrenderer.cpp \
     src/glrenderer_geometry.cpp \
     src/glrenderer_kitty.cpp \
+    src/glrenderer_pipeline.cpp \
     src/glyphatlas.cpp \
     src/keymapping.cpp \
     src/kittyimagedecoder.cpp \
