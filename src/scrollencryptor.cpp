@@ -236,6 +236,7 @@ QByteArray ScrollEncryptor::encrypt(const QByteArray &plaintext)
     enc.setData(padded);
     enc.setInitializationVector(iv);
     enc.setKey(*m_keyReference);
+    // CBC without MAC is intentional: device-lock key, bit-flip malleability accepted.
     enc.setBlockMode(CryptoManager::BlockModeCbc);
     enc.setPadding(CryptoManager::EncryptionPaddingNone);
     enc.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);

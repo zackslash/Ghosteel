@@ -52,15 +52,16 @@ struct IpcMessage {
     }
 
     static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
+        const QString cleanName = sanitizeSessionName(sessionName);
         if (!execCommand.isEmpty()) {
             QByteArray cmdBytes = execCommand.toUtf8();
             for (const QString &arg : execArgs) {
                 cmdBytes.append('\0');
                 cmdBytes.append(arg.toUtf8());
             }
-            return (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
-        } else if (!sessionName.isEmpty()) {
-            return (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
+            return (QStringLiteral("exec:") + cleanName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
+        } else if (!cleanName.isEmpty()) {
+            return (QStringLiteral("switch:") + cleanName + QStringLiteral("\n")).toUtf8();
         }
         return QByteArrayLiteral("raise\n");
     }
