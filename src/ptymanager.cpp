@@ -73,7 +73,10 @@ void PtyReaderThread::run()
             }
         }
     }
-    Q_EMIT readFinished();
+    // Suppress on interruption: stop() has already disconnected, so the emit
+    // would be discarded and the reaper isn't needed.
+    if (!isInterruptionRequested())
+        Q_EMIT readFinished();
 }
 
 // PtyManager
@@ -87,7 +90,8 @@ PtyManager::~PtyManager()
     stop();
 }
 
-bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid)
+bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid,
+                                const char *workingDir, const char *homeDir)
 {
     m_sessionGeneration++;
 
@@ -104,6 +108,19 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     }
     fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
 
+    // Set child env in the parent: forkpty() copies environ into the child, and
+    // execlp/execvp pass it on. glibc setenv mallocs — not async-signal-safe — so
+    // it must not run between fork and exec (QSG render thread / a still-live prior
+    // PtyReaderThread can hold the allocator lock across the fork).
+    setenv("TERM", "xterm-256color", 1);
+    {
+        // Point at the parent of shell-integration/ so shell-integration scripts
+        // resolve via ${GHOSTTY_RESOURCES_DIR}/shell-integration/<shell>/...
+        QByteArray resourceDir = QDir::toNativeSeparators(
+            QStringLiteral("/usr/share/" APP_NAME)).toUtf8();
+        setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
+    }
+
     pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
     if (pid < 0) {
         qWarning() << "forkpty failed:" << strerror(errno);
@@ -111,17 +128,20 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
         ::close(execPipe[1]);
         return false;
     }
-
     if (pid == 0) {
         ::close(execPipe[0]);
-        setupChildProcess();
+        setupChildProcess(workingDir, homeDir);
     }
-
     return true;
 }
 
 bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 {
+    // Pre-fork precompute: between forkpty() and exec() the child may only use
+    // async-signal-safe calls. The QSG render thread and an exiting previous
+    // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
+    // (including setenv) here can deadlock. Build all child inputs on this stack.
+
     // Determine shell — prefer configured command, then $SHELL, then /bin/sh
     const char *shell = nullptr;
     QByteArray shellBytes;
@@ -135,9 +155,17 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
             shell = "/bin/sh";
     }
 
+    const char *homeDir = getenv("HOME");
+    QByteArray workingDirBytes;
+    const char *workingDir = nullptr;
+    if (!m_workingDirectory.isEmpty()) {
+        workingDirBytes = m_workingDirectory.toUtf8();
+        workingDir = workingDirBytes.constData();
+    }
+
     int execPipe[2];
     pid_t pid;
-    if (!forkPtyProcess(cols, rows, execPipe, pid))
+    if (!forkPtyProcess(cols, rows, execPipe, pid, workingDir, homeDir))
         return false;
 
     if (pid == 0) {
@@ -152,51 +180,47 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     return startParentProcess(pid, execPipe);
 }
 
-void PtyManager::setupChildProcess()
+// Runs in CHILD between fork and exec — async-signal-safe calls only.
+void PtyManager::setupChildProcess(const char *workingDir, const char *homeDir)
 {
     setsid();
-
-    // Change to working directory if specified (for session restore)
-    if (!m_workingDirectory.isEmpty()) {
-        QByteArray dirBytes = m_workingDirectory.toUtf8();
-        if (chdir(dirBytes.constData()) != 0) {
-            // Fallback to home directory if saved path no longer exists
-            const char *home = getenv("HOME");
-            if (home)
-                (void)chdir(home);
-        }
+    if (workingDir && workingDir[0]) {
+        if (chdir(workingDir) != 0 && homeDir)
+            (void)chdir(homeDir);
     }
-
-    setenv("TERM", "xterm-256color", 1);
-
-    // Set GHOSTTY_RESOURCES_DIR for shell integration scripts.
-    // The scripts are installed at /usr/share/<APP_NAME>/shell-integration/
-    // but GHOSTTY_RESOURCES_DIR should point to the parent so that
-    // scripts reference ${GHOSTTY_RESOURCES_DIR}/shell-integration/bash/...
-    QByteArray resourceDir = QDir::toNativeSeparators(
-        QStringLiteral("/usr/share/" APP_NAME)).toUtf8();
-    setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
 }
 
 bool PtyManager::startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows)
 {
+    // Pre-fork precompute: between forkpty() and exec() the child may only use
+    // async-signal-safe calls. The QSG render thread and an exiting previous
+    // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
+    // (including setenv) here can deadlock. Build all child inputs on this stack.
+    QByteArray cmdBytes = command.toUtf8();
+    QList<QByteArray> argBytes;
+    argBytes.append(cmdBytes);
+    for (const QString &arg : args)
+        argBytes.append(arg.toUtf8());
+
+    QVector<const char *> argv(argBytes.size() + 1);
+    for (int i = 0; i < argBytes.size(); ++i)
+        argv[i] = argBytes[i].constData();
+    argv[argBytes.size()] = nullptr;
+
+    const char *homeDir = getenv("HOME");
+    QByteArray workingDirBytes;
+    const char *workingDir = nullptr;
+    if (!m_workingDirectory.isEmpty()) {
+        workingDirBytes = m_workingDirectory.toUtf8();
+        workingDir = workingDirBytes.constData();
+    }
+
     int execPipe[2];
     pid_t pid;
-    if (!forkPtyProcess(cols, rows, execPipe, pid))
+    if (!forkPtyProcess(cols, rows, execPipe, pid, workingDir, homeDir))
         return false;
 
     if (pid == 0) {
-        QByteArray cmdBytes = command.toUtf8();
-        QList<QByteArray> argBytes;
-        argBytes.append(cmdBytes);
-        for (const QString &arg : args)
-            argBytes.append(arg.toUtf8());
-
-        QVector<const char *> argv(argBytes.size() + 1);
-        for (int i = 0; i < argBytes.size(); ++i)
-            argv[i] = argBytes[i].constData();
-        argv[argBytes.size()] = nullptr;
-
         execvp(cmdBytes.constData(), const_cast<char *const *>(argv.data()));
 
         int execErr = errno;
@@ -230,6 +254,17 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         // Capture generation by value — if startShell()/startCommand() is called again,
         // the old timer will see a stale generation and bail out.
         uint32_t gen = m_sessionGeneration;
+
+        // Reap a pid queued by a previous stop(false) BEFORE cancelling its
+        // timer — otherwise the cancel orphans it as a zombie until the next
+        // stop() / ~PtyManager(). WNOHANG so we don't block the GUI thread; a
+        // still-living child leaves m_pendingReapPid set for stop() to handle.
+        if (m_pendingReapPid > 0) {
+            int pendingStatus = 0;
+            pid_t pendingResult = ::waitpid(m_pendingReapPid, &pendingStatus, WNOHANG);
+            if (pendingResult != 0)
+                m_pendingReapPid = -1; // reaped (>0) or already gone (<0)
+        }
 
         // Cancel any existing waitpid timer (safety)
         if (m_waitPidTimer) {
@@ -300,6 +335,29 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     return true;
 }
 
+void PtyManager::reapPidBounded(pid_t pid)
+{
+    if (pid <= 0)
+        return;
+
+    constexpr int kMaxAttempts = 50;
+    constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
+    int status = 0;
+    for (int i = 0; i < kMaxAttempts; ++i) {
+        pid_t result = waitpid(pid, &status, WNOHANG);
+        if (result > 0 || result < 0)
+            return; // reaped or error/already gone
+        // result == 0: child still alive. Sleep briefly and retry.
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = kSleepNs;
+        nanosleep(&ts, nullptr);
+    }
+    qWarning("PtyManager::reapPidBounded: child %ld did not exit within %dms; "
+             "may leak as zombie", (long)pid,
+             kMaxAttempts * (int)(kSleepNs / 1000000));
+}
+
 void PtyManager::stop(bool synchronous)
 {
     if (m_execNotifier) {
@@ -318,6 +376,12 @@ void PtyManager::stop(bool synchronous)
         m_waitPidTimer->deleteLater();
         m_waitPidTimer = nullptr;
     }
+    // The async reap timer may have been tracking an old pid; reap it here
+    // regardless of timer state so it can't be orphaned as a zombie.
+    if (m_pendingReapPid > 0) {
+        reapPidBounded(m_pendingReapPid);
+        m_pendingReapPid = -1;
+    }
 
     // Kill child FIRST — this causes the slave side of the PTY to close,
     // which makes read() on the master fd return 0 (EOF), reliably waking
@@ -328,9 +392,10 @@ void PtyManager::stop(bool synchronous)
     }
 
     if (!synchronous) {
-        // Async path (restartShell): tear down the reader thread and PTY fd
-        // without blocking, then set up an async timer to reap the child.
-        // This avoids freezing the GUI thread for up to 500 ms.
+        // Async path (restartShell): tear down the reader thread and PTY fd with
+        // only a short bounded wait (≤100 ms) for the thread to exit, then set up
+        // an async timer to reap the child. Avoids the up-to-500 ms blocking reap
+        // that the synchronous path performs via reapPidBounded().
 
         if (m_readerThread) {
             // Disconnect signals first — prevents queued dataReady/readFinished
@@ -339,15 +404,16 @@ void PtyManager::stop(bool synchronous)
 
             // Ask the thread to exit at its next poll timeout (≤200 ms).
             m_readerThread->requestInterruption();
-
-            // The thread will exit shortly (POLLNVAL from closed fd or
-            // interruption). deleteLater ensures the QThread object is
-            // properly cleaned up after exit, even though we no longer track
-            // it via m_readerThread.
-            connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
-            m_readerThread = nullptr;
         }
 
+        // Close the old PTY fd so it isn't leaked into the new session. (NB:
+        // on Linux, close() in this thread does NOT wake the old reader's in-
+        // flight poll() — fds are process-shared and poll binds to the file at
+        // entry; POLLNVAL would surface only on a *subsequent* poll() call.)
+        // The old thread instead exits via its 200 ms timeout + the flag set
+        // by requestInterruption() above; the disconnect() above ensures any
+        // straggling emissions go nowhere. Those, not the close(), neutralize
+        // the fd-reuse race with the new PTY.
         if (m_ptyFd >= 0) {
             if (m_writeNotifier) {
                 m_writeNotifier->setEnabled(false);
@@ -359,12 +425,32 @@ void PtyManager::stop(bool synchronous)
             m_ptyFd = -1;
         }
 
+        if (m_readerThread) {
+            // The old thread's poll timeout (200 ms) exceeds this 100 ms wait, so the
+            // async deleteLater-on-finished path below is the expected restart path —
+            // not an exceptional fallback (the loop's flag check gates read(), so the
+            // thread can't touch a reused fd number).
+            if (m_readerThread->wait(100)) {
+                m_readerThread->deleteLater();
+            } else {
+                qWarning() << "PtyReaderThread did not exit after fd close; async cleanup";
+                // Detach from parent so ~PtyManager doesn't try to delete a
+                // still-running QThread (would abort: "QThread: Destroyed
+                // while thread is still running"). The finished→deleteLater
+                // connection below owns lifecycle once the thread exits.
+                m_readerThread->setParent(nullptr);
+                connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
+            }
+            m_readerThread = nullptr;
+        }
+
         // Set up an async reap timer — the child is dying from SIGHUP but
         // may not have exited yet. Poll with WNOHANG every 100 ms.
         // Capture the OLD pid BEFORE setupTerminal() can overwrite m_childPid
         // with the new child's PID, so we always reap the correct process.
         if (m_childPid > 0) {
             pid_t oldPid = m_childPid;
+            m_pendingReapPid = oldPid;
             uint32_t gen = m_sessionGeneration;
             auto *timer = new QTimer(this);
             m_waitPidTimer = timer;
@@ -384,6 +470,8 @@ void PtyManager::stop(bool synchronous)
                 timer->deleteLater();
                 if (m_waitPidTimer == timer)
                     m_waitPidTimer = nullptr;
+                if (m_pendingReapPid == oldPid)
+                    m_pendingReapPid = -1;
                 // Only emit if this is still the current session generation
                 if (gen == m_sessionGeneration && result > 0) {
                     m_childPid = -1;
@@ -406,27 +494,7 @@ void PtyManager::stop(bool synchronous)
         // terminate, then give up (kernel subreaper / init will reap if so
         // configured; otherwise we log and accept the rare leak rather than
         // block shutdown indefinitely).
-        constexpr int kMaxAttempts = 50;
-        constexpr long kSleepNs = 10 * 1000 * 1000; // 10ms
-        int status = 0;
-        bool reaped = false;
-        for (int i = 0; i < kMaxAttempts; ++i) {
-            pid_t result = waitpid(m_childPid, &status, WNOHANG);
-            if (result > 0 || result < 0) {
-                reaped = true;
-                break;
-            }
-            // result == 0: child still alive. Sleep briefly and retry.
-            struct timespec ts;
-            ts.tv_sec = 0;
-            ts.tv_nsec = kSleepNs;
-            nanosleep(&ts, nullptr);
-        }
-        if (!reaped) {
-            qWarning("PtyManager::stop: child %ld did not exit within %dms; "
-                     "may leak as zombie", (long)m_childPid,
-                     kMaxAttempts * (int)(kSleepNs / 1000000));
-        }
+        reapPidBounded(m_childPid);
         m_childPid = -1;
     }
 

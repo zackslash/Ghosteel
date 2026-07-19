@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 sesija</numerusform>
+            <numerusform>%n sesija</numerusform>
             <numerusform>%n sesijos</numerusform>
             <numerusform>%n sesijų</numerusform>
         </translation>
@@ -465,10 +465,6 @@ Varomas libghostty terminalo variklio</translation>
     <message>
         <source>New session</source>
         <translation>Nauja sesija</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Sesija %1</translation>
     </message>
     <message>
         <source>Sessions</source>

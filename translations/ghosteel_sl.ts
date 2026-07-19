@@ -10,8 +10,8 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 seja</numerusform>
-            <numerusform>2 seji</numerusform>
+            <numerusform>%n seja</numerusform>
+            <numerusform>%n seji</numerusform>
             <numerusform>%n seje</numerusform>
             <numerusform>%n sej</numerusform>
         </translation>
@@ -466,10 +466,6 @@ Poganja terminalski pogon libghostty</translation>
     <message>
         <source>New session</source>
         <translation>Nova seja</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Seja %1</translation>
     </message>
     <message>
         <source>Sessions</source>

@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 økt</numerusform>
+            <numerusform>%n økt</numerusform>
             <numerusform>%n økter</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Drevet av libghostty terminalmotor</translation>
     <message>
         <source>New session</source>
         <translation>Ny økt</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Økt %1</translation>
     </message>
     <message>
         <source>Sessions</source>

@@ -1,47 +1,7 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 
-// Compute terminal display width of a QString. CJK and non-ASCII chars
-// count as 2 columns; surrogate pairs (emoji) also count as 2.
-static int computeDisplayWidth(const QString &str) {
-    int width = 0;
-    for (int i = 0; i < str.size(); i++) {
-        QChar ch = str.at(i);
-        if (ch.isHighSurrogate() && i + 1 < str.size()
-                && str.at(i + 1).isLowSurrogate()) {
-            ++i;
-            width += 2;
-        } else {
-            width += (ch.unicode() > 127) ? 2 : 1;
-        }
-    }
-    return width;
-}
-
-// Return the substring of str that fits within maxDisplayWidth columns,
-// using the same width rules as computeDisplayWidth(). If nothing fits
-// (maxDisplayWidth <= 0), return one character so progress is always made.
-static QString fitToDisplayWidth(const QString &str, int maxDisplayWidth) {
-    int width = 0;
-    for (int i = 0; i < str.size(); i++) {
-        QChar ch = str.at(i);
-        int charDisplayW;
-        if (ch.isHighSurrogate() && i + 1 < str.size()
-                && str.at(i + 1).isLowSurrogate()) {
-            charDisplayW = 2;
-            if (width + charDisplayW > maxDisplayWidth)
-                return str.left(i);
-            width += charDisplayW;
-            ++i;
-        } else {
-            charDisplayW = (ch.unicode() > 127) ? 2 : 1;
-            if (width + charDisplayW > maxDisplayWidth)
-                return str.left(i);
-            width += charDisplayW;
-        }
-    }
-    return str;
-}
+#include "terminalwidth.h"
 
 GhosttyVt::GhosttyVt(QObject *parent)
     : QObject(parent)
@@ -71,6 +31,12 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
 
     // Enable cursor blinking by default (Ghostty mode 12 defaults to false)
     ghostty_terminal_mode_set(m_terminal, GHOSTTY_MODE_CURSOR_BLINKING, true);
+
+    // Enable grapheme cluster mode (DEC 2027) so VS16 (U+FE0F) makes BMP emoji
+    // (☀☁⛈) 2 cells wide. Matches the Ghostty app default.
+    // NOTE: a hard reset (`reset` / ESC c) clears this; the C API has no
+    // default-modes field, so reset-resilience requires an upstream change.
+    ghostty_terminal_mode_set(m_terminal, GHOSTTY_MODE_GRAPHEME_CLUSTER, true);
 
     // Enable Kitty Graphics Protocol image storage (32 MiB per screen)
     uint64_t kittyLimit = 32 * 1024 * 1024;
@@ -374,6 +340,15 @@ bool GhosttyVt::isWideSpacerCell(GhosttyCell cell)
         || wide == GHOSTTY_CELL_WIDE_SPACER_HEAD;
 }
 
+bool GhosttyVt::isWideSpacerTailCell(GhosttyCell cell)
+{
+    if (cell == 0)
+        return false;
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide);
+    return wide == GHOSTTY_CELL_WIDE_SPACER_TAIL;
+}
+
 bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row)
 {
     if (!terminal)
@@ -547,16 +522,11 @@ QStringList GhosttyVt::extractSearchText()
 
     QStringList result;
     result.reserve(static_cast<int>(totalRows));
-    m_wideSpacerCache.clear();
-    m_wideSpacerCache.reserve(static_cast<int>(totalRows));
     uint32_t graphemeBuf[128];
 
     for (size_t row = 0; row < totalRows; row++) {
         QString line;
         line.reserve(cols);
-        QVector<bool> rowSpacers;
-        rowSpacers.resize(static_cast<int>(cols));
-        rowSpacers.fill(false);
 
         for (uint16_t col = 0; col < cols; col++) {
             GhosttyPoint point = {};
@@ -574,7 +544,6 @@ QStringList GhosttyVt::extractSearchText()
             GhosttyCell cell = 0;
             if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
                     && isWideSpacerCell(cell)) {
-                rowSpacers[static_cast<int>(col)] = true;
                 continue;
             }
 
@@ -587,7 +556,6 @@ QStringList GhosttyVt::extractSearchText()
             }
         }
 
-        m_wideSpacerCache.append(rowSpacers);
         result.append(line);
     }
 
@@ -644,7 +612,10 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
             // Skip wide character spacer cells — they have no text content
             // but would otherwise be exported as phantom spaces.
-            if (isWideCharSpacer(m_terminal, col, static_cast<uint32_t>(row)))
+            // Reuse the grid ref above instead of isWideCharSpacer()'s second grid_ref.
+            GhosttyCell cell = 0;
+            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
+                    && isWideSpacerCell(cell))
                 continue;
 
             size_t graphemeLen = 0;
@@ -723,7 +694,10 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         while (trimmed.endsWith('\r'))
             trimmed.chop(1);
 
-        if (cursorX > 0 && cursorX >= trimmed.size()) {
+        // Compare cursor column (cells) against the prompt's display width,
+        // not its UTF-8 byte count — multibyte prompts otherwise defeat the
+        // duplicate-prompt strip.
+        if (cursorX > 0 && cursorX >= terminalStringWidth(QString::fromUtf8(trimmed))) {
             // Cursor is at or past end of last line — it's an un-typed prompt.
             // Strip the last line entirely.
             if (lastNl >= 0)
@@ -802,7 +776,7 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
                     if (segment.isEmpty()) {
                         segment = str.left(1);
                     }
-                    int width = computeDisplayWidth(segment);
+                    int width = terminalStringWidth(segment);
                     replayData.append(segment.toUtf8());
                     // If segment fills full column width, pending wrap handles
                     // the line break — just send \r to position at col 0.
@@ -817,7 +791,7 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
                 replayData.append(line);
                 // If line fills full column width, pending wrap is set — use \r only.
                 // Compute display width (not byte count) for CJK correctness.
-                int lineDisplayW = computeDisplayWidth(QString::fromUtf8(line));
+                int lineDisplayW = terminalStringWidth(QString::fromUtf8(line));
                 if (lineDisplayW > 0 && lineDisplayW % targetCols == 0)
                     replayData.append("\r");
                 else

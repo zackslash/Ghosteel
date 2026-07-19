@@ -77,8 +77,17 @@ ScrollEncryptor::ScrollEncryptor(QObject *parent)
     QTimer::singleShot(0, this, &ScrollEncryptor::initializeAsync);
 }
 
+void ScrollEncryptor::initializeNow()
+{
+    initializeAsync();
+}
+
 void ScrollEncryptor::initializeAsync()
 {
+    // Guard against double-execution: when initializeNow() ran during
+    // SessionManager construction, the deferred singleShot becomes a no-op.
+    if (m_initialized)
+        return;
     m_available = initializeEncryption();
     if (m_available)
         replenishIVs();
@@ -227,6 +236,7 @@ QByteArray ScrollEncryptor::encrypt(const QByteArray &plaintext)
     enc.setData(padded);
     enc.setInitializationVector(iv);
     enc.setKey(*m_keyReference);
+    // CBC without MAC is intentional: device-lock key, bit-flip malleability accepted.
     enc.setBlockMode(CryptoManager::BlockModeCbc);
     enc.setPadding(CryptoManager::EncryptionPaddingNone);
     enc.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
@@ -301,6 +311,7 @@ bool ScrollEncryptor::isAvailable() const { return false; }
 QByteArray ScrollEncryptor::encrypt(const QByteArray &) { return QByteArray(); }
 QByteArray ScrollEncryptor::decrypt(const QByteArray &) { return QByteArray(); }
 void ScrollEncryptor::replenishIVs() {}
+void ScrollEncryptor::initializeNow() { initializeAsync(); }
 void ScrollEncryptor::initializeAsync() { Q_EMIT availabilityChanged(); }
 
 #endif // SAILFISH_SECRETS

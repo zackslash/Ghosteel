@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 seta</numerusform>
+            <numerusform>%n seta</numerusform>
             <numerusform>%n setur</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>New session</source>
         <translation>Ný seta</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Seta %1</translation>
     </message>
     <message>
         <source>Sessions</source>

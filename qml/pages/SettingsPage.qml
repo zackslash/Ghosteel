@@ -121,10 +121,10 @@ Page {
                 id: fontSlider
                 width: parent.width
                 label: qsTr("Default font size")
-                minimumValue: 6
-                maximumValue: 32
+                minimumValue: Settings.minFontSize
+                maximumValue: Settings.maxFontSize
                 stepSize: 1
-                value: SessionManager.activeSessionFontSize > 0 ? SessionManager.activeSessionFontSize : Settings.fontSize
+                value: Settings.fontSize
                 valueText: {
                     if (value < 10) return qsTr("Tiny (%1)").arg(value)
                     if (value < 14) return qsTr("Small (%1)").arg(value)
@@ -134,19 +134,12 @@ Page {
                     return qsTr("Huge (%1)").arg(value)
                 }
 
-                // Guard: the value binding evaluates during component creation
-                // (before Component.onCompleted), which fires onValueChanged.
-                // Without this guard, opening the settings page when the session
-                // has a font size override would sync the global default to that
-                // override — undoing the session-only pinch/zoom behavior.
+                // Guard: QML evaluates the value binding (firing onValueChanged) before Component.onCompleted.
                 property bool initialized: false
 
                 onValueChanged: {
                     if (!initialized) return
-                    if (value === Settings.fontSize)
-                        SessionManager.setActiveSessionFontSize(0)
-                    else
-                        SessionManager.setActiveSessionFontSize(value)
+                    Settings.fontSize = value
                 }
 
                 Component.onCompleted: initialized = true

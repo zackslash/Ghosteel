@@ -80,10 +80,10 @@ public:
     void setMouseButtonPressed(bool pressed);
     QStringList extractSearchText();
     bool isSearchTextDirty() const { return m_searchTextDirty; }
-
-    // Per-row wide-spacer cache populated by extractSearchText().
-    // m_wideSpacerCache[row][col] == true means the cell is a wide-char spacer.
-    const QVector<QVector<bool>>& wideSpacerCache() const { return m_wideSpacerCache; }
+    // Mark the search cache stale. Call after operations that invalidate the
+    // cached row text (e.g. ghostty_terminal_resize) so the next findNext/
+    // findPrevious re-extracts before navigating.
+    void markSearchTextDirty() { m_searchTextDirty = true; }
 
     // Scrollback persistence — export terminal content (scrollback + active) as
     // VT sequences that can be replayed to restore the terminal state.
@@ -107,6 +107,10 @@ public:
     // True if `cell` is a wide-char spacer (head or tail). Prefer this over
     // isWideCharSpacer() when you already hold a cell, to avoid a redundant ghostty_terminal_grid_ref call.
     static bool isWideSpacerCell(GhosttyCell cell);
+    // True only if `cell` is a SPACER_TAIL (head sits at col-1). Use when
+    // walking left to find a wide char's head; SPACER_HEAD's head is on the
+    // next row, so a left-walk would land on the wrong cell.
+    static bool isWideSpacerTailCell(GhosttyCell cell);
 
 Q_SIGNALS:
     void titleChanged(const QString &title);
@@ -128,9 +132,6 @@ private:
     PtyWriteFn m_ptyWriteFn;
     bool m_needsEncoderSync = true; // Only sync encoders when terminal modes change
     bool m_searchTextDirty = true; // Set in vtWrite(), cleared by extractSearchText()
-
-    // Per-row wide-spacer cache, populated by extractSearchText(). See wideSpacerCache().
-    QVector<QVector<bool>> m_wideSpacerCache;
 
     // OSC 777 desktop notification scanner
     Osc777State m_osc777State = OSC777_IDLE;

@@ -18,6 +18,7 @@ class TerminalView : public QObject
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
     Q_PROPERTY(int searchMatchCount READ searchMatchCount NOTIFY searchMatchCountChanged)
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
+    Q_PROPERTY(int searchPanelHeight READ searchPanelHeight WRITE setSearchPanelHeight NOTIFY searchPanelHeightChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
     Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
@@ -47,6 +48,10 @@ public:
     int searchMatchCount() const { return 0; }
     int currentMatchIndex() const { return m_currentMatchIndex; }
     bool searchActive() const { return m_searchActive; }
+    int searchPanelHeight() const { return m_searchPanelHeight; }
+    void setSearchPanelHeight(int height) {
+        if (m_searchPanelHeight != height) { m_searchPanelHeight = height; Q_EMIT searchPanelHeightChanged(); }
+    }
 
     QColor selectionHighlightColor() const { return m_selectionHighlightColor; }
     void setSelectionHighlightColor(const QColor &color) {
@@ -111,12 +116,19 @@ public:
     Q_INVOKABLE void findPrevious() {}
     void cleanup() {}
 
-    // Stub for scrollback persistence (GhosttyVt not available in stubs)
-    QByteArray exportScrollback(uint16_t &, uint16_t &) const { return {}; }
+    // Stub for scrollback persistence (GhosttyVt not available in stubs).
+    // Returns empty (no real scrollback), but counts calls so tests can
+    // observe whether saveSessionScrollback was invoked (it calls
+    // exportScrollback before its empty-data early-return). A flat counter
+    // means the save was either throttled or blocked by justRestored.
+    QByteArray exportScrollback(uint16_t &, uint16_t &) const { m_exportScrollbackCount++; return {}; }
+    int exportScrollbackCount() const { return m_exportScrollbackCount; }
+    void resetExportScrollbackCount() { m_exportScrollbackCount = 0; }
 
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
     void emitContentChanged() { Q_EMIT contentChanged(); }
+    void emitPtyDataReceived() { Q_EMIT ptyDataReceived(); }
     void setSelectedText(const QString &t) { m_selectedText = t; Q_EMIT selectedTextChanged(); }
     bool shellExited() const { return m_shellExited; }
     void emitCommandExited(int exitCode) { m_shellExited = true; Q_EMIT commandExited(exitCode); }
@@ -126,6 +138,7 @@ Q_SIGNALS:
     void fontSizeChanged();
     void titleChanged();
     void contentChanged();
+    void ptyDataReceived();
     void stickyModifiersChanged();
     void terminalBell();
     void desktopNotification(const QString &summary, const QString &body);
@@ -134,6 +147,7 @@ Q_SIGNALS:
     void selectedTextChanged();
     void searchMatchCountChanged();
     void currentMatchIndexChanged();
+    void searchPanelHeightChanged();
     void selectionHighlightColorChanged();
     void selectionHandleColorChanged();
     void selectionHandleBorderColorChanged();
@@ -168,9 +182,11 @@ private:
     QString m_autorunCommand;
     QStringList m_commandArgs;
     bool m_shellExited = false;
+    mutable int m_exportScrollbackCount = 0;
 
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;
+    int m_searchPanelHeight = 0;
 
     QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);
     QColor m_selectionHandleColor = QColor(255, 255, 255, 200);

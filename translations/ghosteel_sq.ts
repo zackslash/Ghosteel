@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 sesion</numerusform>
+            <numerusform>%n sesion</numerusform>
             <numerusform>%n sesione</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Mundësuar nga motori i terminalit libghostty</translation>
     <message>
         <source>New session</source>
         <translation>Sesioni i ri</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Sesioni %1</translation>
     </message>
     <message>
         <source>Sessions</source>

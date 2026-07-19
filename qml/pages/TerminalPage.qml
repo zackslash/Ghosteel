@@ -1,7 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
-import QtMultimedia 5.0
 import Nemo.Notifications 1.0
 import com.zackslash.ghosteel 1.0
 import "KeyCatalog.js" as KeyCatalog
@@ -131,12 +130,6 @@ Page {
     property int pendingClipboardSessionId: -1
     property string pendingClipboardSessionName: ""
     property bool clipboardDialogActive: false  // Guards against stacking read dialogs
-
-    // Bell sound for terminal BEL character
-    SoundEffect {
-        id: bellSound
-        source: "/usr/share/sounds/jolla-ambient/stereo/jolla-notification.wav"
-    }
 
     // Haptic feedback notification — publishing a notification triggers system vibration
     Notification {
@@ -678,7 +671,7 @@ Page {
 
         // Sound: mode 2 or 3
         if (mode === 2 || mode === 3) {
-            bellSound.play()
+            bellFeedback.playBell()
         }
     }
 
@@ -713,7 +706,7 @@ Page {
     function onZoomRequested(delta) {
         if (!terminal) return
         SessionManager.setActiveSessionFontSize(
-            Math.max(6, Math.min(32, terminal.fontSize + delta)), false)
+            Math.max(Settings.minFontSize, Math.min(Settings.maxFontSize, terminal.fontSize + delta)), false)
     }
 
     function onPinchingChanged(pinching) {
@@ -968,9 +961,12 @@ Page {
             text: {
                 var dir = swipePanX < 0 ? 1 : -1   // leftward → next
                 var count = SessionManager.sessionCount
-                var curDisplay = SessionManager.actualToDisplay(SessionManager.activeSessionIndex)
-                var targetDisplay = ((curDisplay + dir) % count + count) % count
-                var name = SessionManager.sessionDisplayName(SessionManager.displayToActual(targetDisplay))
+                // Mirror switchSession(): navigate by ACTUAL (vector) index, not
+                // display index. Under SortLastUsed the display order shifts on
+                // every switch, so display-index math would name the wrong session.
+                var actualIdx = SessionManager.activeSessionIndex
+                var targetActual = ((actualIdx + dir) % count + count) % count
+                var name = SessionManager.sessionDisplayName(targetActual)
                 return dir > 0 ? (name + "  ›") : ("‹  " + name)
             }
             x: {
@@ -1014,6 +1010,13 @@ Page {
             if (!open && terminal) {
                 terminal.closeSearch()
             }
+            updateSearchPanelHeight()
+        }
+        onHeightChanged: updateSearchPanelHeight()
+
+        function updateSearchPanelHeight() {
+            if (terminal)
+                terminal.searchPanelHeight = open ? height : 0
         }
 
         Row {
@@ -1155,7 +1158,7 @@ Page {
             Rectangle {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width * Math.max(0, Math.min(1, ((terminal ? terminal.fontSize : 6) - 6) / (32 - 6)))
+                width: parent.width * Math.max(0, Math.min(1, ((terminal ? terminal.fontSize : Settings.minFontSize) - Settings.minFontSize) / (Settings.maxFontSize - Settings.minFontSize)))
                 height: parent.height
                 radius: height / 2
                 color: Theme.highlightColor
@@ -1252,9 +1255,9 @@ Page {
                                 var dir = keyDef.id === "prevSession" ? -1 : 1
                                 switchSession(dir)
                             } else if (keyDef.id === "zoomIn") {
-                                SessionManager.setActiveSessionFontSize(Math.min(32, terminal.fontSize + 1), false)
+                                SessionManager.setActiveSessionFontSize(Math.min(Settings.maxFontSize, terminal.fontSize + 1), false)
                             } else if (keyDef.id === "zoomOut") {
-                                SessionManager.setActiveSessionFontSize(Math.max(6, terminal.fontSize - 1), false)
+                                SessionManager.setActiveSessionFontSize(Math.max(Settings.minFontSize, terminal.fontSize - 1), false)
                             }
                         }
 

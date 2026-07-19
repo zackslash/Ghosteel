@@ -24,6 +24,8 @@ include_directories(${CMAKE_SOURCE_DIR}/../ghostty/include)
 add_executable(tst_session_persistence
     tst_session_persistence.cpp
     ${CMAKE_SOURCE_DIR}/../src/sessionmanager.cpp
+    ${CMAKE_SOURCE_DIR}/../src/sessionstore.cpp
+    ${CMAKE_SOURCE_DIR}/../src/singleinstance.cpp
     ${CMAKE_SOURCE_DIR}/../src/settings.cpp
     ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
     ${CMAKE_SOURCE_DIR}/stubs/terminalview.cpp
@@ -142,3 +144,36 @@ add_executable(tst_url_detection
 )
 target_link_libraries(tst_url_detection PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME UrlDetection COMMAND tst_url_detection)
+
+# --- Default terminal modes (grapheme cluster, cursor blinking) tests ---
+add_executable(tst_default_modes
+    tst_default_modes.cpp
+    ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
+)
+target_include_directories(tst_default_modes PRIVATE SYSTEM
+    ${CMAKE_SOURCE_DIR}/stubs
+)
+target_link_libraries(tst_default_modes PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME DefaultModes COMMAND tst_default_modes)
+
+# --- Terminal character width (East Asian Width) tests ---
+add_executable(tst_terminal_width
+    tst_terminal_width.cpp
+)
+target_link_libraries(tst_terminal_width PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME TerminalWidth COMMAND tst_terminal_width)
+
+# --- Kitty PNG dimension-cap guard tests ---
+add_executable(tst_kitty_image_guard
+    tst_kitty_image_guard.cpp
+)
+target_link_libraries(tst_kitty_image_guard PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME KittyImageGuard COMMAND tst_kitty_image_guard)
+
+# --- Glyph cache key (cluster + single-cp) logic tests ---
+add_executable(tst_glyph_cache_key
+    tst_glyph_cache_key.cpp
+)
+target_link_libraries(tst_glyph_cache_key PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
+add_test(NAME GlyphCacheKey COMMAND tst_glyph_cache_key)

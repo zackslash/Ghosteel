@@ -10,7 +10,7 @@
     <message numerus="yes">
         <source>%n session(s)</source>
         <translation>
-            <numerusform>1 seanss</numerusform>
+            <numerusform>%n seanss</numerusform>
             <numerusform>%n seanssi</numerusform>
         </translation>
     </message>
@@ -464,10 +464,6 @@ Toetab libghostty terminalimootorit</translation>
     <message>
         <source>New session</source>
         <translation>Uus seanss</translation>
-    </message>
-    <message>
-        <source>Session %1</source>
-        <translation type="vanished">Seanss %1</translation>
     </message>
     <message>
         <source>Sessions</source>

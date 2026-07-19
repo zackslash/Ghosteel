@@ -20,6 +20,10 @@ DEFINES += SAILFISH_SECRETS
 INCLUDEPATH += /usr/include/Sailfish
 LIBS += -lsailfishsecrets -lsailfishcrypto
 
+# Non-graphical feedback daemon (ngfd) client for the terminal bell
+INCLUDEPATH += /usr/include/ngf-qt5
+LIBS += -lngf-qt5
+
 # Centralized app identity — change these to rename the app
 APP_NAME = $$TARGET
 APP_ORG = com.zackslash
@@ -56,32 +60,45 @@ LIBS += -lpthread -lm -ldl -lutil -lrt -lGLESv2 -lEGL
 RESOURCES += shaders/shaders.qrc
 
 HEADERS += \
+    src/bellfeedback.h \
     src/ghosteeladapter.h \
     src/ghosttyvt.h \
     src/glrenderer.h \
     src/glyphatlas.h \
+    src/ipcmessage.h \
     src/keymapping.h \
     src/kittyimagedecoder.h \
     src/ptymanager.h \
     src/scrollencryptor.h \
     src/sessionmanager.h \
+    src/sessionstore.h \
     src/settings.h \
     src/terminalview.h \
     src/textutil.h
 
 SOURCES += \
+    src/bellfeedback.cpp \
     src/ghosteel.cpp \
     src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \
     src/glrenderer.cpp \
+    src/glrenderer_geometry.cpp \
+    src/glrenderer_kitty.cpp \
+    src/glrenderer_pipeline.cpp \
+    src/glrenderer_shaders.cpp \
     src/glyphatlas.cpp \
     src/keymapping.cpp \
     src/kittyimagedecoder.cpp \
     src/ptymanager.cpp \
     src/scrollencryptor.cpp \
     src/sessionmanager.cpp \
+    src/sessionstore.cpp \
     src/settings.cpp \
+    src/singleinstance.cpp \
     src/terminalview.cpp \
+    src/terminalview_links.cpp \
+    src/terminalview_search.cpp \
+    src/terminalview_touch.cpp \
     src/textutil.cpp
 
 DISTFILES += qml/ghosteel.qml \

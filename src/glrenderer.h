@@ -164,6 +164,7 @@ private:
         int m_matrixUniform = -1;
         int m_atlasUniform = -1;
         int m_cursorPosUniform = -1;
+        int m_cursorWidthUniform = -1;
         int m_cellSizeUniform = -1;
         int m_cursorBlinkUniform = -1;
         int m_cursorStyleUniform = -1;
@@ -196,6 +197,7 @@ private:
         float m_cursorY = kCursorUnset;
         bool m_cursorVisible = false;
         int m_cursorStyle = 0; // 0=none, 1=block, 2=bar, 3=underline, 4=hollow
+        int m_cursorWidth = 1; // Cell span: 1 = narrow, 2 = wide (surrogate/CJK)
         int m_prevCursorX = -1; // matches kCursorUnset sentinel
         int m_prevCursorY = -1;
         float m_cursorChangeTime = 0.0f;
@@ -207,6 +209,13 @@ private:
         // Idle optimization: skip pipeline when animation settled + grid unchanged
         bool m_animationSettled = false;
         bool m_gridDirty = true;
+
+        // Cross-thread flag: render thread requests GUI thread to stop the shader
+        // animation timer once the trail has fully settled and the frame is static.
+        // Consumed in synchronize() where QBasicTimer can be safely touched (owned
+        // by GUI-thread GLRenderer) and GUI-thread-only state is re-checked. Plain
+        // bool is safe — synchronize() blocks render thread (memory barrier).
+        bool m_shouldStopAnimTimer = false;
 
         TerminalView *m_terminalView = nullptr;
 
@@ -310,12 +319,15 @@ private:
             GLuint texture;
             uint32_t width, height;
             uint32_t lastSeenFrame;
-            size_t dataLen;  // track for replacement detection
+            uint64_t generation;  // per-image stamp from ghostty; changed gen ⇒ re-upload
         };
         QHash<uint32_t, KittyCachedTexture> m_kittyTextures;
         uint32_t m_kittyFrameCounter = 0;
         static const int MAX_KITTY_TEXTURES = 32;
         static const int KITTY_EVICTION_FRAMES = 120;
+        // Queried lazily on the render thread (first kitty upload) to clamp
+        // image dimensions against GL_MAX_TEXTURE_SIZE before allocation.
+        GLint m_maxTextureSize = 0;
 
         // Snapshot of kitty placement data (built in synchronize on GUI thread,
         // consumed in render on render thread — avoids ghostty_terminal_get
@@ -329,6 +341,7 @@ private:
             bool imageExists = false;
             bool needsUpload = false;
             size_t dataLen = 0;
+            uint64_t generation = 0;
             GhosttyKittyImageFormat format = GHOSTTY_KITTY_IMAGE_FORMAT_RGBA;
             QByteArray pixelData;  // deep copy, only populated when needsUpload
         };

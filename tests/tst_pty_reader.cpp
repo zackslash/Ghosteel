@@ -112,8 +112,9 @@ private slots:
 
         reader.requestInterruption();
 
-        QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(3000));
-        reader.wait(3000);
+        // readFinished must not fire on interruption (only EOF/error).
+        QVERIFY(reader.wait(3000));
+        QCOMPARE(finishedSpy.count(), 0);
 
         ::close(pipefd[1]);
     }

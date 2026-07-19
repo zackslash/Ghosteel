@@ -9,54 +9,15 @@
 #include <QByteArray>
 #include <QStringList>
 #include <QPointer>
+#include <memory>
+
+#include "ipcmessage.h"
+#include "sessionstore.h"
 
 class TerminalView;
 class ScrollEncryptor;
 class Settings;
-
-// Session scrollback lifecycle (restore → dirty → save):
-//   1. restoreSessions() creates each view, sets justRestored=true.
-//      Geometry-update repaints fire contentChanged immediately, but
-//      the handler no-ops while justRestored is true (avoids re-encrypting
-//      just-restored scrollback on launch).
-//   2. First real PTY byte arrives → titleChanged fires synchronously
-//      (inside vtWrite, before update() emits contentChanged) → clears
-//      justRestored. Subsequent contentChanged marks scrollbackDirty and
-//      schedules a debounced save.
-//   3. Debounce timer (500ms) or aboutToQuit → saveScrollbackIncremental()
-//      encrypts only dirty sessions, active session first.
-//   4. If encryption was unavailable at restore time, the file is queued
-//      in m_pendingScrollbackRestores and retried once when
-//      ScrollEncryptor::availabilityChanged fires.
-
-// Session taxonomy (two orthogonal dimensions):
-//
-//                    No command (execArgs empty)   Command (execArgs set)
-//  No name           Regular shell session         Anonymous command session
-//  Named             Named shell session           Named command session
-//
-// Auto-remove: exit 0 → anonymous only; exit ≠ 0 → all command sessions.
-// restartShell() clears execArgs → cancels pending auto-remove.
-struct SessionInfo {
-    int id;
-    QString name;
-    QString cachedWorkingDirectory; // Persisted CWD for inactive sessions
-    QString autorunCommand;  // Command to run when session starts
-    bool keybarOpen = true;           // Whether the extra keys panel is open
-    bool keyboardVisible = true;      // Whether the software keyboard is visible
-    bool keepAwake = false;           // Keep CPU awake when app is backgrounded
-    int fontSize = 0;                 // Per-session font size (0 = use global default)
-    QString execCommand;              // Command binary name from -e (display only)
-    QStringList execArgs;             // Full command args including binary (for reuse matching)
-    qint64 createdAt = 0;             // Epoch ms when session was created
-    qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
-    TerminalView *view;
-
-    bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
-    bool isCommandSession() const { return !execArgs.isEmpty(); }
-    bool scrollbackDirty = false;  // True if scrollback changed since last encrypt+save
-    bool justRestored = false;     // True after restoreSessions(); skip dirty-marking until PTY data arrives
-};
+class SessionStore;
 
 class SessionManager : public QObject
 {
@@ -111,7 +72,8 @@ public:
     Q_INVOKABLE bool sessionKeepAwake(int index) const;
     Q_INVOKABLE void setSessionKeepAwake(int index, bool enabled);
 
-    Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = true);
+    // Per-session font change must not silently mutate the global default — leave updateGlobal false unless syncing is intended.
+    Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = false);
     int activeSessionFontSize() const;
     Q_INVOKABLE void resetAllSessionFontSizes();
     Q_INVOKABLE QString sessionDisplayName(int index) const;
@@ -173,8 +135,8 @@ private:
     static TerminalView* sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index);
     static QString socketPath();
 
-    void saveSessions();
-    void scheduleSave();
+    void scheduleSave();           // metadata changed — arms timer + marks sessions dirty
+    void scheduleScrollbackSave(); // scrollback-only change — arms timer without settings rewrite
     void rebuildSortedIndices();
     void updateKeepAwakeLock();
 
@@ -186,21 +148,8 @@ private:
     void finishSessionCreation(TerminalView *view, SessionInfo &info);
     static void raiseWindow();
     void clearCliArgs();
-    void restoreScrollbackForSession(TerminalView *view, int savedId);
     int resolveActiveSession(int activeId, int legacyActiveIndex) const;
 
-    // Scrollback persistence
-    void saveScrollbackIncremental();
-    void saveSessionScrollback(SessionInfo &info);
-    void cleanupScrollbackFiles();
-    QString scrollbackDir() const;
-    QString scrollbackFilePath(int sessionId) const;
-
-    // Queued scrollback restores for when encryption becomes available
-    struct PendingScrollbackRestore {
-        QPointer<TerminalView> view;
-        int sessionId;
-    };
     QVector<PendingScrollbackRestore> m_pendingScrollbackRestores;
 
 private Q_SLOTS:
@@ -217,6 +166,7 @@ private:
     QTimer *m_saveTimer = nullptr;
     bool m_sessionsLoaded = false;
     bool m_savedOnQuit = false;
+    bool m_sessionsDirty = false;  // true when session metadata changed since last metadata save
     bool m_dbusRegistered = false;
 
     // Single-instance socket server
@@ -224,6 +174,7 @@ private:
 
     // Scrollback encryption (Sailfish Secrets + Crypto)
     ScrollEncryptor *m_encryptor = nullptr;
+    std::unique_ptr<SessionStore> m_store;
 
     // CLI arguments (set from main(), processed by processCliArgs() from QML)
     QString m_cliExecCommand;
@@ -232,65 +183,6 @@ private:
 
     // Keep-awake aggregation state
     int m_keepAwakeActiveCount = 0;
-};
-
-// IPC protocol for single-instance communication.
-struct IpcMessage {
-    enum Type { Raise, Switch, Exec } type = Raise;
-    QString sessionName;
-    QString command;
-    QStringList args;
-
-    static constexpr int kMaxSessionNameLength = 128;
-
-    static QString sanitizeSessionName(const QString &name) {
-        QString clean = name;
-        clean.truncate(kMaxSessionNameLength);
-        clean.remove(QChar('\0'));
-        clean.remove(QChar('\n'));
-        clean.remove(QChar('\r'));
-        clean.remove(QChar(':')); // load-bearing: exec: protocol uses : as delimiter
-        return clean;
-    }
-
-    static IpcMessage parse(const QByteArray &raw) {
-        IpcMessage msg;
-        QList<QByteArray> parts = raw.split('\0');
-        QByteArray header = parts.isEmpty() ? QByteArray() : parts.first();
-
-        if (header == "raise") {
-            msg.type = Raise;
-        } else if (header.startsWith("switch:")) {
-            msg.type = Switch;
-            msg.sessionName = sanitizeSessionName(QString::fromUtf8(header.mid(7)));
-        } else if (header.startsWith("exec:")) {
-            msg.type = Exec;
-            QByteArray afterPrefix = header.mid(5);
-            int colonPos = afterPrefix.indexOf(':');
-            if (colonPos < 0) { msg.type = Raise; return msg; }
-            msg.sessionName = sanitizeSessionName(QString::fromUtf8(afterPrefix.left(colonPos)));
-            if (colonPos + 1 < afterPrefix.size())
-                msg.command = QString::fromUtf8(afterPrefix.mid(colonPos + 1));
-            for (int i = 1; i < parts.size(); i++)
-                if (!parts[i].isEmpty())
-                    msg.args.append(QString::fromUtf8(parts[i]));
-        }
-        return msg;
-    }
-
-    static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
-        if (!execCommand.isEmpty()) {
-            QByteArray cmdBytes = execCommand.toUtf8();
-            for (const QString &arg : execArgs) {
-                cmdBytes.append('\0');
-                cmdBytes.append(arg.toUtf8());
-            }
-            return (QStringLiteral("exec:") + sessionName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
-        } else if (!sessionName.isEmpty()) {
-            return (QStringLiteral("switch:") + sessionName + QStringLiteral("\n")).toUtf8();
-        }
-        return QByteArrayLiteral("raise\n");
-    }
 };
 
 #endif // SESSIONMANAGER_H
