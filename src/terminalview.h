@@ -225,6 +225,7 @@ private:
 
     void updateFontMetrics();
     QPointF cellFromPixel(const QPointF &pos) const;
+    QPointF cellFromPixelClamped(const QPointF &pos) const;
     void clearSelection();
     void selectWordAt(const QPointF &pos);
     void selectLineAt(const QPointF &pos);

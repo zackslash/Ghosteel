@@ -506,8 +506,8 @@ void TerminalView::copySelection()
     if (!m_vt || !m_vt->renderState())
         return;
 
-    QPointF startCell = cellFromPixel(m_selStart);
-    QPointF endCell = cellFromPixel(m_selEnd);
+    QPointF startCell = cellFromPixelClamped(m_selStart);
+    QPointF endCell = cellFromPixelClamped(m_selEnd);
     if (startCell.x() < 0 || endCell.x() < 0)
         return;
 
@@ -758,6 +758,11 @@ QPointF TerminalView::cellFromPixel(const QPointF &pos) const
     return TextUtil::cellFromPixel(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, m_topPadding);
 }
 
+QPointF TerminalView::cellFromPixelClamped(const QPointF &pos) const
+{
+    return TextUtil::cellFromPixelClamped(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, m_topPadding);
+}
+
 void TerminalView::clearSelection()
 {
     if (m_selecting) {
@@ -930,8 +935,8 @@ int TerminalView::handleHitTest(const QPointF &pos) const
     if (!m_handlesVisible || !m_selecting || m_selStart == m_selEnd)
         return 0;
 
-    QPointF startCell = cellFromPixel(m_selStart);
-    QPointF endCell = cellFromPixel(m_selEnd);
+    QPointF startCell = cellFromPixelClamped(m_selStart);
+    QPointF endCell = cellFromPixelClamped(m_selEnd);
     if (startCell.x() < 0 || endCell.x() < 0)
         return 0;
 
