@@ -616,7 +616,7 @@ Page {
             if (clipboardDialogActive) return  // A read dialog is already open
 
             var policy = Settings.clipboardReadPolicy  // 0=ask, 1=allow, 2=deny
-            var preview = Clipboard.text || ""
+            var preview = SessionManager.clipboardText()
             if (policy === 2) return  // deny
             if (policy === 1) {       // allow
                 var t = SessionManager.sessionById(sessionId)
@@ -636,7 +636,7 @@ Page {
             programmaticHide()
             clipboardReadPushTimer.start()
         }
-        onClipboardTextReady: Clipboard.text = text
+        onClipboardTextReady: SessionManager.setClipboardText(text)
     }
 
     function updateWindowTitle() {
