@@ -112,6 +112,7 @@ Page {
             }
             onActiveSessionIndexChanged: _sortRevision++
             onSessionNameChanged: _sortRevision++
+            onSessionAutorunCommandChanged: _sortRevision++
         }
 
         header: PageHeader {
@@ -143,25 +144,18 @@ Page {
                 var _ = _sortRevision // force re-evaluation on sort change
                 return SessionManager.displayToActual(index)
             }
-            property string sessionName: SessionManager.sessionName(actualIndex)
-            property string autorunCommand: SessionManager.sessionAutorunCommand(actualIndex)
-            property string execCommand: SessionManager.sessionExecCommand(actualIndex)
+            property string sessionName: {
+                var _ = _sortRevision // force re-evaluation on sort change
+                return SessionManager.sessionName(actualIndex)
+            }
+            property string autorunCommand: {
+                var _ = _sortRevision // force re-evaluation on sort change
+                return SessionManager.sessionAutorunCommand(actualIndex)
+            }
 
             onClicked: {
                 pageStack.pop()
                 SessionManager.switchToSession(index)
-            }
-
-            Connections {
-                target: SessionManager
-                onSessionNameChanged: {
-                    if (idx === actualIndex)
-                        sessionDelegate.sessionName = SessionManager.sessionName(actualIndex)
-                }
-                onSessionAutorunCommandChanged: {
-                    if (idx === actualIndex)
-                        sessionDelegate.autorunCommand = SessionManager.sessionAutorunCommand(actualIndex)
-                }
             }
 
             Column {
