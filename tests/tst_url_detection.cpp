@@ -462,6 +462,24 @@ private slots:
         QCOMPARE(spans[0].startCol, 1);
         QCOMPARE(spans[0].uri, QStringLiteral("https://test.org"));
     }
+
+    void trailingWideCharEndCol()
+    {
+        // URL ending in a CJK char (例 U+4F8B, width 2): endCol must cover the
+        // wide glyph's spacer tail cell so the right half is clickable too.
+        QString flat;
+        flat.append("https://example.com/"); // 20 chars, cols 0-19
+        flat.append(QChar(0x4F8B));          // 例 at head col 20 (spacer tail at 21)
+        QVector<TextUtil::CellCoord> charMap;
+        for (int i = 0; i < 20; ++i)
+            charMap.append({ static_cast<uint16_t>(i), 0 });
+        charMap.append({ 20, 0 });           // 例 -> head col 20 only (tail skipped)
+
+        auto spans = TextUtil::findUrls(flat, charMap);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].startCol, 0);
+        QCOMPARE(spans[0].endCol, 22);       // head col 20 + width 2 = 22 (exclusive)
+    }
 };
 
 QTEST_MAIN(TestUrlDetection)
