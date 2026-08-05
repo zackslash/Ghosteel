@@ -42,6 +42,17 @@ QPointF cellFromPixel(const QPointF &pos, int cellWidth, int cellHeight,
     return QPointF(col, row);
 }
 
+QPointF cellFromPixelClamped(const QPointF &pos, int cellWidth, int cellHeight,
+                             int cols, int rows, int topPadding)
+{
+    if (cellWidth <= 0 || cellHeight <= 0 || cols <= 0 || rows <= 0)
+        return QPointF(-1, -1);
+    qreal adjustedY = pos.y() - topPadding;
+    int col = static_cast<int>(pos.x()) / cellWidth;
+    int row = static_cast<int>(adjustedY) / cellHeight;
+    return QPointF(qBound(0, col, cols - 1), qBound(0, row, rows - 1));
+}
+
 ScrollResult accumulateScroll(qreal accumulator, qreal delta)
 {
     // Reset accumulator on direction change (skip when delta is zero)
