@@ -13,6 +13,8 @@
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <algorithm>
+#include <QGuiApplication>
+#include <QClipboard>
 
 static constexpr int kMaxSessionCount = 100;
 
@@ -236,6 +238,16 @@ TerminalView* SessionManager::sessionAtCallback(QQmlListProperty<TerminalView> *
     return manager->m_sessions.at(index).view;
 }
 
+QString SessionManager::clipboardText() const
+{
+    return QGuiApplication::clipboard()->text(QClipboard::Clipboard);
+}
+
+void SessionManager::setClipboardText(const QString &text)
+{
+    QGuiApplication::clipboard()->setText(text, QClipboard::Clipboard);
+}
+
 void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 {
     // Route this view's notifications through the aggregated signal
@@ -250,7 +262,7 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
         Q_EMIT clipboardReadRequest(sessionId, kind);
     });
 
-    // Route clipboard write results to QML (Clipboard.text singleton)
+    // Route clipboard write results to QML (SessionManager.setClipboardText)
     connect(view, &TerminalView::clipboardTextReady, this,
             [this](const QString &text) {
         Q_EMIT clipboardTextReady(text);
