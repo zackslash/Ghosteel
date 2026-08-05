@@ -131,6 +131,14 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     if (pid == 0) {
         ::close(execPipe[0]);
         setupChildProcess(workingDir, homeDir);
+    } else {
+        // Parent: mark the master PTY fd close-on-exec so future session forks
+        // don't inherit it. Without this, each new session's forkpty() child
+        // keeps prior sessions' master fds open in the new shell, preventing
+        // clean EOF on teardown and leaking descriptors that grow with the
+        // number of sessions. (Done in the parent branch only — in the child,
+        // m_ptyFd is stale because forkpty writes *amaster in the parent.)
+        fcntl(m_ptyFd, F_SETFD, FD_CLOEXEC);
     }
     return true;
 }
