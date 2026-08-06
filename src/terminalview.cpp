@@ -382,6 +382,7 @@ void TerminalView::onPtyData(const QByteArray &data)
     // GL is the only renderer — update immediately. Qt's scene graph
     // coalesces multiple update() calls into a single frame.
     update();
+    Q_EMIT contentChanged(); // PTY data is the real content-change signal
 }
 
 void TerminalView::onShellExited(int exitCode)
@@ -419,18 +420,6 @@ void TerminalView::setActive(bool active)
             m_blinkTimerId = 0;
         }
     }
-}
-
-void TerminalView::update()
-{
-    QQuickItem::update();
-    // contentChanged fires on every repaint, not just on real content changes.
-    // The sessionmanager handler debounces (500ms) and skips when scrollbackDirty
-    // is already set, so the cost is one save per dirty cycle. A proper fix would
-    // move this emission to explicit content-change sites (onPtyData, paste), but
-    // geometry updates (resize/restoreScrollback) also mutate terminal state and
-    // route through update(), making a clean split non-trivial.
-    Q_EMIT contentChanged();
 }
 
 void TerminalView::paste()
