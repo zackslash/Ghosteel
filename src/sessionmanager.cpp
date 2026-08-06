@@ -414,9 +414,12 @@ void SessionManager::switchToSessionByName(const QString &name)
     if (idx >= 0) {
         setActiveSessionIndex(idx);
     } else {
-        createSession();
-        int newIdx = m_sessions.size() - 1;
-        setSessionName(newIdx, name);
+        // createSession() returns nullptr at the session cap; only rename when
+        // a session was actually created, otherwise we'd rename an existing one.
+        if (createSession()) {
+            int newIdx = m_sessions.size() - 1;
+            setSessionName(newIdx, name);
+        }
     }
 }
 
@@ -741,8 +744,10 @@ void SessionManager::processCliArgs()
                 } else {
                     // Command exited or session is plain shell — replace with new session.
                     // Create first so removeSession never hits the empty-list fallback.
-                    createSessionWithCommand(m_cliSessionName, fullArgs);
-                    removeSession(named);
+                    // Only remove the old one if the replacement was created: at the session
+                    // cap createSessionWithCommand returns null.
+                    if (createSessionWithCommand(m_cliSessionName, fullArgs))
+                        removeSession(named);
                 }
                 didSomething = true;
             }
@@ -759,8 +764,10 @@ void SessionManager::processCliArgs()
         }
 
         if (!didSomething) {
-            createSessionWithCommand(m_cliSessionName, fullArgs);
-            didSomething = true;
+            // At the session cap this returns null and the command won't run; leave
+            // didSomething false rather than claiming success.
+            if (createSessionWithCommand(m_cliSessionName, fullArgs))
+                didSomething = true;
         }
     } else if (!m_cliSessionName.isEmpty()) {
         switchToSessionByName(m_cliSessionName);
