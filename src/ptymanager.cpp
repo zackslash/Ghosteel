@@ -332,8 +332,10 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         if (n > 0) {
             // exec failed — we received the errno from the child
             qWarning() << "Process exec failed:" << strerror(execErr);
-            int status = 0;
-            waitpid(m_childPid, &status, WNOHANG);
+            // Bounded reap: the child may not have _exit'd yet (it writes errno
+            // then calls _exit(127); the parent may read the pipe before the
+            // _exit lands). reapPidBounded retries to avoid leaving a zombie.
+            reapPidBounded(m_childPid);
             m_childPid = -1;
             Q_EMIT shellExited(kExecFailedExitCode);
         }
