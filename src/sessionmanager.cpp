@@ -569,6 +569,13 @@ QString SessionManager::sessionAutorunCommand(int index) const
     return m_sessions.at(index).autorunCommand;
 }
 
+QString SessionManager::sessionExecCommand(int index) const
+{
+    if (index < 0 || index >= m_sessions.size())
+        return QString();
+    return m_sessions.at(index).execCommand;
+}
+
 void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
 {
     if (index < 0 || index >= m_sessions.size())

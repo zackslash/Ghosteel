@@ -61,6 +61,7 @@ public:
     Q_INVOKABLE bool restoreSessions(); // Returns true if sessions were restored
     Q_INVOKABLE QString sessionWorkingDirectory(int index) const;
     Q_INVOKABLE QString sessionAutorunCommand(int index) const;
+    Q_INVOKABLE QString sessionExecCommand(int index) const;
     Q_INVOKABLE void setSessionAutorunCommand(int index, const QString &cmd);
     Q_INVOKABLE bool sessionKeybarOpen(int index) const;
     Q_INVOKABLE void setSessionKeybarOpen(int index, bool open);
