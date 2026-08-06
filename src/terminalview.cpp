@@ -409,19 +409,6 @@ void TerminalView::restartShell()
     update();
 }
 
-void TerminalView::setActive(bool active)
-{
-    if (active) {
-        if (m_blinkTimerId == 0)
-            m_blinkTimerId = startTimer(BlinkInterval);
-    } else {
-        if (m_blinkTimerId) {
-            killTimer(m_blinkTimerId);
-            m_blinkTimerId = 0;
-        }
-    }
-}
-
 void TerminalView::paste()
 {
     resetBlinkOnInput();
