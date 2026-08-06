@@ -100,7 +100,6 @@ public:
     Q_INVOKABLE void sendClipboardText(const QString &text, const QString &kind = "c");
     Q_INVOKABLE void sendKey(int qtKey, int modifiers = 0);
     Q_INVOKABLE void restartShell();  // Restart shell after exit
-    Q_INVOKABLE void setActive(bool active); // Start/stop blink timer
     Q_INVOKABLE QString workingDirectory() const; // Get CWD from /proc/<pid>/cwd
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     Q_INVOKABLE void setAutorunCommand(const QString &cmd);
