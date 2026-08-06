@@ -174,6 +174,7 @@ Q_SIGNALS:
     void shellRestarted();
     void topPaddingChanged();
     void contentChanged(); // Emitted on real content change (PTY data) for scrollback tracking
+    void repaintRequested(); // Emitted on every repaint request for GL renderer
     void ptyDataReceived(); // Emitted when real PTY data arrives (before vtWrite)
     void pinchingChanged(bool pinching);
     void pinchAtDefaultChanged(bool atDefault);
@@ -193,6 +194,7 @@ Q_SIGNALS:
     void sessionSwipeEnabledChanged();
 
 protected:
+    void update(); // Override to emit repaintRequested() for GL repaint
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void inputMethodEvent(QInputMethodEvent *event) override;

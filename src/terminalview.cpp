@@ -385,6 +385,12 @@ void TerminalView::onPtyData(const QByteArray &data)
     Q_EMIT contentChanged(); // PTY data is the real content-change signal
 }
 
+void TerminalView::update()
+{
+    QQuickItem::update();
+    Q_EMIT repaintRequested(); // Trigger GL repaint (selection, blink, scroll, etc.)
+}
+
 void TerminalView::onShellExited(int exitCode)
 {
     qInfo() << "Shell exited with code" << exitCode;
