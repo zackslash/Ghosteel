@@ -464,10 +464,6 @@ void TerminalView::paste()
             m_pty->writeData(buf.constData(), written);
             return;
         }
-    } else if (res == GHOSTTY_SUCCESS && written > 0) {
-        // Data was small enough to encode in-place (sizingCopy already mutated)
-        m_pty->writeData(sizingCopy.constData(), written);
-        return;
     }
 
     // Fallback: send raw UTF-8 only if encoding completely fails
