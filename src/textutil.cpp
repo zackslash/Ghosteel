@@ -1,4 +1,5 @@
 #include "textutil.h"
+#include "terminalwidth.h"
 #include <QStringList>
 #include <QRegularExpression>
 #include <QtMath>
@@ -137,10 +138,24 @@ QVector<LinkSpan> findUrls(const QString &flatText,
         CellCoord start = charMap[startIdx];
         CellCoord end = charMap[endIdx - 1];
 
+        // Exclusive end column advances by the last matched char's display
+        // width: a trailing wide (CJK/emoji) glyph occupies two cells, so a
+        // flat +1 would exclude its spacer tail from the click range.
+        unsigned int lastCp;
+        if (flatText.at(endIdx - 1).isLowSurrogate() && endIdx - 2 >= startIdx
+                && flatText.at(endIdx - 2).isHighSurrogate()) {
+            lastCp = 0x10000
+                     + ((static_cast<unsigned int>(flatText.at(endIdx - 2).unicode()) - 0xD800) << 10)
+                     + (static_cast<unsigned int>(flatText.at(endIdx - 1).unicode()) - 0xDC00);
+        } else {
+            lastCp = flatText.at(endIdx - 1).unicode();
+        }
+        const int endWidth = terminalCharWidth(lastCp);
+
         LinkSpan span;
         span.startCol = start.col;
         span.startRow = start.row;
-        span.endCol = end.col + 1; // inclusive → exclusive
+        span.endCol = end.col + (endWidth >= 2 ? 2 : 1);
         span.endRow = end.row;
         span.uri = match.captured();
 
