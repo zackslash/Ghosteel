@@ -1,7 +1,7 @@
 #ifndef GHOSTTY_STUBS_H
 #define GHOSTTY_STUBS_H
 
-// Test-visible recorder for ghostty_terminal_mode_set calls.
+// Test-visible recorder for mode-set calls via ghostty_terminal_set.
 //
 // Implemented in ghostty_stubs.cpp; linked into tests that need to assert
 // which terminal modes GhosttyVt::create() enables. The stubs (not the real
@@ -17,9 +17,9 @@ extern "C" {
 // Clear all recorded mode-set calls. Call at the start of each test.
 void ghostty_stubs_reset_modes(void);
 
-// Returns true if ghostty_terminal_mode_set was called with this mode since
-// the last reset, writing the last value to *out_value (if non-null).
-// Returns false if the mode was never set.
+// Returns true if a mode was set via ghostty_terminal_set with
+// GHOSTTY_TERMINAL_OPT_MODE since the last reset, writing the last value
+// to *out_value (if non-null). Returns false if the mode was never set.
 bool ghostty_stubs_mode_set_called(GhosttyMode mode, bool *out_value);
 
 #ifdef __cplusplus

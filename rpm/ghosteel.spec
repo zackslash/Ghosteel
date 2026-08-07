@@ -133,7 +133,7 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ] && [ -L .sfdk/src ]; then
     if [ -d "$SRC" ]; then
         echo "IDE build: linking source tree from $SRC"
         for item in ghosteel.pro src qml shaders translations \
-                    ghostty lib patches dbus-1 icons \
+                    ghostty lib dbus-1 icons \
                     ghosteel.desktop LICENSE; do
             if [ -e "$SRC/$item" ]; then
                 rm -rf "./$item" 2>/dev/null

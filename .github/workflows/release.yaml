@@ -122,7 +122,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: lib/${{ matrix.arch }}
-          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}-${{ hashFiles('patches/*.patch') }}
+          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}
 
       - name: Cache Ghostty submodule
         id: cache-submodule
