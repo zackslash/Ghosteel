@@ -65,6 +65,24 @@ Page {
     }
 
     function moveKey(fromIdx, toIdx) {
+        var breaks = Settings.keybarRowBreaks.slice()
+
+        // If the move crosses a break boundary, shift the break instead of
+        // reordering the key, so it joins the adjacent row without swapping.
+        for (var i = 0; i < breaks.length; i++) {
+            if (fromIdx === breaks[i] && toIdx === breaks[i] - 1) {
+                breaks[i] = breaks[i] + 1
+                Settings.keybarRowBreaks = breaks
+                return
+            }
+            if (toIdx === breaks[i] && fromIdx === breaks[i] - 1) {
+                breaks[i] = breaks[i] - 1
+                Settings.keybarRowBreaks = breaks
+                return
+            }
+        }
+
+        // Normal reorder within the same row
         var keys = Settings.keybarKeys.slice()
         var item = keys.splice(fromIdx, 1)[0]
         keys.splice(toIdx, 0, item)
