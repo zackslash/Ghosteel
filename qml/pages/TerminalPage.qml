@@ -1182,9 +1182,50 @@ Page {
         id: keybar
         anchors.left: parent.left
         anchors.right: parent.right
-        height: Theme.itemSizeMedium + Theme.paddingSmall
+        height: keybarRowCount * (Theme.itemSizeMedium + Theme.paddingSmall)
         y: open ? parent.height - height : parent.height
         property bool open: false  // set by setKeybarOpen(), onToggleKeybar(), etc.
+
+        // Multi-row support: keybarRowBreaks holds sorted indices into keybarKeys
+        // where row breaks occur. Empty = 1 row (default). Clamped to [1, 3] rows.
+        property int keybarRowCount: Math.max(1, Math.min(3, Settings.keybarRowBreaks.length + 1))
+
+        // Widest row width for contentWidth (all rows scroll together).
+        property real keybarContentWidth: {
+            var keys = Settings.keybarKeys
+            var breaks = Settings.keybarRowBreaks
+            var cellW = Theme.itemSizeMedium + Theme.paddingSmall
+            var maxLen = 0
+            var start = 0
+            for (var i = 0; i <= breaks.length; i++) {
+                var end = i < breaks.length ? breaks[i] : keys.length
+                var len = end - start
+                if (len > maxLen) maxLen = len
+                start = end
+            }
+            return maxLen * cellW + Theme.paddingSmall
+        }
+
+        // Row/column for a key at global index in keybarKeys.
+        function rowIndexForIndex(idx) {
+            var breaks = Settings.keybarRowBreaks
+            for (var i = 0; i < breaks.length; i++) {
+                if (idx < breaks[i])
+                    return i
+            }
+            return breaks.length
+        }
+
+        function colIndexForIndex(idx) {
+            var breaks = Settings.keybarRowBreaks
+            var start = 0
+            for (var i = 0; i < breaks.length; i++) {
+                if (idx < breaks[i])
+                    return idx - start
+                start = breaks[i]
+            }
+            return idx - start
+        }
 
         Behavior on y {
             NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
@@ -1201,13 +1242,12 @@ Page {
             anchors.fill: parent
             clip: true
             flickableDirection: Flickable.HorizontalFlick
-            contentWidth: keyRow.implicitWidth
+            contentWidth: keybarContent.width
 
-            Row {
-                id: keyRow
-                anchors.verticalCenter: parent.verticalCenter
-                x: Theme.paddingSmall
-                spacing: Theme.paddingSmall
+            Item {
+                id: keybarContent
+                width: keybar.keybarContentWidth
+                height: keybarFlickable.height
 
                 Repeater {
                     model: Settings.keybarKeys
@@ -1218,6 +1258,8 @@ Page {
 
                         width: Theme.itemSizeMedium
                         height: Theme.itemSizeMedium
+                        x: Theme.paddingSmall + keybar.colIndexForIndex(index) * (Theme.itemSizeMedium + Theme.paddingSmall)
+                        y: keybar.rowIndexForIndex(index) * (Theme.itemSizeMedium + Theme.paddingSmall) + Theme.paddingSmall / 2
 
                         highlighted: {
                             if (!keyDef) return false

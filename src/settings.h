@@ -22,6 +22,7 @@ class Settings : public QObject
     Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
     Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
+    Q_PROPERTY(QVariantList keybarRowBreaks READ keybarRowBreaks WRITE setKeybarRowBreaks NOTIFY keybarRowBreaksChanged)
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
     Q_PROPERTY(bool pinchToZoom READ pinchToZoom WRITE setPinchToZoom NOTIFY pinchToZoomChanged)
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
@@ -87,6 +88,9 @@ public:
     bool keybarVisible() const { return m_keybarVisible; }
     void setKeybarVisible(bool visible);
 
+    QVariantList keybarRowBreaks() const { return m_keybarRowBreaks; }
+    void setKeybarRowBreaks(const QVariantList &breaks);
+
     int sessionSortMode() const { return m_sessionSortMode; }
     void setSessionSortMode(int mode);
 
@@ -124,6 +128,7 @@ Q_SIGNALS:
     void scrollbackRetentionDaysChanged();
     void keybarKeysChanged();
     void keybarVisibleChanged();
+    void keybarRowBreaksChanged();
     void sessionSortModeChanged();
     void cursorTrailsChanged();
     void pinchToZoomChanged();
@@ -149,6 +154,7 @@ private:
     int m_scrollbackRetentionDays = 30;
     QStringList m_keybarKeys;
     bool m_keybarVisible = true;
+    QVariantList m_keybarRowBreaks;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
     bool m_cursorTrails = true; // default: ON — matches load() default
     bool m_pinchToZoom = false; // default: OFF — pinch gesture changes font size

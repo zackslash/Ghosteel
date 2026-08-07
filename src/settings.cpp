@@ -55,6 +55,7 @@ void Settings::load()
                                QStringLiteral("alt"), QStringLiteral("esc"), QStringLiteral("keyboard")};
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
+    m_keybarRowBreaks = m_settings.value(QStringLiteral("keybar/rowBreaks")).toList();
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), false).toBool();
@@ -217,6 +218,16 @@ void Settings::setKeybarVisible(bool visible)
     m_settings.setValue(QStringLiteral("keybar/visible"), visible);
     scheduleSave();
     Q_EMIT keybarVisibleChanged();
+}
+
+void Settings::setKeybarRowBreaks(const QVariantList &breaks)
+{
+    if (m_keybarRowBreaks == breaks)
+        return;
+    m_keybarRowBreaks = breaks;
+    m_settings.setValue(QStringLiteral("keybar/rowBreaks"), breaks);
+    scheduleSave();
+    Q_EMIT keybarRowBreaksChanged();
 }
 
 void Settings::setSessionSortMode(int mode)

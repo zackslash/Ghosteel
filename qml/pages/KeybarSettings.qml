@@ -78,6 +78,15 @@ Page {
         }
     }
 
+    function rowIndexForIndex(idx) {
+        var breaks = Settings.keybarRowBreaks
+        for (var i = 0; i < breaks.length; i++) {
+            if (idx < breaks[i])
+                return i
+        }
+        return breaks.length
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height
@@ -96,6 +105,37 @@ Page {
 
             PageHeader {
                 title: qsTr("Extra keys")
+            }
+
+            // --- Number of rows ---
+            ComboBox {
+                width: parent.width
+                label: qsTr("Keybar rows")
+                currentIndex: Math.min(2, Settings.keybarRowBreaks.length)
+                enabled: Settings.keybarKeys.length >= 2
+                menu: ContextMenu {
+                    MenuItem { text: "1" }
+                    MenuItem { text: "2" }
+                    MenuItem { text: "3" }
+                }
+                onCurrentIndexChanged: {
+                    var desired = currentIndex
+                    var current = Settings.keybarRowBreaks.length
+                    if (desired === current) return
+                    var breaks = Settings.keybarRowBreaks.slice()
+                    var keys = Settings.keybarKeys
+                    while (breaks.length < desired) {
+                        var lastStart = breaks.length > 0 ? breaks[breaks.length - 1] : 0
+                        var mid = Math.floor((lastStart + keys.length) / 2)
+                        if (mid > lastStart)
+                            breaks.push(mid)
+                        else
+                            break
+                    }
+                    while (breaks.length > desired)
+                        breaks.pop()
+                    Settings.keybarRowBreaks = breaks
+                }
             }
 
             // --- Enabled keys (ordered list) ---
@@ -135,10 +175,11 @@ Page {
                             }
                             text: {
                                 var def = KeyCatalog.findById(modelData)
-                                if (!def) return modelData
+                                var rowTag = qsTr("Row") + " " + (keybarSettingsPage.rowIndexForIndex(index) + 1) + "  "
+                                if (!def) return rowTag + modelData
                                 if (def.description && def.description !== def.label)
-                                    return def.label + " (" + translateDescription(def.description) + ")"
-                                return def.label
+                                    return rowTag + def.label + " (" + translateDescription(def.description) + ")"
+                                return rowTag + def.label
                             }
                             color: enabledItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                             truncationMode: TruncationMode.Fade
