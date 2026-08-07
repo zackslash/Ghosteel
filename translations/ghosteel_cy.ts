@@ -147,6 +147,14 @@
         <source>Zoom out</source>
         <translation>Chwyddo allan</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -547,6 +555,10 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Rhagosodedig</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Cloch</translation>
     </message>
 </context>
 </TS>

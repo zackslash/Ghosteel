@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Minnka aðdrátt</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -544,6 +552,10 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>Default</source>
         <translation>Sjálfgefið</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Bjalla</translation>
     </message>
 </context>
 </TS>

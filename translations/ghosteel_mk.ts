@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Одзумирај</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -545,6 +553,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>Стандардно</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Ѕвонче</translation>
     </message>
 </context>
 </TS>

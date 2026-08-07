@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Txikiagotu</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -544,6 +552,10 @@ libghostty terminal motorrak bultzatuta</translation>
     <message>
         <source>Default</source>
         <translation>Lehenetsia</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Txirrina</translation>
     </message>
 </context>
 </TS>

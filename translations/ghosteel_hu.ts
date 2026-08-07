@@ -143,6 +143,14 @@
         <source>Zoom out</source>
         <translation>Kicsinyítés</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -543,6 +551,10 @@ A libghostty terminálmotor hajtja</translation>
     <message>
         <source>Default</source>
         <translation>Alapértelmezett</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Csengő</translation>
     </message>
 </context>
 </TS>

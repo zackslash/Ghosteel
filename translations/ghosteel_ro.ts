@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Micșorează</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -545,6 +553,10 @@ Propulsat de motorul de terminal libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Implicit</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Sunet de alertă</translation>
     </message>
 </context>
 </TS>

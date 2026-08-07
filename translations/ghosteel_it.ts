@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Riduci</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -544,6 +552,10 @@ Alimentato dal motore di terminale libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Predefinito</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Campanella</translation>
     </message>
 </context>
 </TS>

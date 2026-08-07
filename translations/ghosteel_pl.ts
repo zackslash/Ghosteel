@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Pomniejsz</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -545,6 +553,10 @@ Obsługiwany przez silnik terminala libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Domyślny</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Dzwonek</translation>
     </message>
 </context>
 </TS>

@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>შემცირება</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -544,6 +552,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>ნაგულისხმევი</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">ზარი</translation>
     </message>
 </context>
 </TS>

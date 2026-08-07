@@ -23,7 +23,7 @@
     </message>
     <message>
         <source>Command not found</source>
-        <translation>No s'ha trobat l'ordre</translation>
+        <translation>No s&apos;ha trobat l&apos;ordre</translation>
     </message>
 </context>
 <context>
@@ -143,6 +143,14 @@
     <message>
         <source>Zoom out</source>
         <translation>Redueix</translation>
+    </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -544,6 +552,10 @@ Impulsat pel motor de terminal libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Predeterminat</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Timbre</translation>
     </message>
 </context>
 </TS>

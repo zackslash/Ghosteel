@@ -11,7 +11,6 @@
         <source>%n session(s)</source>
         <translation>
             <numerusform>%n oturum</numerusform>
-            <numerusform>%n oturum</numerusform>
         </translation>
     </message>
 </context>
@@ -143,6 +142,14 @@
     <message>
         <source>Zoom out</source>
         <translation>Uzaklaştır</translation>
+    </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -544,6 +551,10 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
     <message>
         <source>Default</source>
         <translation>Varsayılan</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Zil</translation>
     </message>
 </context>
 </TS>

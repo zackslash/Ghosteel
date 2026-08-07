@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Oddálit</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -545,6 +553,10 @@ Poháněno terminálovým enginem libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Výchozí</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation type="unfinished">Zvonek</translation>
     </message>
 </context>
 </TS>
