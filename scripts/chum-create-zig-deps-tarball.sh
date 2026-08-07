@@ -73,58 +73,6 @@ fi
 PKG_COUNT=$(find "${WORK_DIR}/p" -maxdepth 1 -type f -name '*.tar.gz' | wc -l)
 echo "  Fetched $PKG_COUNT packages"
 
-# ── Strip bloat from each package tarball ─────────────────────────────
-# Extract each tarball, remove test/doc/example/fuzz/perf dirs, repack.
-# Keeps the cache under OBS's RPM build disk limit.
-echo ""
-echo "=== Stripping bloat from package tarballs ==="
-STRIP_NAMES=(
-    test tests Test
-    doc docs
-    example examples samples
-    fuzz fuzzing
-    reference
-    ci .ci .github
-    perf kokoro ndk_test gtests
-    gnulib-tests gnulib-local
-    gettext-tools libtextstyle
-    result xstc
-)
-BEFORE_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-STRIPPED=0
-for pkg in "${WORK_DIR}/p"/*.tar.gz; do
-    [ -f "$pkg" ] || continue
-    pkgname=$(basename "$pkg")
-    tmp_extract=$(mktemp -d)
-    tar -xzf "$pkg" -C "$tmp_extract" 2>/dev/null
-
-    for dir in "$tmp_extract"/*/; do
-        [ -d "$dir" ] || continue
-        for name in "${STRIP_NAMES[@]}"; do
-            # Keep dirs referenced as string literals in build.zig
-            # (some packages openDir() them at configure time).
-            if [ -f "${dir}build.zig" ] && grep -qF -e "\"$name\"" -e "\"$name/" "${dir}build.zig"; then
-                continue
-            fi
-            find "$dir" -type d -name "$name" -prune -exec rm -rf {} +
-        done
-    done
-
-    # Repack
-    BEFORE_PKG=$(stat -c%s "$pkg" 2>/dev/null || echo 0)
-    tar -czf "${pkg}.tmp" -C "$tmp_extract" .
-    AFTER_PKG=$(stat -c%s "${pkg}.tmp" 2>/dev/null || echo 0)
-    if [ "$AFTER_PKG" -lt "$BEFORE_PKG" ]; then
-        mv "${pkg}.tmp" "$pkg"
-        STRIPPED=$((STRIPPED + 1))
-    else
-        rm -f "${pkg}.tmp"
-    fi
-    rm -rf "$tmp_extract"
-done
-AFTER_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-echo "  Stripped $STRIPPED packages, cache: ${AFTER_SIZE} (was ${BEFORE_SIZE})"
-
 # ── Create deps tarball ──────────────────────────────────────────────
 echo ""
 echo "Creating deps tarball: $DEPS_OUTPUT"
