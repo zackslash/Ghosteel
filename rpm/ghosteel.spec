@@ -172,18 +172,18 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
         exit 1
     fi
 
-    # Use --system to disable network and point Zig at pre-fetched deps
+    # Use --global-cache-dir to point Zig at pre-fetched dep tarballs
     # Only set when the full deps cache exists (OBS builds)
-    SYSTEM_FLAG=""
+    CACHE_FLAG=""
     if [ -d "%{_builddir}/zig-cache/p" ]; then
-        SYSTEM_FLAG="--system %{_builddir}/zig-cache/p"
+        CACHE_FLAG="--global-cache-dir %{_builddir}/zig-cache"
     fi
 
     cd ghostty
     "$ZIG" build -Demit-lib-vt \
         -Dtarget="${ZIG_TARGET}" \
         -Doptimize=ReleaseSafe \
-        ${SYSTEM_FLAG} 2>&1 || exit 1
+        ${CACHE_FLAG} 2>&1 || exit 1
     mkdir -p %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}
     cp zig-out/lib/libghostty-vt.a %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}/
     cd %{_builddir}/%{name}-%{version}

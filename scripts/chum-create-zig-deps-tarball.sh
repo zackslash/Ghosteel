@@ -2,15 +2,16 @@
 # Downloads the Zig compiler and all Zig package dependencies needed for
 # offline OBS builds. Produces two files to upload to OBS as Source1/Source2.
 #
-# Uses zig build to fetch deps from ghostty's build.zig.zon (which references
-# stable mirror URLs). Run this whenever the ghostty submodule is updated.
+# Uses zig build --fetch=all to resolve the full dependency tree from
+# ghostty's build.zig.zon and store canonical tarballs in an isolated
+# cache directory. Run this whenever the ghostty submodule is updated.
 #
 # Usage: ./scripts/chum-create-zig-deps-tarball.sh [output-dir]
 # Default: rpm/ (spec expects Source1/Source2 there)
 #
 # Outputs:
 #   zig-x86_64-linux-<version>.tar.xz  (Zig compiler)
-#   zig-deps-cache.tar.gz             (all Zig package deps)
+#   zig-deps-cache.tar.gz             (all Zig package deps as tarballs)
 
 set -euo pipefail
 
@@ -45,72 +46,34 @@ else
     echo "  Saved: $ZIG_OUTPUT ($(du -h "$ZIG_OUTPUT" | awk '{print $1}'))"
 fi
 
-# ── Fetch Zig package dependencies via zig build ─────────────────────
-# Uses build.zig.zon as the source of truth (stable mirror URLs), not the
-# flatpak zig-packages.json which can reference stale GitHub commits.
+# ── Fetch all Zig package dependencies ───────────────────────────────
+# Uses --fetch=all to resolve the full dependency tree (including lazy
+# and transitive deps) and --global-cache-dir to isolate the cache so
+# only ghostty's current deps are included (no old versions or pollution
+# from other projects).
 echo ""
-echo "=== Fetching Zig package dependencies via zig build ==="
+echo "=== Fetching Zig package dependencies ==="
 tar -xJf "$ZIG_OUTPUT" -C "$WORK_DIR"
 ZIG_BIN="${WORK_DIR}/zig-x86_64-linux-${ZIG_VERSION}/zig"
 
-# Run zig build to ensure all deps are fetched. Zig 0.16.0 stores packages
-# in the default global cache (~/.cache/zig/p/); --global-cache-dir only
-# redirects the compiler cache (z/), not the package cache (p/).
+# Delete zig-pkg/ so all packages are fetched fresh into the isolated cache.
+# Zig 0.16.0 stores extracted deps in zig-pkg/ (project-local); if it already
+# exists, no network fetch occurs and no tarballs are written to p/.
+rm -rf "${GHOSTTY_DIR}/zig-pkg"
+
 cd "$GHOSTTY_DIR"
-"$ZIG_BIN" build -Demit-lib-vt -Dtarget=x86-linux-gnu.2.28 -Doptimize=ReleaseSafe 2>&1 || \
-    echo "  (build errors expected — deps are cached regardless)"
+"$ZIG_BIN" build --fetch=all --global-cache-dir "$WORK_DIR" 2>&1 || true
 cd "$REPO_ROOT"
 
-# Copy deps from the default cache to the work directory.
-ZIG_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zig"
-if [ ! -d "${ZIG_CACHE_DIR}/p" ] || [ -z "$(ls -A "${ZIG_CACHE_DIR}/p" 2>/dev/null)" ]; then
-    echo "ERROR: No package cache found at ${ZIG_CACHE_DIR}/p" >&2
-    echo "Run ./scripts/build-libs.sh first to populate the cache" >&2
+if [ ! -d "${WORK_DIR}/p" ] || [ -z "$(ls -A "${WORK_DIR}/p" 2>/dev/null)" ]; then
+    echo "ERROR: No packages fetched to ${WORK_DIR}/p" >&2
     exit 1
 fi
-mkdir -p "${WORK_DIR}/p"
-cp -r "${ZIG_CACHE_DIR}/p/"* "${WORK_DIR}/p/"
 
-PKG_COUNT=$(find "${WORK_DIR}/p" -maxdepth 1 -mindepth 1 -type d | wc -l)
-echo "  Copied $PKG_COUNT packages to cache"
+PKG_COUNT=$(find "${WORK_DIR}/p" -maxdepth 1 -type f -name '*.tar.gz' | wc -l)
+echo "  Fetched $PKG_COUNT packages"
 
-# ── Strip bloat never needed for a `zig build --system` release build ───
-# Keeps the cache under OBS's RPM build disk limit.
-#
-# Some deps (e.g. libxev) openDir() these dirs at configure time, so
-# stripping a referenced name crashes `zig build` with FileNotFound.
-# Skip names referenced as string literals in the package's build.zig.
-echo ""
-echo "=== Stripping test/doc/example bloat ==="
-STRIP_NAMES=(
-    test tests Test
-    doc docs
-    example examples samples
-    fuzz fuzzing
-    reference
-    ci .ci .github
-    gnulib-tests gnulib-local
-    # gettext: only gettext-runtime/intl/ is used
-    gettext-tools libtextstyle
-    # libxml2: XML conformance test output
-    result xstc
-)
-BEFORE_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-for pkg in "${WORK_DIR}/p"/*/; do
-    [ -d "$pkg" ] || continue
-    for name in "${STRIP_NAMES[@]}"; do
-        # bare "name" or path form "name/..." → dir is needed at configure
-        # time; keep it to avoid an openDir FileNotFound crash.
-        if [ -f "${pkg}build.zig" ] && grep -qF -e "\"$name\"" -e "\"$name/" "${pkg}build.zig"; then
-            echo "  keeping $name/ in $(basename "$pkg") (referenced by build.zig)"
-            continue
-        fi
-        find "$pkg" -type d -name "$name" -prune -exec rm -rf {} +
-    done
-done
-AFTER_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-echo "  Cache size: ${AFTER_SIZE} (was ${BEFORE_SIZE})"
-
+# ── Create deps tarball ──────────────────────────────────────────────
 echo ""
 echo "Creating deps tarball: $DEPS_OUTPUT"
 tar -czf "$DEPS_OUTPUT" -C "${WORK_DIR}" p
