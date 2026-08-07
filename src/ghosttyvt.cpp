@@ -28,11 +28,12 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     ghostty_terminal_set(m_terminal,
                          GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES, &scrollbackBytes);
 
-    // Enable cursor blinking by default (Ghostty mode 12 defaults to false).
-    // Using MODE_DEFAULT so the setting survives a hard reset (RIS).
+    // Enable cursor blinking (Ghostty mode 12 defaults to false).
+    // Set both current mode and default so it survives a hard reset (RIS).
     GhosttyTerminalModeConfig cursorBlink = {};
     cursorBlink.mode = GHOSTTY_MODE_CURSOR_BLINKING;
     cursorBlink.value = true;
+    ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_MODE, &cursorBlink);
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_MODE_DEFAULT, &cursorBlink);
 
     // Enable grapheme cluster mode (DEC 2027) so VS16 (U+FE0F) makes BMP emoji
@@ -40,6 +41,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     GhosttyTerminalModeConfig graphemeCluster = {};
     graphemeCluster.mode = GHOSTTY_MODE_GRAPHEME_CLUSTER;
     graphemeCluster.value = true;
+    ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_MODE, &graphemeCluster);
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_MODE_DEFAULT, &graphemeCluster);
 
     // Enable Kitty Graphics Protocol image storage (32 MiB per screen)
