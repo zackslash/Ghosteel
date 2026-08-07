@@ -141,6 +141,7 @@ Q_SIGNALS:
 private:
     explicit Settings(QObject *parent = nullptr);
     void load();
+    QVariantList sanitizeRowBreaks(const QVariantList &breaks) const;
 
     QSettings m_settings;
     QTimer *m_saveTimer;

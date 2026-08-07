@@ -119,11 +119,10 @@ Page {
                 width: parent.width
                 label: qsTr("Keybar rows")
                 currentIndex: Math.min(2, Settings.keybarRowBreaks.length)
-                enabled: Settings.keybarKeys.length >= 2
                 menu: ContextMenu {
                     MenuItem { text: "1" }
-                    MenuItem { text: "2" }
-                    MenuItem { text: "3" }
+                    MenuItem { text: "2"; enabled: Settings.keybarKeys.length >= 2 }
+                    MenuItem { text: "3"; enabled: Settings.keybarKeys.length >= 3 }
                 }
                 onCurrentIndexChanged: {
                     var desired = currentIndex

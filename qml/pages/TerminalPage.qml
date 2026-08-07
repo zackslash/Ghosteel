@@ -1203,19 +1203,7 @@ Page {
                 if (len > maxLen) maxLen = len
                 start = end
             }
-            return maxLen * cellW + Theme.paddingSmall
-        }
-
-        // Row/column for a key at global index in keybarKeys.
-        function colIndexForIndex(idx) {
-            var breaks = Settings.keybarRowBreaks
-            var start = 0
-            for (var i = 0; i < breaks.length; i++) {
-                if (idx < breaks[i])
-                    return idx - start
-                start = breaks[i]
-            }
-            return idx - start
+            return maxLen * cellW - Theme.paddingSmall
         }
 
         Behavior on y {
@@ -1249,7 +1237,7 @@ Page {
 
                         width: Theme.itemSizeMedium
                         height: Theme.itemSizeMedium
-                        x: Theme.paddingSmall + keybar.colIndexForIndex(index) * (Theme.itemSizeMedium + Theme.paddingSmall)
+                        x: Theme.paddingSmall + KeyCatalog.colForIndex(index, Settings.keybarRowBreaks) * (Theme.itemSizeMedium + Theme.paddingSmall)
                         y: KeyCatalog.rowForIndex(index, Settings.keybarRowBreaks) * (Theme.itemSizeMedium + Theme.paddingSmall) + Theme.paddingSmall / 2
 
                         highlighted: {
