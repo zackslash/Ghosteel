@@ -281,6 +281,11 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
             m_waitPidTimer = nullptr;
         }
 
+        // If the child was already reaped (e.g., exec failure set m_childPid
+        // to -1), don't create a reap timer — nothing to waitpid.
+        if (m_childPid <= 0)
+            return;
+
         // Use WNOHANG to avoid blocking the main thread.
         // If the child hasn't exited yet (grandchildren holding PTY),
         // retry periodically until waitpid succeeds.
@@ -288,7 +293,13 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         m_waitPidTimer = timer;
         connect(timer, &QTimer::timeout, this, [this, timer, gen]() {
             // Bail if child PID is invalid (stop() was called or already reaped)
-            if (m_childPid <= 0) return;
+            if (m_childPid <= 0) {
+                timer->stop();
+                timer->deleteLater();
+                if (m_waitPidTimer == timer)
+                    m_waitPidTimer = nullptr;
+                return;
+            }
             // Bail if this timer belongs to a previous session
             if (gen != m_sessionGeneration) {
                 timer->stop();
