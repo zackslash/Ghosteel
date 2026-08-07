@@ -172,7 +172,9 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
         exit 1
     fi
 
-    # Use --global-cache-dir to point Zig at pre-fetched dep tarballs
+    # --global-cache-dir (not --system) because the deps cache ships as
+    # .tar.gz tarballs in the global-cache p/ layout. --system expects
+    # pre-extracted directories, which doesn't match the tarball cache.
     # Only set when the full deps cache exists (OBS builds)
     CACHE_FLAG=""
     if [ -d "%{_builddir}/zig-cache/p" ]; then

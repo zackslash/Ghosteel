@@ -62,6 +62,8 @@ ZIG_BIN="${WORK_DIR}/zig-x86_64-linux-${ZIG_VERSION}/zig"
 rm -rf "${GHOSTTY_DIR}/zig-pkg"
 
 cd "$GHOSTTY_DIR"
+# --fetch=all resolves and downloads the full dep tree but exits non-zero
+# if downstream build steps fail; deps are cached regardless.
 "$ZIG_BIN" build --fetch=all --global-cache-dir "$WORK_DIR" 2>&1 || true
 cd "$REPO_ROOT"
 
