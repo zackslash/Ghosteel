@@ -101,7 +101,10 @@ Page {
         PullDownMenu {
             MenuItem {
                 text: qsTr("Reset to defaults")
-                onClicked: Settings.keybarKeys = KeyCatalog.defaults.slice()
+                onClicked: {
+                    Settings.keybarRowBreaks = []
+                    Settings.keybarKeys = KeyCatalog.defaults.slice()
+                }
             }
         }
 
@@ -120,9 +123,9 @@ Page {
                 label: qsTr("Keybar rows")
                 currentIndex: Math.min(2, Settings.keybarRowBreaks.length)
                 menu: ContextMenu {
-                    MenuItem { text: "1" }
-                    MenuItem { text: "2"; enabled: Settings.keybarKeys.length >= 2 }
-                    MenuItem { text: "3"; enabled: Settings.keybarKeys.length >= 3 }
+                    MenuItem { text: qsTr("1 row") }
+                    MenuItem { text: qsTr("2 rows"); enabled: Settings.keybarKeys.length >= 2 }
+                    MenuItem { text: qsTr("3 rows"); enabled: Settings.keybarKeys.length >= 3 }
                 }
                 onCurrentIndexChanged: {
                     var desired = currentIndex

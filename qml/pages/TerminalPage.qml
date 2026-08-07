@@ -1305,6 +1305,19 @@ Page {
             }
         }
 
+        // Subtle row separators (only visible with 2+ rows)
+        Repeater {
+            model: keybar.keybarRowCount > 1 ? keybar.keybarRowCount - 1 : 0
+            delegate: Rectangle {
+                anchors.left: keybarFlickable.left
+                anchors.right: keybarFlickable.right
+                height: 1
+                y: (index + 1) * (Theme.itemSizeMedium + Theme.paddingSmall)
+                color: Theme.primaryColor
+                opacity: 0.15
+            }
+        }
+
         // Custom scroll indicator — HorizontalScrollDecorator has no
         // programmatic flash API.
         Rectangle {
