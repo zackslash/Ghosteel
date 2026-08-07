@@ -100,7 +100,6 @@ public:
     Q_INVOKABLE void sendClipboardText(const QString &text, const QString &kind = "c");
     Q_INVOKABLE void sendKey(int qtKey, int modifiers = 0);
     Q_INVOKABLE void restartShell();  // Restart shell after exit
-    Q_INVOKABLE void setActive(bool active); // Start/stop blink timer
     Q_INVOKABLE QString workingDirectory() const; // Get CWD from /proc/<pid>/cwd
     Q_INVOKABLE void setWorkingDirectory(const QString &dir); // Set CWD for next shell start
     Q_INVOKABLE void setAutorunCommand(const QString &cmd);
@@ -174,6 +173,7 @@ Q_SIGNALS:
     void shellRestarted();
     void topPaddingChanged();
     void contentChanged(); // Emitted on real content change (PTY data) for scrollback tracking
+    void repaintRequested(); // Emitted on every repaint request for GL renderer
     void ptyDataReceived(); // Emitted when real PTY data arrives (before vtWrite)
     void pinchingChanged(bool pinching);
     void pinchAtDefaultChanged(bool atDefault);
@@ -193,6 +193,7 @@ Q_SIGNALS:
     void sessionSwipeEnabledChanged();
 
 protected:
+    void update(); // Override to emit repaintRequested() for GL repaint
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void inputMethodEvent(QInputMethodEvent *event) override;

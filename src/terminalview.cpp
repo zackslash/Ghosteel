@@ -385,6 +385,12 @@ void TerminalView::onPtyData(const QByteArray &data)
     Q_EMIT contentChanged(); // PTY data is the real content-change signal
 }
 
+void TerminalView::update()
+{
+    QQuickItem::update();
+    Q_EMIT repaintRequested(); // Trigger GL repaint (selection, blink, scroll, etc.)
+}
+
 void TerminalView::onShellExited(int exitCode)
 {
     qInfo() << "Shell exited with code" << exitCode;
@@ -407,19 +413,6 @@ void TerminalView::restartShell()
     m_vt->destroy();
     setupTerminal();
     update();
-}
-
-void TerminalView::setActive(bool active)
-{
-    if (active) {
-        if (m_blinkTimerId == 0)
-            m_blinkTimerId = startTimer(BlinkInterval);
-    } else {
-        if (m_blinkTimerId) {
-            killTimer(m_blinkTimerId);
-            m_blinkTimerId = 0;
-        }
-    }
 }
 
 void TerminalView::paste()

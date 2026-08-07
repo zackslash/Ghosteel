@@ -257,13 +257,13 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                      || fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY_ALPHA) {
                 // Convert gray/gray-alpha to RGBA for GL upload
                 bool hasAlpha = (fmt == GHOSTTY_KITTY_IMAGE_FORMAT_GRAY_ALPHA);
-                size_t srcBpp = hasAlpha ? 2 : 1;
+                size_t convSrcBpp = hasAlpha ? 2 : 1;
                 size_t convertedLen = static_cast<size_t>(imgW) * static_cast<size_t>(imgH) * 4;
                 uint8_t* rgba = static_cast<uint8_t*>(malloc(convertedLen));
                 if (rgba) {
                     for (size_t i = 0; i < static_cast<size_t>(imgW) * static_cast<size_t>(imgH); ++i) {
-                        uint8_t gray = pixels[i * srcBpp];
-                        uint8_t alpha = hasAlpha ? pixels[i * srcBpp + 1] : 255;
+                    uint8_t gray = pixels[i * convSrcBpp];
+                    uint8_t alpha = hasAlpha ? pixels[i * convSrcBpp + 1] : 255;
                         rgba[i * 4 + 0] = gray;
                         rgba[i * 4 + 1] = gray;
                         rgba[i * 4 + 2] = gray;
