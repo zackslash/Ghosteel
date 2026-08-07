@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Tik tussen twee toetsen om een nieuwe rij te beginnen</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rij</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Aangedreven door de libghostty terminal-engine</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Bel</translation>
+        <translation>Bel</translation>
     </message>
 </context>
 </TS>

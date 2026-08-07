@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Додирните између два типка за почетак новог реда</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Ред</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Pokreće libghostty terminalski motor</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Zvono</translation>
+        <translation>Zvono</translation>
     </message>
 </context>
 </TS>

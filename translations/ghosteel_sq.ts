@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Prekni mes dy tasteve për të filluar një rresht të ri</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rresht</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Mundësuar nga motori i terminalit libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Zile</translation>
+        <translation>Zile</translation>
     </message>
 </context>
 </TS>

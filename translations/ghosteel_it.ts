@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Tocca tra due tasti per iniziare una nuova riga</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Riga</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Alimentato dal motore di terminale libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Campanella</translation>
+        <translation>Campanella</translation>
     </message>
 </context>
 </TS>

@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Zwischen zwei Tasten tippen, um eine neue Zeile zu beginnen</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Zeile</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Glocke</translation>
+        <translation>Glocke</translation>
     </message>
 </context>
 </TS>

@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Tapáil idir dhá eochair chun ró nua a thosú</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Ró</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Clog</translation>
+        <translation>Clog</translation>
     </message>
 </context>
 </TS>

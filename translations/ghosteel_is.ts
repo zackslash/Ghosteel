@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Ýttu á milli tveggja lykla til að hefja nýja röð</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Röð</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Keyrt af libghostty skjáhermisvél</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Bjalla</translation>
+        <translation>Bjalla</translation>
     </message>
 </context>
 </TS>

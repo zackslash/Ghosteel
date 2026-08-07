@@ -145,11 +145,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Két gomb közé koppintva új sort indíthat</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Sor</translation>
     </message>
 </context>
 <context>
@@ -554,7 +554,7 @@ A libghostty terminálmotor hajtja</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Csengő</translation>
+        <translation>Csengő</translation>
     </message>
 </context>
 </TS>

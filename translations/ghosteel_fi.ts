@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Napauta kahden näppäimen välissä aloittaaksesi uuden rivin</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rivi</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Käyttää libghostty-pääteohjelmaa</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Äänimerkki</translation>
+        <translation>Äänimerkki</translation>
     </message>
 </context>
 </TS>

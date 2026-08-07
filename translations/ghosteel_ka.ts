@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>შეეხეთ ორ ღილაკს შორის ახალი რიგის დასაწყებად</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>რიგი</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">ზარი</translation>
+        <translation>ზარი</translation>
     </message>
 </context>
 </TS>

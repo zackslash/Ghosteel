@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Atingeți între două taste pentru a începe un rând nou</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rând</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Propulsat de motorul de terminal libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Sunet de alertă</translation>
+        <translation>Sunet de alertă</translation>
     </message>
 </context>
 </TS>

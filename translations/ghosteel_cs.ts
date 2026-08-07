@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Klepněte mezi dvěma klávesami pro vytvoření nového řádku</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Řádek</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Poháněno terminálovým enginem libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Zvonek</translation>
+        <translation>Zvonek</translation>
     </message>
 </context>
 </TS>

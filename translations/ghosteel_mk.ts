@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Допрете помеѓу два копча за да започнете нов ред</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Ред</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Ѕвонче</translation>
+        <translation>Ѕвонче</translation>
     </message>
 </context>
 </TS>

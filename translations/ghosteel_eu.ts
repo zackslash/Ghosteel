@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Sakatu bi teklen artean errenkada berri bat hasteko</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Errenkada</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ libghostty terminal motorrak bultzatuta</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Txirrina</translation>
+        <translation>Txirrina</translation>
     </message>
 </context>
 </TS>

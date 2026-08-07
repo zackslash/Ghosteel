@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Puuduta kahe klahvi vahel, et alustada uut rida</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rida</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Toetab libghostty terminalimootorit</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Häire</translation>
+        <translation>Häire</translation>
     </message>
 </context>
 </TS>

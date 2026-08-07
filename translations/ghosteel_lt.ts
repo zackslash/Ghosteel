@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Bakstelėkite tarp dviejų klavišų, kad pradėtumėte naują eilutę</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Eilutė</translation>
     </message>
 </context>
 <context>
@@ -267,7 +267,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Skambutis</translation>
+        <translation>Signalas</translation>
     </message>
     <message>
         <source>Color scheme</source>
@@ -556,7 +556,7 @@ Varomas libghostty terminalo variklio</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Skambutis</translation>
+        <translation>Signalas</translation>
     </message>
 </context>
 </TS>

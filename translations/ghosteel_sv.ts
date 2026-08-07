@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryck mellan två tangenter för att starta en ny rad</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rad</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Drivs av libghostty terminalmotor</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Signal</translation>
+        <translation>Signal</translation>
     </message>
 </context>
 </TS>

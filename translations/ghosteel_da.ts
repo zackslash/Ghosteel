@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryk mellem to taster for at starte en ny række</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Række</translation>
     </message>
 </context>
 <context>
@@ -555,7 +555,7 @@ Drevet af libghostty terminalmotor</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Signal</translation>
+        <translation>Signal</translation>
     </message>
 </context>
 </TS>

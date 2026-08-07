@@ -148,11 +148,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Agħfas bejn żewġ tasti biex tibda ringiels ġdida</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>ringiela</translation>
     </message>
 </context>
 <context>
@@ -557,7 +557,7 @@ Mħaddem minn magna terminali libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Qanpiena</translation>
+        <translation>Qanpiena</translation>
     </message>
 </context>
 </TS>

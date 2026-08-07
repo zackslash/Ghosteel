@@ -149,11 +149,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Tapiwch rhwng dwy allwedd i gychwyn rhes newydd</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rhes</translation>
     </message>
 </context>
 <context>
@@ -558,7 +558,7 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Cloch</translation>
+        <translation>Cloch</translation>
     </message>
 </context>
 </TS>

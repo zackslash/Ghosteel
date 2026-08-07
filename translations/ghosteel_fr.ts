@@ -146,11 +146,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Touchez entre deux touches pour démarrer une nouvelle ligne</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Ligne</translation>
     </message>
 </context>
 <context>
@@ -266,7 +266,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Sonnerie</translation>
+        <translation>Signal sonore</translation>
     </message>
     <message>
         <source>Color scheme</source>
@@ -555,7 +555,7 @@ Propulsé par le moteur de terminal libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Sonnerie</translation>
+        <translation>Signal sonore</translation>
     </message>
 </context>
 </TS>

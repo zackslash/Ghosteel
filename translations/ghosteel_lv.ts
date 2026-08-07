@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Pieskarieties starp divām taustiņām, lai sāktu jaunu rindu</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Rinda</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Darbina libghostty termināla dzinējs</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Zvans</translation>
+        <translation>Zvans</translation>
     </message>
 </context>
 </TS>

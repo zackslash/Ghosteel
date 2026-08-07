@@ -145,11 +145,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Yeni satır başlatmak için iki tuş arasına dokunun</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Satır</translation>
     </message>
 </context>
 <context>
@@ -554,7 +554,7 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Zil</translation>
+        <translation>Zil</translation>
     </message>
 </context>
 </TS>

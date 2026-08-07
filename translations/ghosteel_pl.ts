@@ -147,11 +147,11 @@
     </message>
     <message>
         <source>Tap between two keys to start a new row</source>
-        <translation type="unfinished"></translation>
+        <translation>Stuknij między dwoma klawiszami, aby rozpocząć nowy wiersz</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation>Wiersz</translation>
     </message>
 </context>
 <context>
@@ -556,7 +556,7 @@ Obsługiwany przez silnik terminala libghostty</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation type="unfinished">Dzwonek</translation>
+        <translation>Dzwonek</translation>
     </message>
 </context>
 </TS>
