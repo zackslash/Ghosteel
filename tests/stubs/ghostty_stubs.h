@@ -18,8 +18,9 @@ extern "C" {
 void ghostty_stubs_reset_modes(void);
 
 // Returns true if a mode was set via ghostty_terminal_set with
-// GHOSTTY_TERMINAL_OPT_MODE since the last reset, writing the last value
-// to *out_value (if non-null). Returns false if the mode was never set.
+// GHOSTTY_TERMINAL_OPT_MODE or GHOSTTY_TERMINAL_OPT_MODE_DEFAULT since
+// the last reset, writing the last value to *out_value (if non-null).
+// Returns false if the mode was never set.
 bool ghostty_stubs_mode_set_called(GhosttyMode mode, bool *out_value);
 
 #ifdef __cplusplus

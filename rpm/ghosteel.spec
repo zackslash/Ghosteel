@@ -75,8 +75,7 @@ Custom:
 %prep
 %setup -q -n %{name}-%{version}
 
-
-# Extract Zig compiler (OBS only — Source1 is fetched by OBS before build)
+# Extract Zig compiler (OBS only)
 if [ -f "%{_sourcedir}/zig-x86_64-linux-%{zig_version}.tar.xz" ]; then
     tar -xJf "%{_sourcedir}/zig-x86_64-linux-%{zig_version}.tar.xz" -C %{_builddir}
 fi
