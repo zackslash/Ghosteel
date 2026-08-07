@@ -382,6 +382,13 @@ void TerminalView::onPtyData(const QByteArray &data)
     // GL is the only renderer — update immediately. Qt's scene graph
     // coalesces multiple update() calls into a single frame.
     update();
+    Q_EMIT contentChanged(); // PTY data is the real content-change signal
+}
+
+void TerminalView::update()
+{
+    QQuickItem::update();
+    Q_EMIT repaintRequested(); // Trigger GL repaint (selection, blink, scroll, etc.)
 }
 
 void TerminalView::onShellExited(int exitCode)
@@ -407,31 +414,6 @@ void TerminalView::restartShell()
     m_vt->destroy();
     setupTerminal();
     update();
-}
-
-void TerminalView::setActive(bool active)
-{
-    if (active) {
-        if (m_blinkTimerId == 0)
-            m_blinkTimerId = startTimer(BlinkInterval);
-    } else {
-        if (m_blinkTimerId) {
-            killTimer(m_blinkTimerId);
-            m_blinkTimerId = 0;
-        }
-    }
-}
-
-void TerminalView::update()
-{
-    QQuickItem::update();
-    // contentChanged fires on every repaint, not just on real content changes.
-    // The sessionmanager handler debounces (500ms) and skips when scrollbackDirty
-    // is already set, so the cost is one save per dirty cycle. A proper fix would
-    // move this emission to explicit content-change sites (onPtyData, paste), but
-    // geometry updates (resize/restoreScrollback) also mutate terminal state and
-    // route through update(), making a clean split non-trivial.
-    Q_EMIT contentChanged();
 }
 
 void TerminalView::paste()
@@ -465,10 +447,6 @@ void TerminalView::paste()
             m_pty->writeData(buf.constData(), written);
             return;
         }
-    } else if (res == GHOSTTY_SUCCESS && written > 0) {
-        // Data was small enough to encode in-place (sizingCopy already mutated)
-        m_pty->writeData(sizingCopy.constData(), written);
-        return;
     }
 
     // Fallback: send raw UTF-8 only if encoding completely fails
@@ -507,8 +485,8 @@ void TerminalView::copySelection()
     if (!m_vt || !m_vt->renderState())
         return;
 
-    QPointF startCell = cellFromPixel(m_selStart);
-    QPointF endCell = cellFromPixel(m_selEnd);
+    QPointF startCell = cellFromPixelClamped(m_selStart);
+    QPointF endCell = cellFromPixelClamped(m_selEnd);
     if (startCell.x() < 0 || endCell.x() < 0)
         return;
 
@@ -759,6 +737,11 @@ QPointF TerminalView::cellFromPixel(const QPointF &pos) const
     return TextUtil::cellFromPixel(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, m_topPadding);
 }
 
+QPointF TerminalView::cellFromPixelClamped(const QPointF &pos) const
+{
+    return TextUtil::cellFromPixelClamped(pos, m_cellWidth, m_cellHeight, m_cols, m_rows, m_topPadding);
+}
+
 void TerminalView::clearSelection()
 {
     if (m_selecting) {
@@ -931,8 +914,8 @@ int TerminalView::handleHitTest(const QPointF &pos) const
     if (!m_handlesVisible || !m_selecting || m_selStart == m_selEnd)
         return 0;
 
-    QPointF startCell = cellFromPixel(m_selStart);
-    QPointF endCell = cellFromPixel(m_selEnd);
+    QPointF startCell = cellFromPixelClamped(m_selStart);
+    QPointF endCell = cellFromPixelClamped(m_selEnd);
     if (startCell.x() < 0 || endCell.x() < 0)
         return 0;
 

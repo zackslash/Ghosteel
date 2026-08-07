@@ -5,30 +5,29 @@
 class KittyImageGuardTest : public QObject {
     Q_OBJECT
 private slots:
-    void withinCap();
-    void bombExceedsCap();
-    void oneDimExceeds();
+    void parsesDimensions();
+    void parsesColorTypeAndInterlace();
     void boundaryExactlyAtCap();
-    void boundaryJustOverCap();
-    void boundaryJustOverCapSingleAxis();
     void maxWidthUint32();
-    void emptyDataFallsThrough();
-    void nonPngFallsThrough();
-    void truncatedFallsThrough();
-    void validSigButNotIhdr();
-    void nullData();
+    void lengthFloorRequiresFullIhdr();
+    void emptyDataInvalid();
+    void nonPngInvalid();
+    void truncatedInvalid();
+    void validSigButNotIhdrInvalid();
+    void nullDataInvalid();
 };
 
-// Build a 24-byte PNG-header prefix with the given width/height (big-endian),
-// exactly the bytes kittyPngExceedsDimCap inspects. The rest of a real PNG
-// (chunk data, CRC, IDAT…) is irrelevant to the sniff and omitted.
-static QByteArray pngHeader(uint32_t width, uint32_t height)
+// Build a 29-byte PNG IHDR prefix: sig(8) + length(4) + "IHDR"(4) + W(4) + H(4)
+// + bit_depth(1) + color_type(1) + compression(1) + filter(1) + interlace(1).
+// The rest of a real PNG (CRC, IDAT...) is irrelevant to the sniff and omitted.
+static QByteArray pngHeader(uint32_t width, uint32_t height,
+                            uint8_t colorType = 2, uint8_t interlace = 0)
 {
     static const uchar sig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     static const uchar ihdr[4] = {0x49, 0x48, 0x44, 0x52};  // "IHDR"
 
     QByteArray b;
-    b.reserve(24);
+    b.reserve(29);
     b.append(reinterpret_cast<const char *>(sig), 8);
     b.append(4, '\0');                                   // IHDR chunk length (not validated)
     b.append(reinterpret_cast<const char *>(ihdr), 4);
@@ -44,94 +43,104 @@ static QByteArray pngHeader(uint32_t width, uint32_t height)
         static_cast<uchar>(height & 0xFF),
     };
     b.append(reinterpret_cast<const char *>(wh), 8);
+    b.append(static_cast<char>(8));        // bit depth
+    b.append(static_cast<char>(colorType));
+    b.append(static_cast<char>(0));        // compression method
+    b.append(static_cast<char>(0));        // filter method
+    b.append(static_cast<char>(interlace));
     return b;
 }
 
-static bool exceeds(const QByteArray &b, int maxDim = 4096)
+static KittyPngHeader sniff(const QByteArray &b)
 {
-    return kittyPngExceedsDimCap(reinterpret_cast<const uint8_t *>(b.constData()),
-                                 static_cast<size_t>(b.size()), maxDim);
+    return kittyPngSniffHeader(reinterpret_cast<const uint8_t *>(b.constData()),
+                               static_cast<size_t>(b.size()));
 }
 
-void KittyImageGuardTest::withinCap()
+void KittyImageGuardTest::parsesDimensions()
 {
-    QCOMPARE(exceeds(pngHeader(1920, 1080)), false);
-    QCOMPARE(exceeds(pngHeader(1, 1)), false);
+    const auto h = sniff(pngHeader(1920, 1080));
+    QVERIFY(h.valid);
+    QCOMPARE(h.width, 1920u);
+    QCOMPARE(h.height, 1080u);
+    QCOMPARE(h.colorType, uint8_t(2));
+    QCOMPARE(h.interlaceMethod, uint8_t(0));
+
+    const auto tiny = sniff(pngHeader(1, 1));
+    QVERIFY(tiny.valid);
+    QCOMPARE(tiny.width, 1u);
+    QCOMPARE(tiny.height, 1u);
 }
 
-void KittyImageGuardTest::bombExceedsCap()
+void KittyImageGuardTest::parsesColorTypeAndInterlace()
 {
-    QCOMPARE(exceeds(pngHeader(50000, 50000)), true);
-}
-
-void KittyImageGuardTest::oneDimExceeds()
-{
-    QCOMPARE(exceeds(pngHeader(5000, 100)), true);
-    QCOMPARE(exceeds(pngHeader(100, 5000)), true);
+    // The sniff must surface color_type and interlace so the decoder can decide
+    // whether Qt can stream-downscale (RGB/RGBA, non-interlaced).
+    QCOMPARE(sniff(pngHeader(100, 100, 6, 0)).colorType, uint8_t(6));        // RGBA
+    QCOMPARE(sniff(pngHeader(100, 100, 0, 0)).colorType, uint8_t(0));        // gray
+    QCOMPARE(sniff(pngHeader(100, 100, 3, 0)).colorType, uint8_t(3));        // palette
+    QCOMPARE(sniff(pngHeader(100, 100, 2, 1)).interlaceMethod, uint8_t(1));  // Adam7
 }
 
 void KittyImageGuardTest::boundaryExactlyAtCap()
 {
-    QCOMPARE(exceeds(pngHeader(4096, 4096)), false);
-}
-
-void KittyImageGuardTest::boundaryJustOverCap()
-{
-    QCOMPARE(exceeds(pngHeader(4097, 4097)), true);
-}
-
-void KittyImageGuardTest::boundaryJustOverCapSingleAxis()
-{
-    // The || at the sniff boundary must trip on either axis alone.
-    QCOMPARE(exceeds(pngHeader(4097, 1)), true);
-    QCOMPARE(exceeds(pngHeader(1, 4097)), true);
-    QCOMPARE(exceeds(pngHeader(4096, 4097)), true);
-    QCOMPARE(exceeds(pngHeader(4097, 4096)), true);
+    const auto h = sniff(pngHeader(4096, 4096));
+    QVERIFY(h.valid);
+    QCOMPARE(h.width, 4096u);
+    QCOMPARE(h.height, 4096u);
 }
 
 void KittyImageGuardTest::maxWidthUint32()
 {
-    // Locks in shift-overflow safety: 0xFFFFFFFF big-endian = FF FF FF FF.
-    // Correct only if each byte is widened to uint32_t before the shift and
-    // the comparison is unsigned.
-    QCOMPARE(exceeds(pngHeader(0xFFFFFFFFu, 1)), true);
-    QCOMPARE(exceeds(pngHeader(1, 0xFFFFFFFFu)), true);
+    // Regression guard: 0xFFFFFFFF big-endian must decode exactly (exercises
+    // all four byte-position shifts of the width field).
+    const auto h = sniff(pngHeader(0xFFFFFFFFu, 1));
+    QVERIFY(h.valid);
+    QCOMPARE(h.width, 0xFFFFFFFFu);
 }
 
-void KittyImageGuardTest::emptyDataFallsThrough()
+void KittyImageGuardTest::lengthFloorRequiresFullIhdr()
 {
-    // Non-null pointer, zero length — distinct from nullData().
-    QCOMPARE(kittyPngExceedsDimCap(reinterpret_cast<const uint8_t *>(""), 0, 4096), false);
+    // color_type lives at byte 25 and interlace at byte 28, so the sniff needs
+    // the full 29-byte IHDR. 28 bytes must be rejected as un-sniffable.
+    QCOMPARE(sniff(pngHeader(100, 100).left(28)).valid, false);
+    QCOMPARE(sniff(pngHeader(100, 100)).valid, true);
 }
 
-void KittyImageGuardTest::nonPngFallsThrough()
+void KittyImageGuardTest::emptyDataInvalid()
 {
-    // JPEG SOI — not a PNG signature; sniff returns false so the caller's
+    // Non-null pointer, zero length. Distinct from nullData().
+    QCOMPARE(kittyPngSniffHeader(reinterpret_cast<const uint8_t *>(""), 0).valid, false);
+}
+
+void KittyImageGuardTest::nonPngInvalid()
+{
+    // JPEG SOI, not a PNG signature; sniff returns invalid so the caller's
     // normal loadFromData path handles it (preserving existing diagnostics).
     QByteArray jpeg = QByteArray::fromHex("ffd8ffe000104a464946000101");
-    QCOMPARE(exceeds(jpeg), false);
+    QCOMPARE(sniff(jpeg).valid, false);
 }
 
-void KittyImageGuardTest::truncatedFallsThrough()
+void KittyImageGuardTest::truncatedInvalid()
 {
     QByteArray trunc = pngHeader(50000, 50000).left(10);
-    QCOMPARE(exceeds(trunc), false);
+    QCOMPARE(sniff(trunc).valid, false);
 }
 
-void KittyImageGuardTest::validSigButNotIhdr()
+void KittyImageGuardTest::validSigButNotIhdrInvalid()
 {
     static const uchar sig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     QByteArray b;
     b.append(reinterpret_cast<const char *>(sig), 8);
     b.append(4, '\0');
     b.append("IDAT", 4);   // wrong first chunk type
-    b.append(8, '\0');
-    QCOMPARE(exceeds(b), false);
+    b.append(13, '\0');    // pad to a full 29-byte header so the failure is the chunk type, not length
+    QCOMPARE(sniff(b).valid, false);
 }
 
-void KittyImageGuardTest::nullData()
+void KittyImageGuardTest::nullDataInvalid()
 {
-    QCOMPARE(kittyPngExceedsDimCap(nullptr, 100, 4096), false);
+    QCOMPARE(kittyPngSniffHeader(nullptr, 100).valid, false);
 }
 
 QTEST_APPLESS_MAIN(KittyImageGuardTest)

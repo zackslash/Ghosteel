@@ -131,6 +131,14 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     if (pid == 0) {
         ::close(execPipe[0]);
         setupChildProcess(workingDir, homeDir);
+    } else {
+        // Parent: mark the master PTY fd close-on-exec so future session forks
+        // don't inherit it. Without this, each new session's forkpty() child
+        // keeps prior sessions' master fds open in the new shell, preventing
+        // clean EOF on teardown and leaking descriptors that grow with the
+        // number of sessions. (Done in the parent branch only — in the child,
+        // m_ptyFd is stale because forkpty writes *amaster in the parent.)
+        fcntl(m_ptyFd, F_SETFD, FD_CLOEXEC);
     }
     return true;
 }
@@ -273,6 +281,11 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
             m_waitPidTimer = nullptr;
         }
 
+        // If the child was already reaped (e.g., exec failure set m_childPid
+        // to -1), don't create a reap timer — nothing to waitpid.
+        if (m_childPid <= 0)
+            return;
+
         // Use WNOHANG to avoid blocking the main thread.
         // If the child hasn't exited yet (grandchildren holding PTY),
         // retry periodically until waitpid succeeds.
@@ -280,7 +293,13 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         m_waitPidTimer = timer;
         connect(timer, &QTimer::timeout, this, [this, timer, gen]() {
             // Bail if child PID is invalid (stop() was called or already reaped)
-            if (m_childPid <= 0) return;
+            if (m_childPid <= 0) {
+                timer->stop();
+                timer->deleteLater();
+                if (m_waitPidTimer == timer)
+                    m_waitPidTimer = nullptr;
+                return;
+            }
             // Bail if this timer belongs to a previous session
             if (gen != m_sessionGeneration) {
                 timer->stop();
@@ -324,8 +343,10 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         if (n > 0) {
             // exec failed — we received the errno from the child
             qWarning() << "Process exec failed:" << strerror(execErr);
-            int status = 0;
-            waitpid(m_childPid, &status, WNOHANG);
+            // Bounded reap: the child may not have _exit'd yet (it writes errno
+            // then calls _exit(127); the parent may read the pipe before the
+            // _exit lands). reapPidBounded retries to avoid leaving a zombie.
+            reapPidBounded(m_childPid);
             m_childPid = -1;
             Q_EMIT shellExited(kExecFailedExitCode);
         }

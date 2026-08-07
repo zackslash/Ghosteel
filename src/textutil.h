@@ -19,6 +19,13 @@ QString trimSelectionText(const QString &text);
 QPointF cellFromPixel(const QPointF &pos, int cellWidth, int cellHeight,
                       int cols, int rows, int topPadding);
 
+// Like cellFromPixel, but saturates out-of-bounds positions to the nearest
+// edge cell instead of returning (-1, -1). Used for selection endpoints,
+// which can legitimately land exactly on the grid edge (col == cols).
+// Returns (-1, -1) only when the grid itself is empty/invalid.
+QPointF cellFromPixelClamped(const QPointF &pos, int cellWidth, int cellHeight,
+                             int cols, int rows, int topPadding);
+
 // Accumulate fractional scroll lines from wheel/touch delta.
 // Resets accumulator on direction change to prevent drifting.
 // Returns the accumulated scroll state (lines to scroll + remaining accumulator).

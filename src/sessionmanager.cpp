@@ -13,6 +13,8 @@
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <algorithm>
+#include <QGuiApplication>
+#include <QClipboard>
 
 static constexpr int kMaxSessionCount = 100;
 
@@ -236,6 +238,16 @@ TerminalView* SessionManager::sessionAtCallback(QQmlListProperty<TerminalView> *
     return manager->m_sessions.at(index).view;
 }
 
+QString SessionManager::clipboardText() const
+{
+    return QGuiApplication::clipboard()->text(QClipboard::Clipboard);
+}
+
+void SessionManager::setClipboardText(const QString &text)
+{
+    QGuiApplication::clipboard()->setText(text, QClipboard::Clipboard);
+}
+
 void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 {
     // Route this view's notifications through the aggregated signal
@@ -250,7 +262,7 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
         Q_EMIT clipboardReadRequest(sessionId, kind);
     });
 
-    // Route clipboard write results to QML (Clipboard.text singleton)
+    // Route clipboard write results to QML (SessionManager.setClipboardText)
     connect(view, &TerminalView::clipboardTextReady, this,
             [this](const QString &text) {
         Q_EMIT clipboardTextReady(text);
@@ -405,9 +417,12 @@ void SessionManager::switchToSessionByName(const QString &name)
     if (idx >= 0) {
         setActiveSessionIndex(idx);
     } else {
-        createSession();
-        int newIdx = m_sessions.size() - 1;
-        setSessionName(newIdx, name);
+        // createSession() returns nullptr at the session cap; only rename when
+        // a session was actually created, otherwise we'd rename an existing one.
+        if (createSession()) {
+            int newIdx = m_sessions.size() - 1;
+            setSessionName(newIdx, name);
+        }
     }
 }
 
@@ -768,8 +783,10 @@ void SessionManager::processCliArgs()
                 } else {
                     // Command exited or session is plain shell — replace with new session.
                     // Create first so removeSession never hits the empty-list fallback.
-                    createSessionWithCommand(m_cliSessionName, fullArgs);
-                    removeSession(named);
+                    // Only remove the old one if the replacement was created: at the session
+                    // cap createSessionWithCommand returns null.
+                    if (createSessionWithCommand(m_cliSessionName, fullArgs))
+                        removeSession(named);
                 }
                 didSomething = true;
             }
@@ -786,8 +803,10 @@ void SessionManager::processCliArgs()
         }
 
         if (!didSomething) {
-            createSessionWithCommand(m_cliSessionName, fullArgs);
-            didSomething = true;
+            // At the session cap this returns null and the command won't run; leave
+            // didSomething false rather than claiming success.
+            if (createSessionWithCommand(m_cliSessionName, fullArgs))
+                didSomething = true;
         }
     } else if (!m_cliSessionName.isEmpty()) {
         switchToSessionByName(m_cliSessionName);

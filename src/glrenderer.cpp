@@ -75,7 +75,7 @@ void GLRenderer::setSource(QObject *source)
     // Connect TerminalView signals to trigger GL repaint and metric invalidation
     TerminalView *tv = qobject_cast<TerminalView *>(m_source);
     if (tv) {
-        connect(tv, &TerminalView::contentChanged, this, &QQuickItem::update);
+        connect(tv, &TerminalView::repaintRequested, this, &QQuickItem::update);
         connect(tv, &TerminalView::fontSizeChanged, this, &GLRenderer::invalidateMetrics);
         invalidateMetrics();
     }

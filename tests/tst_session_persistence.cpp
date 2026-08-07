@@ -1967,6 +1967,26 @@ private slots:
         QCOMPARE(mgr.activeSessionIndex(), mgr.sessionCount() - 1);
     }
 
+    void testSwitchToSessionByNameAtCap()
+    {
+        // At the session cap, switching to a name that doesn't exist must NOT
+        // rename the last existing session (the pre-fix data-corruption bug).
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        for (int i = 0; i < 100; i++) {
+            auto *view = mgr.createSessionWithCommand(
+                QStringLiteral("cmd%1").arg(i), QStringList() << "true");
+            QVERIFY(view != nullptr);
+        }
+        QCOMPARE(mgr.sessionCount(), 100);
+
+        QString lastName = mgr.sessionName(mgr.sessionCount() - 1);
+        mgr.switchToSessionByName("newname");
+        QCOMPARE(mgr.sessionCount(), 100); // no session added at the cap
+        QCOMPARE(mgr.sessionName(mgr.sessionCount() - 1), lastName); // last session not renamed
+    }
+
     // --- sessionExecCommand ---
 
     void testSessionExecCommandForCommandSession()

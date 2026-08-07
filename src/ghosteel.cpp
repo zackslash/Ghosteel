@@ -64,21 +64,47 @@ int main(int argc, char *argv[])
     QStringList execArgs;
     QString sessionName;
 
-    // Scan argv manually.  -e/--exec consumes all remaining args (must be last).
-    // -s/--session takes one value.  Order matters: -s before -e.
+    // -e/--exec consumes all remaining args (must be the last ghosteel option).
+    // -s/--session takes one value.  A bare '--' marks everything after it as
+    // the command verbatim, for commands that carry their own flags.
     for (int i = 1; i < argc; i++) {
         QString arg = QString::fromLocal8Bit(argv[i]);
+
         if (arg == QStringLiteral("-h") || arg == QStringLiteral("--help")) {
-            printf("Usage: ghosteel [-e|--exec <command> [args...]] [-s|--session <name>]\n"
+            printf("Usage: ghosteel [-s|--session <name>] [-e|--exec <command> [args...]]\n"
+                   "       ghosteel [-s|--session <name>] -- <command> [args...]\n"
                    "\n"
-                   "  -e, --exec <command> [args...]  Run command instead of default shell\n"
                    "  -s, --session <name>            Switch to or create named session\n"
-                   "  -h, --help                      Show this help\n");
+                   "  -e, --exec <command> [args...]  Run command instead of default shell\n"
+                   "                                  (must be the last ghosteel option)\n"
+                   "  --                              Treat the rest as the command verbatim,\n"
+                   "                                  for commands with their own flags\n"
+                   "  -h, --help                      Show this help\n"
+                   "\n"
+                   "Examples:\n"
+                   "  ghosteel -s sysmon -e top\n"
+                   "  ghosteel -s sysmon -- htop -s PERCENT_CPU\n");
             fflush(stdout);
             return 0;
-        } else if (arg == QStringLiteral("-e") || arg == QStringLiteral("--exec")) {
+        } else if (arg == QStringLiteral("--")) {
             if (i + 1 < argc) {
                 execCommand = QString::fromLocal8Bit(argv[i + 1]);
+                for (int j = i + 2; j < argc; j++)
+                    execArgs.append(QString::fromLocal8Bit(argv[j]));
+            }
+            break; // everything after "--" is the command verbatim
+        } else if (arg == QStringLiteral("-e") || arg == QStringLiteral("--exec")) {
+            if (i + 1 < argc) {
+                const QString cmd = QString::fromLocal8Bit(argv[i + 1]);
+                if (cmd.startsWith(QLatin1Char('-'))) {
+                    fprintf(stderr,
+                            "ghosteel: -e requires a command, but the next token is '%s'.\n"
+                            "ghosteel: Put ghosteel options before -e, or use '--' to give the\n"
+                            "ghosteel: command its own flags, e.g.  ghosteel -s <name> -- <cmd> [args...]\n",
+                            qPrintable(cmd));
+                    return 1;
+                }
+                execCommand = cmd;
                 for (int j = i + 2; j < argc; j++)
                     execArgs.append(QString::fromLocal8Bit(argv[j]));
                 break; // -e consumes everything after it

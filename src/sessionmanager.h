@@ -72,6 +72,12 @@ public:
     Q_INVOKABLE bool sessionKeepAwake(int index) const;
     Q_INVOKABLE void setSessionKeepAwake(int index, bool enabled);
 
+    // System clipboard access for OSC 52 read/write from terminal programs.
+    // Routed through QGuiApplication::clipboard() so OSC 52 uses the same
+    // clipboard as copy/paste; the read policy (ask/allow/deny) still applies.
+    Q_INVOKABLE QString clipboardText() const;
+    Q_INVOKABLE void setClipboardText(const QString &text);
+
     // Per-session font change must not silently mutate the global default — leave updateGlobal false unless syncing is intended.
     Q_INVOKABLE void setActiveSessionFontSize(int size, bool updateGlobal = false);
     int activeSessionFontSize() const;
