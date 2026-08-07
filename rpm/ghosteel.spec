@@ -140,7 +140,6 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ] && [ -L .sfdk/src ]; then
                 ln -s "$SRC/$item" .
             fi
         done
-        fi
     fi
 fi
 
