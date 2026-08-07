@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-ZIG_VERSION="0.15.2"
+ZIG_VERSION="0.16.0"
 ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"

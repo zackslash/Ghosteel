@@ -4,7 +4,7 @@ Summary:    Ghosteel terminal emulator for Sailfish OS
 Version:    0.0.0
 Release:    1
 %define debug_package %{nil}
-%define zig_version 0.15.2
+%define zig_version 0.16.0
 License:    MIT
 URL:        https://github.com/zackslash/Ghosteel
 Source0:    %{name}-%{version}.tar.bz2
