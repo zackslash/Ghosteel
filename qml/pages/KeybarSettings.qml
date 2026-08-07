@@ -240,14 +240,22 @@ Page {
                                 font.pixelSize: Theme.fontSizeSmall
                             }
 
-                            // Inactive: thin faint line
-                            Rectangle {
+                            // Inactive: centered "+" mark (tap to create a row break)
+                            Item {
                                 anchors.centerIn: parent
                                 visible: !breakDivider.isBreak
-                                width: parent.width - 2 * Theme.horizontalPageMargin
-                                height: 1
-                                color: Theme.primaryColor
-                                opacity: breakDivider.canAdd ? 0.2 : 0.05
+                                opacity: breakDivider.canAdd ? 0.5 : 0.1
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 12; height: 1
+                                    color: Theme.primaryColor
+                                }
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 1; height: 12
+                                    color: Theme.primaryColor
+                                }
                             }
 
                             MouseArea {
