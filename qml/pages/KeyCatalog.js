@@ -58,3 +58,12 @@ function findById(id) {
     }
     return null
 }
+
+// Row number (0-based) for a key at global index idx, given the row breaks.
+function rowForIndex(idx, breaks) {
+    for (var i = 0; i < breaks.length; i++) {
+        if (idx < breaks[i])
+            return i
+    }
+    return breaks.length
+}

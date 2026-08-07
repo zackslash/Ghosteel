@@ -58,6 +58,7 @@ Page {
             keys.push(keyId)
         } else if (!enabled && idx >= 0) {
             keys.splice(idx, 1)
+            adjustBreaksForRemoval(idx)
         }
         Settings.keybarKeys = keys
     }
@@ -74,17 +75,23 @@ Page {
         var idx = keys.indexOf(keyId)
         if (idx >= 0) {
             keys.splice(idx, 1)
+            adjustBreaksForRemoval(idx)
             Settings.keybarKeys = keys
         }
     }
 
-    function rowIndexForIndex(idx) {
-        var breaks = Settings.keybarRowBreaks
+    // Decrement breaks past the removed index so keys stay in their rows.
+    function adjustBreaksForRemoval(removedIdx) {
+        var breaks = Settings.keybarRowBreaks.slice()
+        var changed = false
         for (var i = 0; i < breaks.length; i++) {
-            if (idx < breaks[i])
-                return i
+            if (breaks[i] > removedIdx) {
+                breaks[i] = breaks[i] - 1
+                changed = true
+            }
         }
-        return breaks.length
+        if (changed)
+            Settings.keybarRowBreaks = breaks
     }
 
     SilicaFlickable {
@@ -175,7 +182,7 @@ Page {
                             }
                             text: {
                                 var def = KeyCatalog.findById(modelData)
-                                var rowTag = qsTr("Row") + " " + (keybarSettingsPage.rowIndexForIndex(index) + 1) + "  "
+                                var rowTag = qsTr("Row") + " " + (KeyCatalog.rowForIndex(index, Settings.keybarRowBreaks) + 1) + "  "
                                 if (!def) return rowTag + modelData
                                 if (def.description && def.description !== def.label)
                                     return rowTag + def.label + " (" + translateDescription(def.description) + ")"

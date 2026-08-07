@@ -222,10 +222,19 @@ void Settings::setKeybarVisible(bool visible)
 
 void Settings::setKeybarRowBreaks(const QVariantList &breaks)
 {
-    if (m_keybarRowBreaks == breaks)
+    // Clamp to at most 2 entries (max 3 rows), filter invalid values,
+    // keep ascending and deduplicated.
+    QVariantList clamped;
+    for (int i = 0; i < breaks.size() && clamped.size() < 2; ++i) {
+        bool ok = false;
+        int val = breaks[i].toInt(&ok);
+        if (ok && val > 0 && (clamped.isEmpty() || val > clamped.last().toInt()))
+            clamped.append(val);
+    }
+    if (m_keybarRowBreaks == clamped)
         return;
-    m_keybarRowBreaks = breaks;
-    m_settings.setValue(QStringLiteral("keybar/rowBreaks"), breaks);
+    m_keybarRowBreaks = clamped;
+    m_settings.setValue(QStringLiteral("keybar/rowBreaks"), clamped);
     scheduleSave();
     Q_EMIT keybarRowBreaksChanged();
 }

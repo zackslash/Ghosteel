@@ -1207,15 +1207,6 @@ Page {
         }
 
         // Row/column for a key at global index in keybarKeys.
-        function rowIndexForIndex(idx) {
-            var breaks = Settings.keybarRowBreaks
-            for (var i = 0; i < breaks.length; i++) {
-                if (idx < breaks[i])
-                    return i
-            }
-            return breaks.length
-        }
-
         function colIndexForIndex(idx) {
             var breaks = Settings.keybarRowBreaks
             var start = 0
@@ -1259,7 +1250,7 @@ Page {
                         width: Theme.itemSizeMedium
                         height: Theme.itemSizeMedium
                         x: Theme.paddingSmall + keybar.colIndexForIndex(index) * (Theme.itemSizeMedium + Theme.paddingSmall)
-                        y: keybar.rowIndexForIndex(index) * (Theme.itemSizeMedium + Theme.paddingSmall) + Theme.paddingSmall / 2
+                        y: KeyCatalog.rowForIndex(index, Settings.keybarRowBreaks) * (Theme.itemSizeMedium + Theme.paddingSmall) + Theme.paddingSmall / 2
 
                         highlighted: {
                             if (!keyDef) return false
