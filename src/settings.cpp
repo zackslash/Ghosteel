@@ -224,7 +224,7 @@ QVariantList Settings::sanitizeRowBreaks(const QVariantList &breaks) const
 {
     // Clamp to at most 2 entries (max 3 rows), filter invalid values,
     // drop breaks past the end of keybarKeys (prevents empty trailing rows),
-    // keep ascending and deduplicated.
+    // drop out-of-order and duplicate entries (input is assumed pre-sorted).
     QVariantList clamped;
     for (int i = 0; i < breaks.size() && clamped.size() < 2; ++i) {
         bool ok = false;

@@ -56,11 +56,12 @@ Page {
         var idx = keys.indexOf(keyId)
         if (enabled && idx < 0) {
             keys.push(keyId)
+            Settings.keybarKeys = keys
         } else if (!enabled && idx >= 0) {
             keys.splice(idx, 1)
+            Settings.keybarKeys = keys
             adjustBreaksForRemoval(idx)
         }
-        Settings.keybarKeys = keys
     }
 
     function moveKey(fromIdx, toIdx) {
@@ -75,23 +76,19 @@ Page {
         var idx = keys.indexOf(keyId)
         if (idx >= 0) {
             keys.splice(idx, 1)
-            adjustBreaksForRemoval(idx)
             Settings.keybarKeys = keys
+            adjustBreaksForRemoval(idx)
         }
     }
 
     // Decrement breaks past the removed index so keys stay in their rows.
     function adjustBreaksForRemoval(removedIdx) {
         var breaks = Settings.keybarRowBreaks.slice()
-        var changed = false
         for (var i = 0; i < breaks.length; i++) {
-            if (breaks[i] > removedIdx) {
+            if (breaks[i] > removedIdx)
                 breaks[i] = breaks[i] - 1
-                changed = true
-            }
         }
-        if (changed)
-            Settings.keybarRowBreaks = breaks
+        Settings.keybarRowBreaks = breaks
     }
 
     SilicaFlickable {

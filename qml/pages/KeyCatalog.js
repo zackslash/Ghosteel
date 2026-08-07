@@ -68,7 +68,7 @@ function rowForIndex(idx, breaks) {
     return breaks.length
 }
 
-// Column (0-based) within a row for a key at global index idx, given breaks.
+// Column (0-based) within a row for a key at global index idx, given the row breaks.
 function colForIndex(idx, breaks) {
     var start = 0
     for (var i = 0; i < breaks.length; i++) {

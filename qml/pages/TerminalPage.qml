@@ -1186,8 +1186,8 @@ Page {
         y: open ? parent.height - height : parent.height
         property bool open: false  // set by setKeybarOpen(), onToggleKeybar(), etc.
 
-        // Multi-row support: keybarRowBreaks holds sorted indices into keybarKeys
-        // where row breaks occur. Empty = 1 row (default). Clamped to [1, 3] rows.
+        // keybarRowBreaks: sorted indices into keybarKeys where a new row starts.
+        // Empty = 1 row (default). Row count is clamped to [1, 3].
         property int keybarRowCount: Math.max(1, Math.min(3, Settings.keybarRowBreaks.length + 1))
 
         // Widest row width for contentWidth (all rows scroll together).
