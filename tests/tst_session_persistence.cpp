@@ -2587,6 +2587,29 @@ private slots:
         QCOMPARE(restoredSpy.count(), 1);
     }
 
+    // Removing a flagged session must release the aggregate lock.
+    void testKeepAwakeReleasedOnSessionRemoval()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        TerminalView *view = mgr.createSession();
+        QVERIFY(view != nullptr);
+
+        mgr.setSessionKeepAwake(0, true);
+        QCOMPARE(mgr.keepAwakeActive(), true);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 1);
+
+        // Removing the flagged session drops the count to 0 and releases the lock.
+        QSignalSpy countSpy(&mgr, &SessionManager::keepAwakeActiveCountChanged);
+        mgr.removeSession(0);
+        QCOMPARE(mgr.keepAwakeActive(), false);
+        QCOMPARE(mgr.keepAwakeActiveCount(), 0);
+        QCOMPARE(countSpy.count(), 1);
+        QCOMPARE(mgr.sessionCount(), 0);
+    }
+
     // --- scrollbackDirty pipeline tests (contentChanged / justRestored / titleChanged) ---
 
     void testContentChangedBlockedByJustRestored()
