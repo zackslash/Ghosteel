@@ -104,7 +104,7 @@ Page {
                 id: schemeCombo
                 width: parent.width
                 label: qsTr("Color scheme")
-                description: Settings.followAmbience ? qsTr("Follows your ambience") : ""
+                description: Settings.followAmbience ? qsTr("Auto follows your ambience") : ""
                 // 0=Auto, 1=Dark, 2=Light — matches menu order; followAmbience takes precedence
                 currentIndex: Settings.followAmbience ? 0
                     : (Settings.colorScheme === "light" ? 2 : 1)
