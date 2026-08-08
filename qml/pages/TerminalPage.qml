@@ -1204,12 +1204,14 @@ Page {
             position: Dock.Bottom
         }
 
-        // Scheme-dependent tint. PanelBackground follows the ambience, which
-        // may not match the terminal color scheme. Semi-transparent white
-        // tints the panel light while preserving the gradient translucency.
+        // Scheme-dependent tint over PanelBackground. Ensures the keybar
+        // always matches the terminal scheme regardless of the ambience.
+        // PanelBackground provides the gradient translucency underneath.
         Rectangle {
             anchors.fill: parent
-            color: Settings.colorScheme === "light" ? Qt.rgba(1, 1, 1, 0.6) : "transparent"
+            color: Settings.colorScheme === "light"
+                   ? Qt.rgba(1, 1, 1, 0.6)
+                   : Qt.rgba(0, 0, 0, 0.5)
         }
 
         SilicaFlickable {

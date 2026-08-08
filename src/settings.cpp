@@ -46,7 +46,7 @@ void Settings::load()
     m_shellCommand = m_settings.value(QStringLiteral("terminal/shell"), QString()).toString();
     m_colorScheme = m_settings.value(QStringLiteral("terminal/colorScheme"),
                                      QStringLiteral("dark")).toString();
-    m_followAmbience = m_settings.value(QStringLiteral("terminal/followAmbience"), false).toBool();
+    m_followAmbience = m_settings.value(QStringLiteral("terminal/followAmbience"), true).toBool();
     m_backgroundOpacity = qBound(0.0f, m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat(), 1.0f);
     m_bellMode = qBound(0, m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(), 3);
     m_scrollbackPersistence = m_settings.value(QStringLiteral("scrollback/enabled"), false).toBool();

@@ -21,8 +21,8 @@ Page {
                     SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
-                    schemeCombo.currentIndex = 1 // Dark
-                    Settings.followAmbience = false
+                    schemeCombo.currentIndex = 0 // Auto
+                    Settings.followAmbience = true
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
                     urlAutoDetectToggle.checked = true
