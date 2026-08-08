@@ -336,6 +336,12 @@ Page {
             terminal.stickyModifiers = activeModifiers
     }
 
+    // Returns text/icon color for the current terminal color scheme.
+    // Dark scheme: ambience primary; light scheme: dark primary for white keybar.
+    function schemeTextColor() {
+        return Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor
+    }
+
     function showLinkDialog(uri) {
         pageStack.push(linkDialogComponent, { "url": uri })
     }
@@ -1298,9 +1304,7 @@ Page {
                             visible: !keyDef || keyDef.iconSource === undefined
                             text: keyDef ? keyDef.label : ""
                             font.pixelSize: Theme.fontSizeSmall
-                            // dark text on the light overlay; matches the panel above
-                            color: keyDelegate.highlighted ? Theme.highlightColor
-                                : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor)
+                            color: keyDelegate.highlighted ? Theme.highlightColor : page.schemeTextColor()
                         }
                     }
                 }
@@ -1322,7 +1326,7 @@ Page {
             Rectangle {
                 id: indicatorBar
                 height: parent.height
-                color: Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor
+                color: page.schemeTextColor()
                 radius: height / 2
                 width: keybarFlickable.contentWidth > 0
                        ? Math.max(20, keybarFlickable.width * (keybarFlickable.width / keybarFlickable.contentWidth))

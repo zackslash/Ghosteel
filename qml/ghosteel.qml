@@ -40,6 +40,12 @@ ApplicationWindow {
         onColorSchemeChanged: resolveAmbience()
     }
 
+    // Resolve immediately when followAmbience is toggled in settings
+    Connections {
+        target: Settings
+        onFollowAmbienceChanged: resolveAmbience()
+    }
+
     // IPC exec: navigate to terminal so user sees the result
     Connections {
         target: SessionManager

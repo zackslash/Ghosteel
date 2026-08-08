@@ -121,7 +121,6 @@ Page {
                     var choice = colorSchemes[currentIndex]
                     if (choice === "auto") {
                         Settings.followAmbience = true
-                        Settings.colorScheme = (Theme.colorScheme === Theme.DarkOnLight) ? "light" : "dark"
                     } else {
                         Settings.followAmbience = false
                         Settings.colorScheme = choice
