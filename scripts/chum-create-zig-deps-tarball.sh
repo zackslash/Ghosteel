@@ -54,6 +54,8 @@ tar -xJf "$ZIG_OUTPUT" -C "$WORK_DIR"
 ZIG_BIN="${WORK_DIR}/zig-x86_64-linux-${ZIG_VERSION}/zig"
 
 # Delete zig-pkg/ so all packages are fetched fresh into the isolated cache.
+# Zig 0.16.0 stores extracted deps in zig-pkg/ (project-local); if it already
+# exists, no network fetch occurs and no tarballs are written to p/.
 rm -rf "${GHOSTTY_DIR}/zig-pkg"
 
 cd "$GHOSTTY_DIR"
@@ -96,7 +98,10 @@ for pkg_tarball in "${WORK_DIR}/p"/*.tar.gz; do
     hash=$(basename "$pkg_tarball" .tar.gz)
     pkg_dir="${WORK_DIR}/pkg/${hash}"
     mkdir -p "$pkg_dir"
-    tar -xzf "$pkg_tarball" --strip-components=1 -C "$pkg_dir" 2>/dev/null
+    tar -xzf "$pkg_tarball" --strip-components=1 -C "$pkg_dir"
+    if [ ! -f "${pkg_dir}/build.zig.zon" ]; then
+        echo "WARN: ${hash} missing build.zig.zon after extract" >&2
+    fi
 
     # Strip bloat never needed for a release build.
     for name in "${STRIP_NAMES[@]}"; do
