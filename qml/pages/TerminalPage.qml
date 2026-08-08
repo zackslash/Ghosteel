@@ -1196,6 +1196,13 @@ Page {
             position: Dock.Bottom
         }
 
+        // Scheme-dependent overlay for light mode. PanelBackground follows
+        // the ambience, which may not match the terminal color scheme.
+        Rectangle {
+            anchors.fill: parent
+            color: Settings.colorScheme === "light" ? "#FFFFFF" : "transparent"
+        }
+
         SilicaFlickable {
             id: keybarFlickable
             anchors.fill: parent
@@ -1277,7 +1284,8 @@ Page {
                             visible: !keyDef || keyDef.iconSource === undefined
                             text: keyDef ? keyDef.label : ""
                             font.pixelSize: Theme.fontSizeSmall
-                            color: keyDelegate.highlighted ? Theme.highlightColor : Theme.primaryColor
+                            color: keyDelegate.highlighted ? Theme.highlightColor
+                                : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor)
                         }
                     }
                 }
@@ -1299,7 +1307,7 @@ Page {
             Rectangle {
                 id: indicatorBar
                 height: parent.height
-                color: Theme.primaryColor
+                color: Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor
                 radius: height / 2
                 width: keybarFlickable.contentWidth > 0
                        ? Math.max(20, keybarFlickable.width * (keybarFlickable.width / keybarFlickable.contentWidth))
