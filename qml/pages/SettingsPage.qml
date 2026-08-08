@@ -7,6 +7,7 @@ Page {
     allowedOrientations: Orientation.All
 
     property var colorSchemes: ["auto", "dark", "light"]
+    property bool updatingScheme: false
 
     SilicaFlickable {
         anchors.fill: parent
@@ -20,7 +21,7 @@ Page {
                     SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
-                    schemeCombo.currentIndex = 1
+                    schemeCombo.currentIndex = 1 // Dark
                     Settings.followAmbience = false
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
@@ -104,6 +105,7 @@ Page {
                 width: parent.width
                 label: qsTr("Color scheme")
                 description: qsTr("Auto follows your ambience")
+                // 0=Auto, 1=Dark, 2=Light — matches menu order; followAmbience takes precedence
                 currentIndex: Settings.followAmbience ? 0
                     : (Settings.colorScheme === "light" ? 2 : 1)
 
@@ -114,6 +116,8 @@ Page {
                 }
 
                 onCurrentIndexChanged: {
+                    if (updatingScheme) return
+                    updatingScheme = true
                     var choice = colorSchemes[currentIndex]
                     if (choice === "auto") {
                         Settings.followAmbience = true
@@ -122,6 +126,7 @@ Page {
                         Settings.followAmbience = false
                         Settings.colorScheme = choice
                     }
+                    updatingScheme = false
                 }
             }
 

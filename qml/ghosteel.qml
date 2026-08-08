@@ -30,10 +30,11 @@ ApplicationWindow {
 
     function resolveAmbience() {
         if (Settings.followAmbience)
+            // Light ambience (DarkOnLight) → light terminal bg; everything else → dark
             Settings.colorScheme = (Theme.colorScheme === Theme.DarkOnLight) ? "light" : "dark"
     }
 
-    // Update terminal colors when the user switches ambiences
+    // Re-resolve when the ambience changes (startup or user switch)
     Connections {
         target: Theme
         onColorSchemeChanged: resolveAmbience()

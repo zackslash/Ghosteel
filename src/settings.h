@@ -148,7 +148,7 @@ private:
     QString m_fontFamily = QStringLiteral("monospace");
     QString m_shellCommand;
     QString m_colorScheme = QStringLiteral("dark");
-    bool m_followAmbience = false;
+    bool m_followAmbience = false; // default: off — opt-in ambience follow
     float m_backgroundOpacity = 0.6f;
     int m_bellMode = 1; // default: Vibrate
     bool m_scrollbackPersistence = false; // default: off (opt-in)
