@@ -337,9 +337,10 @@ Page {
     }
 
     // Returns text/indicator color for the current terminal color scheme.
-    // Dark scheme: ambience primary; light scheme: dark primary for white keybar.
+    // Uses contrast-paired colors so text is always readable on the keybar
+    // regardless of whether the ambience matches the terminal scheme.
     function schemeTextColor() {
-        return Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor
+        return Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.lightPrimaryColor
     }
 
     function showLinkDialog(uri) {
