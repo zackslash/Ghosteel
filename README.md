@@ -97,12 +97,12 @@ systemctl --user restart lipstick.service
 
 ## Build
 
-Requires Sailfish OS SDK and Zig 0.15.2 (Ghostty is incompatible with 0.16+).
+Requires Sailfish OS SDK and Zig 0.16.0.
 
 ```bash
-# Install Zig 0.15.2
-curl -L https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz | tar -xJ -C ~/.local/
-ln -sf ~/.local/zig-x86_64-linux-0.15.2/zig ~/.local/bin/zig
+# Install Zig 0.16.0
+curl -L https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz | tar -xJ -C ~/.local/
+ln -sf ~/.local/zig-x86_64-linux-0.16.0/zig ~/.local/bin/zig
 
 # Build libghostty-vt for your target architecture
 ./scripts/build-libs.sh          # all architectures
@@ -126,8 +126,6 @@ Before first IDE build:
 git submodule update --init
 ./scripts/build-libs.sh i486
 ```
-
-The Ghostty submodule needs a patch for a Zig i386 C ABI bug. It's applied automatically by the spec during builds. For manual builds: `git -C ghostty apply patches/ghostty-i386-abi-fix.patch`
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for git hooks and development guidelines.
 

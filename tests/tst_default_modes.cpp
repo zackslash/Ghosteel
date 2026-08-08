@@ -27,7 +27,7 @@ private slots:
         QVERIFY(value);
     }
 
-    // Ghostty mode 12 defaults to false; Ghosteel enables cursor blinking.
+    // DEC mode 12 defaults to false; Ghosteel enables cursor blinking.
     void testCursorBlinkingEnabled()
     {
         ghostty_stubs_reset_modes();
