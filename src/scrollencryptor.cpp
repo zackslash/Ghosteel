@@ -272,9 +272,9 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
 
     const QByteArray padded = pkcs7Pad(plaintext);
 
-    // Parent to this so the lambda dispatches on the GUI thread event loop.
-    // No waitForFinished() — the D-Bus round-trip happens off the GUI thread,
-    // and statusChanged is delivered back via our thread's event loop.
+    // Parent to this for lifetime (auto-delete if destroyed mid-request).
+    // The callback runs on the GUI thread because enc is the connect
+    // context object and was created here.
     auto *enc = new EncryptRequest(this);
     enc->setManager(m_cryptoManager.get());
     enc->setData(padded);

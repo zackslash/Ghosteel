@@ -208,8 +208,7 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
 
     auto trySave = [&](SessionInfo &info) {
         // Skip sessions with an async encrypt request still in flight —
-        // saveCompleted/saveFailed will clear the flag when the D-Bus reply
-        // lands. Re-exporting now would double-encrypt the same data.
+        // avoid a second concurrent encrypt racing the in-flight one.
         if (!force && info.scrollbackSaveInFlight)
             return;
         if (!info.scrollbackDirty)
@@ -220,9 +219,7 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
             anyThrottled = true;
             return;
         }
-        saveSessionScrollback(info, force);  // async (or sync on quit); clears dirty on success
-        if (!info.scrollbackDirty)
-            info.lastScrollbackSaveMs = now;
+        saveSessionScrollback(info, force);  // async (or sync on quit); dirty cleared by saveCompleted handler
     };
 
     // Process active session first for priority on quit
