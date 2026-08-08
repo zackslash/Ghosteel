@@ -414,9 +414,9 @@ void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info
         // case-insensitive comparison used by rebuildSortedIndices().
         // Ties fall through to the end, preserving stable-sort semantics.
         const QString newName = info.name.toLower();
-        predictedPos = m_sessions.size();
-        for (int i = 0; i < m_sessions.size(); ++i) {
-            if (newName < m_sessions.at(i).name.toLower()) {
+        predictedPos = m_sortedIndices.size();
+        for (int i = 0; i < m_sortedIndices.size(); ++i) {
+            if (newName < m_sessions.at(m_sortedIndices.at(i)).name.toLower()) {
                 predictedPos = i;
                 break;
             }
@@ -433,6 +433,8 @@ void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info
     beginInsertRows(QModelIndex(), predictedPos, predictedPos);
     m_sessions.append(info);
     rebuildSortedIndices();
+    // The predicted display position must match the rebuilt sort order.
+    Q_ASSERT(actualToDisplay(m_sessions.size() - 1) == predictedPos);
     endInsertRows();
 
     int index = m_sessions.size() - 1;
@@ -469,7 +471,7 @@ void SessionManager::removeSession(int index)
 
     SessionInfo info = m_sessions.takeAt(index);
 
-    // Rebuild sort order and emit layoutChanged BEFORE activeSessionIndexChanged,
+    // Rebuild sort order and call endRemoveRows() BEFORE activeSessionIndexChanged,
     // so handlers see a consistent display→actual mapping when they re-evaluate.
     if (m_sessions.isEmpty()) {
         m_activeSessionIndex = -1;
@@ -634,6 +636,13 @@ void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
 
     m_sessions[index].autorunCommand = cmd;
     Q_EMIT sessionAutorunCommandChanged(index);
+
+    // Emit dataChanged for the autorun role so the QML delegate's
+    // model.autorunCommand binding re-evaluates.
+    QVector<int> roles = {AutorunCommandRole};
+    int displayPos = actualToDisplay(index);
+    if (displayPos >= 0 && displayPos < m_sortedIndices.size())
+        Q_EMIT dataChanged(this->index(displayPos), this->index(displayPos), roles);
 
     scheduleSave();
 }

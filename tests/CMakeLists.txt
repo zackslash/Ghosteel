@@ -36,10 +36,6 @@ add_executable(tst_session_persistence
 target_compile_options(tst_session_persistence PRIVATE
     -include${CMAKE_SOURCE_DIR}/stubs/terminalview.h
 )
-# Stubs dir in system path so #include <QQmlListProperty> finds our stub
-target_include_directories(tst_session_persistence PRIVATE SYSTEM
-    ${CMAKE_SOURCE_DIR}/stubs
-)
 target_link_libraries(tst_session_persistence PRIVATE Qt5::Core Qt5::Gui Qt5::Test Qt5::Network)
 add_test(NAME SessionPersistence COMMAND tst_session_persistence)
 
