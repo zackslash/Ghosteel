@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Súmáil amach</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tapáil idir dhá eochair chun ró nua a thosú</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ró</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

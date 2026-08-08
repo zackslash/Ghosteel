@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Umanji</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Dodirnite između dva tipka za početak novog reda</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Red</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Riduci</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tocca tra due tasti per iniziare una nuova riga</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Riga</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

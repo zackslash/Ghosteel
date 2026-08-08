@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Зменшити</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Торкніться між двома клавішами, щоб почати новий ряд</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ряд</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

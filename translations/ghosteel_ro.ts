@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Micșorează</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Atingeți între două taste pentru a începe un rând nou</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rând</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

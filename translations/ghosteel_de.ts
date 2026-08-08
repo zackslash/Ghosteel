@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Verkleinern</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Zwischen zwei Tasten tippen, um eine neue Zeile zu beginnen</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Zeile</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

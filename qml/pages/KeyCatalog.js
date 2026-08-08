@@ -58,3 +58,23 @@ function findById(id) {
     }
     return null
 }
+
+// Row number (0-based) for a key at global index idx, given the row breaks.
+function rowForIndex(idx, breaks) {
+    for (var i = 0; i < breaks.length; i++) {
+        if (idx < breaks[i])
+            return i
+    }
+    return breaks.length
+}
+
+// Column (0-based) within a row for a key at global index idx, given the row breaks.
+function colForIndex(idx, breaks) {
+    var start = 0
+    for (var i = 0; i < breaks.length; i++) {
+        if (idx < breaks[i])
+            return idx - start
+        start = breaks[i]
+    }
+    return idx - start
+}

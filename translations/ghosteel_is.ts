@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Minnka aðdrátt</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Ýttu á milli tveggja lykla til að hefja nýja röð</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Röð</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

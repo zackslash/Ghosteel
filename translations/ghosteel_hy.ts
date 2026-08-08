@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Փոքրացնել</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Հպեք երկու ստեղնների միջև՝ նոր տող սկսելու համար</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Տող</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

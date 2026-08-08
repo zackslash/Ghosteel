@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Уменьшить</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Нажмите между двумя клавишами, чтобы начать новый ряд</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ряд</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -259,7 +267,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Звонок</translation>
+        <translation>Сигнал</translation>
     </message>
     <message>
         <source>Color scheme</source>
@@ -556,7 +564,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Bell</source>
-        <translation>Звонок</translation>
+        <translation>Сигнал</translation>
     </message>
 </context>
 </TS>

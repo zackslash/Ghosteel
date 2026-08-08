@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Loitonna</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Napauta kahden näppäimen välissä aloittaaksesi uuden rivin</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rivi</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

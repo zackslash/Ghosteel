@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Умањи</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Додирните између два типка за почетак новог реда</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ред</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

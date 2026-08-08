@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Redueix</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Toqueu entre dues tecles per iniciar una fila nova</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Fila</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

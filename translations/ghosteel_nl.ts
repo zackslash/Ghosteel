@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Uitzoomen</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tik tussen twee toetsen om een nieuwe rij te beginnen</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rij</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

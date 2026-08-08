@@ -143,6 +143,14 @@
         <source>Zoom out</source>
         <translation>Kicsinyítés</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Két gomb közé koppintva új sort indíthat</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Sor</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

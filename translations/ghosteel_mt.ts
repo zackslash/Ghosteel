@@ -146,6 +146,14 @@
         <source>Zoom out</source>
         <translation>Naqqas</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Agħfas bejn żewġ tasti biex tibda ringiels ġdida</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>ringiela</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -455,6 +463,10 @@ Mħaddem minn magna terminali libghostty</translation>
     <message>
         <source>Default font size</source>
         <translation>Daqs tal-font awtomatika</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>

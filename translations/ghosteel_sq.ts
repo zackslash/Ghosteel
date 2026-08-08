@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Zvogëlo</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Prekni mes dy tasteve për të filluar një rresht të ri</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rresht</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

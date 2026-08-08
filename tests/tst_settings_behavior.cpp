@@ -403,6 +403,81 @@ private slots:
         QCOMPARE(s2.keybarKeys(), QStringList());
     }
 
+    // --- Keybar row breaks ---
+
+    void testKeybarRowBreaksDefault()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        // Default should be empty (single row)
+        QCOMPARE(s.keybarRowBreaks(), QVariantList());
+    }
+
+    void testKeybarRowBreaksSetAndGet()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QVariantList breaks = {4, 7};
+        s.setKeybarRowBreaks(breaks);
+        QCOMPARE(s.keybarRowBreaks(), breaks);
+    }
+
+    void testKeybarRowBreaksMaxTwo()
+    {
+        // Max 2 breaks = 3 rows. Third break should be dropped.
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setKeybarKeys({"a","b","c","d","e","f","g","h","i","j"});
+        QVariantList input = {2, 5, 8};
+        QVariantList expected = {2, 5};
+        s.setKeybarRowBreaks(input);
+        QCOMPARE(s.keybarRowBreaks(), expected);
+    }
+
+    void testKeybarRowBreaksFilterInvalid()
+    {
+        // Values <= 0 or >= key count should be filtered
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setKeybarKeys({"a","b","c","d","e"});
+        QVariantList input = {0, -1, 3, 5, 10};
+        QVariantList expected = {3};
+        s.setKeybarRowBreaks(input);
+        QCOMPARE(s.keybarRowBreaks(), expected);
+    }
+
+    void testKeybarRowBreaksDedup()
+    {
+        // Duplicate values should be removed (monotonic check rejects equal)
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setKeybarKeys({"a","b","c","d","e","f"});
+        QVariantList input = {2, 2, 4};
+        QVariantList expected = {2, 4};
+        s.setKeybarRowBreaks(input);
+        QCOMPARE(s.keybarRowBreaks(), expected);
+    }
+
+    void testKeybarRowBreaksEmpty()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setKeybarRowBreaks({});
+        QCOMPARE(s.keybarRowBreaks(), QVariantList());
+    }
+
+    void testKeybarRowBreaksTrailingTrim()
+    {
+        // Breaks >= key count should be trimmed
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setKeybarKeys({"a","b","c"});
+        QVariantList input = {1, 3};  // 3 >= size(3), should be dropped
+        QVariantList expected = {1};
+        s.setKeybarRowBreaks(input);
+        QCOMPARE(s.keybarRowBreaks(), expected);
+    }
+
     // --- Keybar visible ---
 
     void testKeybarVisibleNoOpSignalSuppression()

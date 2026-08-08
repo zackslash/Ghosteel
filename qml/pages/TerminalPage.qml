@@ -1190,9 +1190,29 @@ Page {
         id: keybar
         anchors.left: parent.left
         anchors.right: parent.right
-        height: Theme.itemSizeMedium + Theme.paddingSmall
+        height: keybarRowCount * (Theme.itemSizeMedium + Theme.paddingSmall)
         y: open ? parent.height - height : parent.height
         property bool open: false  // set by setKeybarOpen(), onToggleKeybar(), etc.
+
+        // keybarRowBreaks: sorted indices into keybarKeys where a new row starts.
+        // Empty = 1 row (default). Row count is clamped to [1, 3].
+        property int keybarRowCount: Math.max(1, Math.min(3, Settings.keybarRowBreaks.length + 1))
+
+        // Widest row width for contentWidth (all rows scroll together).
+        property real keybarContentWidth: {
+            var keys = Settings.keybarKeys
+            var breaks = Settings.keybarRowBreaks
+            var cellW = Theme.itemSizeMedium + Theme.paddingSmall
+            var maxLen = 0
+            var start = 0
+            for (var i = 0; i <= breaks.length; i++) {
+                var end = i < breaks.length ? breaks[i] : keys.length
+                var len = end - start
+                if (len > maxLen) maxLen = len
+                start = end
+            }
+            return maxLen * cellW
+        }
 
         Behavior on y {
             NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
@@ -1220,13 +1240,12 @@ Page {
             anchors.fill: parent
             clip: true
             flickableDirection: Flickable.HorizontalFlick
-            contentWidth: keyRow.implicitWidth
+            contentWidth: keybarContent.width
 
-            Row {
-                id: keyRow
-                anchors.verticalCenter: parent.verticalCenter
-                x: Theme.paddingSmall
-                spacing: Theme.paddingSmall
+            Item {
+                id: keybarContent
+                width: keybar.keybarContentWidth
+                height: keybarFlickable.height
 
                 Repeater {
                     model: Settings.keybarKeys
@@ -1237,6 +1256,8 @@ Page {
 
                         width: Theme.itemSizeMedium
                         height: Theme.itemSizeMedium
+                        x: Theme.paddingSmall + KeyCatalog.colForIndex(index, Settings.keybarRowBreaks) * (Theme.itemSizeMedium + Theme.paddingSmall)
+                        y: KeyCatalog.rowForIndex(index, Settings.keybarRowBreaks) * (Theme.itemSizeMedium + Theme.paddingSmall) + Theme.paddingSmall / 2
 
                         highlighted: {
                             if (!keyDef) return false
@@ -1313,6 +1334,19 @@ Page {
                         }
                     }
                 }
+            }
+        }
+
+        // Subtle row separators (only visible with 2+ rows)
+        Repeater {
+            model: keybar.keybarRowCount > 1 ? keybar.keybarRowCount - 1 : 0
+            delegate: Rectangle {
+                anchors.left: keybarFlickable.left
+                anchors.right: keybarFlickable.right
+                height: 1
+                y: (index + 1) * (Theme.itemSizeMedium + Theme.paddingSmall)
+                color: Theme.primaryColor
+                opacity: 0.15
             }
         }
 

@@ -147,6 +147,14 @@
         <source>Zoom out</source>
         <translation>Chwyddo allan</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tapiwch rhwng dwy allwedd i gychwyn rhes newydd</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rhes</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

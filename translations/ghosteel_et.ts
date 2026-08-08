@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Vähenda</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Puuduta kahe klahvi vahel, et alustada uut rida</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rida</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

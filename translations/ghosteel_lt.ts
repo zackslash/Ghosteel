@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Sumažinti</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Bakstelėkite tarp dviejų klavišų, kad pradėtumėte naują eilutę</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Eilutė</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -259,7 +267,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Skambutis</translation>
+        <translation>Signalas</translation>
     </message>
     <message>
         <source>Color scheme</source>
@@ -556,7 +564,7 @@ Varomas libghostty terminalo variklio</translation>
     </message>
     <message>
         <source>Bell</source>
-        <translation>Skambutis</translation>
+        <translation>Signalas</translation>
     </message>
 </context>
 </TS>

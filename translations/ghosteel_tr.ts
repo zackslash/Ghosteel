@@ -143,6 +143,14 @@
         <source>Zoom out</source>
         <translation>Uzaklaştır</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Yeni satır başlatmak için iki tuş arasına dokunun</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Satır</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

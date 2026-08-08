@@ -146,6 +146,14 @@
         <source>Zoom out</source>
         <translation>Zmanjšaj</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tapnite med dvema tipkama za začetek nove vrstice</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Vrstica</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

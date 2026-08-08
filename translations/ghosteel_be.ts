@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Паменшыць</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Націсніце паміж дзвюма клавішамі, каб пачаць новы рад</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Рад</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

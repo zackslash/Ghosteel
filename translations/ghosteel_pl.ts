@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Pomniejsz</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Stuknij między dwoma klawiszami, aby rozpocząć nowy wiersz</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Wiersz</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

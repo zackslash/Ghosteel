@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Txikiagotu</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Sakatu bi teklen artean errenkada berri bat hasteko</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Errenkada</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

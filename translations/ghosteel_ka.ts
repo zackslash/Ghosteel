@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>შემცირება</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>შეეხეთ ორ ღილაკს შორის ახალი რიგის დასაწყებად</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>რიგი</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

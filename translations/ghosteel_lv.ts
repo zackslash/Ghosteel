@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Samazināt</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Pieskarieties starp divām taustiņām, lai sāktu jaunu rindu</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rinda</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>

@@ -29,6 +29,7 @@ Page {
                     Settings.customShaderPath = ""
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
+                    Settings.keybarRowBreaks = []
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
                     Settings.keybarVisible = true
                     pinchToZoomToggle.checked = false

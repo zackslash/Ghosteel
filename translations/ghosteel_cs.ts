@@ -145,6 +145,14 @@
         <source>Zoom out</source>
         <translation>Oddálit</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Klepněte mezi dvěma klávesami pro vytvoření nového řádku</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Řádek</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
