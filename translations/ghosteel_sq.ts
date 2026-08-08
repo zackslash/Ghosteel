@@ -458,6 +458,14 @@ Mundësuar nga motori i terminalit libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Ndrysho madhësinë e shkronjave të sesionit me gjest pinçimi me dy gishta</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto ndjek ambientin tuaj</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ Mundësuar nga motori i terminalit libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Parazgjedhje</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Zile</translation>
     </message>
 </context>
 </TS>

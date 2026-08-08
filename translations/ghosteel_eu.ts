@@ -458,6 +458,14 @@ libghostty terminal motorrak bultzatuta</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Aldatu saioaren letra-tamaina hatz batekiko pintzean bi hatzekin</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto-k jarraitzen du zure giroari</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ libghostty terminal motorrak bultzatuta</translation>
     <message>
         <source>Default</source>
         <translation>Lehenetsia</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Txirrina</translation>
     </message>
 </context>
 </TS>

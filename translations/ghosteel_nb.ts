@@ -458,6 +458,14 @@ Drevet av libghostty terminalmotor</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Endre skriftstørrelsen i økten med en tofingerklype-bevegelse</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto følger ditt miljø</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ Drevet av libghostty terminalmotor</translation>
     <message>
         <source>Default</source>
         <translation>Standard</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Signal</translation>
     </message>
 </context>
 </TS>

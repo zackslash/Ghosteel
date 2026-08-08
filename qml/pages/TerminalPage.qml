@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
 import Nemo.Notifications 1.0
 import com.zackslash.ghosteel 1.0
+import QtGraphicalEffects 1.0
 import "KeyCatalog.js" as KeyCatalog
 
 Page {
@@ -333,6 +334,13 @@ Page {
     onActiveModifiersChanged: {
         if (terminal)
             terminal.stickyModifiers = activeModifiers
+    }
+
+    // Returns text/indicator color for the current terminal color scheme.
+    // Uses contrast-paired colors so text is always readable on the keybar
+    // regardless of whether the ambience matches the terminal scheme.
+    function schemeTextColor() {
+        return Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.lightPrimaryColor
     }
 
     function showLinkDialog(uri) {
@@ -1190,10 +1198,21 @@ Page {
             NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
         }
 
-        // Match DockedPanel's default translucent gradient background
+        // Match DockedPanel's default translucent gradient background.
+        // Kept visible in both schemes — the overlay tints it for light mode.
         PanelBackground {
             anchors.fill: parent
             position: Dock.Bottom
+        }
+
+        // Scheme-dependent tint over PanelBackground. Only tints when the
+        // terminal scheme differs from the ambience to avoid mismatched keybar.
+        Rectangle {
+            anchors.fill: parent
+            color: Settings.colorScheme === "light"
+                   ? Qt.rgba(1, 1, 1, 0.6)
+                   : (Theme.colorScheme === Theme.DarkOnLight
+                      ? Qt.rgba(0, 0, 0, 0.5) : "transparent")
         }
 
         SilicaFlickable {
@@ -1261,14 +1280,27 @@ Page {
                             }
                         }
 
-                        // Icon for keys with iconSource (arrows, keyboard)
-                        IconButton {
+                        // Icon for keys with iconSource (arrows).
+                        // ColorOverlay tints icons dark for the light scheme
+                        // where Silica theme icons would be invisible on white.
+                        Image {
+                            id: keyIcon
                             anchors.centerIn: parent
                             visible: keyDef && keyDef.iconSource !== undefined
-                            icon.source: keyDef && keyDef.iconSource !== undefined
-                                       ? "image://theme/" + keyDef.iconSource : ""
-                            highlighted: keyDelegate.highlighted
-                            enabled: false
+                            source: keyDef && keyDef.iconSource !== undefined
+                                   ? "image://theme/" + keyDef.iconSource : ""
+                            width: Theme.iconSizeMedium
+                            height: Theme.iconSizeMedium
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: keyIcon
+                            source: keyIcon
+                            visible: keyIcon.visible
+                            // Highlighted (Ctrl/Alt/keyboard active): accent color.
+                            // Light scheme: dark tint. Dark scheme: #FFFFFF = no-op.
+                            color: keyDelegate.highlighted ? Theme.highlightColor
+                                : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : "#FFFFFF")
                         }
 
                         // Label for text keys (Tab, Esc, Ctrl, Alt, F-keys, etc.)
@@ -1277,7 +1309,7 @@ Page {
                             visible: !keyDef || keyDef.iconSource === undefined
                             text: keyDef ? keyDef.label : ""
                             font.pixelSize: Theme.fontSizeSmall
-                            color: keyDelegate.highlighted ? Theme.highlightColor : Theme.primaryColor
+                            color: keyDelegate.highlighted ? Theme.highlightColor : page.schemeTextColor()
                         }
                     }
                 }
@@ -1299,7 +1331,7 @@ Page {
             Rectangle {
                 id: indicatorBar
                 height: parent.height
-                color: Theme.primaryColor
+                color: page.schemeTextColor()
                 radius: height / 2
                 width: keybarFlickable.contentWidth > 0
                        ? Math.max(20, keybarFlickable.width * (keybarFlickable.width / keybarFlickable.contentWidth))

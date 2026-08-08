@@ -458,6 +458,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Αλλάξτε το μέγεθος γραμματοσειράς της συνεδρίας με χειρονομία τσιμπήματος δύο δαχτύλων</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Αυτόματο ακολουθεί το περιβάλλον σας</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Αυτόματο</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>Προεπιλογή</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Κουδούνι</translation>
     </message>
 </context>
 </TS>

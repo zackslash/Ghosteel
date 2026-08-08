@@ -11,7 +11,6 @@
         <source>%n session(s)</source>
         <translation>
             <numerusform>%n oturum</numerusform>
-            <numerusform>%n oturum</numerusform>
         </translation>
     </message>
 </context>
@@ -458,6 +457,14 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Oturumun yazı tipi boyutunu iki parmak kıstırma hareketiyle değiştir</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Otomatik ortamınızı takip eder</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Otomatik</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +551,10 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
     <message>
         <source>Default</source>
         <translation>Varsayılan</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Zil</translation>
     </message>
 </context>
 </TS>
