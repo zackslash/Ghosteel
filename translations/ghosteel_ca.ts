@@ -466,6 +466,14 @@ Impulsat pel motor de terminal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Canvia la mida de lletra de la sessió amb un gest de pessic de dos dits</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automàtic segueix el teu ambient</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automàtic</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

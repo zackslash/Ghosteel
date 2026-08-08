@@ -466,6 +466,14 @@ Drevet af libghostty terminalmotor</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Skift skriftstørrelse i sessionen med en tofingerknib-bevægelse</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto følger dit miljø</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

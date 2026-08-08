@@ -467,6 +467,14 @@ Darbina libghostty termināla dzinējs</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Mainiet sesijas fonta izmēru ar divu pirkstu kniebšanas žestu</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto seko jūsu noskaņojumam</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

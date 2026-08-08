@@ -466,6 +466,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Փոխեք սեսիայի տառատեսակի չափը երկու մատով սեղմելու ժեստով</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Ավտոն հետևում է ձեր մթնոլորտին</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Ավտո</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

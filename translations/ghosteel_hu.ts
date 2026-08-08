@@ -465,6 +465,14 @@ A libghostty terminálmotor hajtja</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Munkamenet betűméretének módosítása kétujjas csippentő mozdulattal</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto követi a hangulatot</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

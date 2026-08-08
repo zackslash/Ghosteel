@@ -17,12 +17,33 @@ ApplicationWindow {
     allowedOrientations: defaultAllowedOrientations
 
     Component.onCompleted: {
+        // Resolve ambience-following before sessions are restored so
+        // terminals are created with the correct color scheme.
+        resolveAmbience()
         // Restore saved sessions if available, otherwise create a fresh one
         if (!SessionManager.restoreSessions()) {
             SessionManager.createSession()
         }
         // Process CLI args (-e/--exec, -s/--session) after sessions are restored
         SessionManager.processCliArgs()
+    }
+
+    function resolveAmbience() {
+        if (Settings.followAmbience)
+            // Light ambience (DarkOnLight) → light terminal bg; everything else → dark
+            Settings.colorScheme = (Theme.colorScheme === Theme.DarkOnLight) ? "light" : "dark"
+    }
+
+    // Re-resolve on runtime ambience change or late theme init
+    Connections {
+        target: Theme
+        onColorSchemeChanged: resolveAmbience()
+    }
+
+    // Resolve immediately when followAmbience is toggled in settings
+    Connections {
+        target: Settings
+        onFollowAmbienceChanged: resolveAmbience()
     }
 
     // IPC exec: navigate to terminal so user sees the result

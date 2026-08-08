@@ -466,6 +466,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Muuta istunnon fontin kokoa kahden sormen nipistys-eleellä</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automaattinen seuraa ympäristöäsi</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automaattinen</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

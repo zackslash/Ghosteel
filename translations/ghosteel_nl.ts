@@ -466,6 +466,14 @@ Aangedreven door de libghostty terminal-engine</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Wijzig de lettergrootte van de sessie met een tweevinger-knijpgebaar</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automatisch volgt je omgeving</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatisch</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

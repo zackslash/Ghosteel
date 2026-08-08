@@ -467,6 +467,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Смени ја големината на фонтот на сесијата со гест на штипање со два прста</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Авто го следи вашиот амбиент</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Авто</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

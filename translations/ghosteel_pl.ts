@@ -467,6 +467,14 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Zmień rozmiar czcionki sesji za pomocą gestu uszczypnięcia dwoma palcami</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automatycznie podąża za Twoim motywem</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatycznie</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

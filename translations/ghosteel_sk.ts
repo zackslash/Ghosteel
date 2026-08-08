@@ -467,6 +467,14 @@ Poháňané terminálovým enginom libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Zmeňte veľkosť písma relácie gestom štipnutia dvoma prstami</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto nasleduje vaše prostredie</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

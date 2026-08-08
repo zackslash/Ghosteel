@@ -466,6 +466,14 @@ Keyrt af libghostty skjáhermisvél</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Breyttu leturstærð setunnar með tveggja-fingra klemmuhreyfingu</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Sjálfvirkt fylgir umhverfi þínu</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Sjálfvirkt</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

@@ -466,6 +466,14 @@ Impulsado polo motor de terminal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Cambia o tamaño de fonte da sesión cun xesto de belisco de dous dedos</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto segue o teu ambiente</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

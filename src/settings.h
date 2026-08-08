@@ -16,6 +16,7 @@ class Settings : public QObject
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
     Q_PROPERTY(QString shellCommand READ shellCommand WRITE setShellCommand NOTIFY shellCommandChanged)
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
+    Q_PROPERTY(bool followAmbience READ followAmbience WRITE setFollowAmbience NOTIFY followAmbienceChanged)
     Q_PROPERTY(float backgroundOpacity READ backgroundOpacity WRITE setBackgroundOpacity NOTIFY backgroundOpacityChanged)
     Q_PROPERTY(int bellMode READ bellMode WRITE setBellMode NOTIFY bellModeChanged)
     Q_PROPERTY(bool scrollbackPersistence READ scrollbackPersistence WRITE setScrollbackPersistence NOTIFY scrollbackPersistenceChanged)
@@ -70,6 +71,9 @@ public:
     QString colorScheme() const { return m_colorScheme; }
     void setColorScheme(const QString &scheme);
 
+    bool followAmbience() const { return m_followAmbience; }
+    void setFollowAmbience(bool enabled);
+
     float backgroundOpacity() const { return m_backgroundOpacity; }
     void setBackgroundOpacity(float opacity);
 
@@ -122,6 +126,7 @@ Q_SIGNALS:
     void fontFamilyChanged();
     void shellCommandChanged();
     void colorSchemeChanged();
+    void followAmbienceChanged();
     void backgroundOpacityChanged();
     void bellModeChanged();
     void scrollbackPersistenceChanged();
@@ -149,6 +154,7 @@ private:
     QString m_fontFamily = QStringLiteral("monospace");
     QString m_shellCommand;
     QString m_colorScheme = QStringLiteral("dark");
+    bool m_followAmbience = true; // default: on — follows ambience
     float m_backgroundOpacity = 0.6f;
     int m_bellMode = 1; // default: Vibrate
     bool m_scrollbackPersistence = false; // default: off (opt-in)

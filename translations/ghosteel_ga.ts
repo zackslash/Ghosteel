@@ -467,6 +467,14 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Athraigh méid cló an tseisiúin le gotha pincín dhá mhéar</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Leanann Auto d'atmaisféar</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

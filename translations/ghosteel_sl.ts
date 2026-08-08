@@ -468,6 +468,14 @@ Poganja terminalski pogon libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Spremeni velikost pisave seje z gesto ščipanja z dvema prstoma</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto sledi vašemu ambientu</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

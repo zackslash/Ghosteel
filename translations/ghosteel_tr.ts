@@ -465,6 +465,14 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Oturumun yazı tipi boyutunu iki parmak kıstırma hareketiyle değiştir</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Otomatik ortamınızı takip eder</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Otomatik</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

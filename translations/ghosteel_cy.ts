@@ -469,6 +469,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Newid maint ffont y sesiwn gyda ystum gwasgu dau bys</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto yn dilyn eich amgylchedd</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
