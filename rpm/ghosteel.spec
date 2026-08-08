@@ -172,13 +172,12 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
         exit 1
     fi
 
-    # --global-cache-dir (not --system) because the deps cache ships as
-    # .tar.gz tarballs in the global-cache p/ layout. --system expects
-    # pre-extracted directories, which doesn't match the tarball cache.
+    # --system mode trusts pre-extracted dirs without hash verification,
+    # allowing the deps cache to be stripped for smaller size.
     # Only set when the full deps cache exists (OBS builds)
     CACHE_FLAG=""
-    if [ -d "%{_builddir}/zig-cache/p" ]; then
-        CACHE_FLAG="--global-cache-dir %{_builddir}/zig-cache"
+    if ls %{_builddir}/zig-cache/*/ >/dev/null 2>&1; then
+        CACHE_FLAG="--system %{_builddir}/zig-cache"
     fi
 
     cd ghostty
