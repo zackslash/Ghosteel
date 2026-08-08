@@ -33,7 +33,7 @@ SessionManager::SessionManager(const QString &settingsPath, QObject *parent)
 }
 
 SessionManager::SessionManager(Settings *settings, QObject *parent)
-    : QObject(parent)
+    : QAbstractListModel(parent)
     , m_settings(settings)
 {
     // Initialize scrollback encryption (may fail gracefully — callers check isAvailable)
@@ -200,15 +200,38 @@ void SessionManager::setActiveSessionIndex(int index)
     if (m_activeSessionIndex == index)
         return;
 
+    int oldActive = m_activeSessionIndex;
+    bool sortRebuilt = false;
+
     // Update last-used timestamp and rebuild sort order BEFORE emitting
     // signals, so QML bindings that call displayToActual() see the
     // correct mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
+        layoutAboutToBeChanged();
         rebuildSortedIndices();
+        sortRebuilt = true;
     }
 
     m_activeSessionIndex = index;
+
+    if (sortRebuilt) {
+        layoutChanged();
+    } else {
+        // No sort reorder — just emit dataChanged for the active role
+        QVector<int> roles = {IsActiveRole};
+        if (oldActive >= 0) {
+            int oldDisplay = actualToDisplay(oldActive);
+            if (oldDisplay >= 0 && oldDisplay < m_sortedIndices.size())
+                Q_EMIT dataChanged(QAbstractListModel::index(oldDisplay), QAbstractListModel::index(oldDisplay), roles);
+        }
+        if (index >= 0) {
+            int newDisplay = actualToDisplay(index);
+            if (newDisplay >= 0 && newDisplay < m_sortedIndices.size())
+                Q_EMIT dataChanged(QAbstractListModel::index(newDisplay), QAbstractListModel::index(newDisplay), roles);
+        }
+    }
+
     Q_EMIT activeSessionIndexChanged();
     Q_EMIT sessionSwitched(index);
 
@@ -402,8 +425,10 @@ void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info
     connectSessionSignals(view, info.id);
     rebuildSortedIndices();
     int index = m_sessions.size() - 1;
+    int displayPos = actualToDisplay(index);
+    beginInsertRows(QModelIndex(), displayPos, displayPos);
+    endInsertRows();
     Q_EMIT sessionCountChanged();
-    Q_EMIT sessionsChanged();
     Q_EMIT sessionCreated(index);
     setActiveSessionIndex(index);
 }
@@ -428,9 +453,13 @@ void SessionManager::removeSession(int index)
     if (index < 0 || index >= m_sessions.size())
         return;
 
-    SessionInfo info = m_sessions.takeAt(index);
     bool wasActive = (index == m_activeSessionIndex);
     bool wasBeforeActive = (index < m_activeSessionIndex);
+
+    int displayRow = actualToDisplay(index);
+    beginRemoveRows(QModelIndex(), displayRow, displayRow);
+
+    SessionInfo info = m_sessions.takeAt(index);
 
     // Adjust active session index silently first, then rebuild sort order.
     // Signals are deferred so that QML bindings calling displayToActual()
@@ -453,6 +482,8 @@ void SessionManager::removeSession(int index)
     if (wasActive && !m_sortedIndices.isEmpty())
         m_activeSessionIndex = m_sortedIndices[0];
 
+    endRemoveRows();
+
     // Emit signals after sorted indices are ready.
     // activeSessionIndexChanged must precede sessionSwitched.
     // sessionSwitched must precede sessionRemoved so that the view
@@ -464,7 +495,6 @@ void SessionManager::removeSession(int index)
         Q_EMIT sessionSwitched(m_activeSessionIndex);
 
     Q_EMIT sessionCountChanged();
-    Q_EMIT sessionsChanged();
     Q_EMIT sessionRemoved(index, info.id);
 
     // Clean up and delete the view AFTER all signals have been emitted,
@@ -532,7 +562,18 @@ void SessionManager::setSessionName(int index, const QString &name)
 
     // Alphabetical sort depends on name — rebuild before emitting so that
     // QML bindings see the correct displayToActual() mapping.
-    rebuildSortedIndices();
+    if (sortMode() == Settings::SortAlphabetical) {
+        layoutAboutToBeChanged();
+        rebuildSortedIndices();
+        layoutChanged();
+    } else {
+        rebuildSortedIndices();
+        // Emit dataChanged for name-dependent roles on this row
+        QVector<int> roles = {NameRole, DisplayNameRole};
+        int displayPos = actualToDisplay(index);
+        if (displayPos >= 0 && displayPos < m_sortedIndices.size())
+            Q_EMIT dataChanged(this->index(displayPos), this->index(displayPos), roles);
+    }
     Q_EMIT sessionNameChanged(index);
 
     scheduleSave();
@@ -661,8 +702,9 @@ int SessionManager::sortMode() const
 void SessionManager::setSortMode(int mode)
 {
     m_settings->setSessionSortMode(mode);
+    layoutAboutToBeChanged();
     rebuildSortedIndices();
-    Q_EMIT sessionsChanged();
+    layoutChanged();
     Q_EMIT sortOrderChanged();
 }
 
@@ -968,10 +1010,15 @@ bool SessionManager::restoreSessions()
         // Ensure nextSessionId stays ahead of any restored ID
         if (savedId >= m_nextSessionId)
             m_nextSessionId = savedId + 1;
-
-        Q_EMIT sessionCountChanged();
-        Q_EMIT sessionsChanged();
     }
+
+    // Build sort order and notify the model of all new rows at once
+    rebuildSortedIndices();
+    if (!m_sessions.isEmpty()) {
+        beginInsertRows(QModelIndex(), 0, m_sessions.size() - 1);
+        endInsertRows();
+    }
+    Q_EMIT sessionCountChanged();
 
     // Restore active session by ID (or by legacy index)
     int resolvedActive = resolveActiveSession(activeId, legacyActiveIndex);
@@ -985,7 +1032,46 @@ bool SessionManager::restoreSessions()
     // so the next scrollback-only arm must not trigger a redundant metadata save.
     m_sessionsDirty = false;
     m_sessionsLoaded = true;
-    rebuildSortedIndices();
     Q_EMIT sessionsRestored();
     return true;
+}
+
+// QAbstractListModel overrides
+
+int SessionManager::rowCount(const QModelIndex &parent) const
+{
+    if (parent.isValid())
+        return 0;
+    return m_sortedIndices.size();
+}
+
+QVariant SessionManager::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_sortedIndices.size())
+        return QVariant();
+    int actual = m_sortedIndices.at(index.row());
+    if (actual < 0 || actual >= m_sessions.size())
+        return QVariant();
+    const SessionInfo &info = m_sessions.at(actual);
+    switch (role) {
+        case NameRole:           return info.name;
+        case IdRole:             return info.id;
+        case DisplayNameRole:    return sessionDisplayName(actual);
+        case AutorunCommandRole: return info.autorunCommand;
+        case WorkingDirectoryRole: return sessionWorkingDirectory(actual);
+        case IsActiveRole:       return actual == m_activeSessionIndex;
+    }
+    return QVariant();
+}
+
+QHash<int, QByteArray> SessionManager::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[NameRole] = "name";
+    roles[IdRole] = "id";
+    roles[DisplayNameRole] = "displayName";
+    roles[AutorunCommandRole] = "autorunCommand";
+    roles[WorkingDirectoryRole] = "workingDirectory";
+    roles[IsActiveRole] = "isActive";
+    return roles;
 }

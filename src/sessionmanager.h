@@ -2,6 +2,7 @@
 #define SESSIONMANAGER_H
 
 #include <QObject>
+#include <QAbstractListModel>
 #include <QQmlListProperty>
 #include <QVector>
 #include <QTimer>
@@ -19,7 +20,7 @@ class ScrollEncryptor;
 class Settings;
 class SessionStore;
 
-class SessionManager : public QObject
+class SessionManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int activeSessionIndex READ activeSessionIndex WRITE setActiveSessionIndex NOTIFY activeSessionIndexChanged)
@@ -33,6 +34,11 @@ public:
     explicit SessionManager(Settings *settings, QObject *parent = nullptr);
     explicit SessionManager(const QString &settingsPath, QObject *parent = nullptr);
     ~SessionManager();
+
+    // QAbstractListModel overrides
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     int activeSessionIndex() const { return m_activeSessionIndex; }
     void setActiveSessionIndex(int index);
@@ -128,6 +134,15 @@ Q_SIGNALS:
     void showSessionList(); // Request QML to show session picker
 
 private:
+    enum SessionRoles {
+        NameRole = Qt::UserRole + 1,
+        IdRole,
+        DisplayNameRole,
+        AutorunCommandRole,
+        WorkingDirectoryRole,
+        IsActiveRole
+    };
+
     static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
     static TerminalView* sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index);
     static QString socketPath();
