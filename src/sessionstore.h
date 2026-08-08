@@ -1,6 +1,7 @@
 #ifndef SESSIONSTORE_H
 #define SESSIONSTORE_H
 
+#include <QObject>
 #include <QPointer>
 #include <QString>
 #include <QStringList>
@@ -51,6 +52,7 @@ struct SessionInfo {
     bool isCommandSession() const { return !execArgs.isEmpty(); }
     bool scrollbackDirty = false;  // True if scrollback changed since last encrypt+save
     bool justRestored = false;     // True after restoreSessions(); skip dirty-marking until PTY data arrives
+    bool scrollbackSaveInFlight = false; // True while an async encrypt request is pending for this session
     qint64 lastScrollbackSaveMs = 0; // Epoch ms of last successful scrollback save (throttle under continuous output)
 };
 
@@ -59,7 +61,10 @@ struct PendingScrollbackRestore {
     int sessionId;
 };
 
-class SessionStore {
+class SessionStore : public QObject
+{
+    Q_OBJECT
+
 public:
     SessionStore(Settings *settings, ScrollEncryptor *encryptor);
 
@@ -69,7 +74,8 @@ public:
     // Encrypt + save scrollback for sessions marked dirty. Returns true if
     // throttled (5s min interval per session) and the caller should re-arm
     // the save timer; false otherwise. force=true bypasses the throttle
-    // (used on aboutToQuit).
+    // (used on aboutToQuit) and saves synchronously so nothing is lost
+    // while the event loop is stopping.
     bool saveScrollbackIncremental(QVector<SessionInfo> &sessions, int activeIndex, bool force = false);
 
     // purgeAll=true bypasses retention and removes every scrollback file (used when persistence is disabled).
@@ -81,11 +87,27 @@ public:
 
     QString scrollbackFilePath(int sessionId) const;
 
+Q_SIGNALS:
+    // Async scrollback encryption + write completed (data now on disk).
+    void saveCompleted(int sessionId);
+    // Async scrollback encryption or write failed — session is left dirty
+    // and will be retried on the next save opportunity.
+    void saveFailed(int sessionId);
+
 private:
     Settings *m_settings;
     ScrollEncryptor *m_encryptor;
 
-    void saveSessionScrollback(SessionInfo &info);
+    // Encrypts and writes one session's scrollback. With forceSync (aboutToQuit
+    // / destructor) encryption blocks via the sync encrypt(); otherwise it is
+    // started async via encryptAsync() and the disk write happens from the
+    // callback on the GUI thread event loop.
+    void saveSessionScrollback(SessionInfo &info, bool forceSync = false);
+
+    // Atomic QSaveFile + fsync write of an already-encrypted blob. Emits
+    // saveCompleted on success, saveFailed otherwise.
+    void writeScrollbackToDisk(int sessionId, const QByteArray &encrypted);
+
     QString scrollbackDir() const;
 };
 

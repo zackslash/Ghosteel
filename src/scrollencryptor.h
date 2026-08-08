@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QByteArray>
 #include <QVector>
+#include <functional>
 
 #ifdef SAILFISH_SECRETS
 #include <memory>
@@ -18,7 +19,8 @@ namespace Sailfish { namespace Crypto { class CryptoManager; class Key; } }
 // rather than falling back to plaintext. Scrollback is silently dropped
 // when encryption is unavailable.
 //
-// Thread safety: main thread only. Uses synchronous waitForFinished() calls.
+// Thread safety: main thread only. Uses async startRequest() for encryption,
+// sync for decryption.
 class ScrollEncryptor : public QObject
 {
     Q_OBJECT
@@ -34,9 +36,20 @@ public:
     // singleShot. Call before restoreSessions() — no-op if already initialized.
     void initializeNow();
 
+    // Invoked on the GUI thread event loop when the D-Bus reply arrives.
+    // Empty output means the encryption failed — caller should skip writing
+    // (no plaintext fallback).
+    using EncryptCallback = std::function<void(const QByteArray &encrypted)>;
+
     // Encrypt plaintext. Returns binary blob with header, or empty on failure.
     // Caller should skip writing (no plaintext fallback).
     QByteArray encrypt(const QByteArray &plaintext);
+
+    // Encrypt plaintext asynchronously via startRequest() (no waitForFinished).
+    // Returns immediately; the callback fires on the GUI thread event loop.
+    // Returns false (callback not invoked) if encryption is unavailable —
+    // caller should leave the data dirty for a later retry.
+    bool encryptAsync(const QByteArray &plaintext, EncryptCallback callback);
 
     // Decrypt ciphertext (with header). Returns plaintext, or empty on failure.
     QByteArray decrypt(const QByteArray &ciphertextWithHeader);

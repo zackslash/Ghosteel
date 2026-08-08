@@ -40,6 +40,27 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     m_encryptor = new ScrollEncryptor(this);
     m_store = std::make_unique<SessionStore>(m_settings, m_encryptor);
 
+    // Async scrollback encryption completes on the GUI thread event loop.
+    // Clear the in-flight guard so the session can be saved again; on success
+    // clear dirty (data is on disk), on failure leave dirty so the save is
+    // retried on the next opportunity (e.g. availabilityChanged).
+    connect(m_store.get(), &SessionStore::saveCompleted, this, [this](int sessionId) {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        m_sessions[idx].scrollbackSaveInFlight = false;
+        m_sessions[idx].scrollbackDirty = false;
+        m_sessions[idx].lastScrollbackSaveMs = QDateTime::currentMSecsSinceEpoch();
+    });
+    connect(m_store.get(), &SessionStore::saveFailed, this, [this](int sessionId) {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        // Clear the in-flight guard only; keep scrollbackDirty so the session
+        // is retried (the content was not persisted).
+        m_sessions[idx].scrollbackSaveInFlight = false;
+    });
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class

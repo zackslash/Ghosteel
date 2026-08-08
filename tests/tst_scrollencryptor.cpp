@@ -175,6 +175,21 @@ private slots:
         QCOMPARE(spy.count(), 1);
         QCOMPARE(encryptor.isAvailable(), false);
     }
+
+    void testEncryptAsyncUnavailableDoesNotInvokeCallback()
+    {
+        // Stub contract for the async path: encryption is never available in
+        // the non-SAILFISH_SECRETS build, so encryptAsync() must return false
+        // immediately and must NOT invoke the callback. Callers leave the
+        // session dirty and retry once encryption becomes available.
+        ScrollEncryptor encryptor;
+        bool invoked = false;
+        const bool ok = encryptor.encryptAsync(QByteArray("secret scrollback"),
+            [&invoked](const QByteArray &) { invoked = true; });
+
+        QCOMPARE(ok, false);
+        QCOMPARE(invoked, false);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestScrollEncryptor)
