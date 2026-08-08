@@ -514,6 +514,9 @@ void TerminalView::copySelection()
 
         ghostty_render_state_row_get(iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &cells);
 
+        // Track last-cell content for the readline wrap heuristic.
+        bool lastCellHadContent = false;
+
         int colIdx = 0;
         while (ghostty_render_state_row_cells_next(cells)) {
             if (rowIdx == startRow && colIdx < startCol) { colIdx++; continue; }
@@ -533,6 +536,10 @@ void TerminalView::copySelection()
             uint32_t graphemesLen = 0;
             ghostty_render_state_row_cells_get(cells,
                 GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN, &graphemesLen);
+
+            if (rowIdx < endRow && colIdx == m_cols - 1)
+                lastCellHadContent = (graphemesLen > 0);
+
             if (graphemesLen > 0 && graphemesLen <= 128) {
                 uint32_t buf[128];
                 ghostty_render_state_row_cells_get(cells,
@@ -544,19 +551,28 @@ void TerminalView::copySelection()
 
             colIdx++;
         }
-
         if (rowIdx < endRow) {
-            // Skip the newline on soft-wrapped rows so a visual continuation of
-            // one logical line doesn't get split on paste.
-            // Mirrors exportScrollback (ghosttyvt.cpp:632-648) and refreshLinks
-            // (terminalview_links.cpp:62-69).
-            bool isWrapped = false;
+            // Suppress newline when this row soft-wraps into the next.
+            // Primary: ghostty WRAP flag (terminal autowrap). Fallback:
+            // full-width heuristic: if WRAP is false but the row fills the
+            // entire width (last cell is non-empty), treat it as a soft wrap.
+            // Handles readline/busybox wrapping which positions the cursor
+            // manually instead of triggering terminal autowrap.
+            // May false-positive on an exact-width line with a hard newline.
+            // Alternative: OSC 133 shell integration would scope the heuristic
+            // to input rows only, but requires per-shell scripts and maintenance.
+            // See also refreshLinks (terminalview_links.cpp) — heuristic not
+            // ported there; link extraction still uses WRAP flag only.
             GhosttyRow rawRow = 0;
+            bool isWrapped = false;
             if (ghostty_render_state_row_get(iterator,
                                              GHOSTTY_RENDER_STATE_ROW_DATA_RAW,
                                              &rawRow) == GHOSTTY_SUCCESS) {
                 ghostty_row_get(rawRow, GHOSTTY_ROW_DATA_WRAP, &isWrapped);
             }
+            if (!isWrapped && lastCellHadContent)
+                isWrapped = true;
+
             if (!isWrapped)
                 text += QLatin1Char('\n');
         }

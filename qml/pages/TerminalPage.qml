@@ -350,7 +350,7 @@ Page {
     // Apply Sailfish Theme colors to terminal UI overlays
     function applyTerminalTheme(t) {
         if (!t) return
-        t.selectionHighlightColor = Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
+        t.selectionHighlightColor = Theme.rgba(Theme.highlightColor, Theme.highlightBackgroundOpacity)
         t.selectionHandleColor = Theme.rgba(Theme.highlightColor, 0.8)
         t.selectionHandleBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
         t.searchHighlightColor = Theme.rgba(Theme.highlightColor, 0.3)
@@ -360,6 +360,14 @@ Page {
         t.magnifierBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
         t.topPadding = Theme.paddingSmall
         t.pullDownZoneHeight = Theme.itemSizeLarge
+    }
+
+    // Re-apply Theme colors when the ambience changes
+    Connections {
+        target: Theme
+        onHighlightColorChanged: {
+            if (terminal) applyTerminalTheme(terminal)
+        }
     }
 
     function attachTerminal(t, focus) {
