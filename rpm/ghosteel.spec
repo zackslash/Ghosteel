@@ -4,7 +4,7 @@ Summary:    Ghosteel terminal emulator for Sailfish OS
 Version:    0.0.0
 Release:    1
 %define debug_package %{nil}
-%define zig_version 0.15.2
+%define zig_version 0.16.0
 License:    MIT
 URL:        https://github.com/zackslash/Ghosteel
 Source0:    %{name}-%{version}.tar.bz2
@@ -34,7 +34,6 @@ BuildRequires:  pkgconfig(sailfishcrypto)
 BuildRequires:  pkgconfig(ngf-qt5)
 BuildRequires:  desktop-file-utils
 BuildRequires:  xz
-BuildRequires:  patch
 
 ExclusiveArch:  %arm aarch64 %ix86
 
@@ -77,16 +76,7 @@ Custom:
 %prep
 %setup -q -n %{name}-%{version}
 
-# Apply patches to ghostty submodule
-# OBS: ghostty/ populated by tar_scm with submodules=enable
-# SDK: ghostty/ populated by "method: tar" + git submodule update --init
-if [ -d ghostty/src ]; then
-    for p in patches/*.patch; do
-        [ -f "$p" ] && patch --forward -d ghostty -p1 < "$p"
-    done
-fi
-
-# Extract Zig compiler (OBS only — Source1 is fetched by OBS before build)
+# Extract Zig compiler (OBS only)
 if [ -f "%{_sourcedir}/zig-x86_64-linux-%{zig_version}.tar.xz" ]; then
     tar -xJf "%{_sourcedir}/zig-x86_64-linux-%{zig_version}.tar.xz" -C %{_builddir}
 fi
@@ -143,22 +133,13 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ] && [ -L .sfdk/src ]; then
     if [ -d "$SRC" ]; then
         echo "IDE build: linking source tree from $SRC"
         for item in ghosteel.pro src qml shaders translations \
-                    ghostty lib patches dbus-1 icons \
+                    ghostty lib dbus-1 icons \
                     ghosteel.desktop LICENSE; do
             if [ -e "$SRC/$item" ]; then
                 rm -rf "./$item" 2>/dev/null
                 ln -s "$SRC/$item" .
             fi
         done
-        # Apply patches to ghostty (normally done in the prep step)
-        if [ -d ghostty/src ]; then
-            for p in patches/*.patch; do
-                [ -f "$p" ] || continue
-                if patch --forward --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
-                    patch --forward -d ghostty -p1 < "$p"
-                fi
-            done
-        fi
     fi
 fi
 
@@ -192,18 +173,19 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
         exit 1
     fi
 
-    # Use --system to disable network and point Zig at pre-fetched deps
+    # --system mode trusts pre-extracted dirs without hash verification,
+    # allowing the deps cache to be stripped for smaller size.
     # Only set when the full deps cache exists (OBS builds)
-    SYSTEM_FLAG=""
-    if [ -d "%{_builddir}/zig-cache/p" ]; then
-        SYSTEM_FLAG="--system %{_builddir}/zig-cache/p"
+    CACHE_FLAG=""
+    if ls %{_builddir}/zig-cache/*/ >/dev/null 2>&1; then
+        CACHE_FLAG="--system %{_builddir}/zig-cache"
     fi
 
     cd ghostty
     "$ZIG" build -Demit-lib-vt \
         -Dtarget="${ZIG_TARGET}" \
         -Doptimize=ReleaseSafe \
-        ${SYSTEM_FLAG} 2>&1 || exit 1
+        ${CACHE_FLAG} 2>&1 || exit 1
     mkdir -p %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}
     cp zig-out/lib/libghostty-vt.a %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}/
     cd %{_builddir}/%{name}-%{version}

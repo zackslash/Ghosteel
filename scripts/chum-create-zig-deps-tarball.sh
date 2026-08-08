@@ -2,24 +2,25 @@
 # Downloads the Zig compiler and all Zig package dependencies needed for
 # offline OBS builds. Produces two files to upload to OBS as Source1/Source2.
 #
-# Uses Ghostty's Flatpak zig-packages.json as the authoritative dep list.
-# Run this whenever the ghostty submodule is updated (new release, version bump, etc.)
+# Uses zig build --fetch=all to resolve the full dependency tree, then
+# extracts and strips each package for smaller cache size. The extracted
+# dirs are shipped (not tarballs) and used with --system mode, which
+# trusts pre-extracted directories without hash verification.
 #
 # Usage: ./scripts/chum-create-zig-deps-tarball.sh [output-dir]
 # Default: rpm/ (spec expects Source1/Source2 there)
 #
 # Outputs:
 #   zig-x86_64-linux-<version>.tar.xz  (Zig compiler)
-#   zig-deps-cache.tar.gz             (all Zig package deps)
+#   zig-deps-cache.tar.gz             (stripped Zig package deps as dirs)
 
 set -euo pipefail
 
-ZIG_VERSION="0.15.2"
+ZIG_VERSION="0.16.0"
 ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GHOSTTY_DIR="${REPO_ROOT}/ghostty"
-PACKAGES_JSON="${GHOSTTY_DIR}/flatpak/zig-packages.json"
 OUTPUT_DIR="${1:-${REPO_ROOT}/rpm}"
 mkdir -p "$OUTPUT_DIR"
 WORK_DIR=$(mktemp -d)
@@ -29,8 +30,8 @@ DEPS_OUTPUT="${OUTPUT_DIR}/zig-deps-cache.tar.gz"
 
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-if [ ! -f "$PACKAGES_JSON" ]; then
-    echo "ERROR: $PACKAGES_JSON not found" >&2
+if [ ! -f "${GHOSTTY_DIR}/build.zig.zon" ]; then
+    echo "ERROR: ${GHOSTTY_DIR}/build.zig.zon not found" >&2
     echo "Make sure the ghostty submodule is initialized" >&2
     exit 1
 fi
@@ -46,76 +47,37 @@ else
     echo "  Saved: $ZIG_OUTPUT ($(du -h "$ZIG_OUTPUT" | awk '{print $1}'))"
 fi
 
-# ── Download Zig package dependencies ────────────────────────────────
+# ── Fetch all Zig package dependencies ───────────────────────────────
 echo ""
-echo "=== Downloading Zig package dependencies ==="
-echo "Reading packages from $PACKAGES_JSON..."
-mkdir -p "${WORK_DIR}/p"
+echo "=== Fetching Zig package dependencies ==="
+tar -xJf "$ZIG_OUTPUT" -C "$WORK_DIR"
+ZIG_BIN="${WORK_DIR}/zig-x86_64-linux-${ZIG_VERSION}/zig"
 
-TOTAL=$(jq length "$PACKAGES_JSON")
-COUNT=0
-SKIPPED=0
+# Delete zig-pkg/ so all packages are fetched fresh into the isolated cache.
+# Zig 0.16.0 stores extracted deps in zig-pkg/ (project-local); if it already
+# exists, no network fetch occurs and no tarballs are written to p/.
+rm -rf "${GHOSTTY_DIR}/zig-pkg"
 
-for i in $(seq 0 $((TOTAL - 1))); do
-    TYPE=$(jq -r ".[$i].type" "$PACKAGES_JSON")
-    DEST=$(jq -r ".[$i].dest" "$PACKAGES_JSON")
-    # Strip "vendor/" prefix — we build the p/ directory directly
-    DEST="${DEST#vendor/}"
+cd "$GHOSTTY_DIR"
+# --fetch=all resolves and downloads the full dep tree but exits non-zero
+# if downstream build steps fail; deps are cached regardless.
+"$ZIG_BIN" build --fetch=all --global-cache-dir "$WORK_DIR" 2>&1 || true
+cd "$REPO_ROOT"
 
-    COUNT=$((COUNT + 1))
+if [ ! -d "${WORK_DIR}/p" ] || [ -z "$(ls -A "${WORK_DIR}/p" 2>/dev/null)" ]; then
+    echo "ERROR: No packages fetched to ${WORK_DIR}/p" >&2
+    exit 1
+fi
 
-    if [ "$TYPE" = "git" ]; then
-        URL=$(jq -r ".[$i].url" "$PACKAGES_JSON")
-        COMMIT=$(jq -r ".[$i].commit" "$PACKAGES_JSON")
-        echo "[$COUNT/$TOTAL] git clone $URL @ $COMMIT -> $DEST"
-        git clone --quiet "$URL" "${WORK_DIR}/${DEST}"
-        git -C "${WORK_DIR}/${DEST}" checkout --quiet "$COMMIT"
-        rm -rf "${WORK_DIR}/${DEST}/.git"
-    elif [ "$TYPE" = "archive" ]; then
-        URL=$(jq -r ".[$i].url" "$PACKAGES_JSON")
-        SHA256=$(jq -r ".[$i].sha256" "$PACKAGES_JSON")
-        FILENAME=$(basename "$URL")
-        echo "[$COUNT/$TOTAL] $FILENAME -> $DEST"
+TARBALL_COUNT=$(find "${WORK_DIR}/p" -maxdepth 1 -type f -name '*.tar.gz' | wc -l)
+echo "  Fetched $TARBALL_COUNT packages"
 
-        # Download
-        curl -fsSL -o "${WORK_DIR}/${FILENAME}" "$URL"
-
-        # Verify checksum
-        ACTUAL_SHA256=$(sha256sum "${WORK_DIR}/${FILENAME}" | awk '{print $1}')
-        if [ "$ACTUAL_SHA256" != "$SHA256" ]; then
-            echo "  ERROR: SHA256 mismatch for $FILENAME" >&2
-            echo "  Expected: $SHA256" >&2
-            echo "  Actual:   $ACTUAL_SHA256" >&2
-            exit 1
-        fi
-
-        # Extract — detect compression
-        mkdir -p "${WORK_DIR}/${DEST}"
-        case "$FILENAME" in
-            *.tar.gz|*.tgz)  tar -xzf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
-            *.tar.xz)        tar -xJf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
-            *.tar.zst)       tar --zstd -xf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
-            *.tar)           tar -xf "${WORK_DIR}/${FILENAME}" --strip-components=1 -C "${WORK_DIR}/${DEST}" ;;
-            *.zip)           unzip -q -o "${WORK_DIR}/${FILENAME}" -d "${WORK_DIR}/${DEST}" ;;
-            *)               echo "  WARNING: Unknown archive format: $FILENAME" >&2; SKIPPED=$((SKIPPED + 1)) ;;
-        esac
-
-        # Clean up downloaded file
-        rm -f "${WORK_DIR}/${FILENAME}"
-    else
-        echo "[$COUNT/$TOTAL] Unknown type: $TYPE, skipping"
-        SKIPPED=$((SKIPPED + 1))
-    fi
-done
-
-# ── Strip bloat never needed for a `zig build --system` release build ───
-# Keeps the cache under OBS's RPM build disk limit.
-#
-# Some deps (e.g. libxev) openDir() these dirs at configure time, so
-# stripping a referenced name crashes `zig build` with FileNotFound.
-# Skip names referenced as string literals in the package's build.zig.
+# ── Extract and strip each package ───────────────────────────────────
+# Extract tarballs to directories, strip test/doc/example bloat, and ship
+# the dirs (not tarballs). --system mode trusts dirs without hash
+# verification, allowing us to strip without breaking Zig's content hashes.
 echo ""
-echo "=== Stripping test/doc/example bloat ==="
+echo "=== Extracting and stripping packages ==="
 STRIP_NAMES=(
     test tests Test
     doc docs
@@ -123,31 +85,44 @@ STRIP_NAMES=(
     fuzz fuzzing
     reference
     ci .ci .github
+    perf kokoro ndk_test gtests
     gnulib-tests gnulib-local
-    # gettext: only gettext-runtime/intl/ is used
     gettext-tools libtextstyle
-    # libxml2: XML conformance test output
     result xstc
 )
-BEFORE_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-for pkg in "${WORK_DIR}/p"/*/; do
-    [ -d "$pkg" ] || continue
+
+mkdir -p "${WORK_DIR}/pkg"
+EXTRACTED=0
+for pkg_tarball in "${WORK_DIR}/p"/*.tar.gz; do
+    [ -f "$pkg_tarball" ] || continue
+    hash=$(basename "$pkg_tarball" .tar.gz)
+    pkg_dir="${WORK_DIR}/pkg/${hash}"
+    mkdir -p "$pkg_dir"
+    tar -xzf "$pkg_tarball" --strip-components=1 -C "$pkg_dir"
+    if [ ! -f "${pkg_dir}/build.zig.zon" ]; then
+        echo "WARN: ${hash} missing build.zig.zon after extract" >&2
+    fi
+
+    # Strip bloat never needed for a release build.
     for name in "${STRIP_NAMES[@]}"; do
-        # bare "name" or path form "name/..." → dir is needed at configure
-        # time; keep it to avoid an openDir FileNotFound crash.
-        if [ -f "${pkg}build.zig" ] && grep -qF -e "\"$name\"" -e "\"$name/" "${pkg}build.zig"; then
-            echo "  keeping $name/ in $(basename "$pkg") (referenced by build.zig)"
+        # Keep dirs referenced as string literals in build.zig
+        # (some packages openDir() them at configure time).
+        if [ -f "${pkg_dir}/build.zig" ] && grep -qF -e "\"$name\"" -e "\"$name/" "${pkg_dir}/build.zig"; then
             continue
         fi
-        find "$pkg" -type d -name "$name" -prune -exec rm -rf {} +
+        find "$pkg_dir" -type d -name "$name" -prune -exec rm -rf {} +
     done
-done
-AFTER_SIZE=$(du -sh "${WORK_DIR}/p" | awk '{print $1}')
-echo "  Cache size: ${AFTER_SIZE} (was ${BEFORE_SIZE})"
 
+    EXTRACTED=$((EXTRACTED + 1))
+done
+
+PKG_SIZE=$(du -sh "${WORK_DIR}/pkg" | awk '{print $1}')
+echo "  Extracted and stripped $EXTRACTED packages (${PKG_SIZE})"
+
+# ── Create deps tarball ──────────────────────────────────────────────
 echo ""
 echo "Creating deps tarball: $DEPS_OUTPUT"
-tar -czf "$DEPS_OUTPUT" -C "${WORK_DIR}" p
+tar -czf "$DEPS_OUTPUT" -C "${WORK_DIR}/pkg" .
 
 DEPS_SIZE=$(du -h "$DEPS_OUTPUT" | awk '{print $1}')
 ZIG_SIZE=$(du -h "$ZIG_OUTPUT" | awk '{print $1}')
@@ -155,4 +130,4 @@ echo ""
 echo "=== Done ==="
 echo "  Zig compiler: $ZIG_OUTPUT ($ZIG_SIZE)   → upload as OBS Source1"
 echo "  Zig deps:     $DEPS_OUTPUT ($DEPS_SIZE) → upload as OBS Source2"
-echo "  Packages:     $((COUNT - SKIPPED)) included, $SKIPPED skipped"
+echo "  Packages:     $EXTRACTED"
