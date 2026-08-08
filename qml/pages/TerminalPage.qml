@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Share 1.0
 import Nemo.Notifications 1.0
 import com.zackslash.ghosteel 1.0
+import QtGraphicalEffects 1.0
 import "KeyCatalog.js" as KeyCatalog
 
 Page {
@@ -1270,14 +1271,24 @@ Page {
                             }
                         }
 
-                        // Icon for keys with iconSource (arrows, keyboard)
-                        IconButton {
+                        // Icon for keys with iconSource (arrows, keyboard).
+                        // ColorOverlay tints icons dark for the light scheme
+                        // where Silica theme icons would be invisible on white.
+                        Image {
+                            id: keyIcon
                             anchors.centerIn: parent
                             visible: keyDef && keyDef.iconSource !== undefined
-                            icon.source: keyDef && keyDef.iconSource !== undefined
-                                       ? "image://theme/" + keyDef.iconSource : ""
-                            highlighted: keyDelegate.highlighted
-                            enabled: false
+                            source: keyDef && keyDef.iconSource !== undefined
+                                   ? "image://theme/" + keyDef.iconSource : ""
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: keyIcon
+                            source: keyIcon
+                            visible: keyIcon.visible
+                            // #FFFFFF = no-op (dark scheme keeps theme color)
+                            color: keyDelegate.highlighted ? Theme.highlightColor
+                                : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : "#FFFFFF")
                         }
 
                         // Label for text keys (Tab, Esc, Ctrl, Alt, F-keys, etc.)
