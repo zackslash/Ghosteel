@@ -1279,7 +1279,7 @@ Page {
                             }
                         }
 
-                        // Icon for keys with iconSource (arrows, keyboard).
+                        // Icon for keys with iconSource (arrows).
                         // ColorOverlay tints icons dark for the light scheme
                         // where Silica theme icons would be invisible on white.
                         Image {

@@ -34,7 +34,7 @@ ApplicationWindow {
             Settings.colorScheme = (Theme.colorScheme === Theme.DarkOnLight) ? "light" : "dark"
     }
 
-    // Re-resolve when the ambience changes (startup or user switch)
+    // Re-resolve on runtime ambience change or late theme init
     Connections {
         target: Theme
         onColorSchemeChanged: resolveAmbience()
