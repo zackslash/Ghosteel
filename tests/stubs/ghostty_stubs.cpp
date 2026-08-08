@@ -399,6 +399,31 @@ GHOSTTY_API GhosttyResult ghostty_paste_encode(
     return GHOSTTY_SUCCESS;
 }
 
+// ---- Formatter ----
+
+// exportScrollback() returns early in test builds (the terminal stub reports
+// 0 cols/rows), so these formatter stubs only need to link, not produce data.
+
+GHOSTTY_API GhosttyResult ghostty_formatter_terminal_new(
+    const GhosttyAllocator*, GhosttyFormatter* out, GhosttyTerminal,
+    GhosttyFormatterTerminalOptions)
+{
+    if (out) *out = (GhosttyFormatter)1;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_formatter_format_alloc(
+    GhosttyFormatter, const GhosttyAllocator*, uint8_t** out_ptr, size_t* out_len)
+{
+    if (out_ptr) *out_ptr = nullptr;
+    if (out_len) *out_len = 0;
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API void ghostty_formatter_free(GhosttyFormatter) {}
+
+GHOSTTY_API void ghostty_free(const GhosttyAllocator*, uint8_t*, size_t) {}
+
 // ---- Color ----
 
 GHOSTTY_API void ghostty_color_rgb_get(

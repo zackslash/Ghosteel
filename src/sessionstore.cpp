@@ -101,7 +101,11 @@ void SessionStore::saveSessionScrollback(SessionInfo &info, bool forceSync)
     uint16_t cols = 0, rows = 0;
     QByteArray data = info.view->exportScrollback(cols, rows);
     if (data.isEmpty()) {
-        info.scrollbackDirty = false;
+        // Nothing to persist. Route through saveCompleted so the manager's
+        // handler updates scrollbackDirty and the save-throttle timestamp the
+        // same way a real (encrypted) save does — otherwise the throttle
+        // never engages after an empty export.
+        Q_EMIT saveCompleted(info.id);
         return;
     }
 

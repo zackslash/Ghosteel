@@ -15,8 +15,9 @@ void TerminalView::openSearch()
     m_searchActive = true;
 
     if (m_vt) {
-        m_searchCache = m_vt->extractSearchText();
-        buildCellMapping();
+        VtSearchText st = m_vt->extractSearchText();
+        m_searchCache = st.lines;
+        m_cellMapping = st.mapping;
     }
 
     clearSelection();
@@ -111,8 +112,9 @@ void TerminalView::setSearchPattern(const QString &pattern)
     m_searchPattern = pattern;
 
     if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty())) {
-        m_searchCache = m_vt->extractSearchText();
-        buildCellMapping();
+        VtSearchText st = m_vt->extractSearchText();
+        m_searchCache = st.lines;
+        m_cellMapping = st.mapping;
     }
 
     performSearch();
@@ -251,8 +253,9 @@ void TerminalView::refreshSearchCachePreservingMatch()
     int prevRow = (m_currentMatchIndex >= 0 && m_currentMatchIndex < m_searchMatches.size())
         ? m_searchMatches[m_currentMatchIndex].row : -1;
 
-    m_searchCache = m_vt->extractSearchText();
-    buildCellMapping();
+    VtSearchText st = m_vt->extractSearchText();
+    m_searchCache = st.lines;
+    m_cellMapping = st.mapping;
     performSearch();
 
     if (prevRow >= 0) {

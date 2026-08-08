@@ -1,6 +1,8 @@
 #include "ghosttyvt.h"
 #include <QDebug>
 
+#include <algorithm>
+
 #include "terminalwidth.h"
 
 GhosttyVt::GhosttyVt(QObject *parent)
@@ -518,10 +520,11 @@ void GhosttyVt::bellCallback(GhosttyTerminal, void *ud)
     Q_EMIT self->bell();
 }
 
-QStringList GhosttyVt::extractSearchText()
+VtSearchText GhosttyVt::extractSearchText()
 {
+    VtSearchText out;
     if (!m_terminal)
-        return {};
+        return out;
 
     size_t totalRows = 0;
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
@@ -529,17 +532,27 @@ QStringList GhosttyVt::extractSearchText()
     ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
 
     if (totalRows == 0 || cols == 0)
-        return {};
+        return out;
 
-    QStringList result;
-    result.reserve(static_cast<int>(totalRows));
+    const int colsInt = static_cast<int>(cols);
+    out.lines.reserve(static_cast<int>(totalRows));
+    out.mapping.reserve(static_cast<int>(totalRows));
     uint32_t graphemeBuf[128];
 
+    // Single pass over the grid: build the row text and, simultaneously, the
+    // cell→QChar mapping. Wide chars take 2 cells; supplementary-plane
+    // codepoints (emoji) expand to 2 QChars (a surrogate pair). Each cell's
+    // mapping records the QChar offset where its grapheme cluster starts.
+    // Formerly extractSearchText() + buildCellMapping() each walked the grid.
     for (size_t row = 0; row < totalRows; row++) {
         QString line;
         line.reserve(cols);
+        QVector<int> rowMapping(colsInt, 0);
+        int charIdx = 0;
 
         for (uint16_t col = 0; col < cols; col++) {
+            rowMapping[col] = charIdx;
+
             GhosttyPoint point = {};
             point.tag = GHOSTTY_POINT_TAG_SCREEN;
             point.value.coordinate.x = col;
@@ -551,7 +564,8 @@ QStringList GhosttyVt::extractSearchText()
                 continue;
             }
 
-            // Reuse the grid ref above instead of isWideCharSpacer()'s second grid_ref.
+            // Wide-char spacer — no text content; charIdx stays put so the
+            // spacer cell maps to the same offset as its head cell.
             GhosttyCell cell = 0;
             if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
                     && isWideSpacerCell(cell)) {
@@ -559,19 +573,26 @@ QStringList GhosttyVt::extractSearchText()
             }
 
             size_t graphemeLen = 0;
+            int advance = 1; // blank cell — the row text appends one space
             if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
                     == GHOSTTY_SUCCESS && graphemeLen > 0) {
                 line += QString::fromUcs4(graphemeBuf, graphemeLen);
+                advance = 0;
+                for (size_t g = 0; g < graphemeLen; ++g)
+                    advance += (graphemeBuf[g] > 0xFFFF) ? 2 : 1;
             } else {
                 line += QLatin1Char(' ');
             }
+            if (charIdx < line.size())
+                charIdx = std::min(charIdx + advance, line.size());
         }
 
-        result.append(line);
+        out.lines.append(line);
+        out.mapping.append(rowMapping);
     }
 
     m_searchTextDirty = false;
-    return result;
+    return out;
 }
 
 QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) const
@@ -594,99 +615,40 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     if (outCols == 0 || totalRows == 0)
         return {};
 
-    // Using grid_ref API — the formatter API crashes on Zig null-unwrap with empty page lists.
+    // Format the entire terminal (scrollback + active screen) via the ghostty
+    // formatter API instead of a per-cell grid_ref walk (~600k FFI calls for
+    // full scrollback). unwrap merges soft-wrapped rows (replaces the manual
+    // WRAP_CONTINUATION check); trim strips trailing whitespace per row
+    // (replaces the manual rtrim). selection=NULL formats everything. Plain
+    // output uses '\n' line endings — restoreScrollback accepts both.
+    GhosttyFormatter formatter = nullptr;
+    GhosttyFormatterTerminalOptions fopts = GHOSTTY_INIT_SIZED(GhosttyFormatterTerminalOptions);
+    fopts.unwrap = true;
+    fopts.trim = true;
+    // fopts.emit is intentionally left at its zero-init value
+    // (GHOSTTY_FORMATTER_FORMAT_PLAIN, enum value 0) — assigning it directly
+    // would collide with Qt's empty `emit` macro (the same conflict
+    // ghosttyvt.h works around at include time).
+    static_assert(GHOSTTY_FORMATTER_FORMAT_PLAIN == 0,
+                  "Plain format must remain the zero-init default");
+
     QByteArray result;
-    // Reserve ~4 bytes per cell to avoid reallocations for UTF-8 content (CJK, emoji)
-    result.reserve(static_cast<int>(totalRows * outCols * 4));
-    uint32_t graphemeBuf[128];
-
-    // Accumulate into a logical line buffer. Soft-wrapped continuation rows
-    // are merged into the current line without a newline. Only when we reach
-    // a non-continuation row do we flush the previous line with \r\n.
-    QByteArray lineBuf;
-
-    for (size_t row = 0; row < totalRows; row++) {
-        QByteArray line;
-        line.reserve(outCols);
-
-        for (uint16_t col = 0; col < outCols; col++) {
-            GhosttyPoint point = {};
-            point.tag = GHOSTTY_POINT_TAG_SCREEN;
-            point.value.coordinate.x = col;
-            point.value.coordinate.y = static_cast<uint32_t>(row);
-
-            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
-            if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
-                line.append(' ');
-                continue;
-            }
-
-            // Skip wide character spacer cells — they have no text content
-            // but would otherwise be exported as phantom spaces.
-            // Reuse the grid ref above instead of isWideCharSpacer()'s second grid_ref.
-            GhosttyCell cell = 0;
-            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
-                    && isWideSpacerCell(cell))
-                continue;
-
-            size_t graphemeLen = 0;
-            if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
-                    == GHOSTTY_SUCCESS && graphemeLen > 0) {
-                line.append(QString::fromUcs4(graphemeBuf, graphemeLen).toUtf8());
-            } else {
-                line.append(' ');
-            }
-        }
-
-        // Trim trailing spaces to avoid pending-wrap + newline double-skip on replay.
-        while (!line.isEmpty() && line.endsWith(' '))
-            line.chop(1);
-
-        // Check if this row is a soft-wrap continuation of the previous row.
-        bool isContinuation = false;
-        if (row > 0) {
-            GhosttyPoint firstCol = {};
-            firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
-            firstCol.value.coordinate.x = 0;
-            firstCol.value.coordinate.y = static_cast<uint32_t>(row);
-            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
-            if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
-                GhosttyRow rowHandle = 0;
-                if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {
-                    bool wc = false;
-                    if (ghostty_row_get(rowHandle, GHOSTTY_ROW_DATA_WRAP_CONTINUATION, &wc) == GHOSTTY_SUCCESS)
-                        isContinuation = wc;
-                }
-            }
-        }
-
-        if (isContinuation) {
-            // Soft-wrapped continuation — merge into current line buffer.
-            // Don't trim: the original line content needs to stay intact
-            // so it re-wraps at the same point on replay.
-            lineBuf.append(line);
-        } else {
-            // New logical line — flush the previous line buffer with \r\n,
-            // then start accumulating this row.
-            if (!lineBuf.isEmpty()) {
-                result.append(lineBuf);
-                result.append("\r\n");
-            }
-            lineBuf = line;
-        }
+    if (ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, fopts)
+            != GHOSTTY_SUCCESS || !formatter) {
+        return {};  // No fallback path — persist nothing rather than a partial export.
     }
 
-    // Flush the last line
-    if (!lineBuf.isEmpty()) {
-        result.append(lineBuf);
-        result.append("\r\n");
+    uint8_t *buf = nullptr;
+    size_t bufLen = 0;
+    if (ghostty_formatter_format_alloc(formatter, nullptr, &buf, &bufLen) == GHOSTTY_SUCCESS
+            && buf != nullptr && bufLen > 0) {
+        result = QByteArray(reinterpret_cast<const char *>(buf), static_cast<int>(bufLen));
     }
+    ghostty_free(nullptr, buf, bufLen);
+    ghostty_formatter_free(formatter);
 
-    // Strip trailing empty lines — these are blank viewport rows below the
-    // last real content. Without this, restoring creates a screen-height
-    // gap of whitespace before the shell prompt.
-    while (result.endsWith("\r\n"))
-        result.chop(2);
+    if (result.isEmpty())
+        return {};  // Nothing but blank rows — nothing worth persisting.
 
     // Strip the active prompt line — when the shell is waiting for input,
     // the last line is just the prompt (e.g. "[user@host ~]$"). On restore,
@@ -716,10 +678,10 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             else
                 result.clear();
 
-            // Re-strip any blank lines exposed by the removal
-            while (result.endsWith("\r\n"))
-                result.chop(2);
-            // Also strip lone \r left when prompt was on a line after blank rows
+            // Re-strip blank lines exposed by the removal. Accepts both \n
+            // (formatter plain output) and \r\n (legacy manual output).
+            while (result.endsWith('\n'))
+                result.chop(1);
             while (result.endsWith('\r'))
                 result.chop(1);
         }

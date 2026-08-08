@@ -1,5 +1,6 @@
 #include "glrenderer.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace {
@@ -142,17 +143,14 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         int visibleStartRow = scrollOffset;
         int visibleEndRow = scrollOffset + m_rows;
 
-        int startIdx = 0;
-        for (int i = 0; i < m_searchMatches.size(); ++i) {
-            if (m_searchMatches[i].row >= visibleStartRow) {
-                startIdx = i;
-                break;
-            }
-            if (m_searchMatches[i].row > visibleEndRow) {
-                startIdx = m_searchMatches.size();
-                break;
-            }
-        }
+        // m_searchMatches is sorted by row — binary search for the first
+        // match at/after the visible range instead of a linear scan of up to
+        // 10k matches every frame. The draw loop below breaks as soon as a
+        // match passes visibleEndRow, so no further pre-filtering is needed.
+        const auto firstVisible = std::lower_bound(
+            m_searchMatches.begin(), m_searchMatches.end(), visibleStartRow,
+            [](const TerminalView::SearchMatch &m, int row) { return m.row < row; });
+        int startIdx = static_cast<int>(firstVisible - m_searchMatches.begin());
 
         for (int i = startIdx; i < m_searchMatches.size(); ++i) {
             const auto &match = m_searchMatches[i];
