@@ -1194,10 +1194,12 @@ Page {
         PanelBackground {
             anchors.fill: parent
             position: Dock.Bottom
+            visible: Settings.colorScheme !== "light"
         }
 
         // Scheme-dependent overlay for light mode. PanelBackground follows
         // the ambience, which may not match the terminal color scheme.
+        // White masks the ambience tint in light mode; dark mode reuses PanelBackground.
         Rectangle {
             anchors.fill: parent
             color: Settings.colorScheme === "light" ? "#FFFFFF" : "transparent"
@@ -1284,6 +1286,7 @@ Page {
                             visible: !keyDef || keyDef.iconSource === undefined
                             text: keyDef ? keyDef.label : ""
                             font.pixelSize: Theme.fontSizeSmall
+                            // dark text on the light overlay; matches the panel above
                             color: keyDelegate.highlighted ? Theme.highlightColor
                                 : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor)
                         }
