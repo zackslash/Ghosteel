@@ -10,6 +10,13 @@ constexpr uint32_t kMaxGraphemesPerCell = 128;  // matches ghostty Cell.grapheme
 
 void TerminalView::refreshLinks()
 {
+    // Throttle: limit to ~4Hz to avoid per-frame viewport regex scans
+    // under continuous output. The dirty flag stays true until a real
+    // scan runs, so links are always eventually refreshed.
+    if (m_lastLinkScanTime.isValid() && m_lastLinkScanTime.elapsed() < 250)
+        return;
+    m_lastLinkScanTime.start();
+
     if (!m_vt || !m_vt->terminal() || m_cols == 0 || m_rows == 0) {
         m_linkScanDirty = false;
         return;

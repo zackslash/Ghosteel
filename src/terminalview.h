@@ -371,6 +371,7 @@ private:
     // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
     QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
     bool m_linkScanDirty = true;       // Set when PTY data arrives, cleared after scan
+    QElapsedTimer m_lastLinkScanTime; // Throttle: limit link scans to ~4Hz
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started

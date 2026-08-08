@@ -153,6 +153,11 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
     for (size_t i = 0; i < len; i++) {
         uint8_t c = data[i];
 
+        // Fast-path: skip both OSC scanners when idle and byte isn't ESC.
+        // Avoids ~99% of switch evaluations for normal terminal output.
+        if (c != 0x1b && m_osc777State == OSC777_IDLE && m_osc52State == OSC52_IDLE)
+            continue;
+
         // --- OSC 777 scanner ---
         switch (m_osc777State) {
         case OSC777_IDLE:

@@ -382,6 +382,7 @@ Page {
         var sessionFontSize = SessionManager.activeSessionFontSize
         t.fontSize = sessionFontSize > 0 ? sessionFontSize : Settings.fontSize
         applyTerminalTheme(t)
+        updateSearchPanelHeight()
         if (focus !== false)
             t.forceActiveFocus()
 
