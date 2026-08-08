@@ -92,7 +92,8 @@ CoverBackground {
                 }
 
                 Label {
-                    width: parent.width - (Theme.iconSizeSmall * 2) - (Theme.paddingSmall * 2)
+                    width: parent.width - Theme.iconSizeSmall - Theme.paddingSmall
+                           - (model.keepAwake ? Theme.iconSizeSmall + Theme.paddingSmall : 0)
                     text: model.displayName
                     color: model.isActive ? Theme.highlightColor : Theme.secondaryColor
                     font.pixelSize: Theme.fontSizeSmall
