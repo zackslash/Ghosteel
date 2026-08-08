@@ -1203,7 +1203,7 @@ Page {
                 if (len > maxLen) maxLen = len
                 start = end
             }
-            return maxLen * cellW - Theme.paddingSmall
+            return maxLen * cellW
         }
 
         Behavior on y {
