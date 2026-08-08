@@ -336,7 +336,7 @@ Page {
             terminal.stickyModifiers = activeModifiers
     }
 
-    // Returns text/icon color for the current terminal color scheme.
+    // Returns text/indicator color for the current terminal color scheme.
     // Dark scheme: ambience primary; light scheme: dark primary for white keybar.
     function schemeTextColor() {
         return Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.primaryColor
@@ -1294,7 +1294,7 @@ Page {
                             anchors.fill: keyIcon
                             source: keyIcon
                             visible: keyIcon.visible
-                            // Highlighted (keyboard toggle active): accent color.
+                            // Highlighted (Ctrl/Alt/keyboard active): accent color.
                             // Light scheme: dark tint. Dark scheme: #FFFFFF = no-op.
                             color: keyDelegate.highlighted ? Theme.highlightColor
                                 : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : "#FFFFFF")
