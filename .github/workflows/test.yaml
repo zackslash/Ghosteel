@@ -16,12 +16,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Apply Ghosteel patches to Ghostty
-        run: |
-          for patch in patches/*.patch; do
-            [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
-          done
-
       - name: Fix apt cache permissions
         run: sudo chown -R $(id -u):$(id -g) /var/cache/apt/archives
 
@@ -84,7 +78,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: lib/${{ matrix.arch }}
-          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}-${{ hashFiles('patches/*.patch') }}
+          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}
 
       - name: Cache Ghostty submodule
         id: cache-submodule
@@ -98,29 +92,23 @@ jobs:
       - name: Initialize Ghostty submodule
         run: git submodule update --init --recursive
 
-      - name: Apply Ghosteel patches to Ghostty
-        run: |
-          for patch in patches/*.patch; do
-            [ -f "$patch" ] && git -C ghostty apply --check "$GITHUB_WORKSPACE/$patch" && git -C ghostty apply "$GITHUB_WORKSPACE/$patch"
-          done
-
       - name: Cache Zig
         if: steps.cache-lib.outputs.cache-hit != 'true'
         id: cache-zig
         uses: actions/cache@v4
         with:
-          path: /opt/zig-x86_64-linux-0.15.2
-          key: zig-0.15.2-linux-x86_64
+          path: /opt/zig-x86_64-linux-0.16.0
+          key: zig-0.16.0-linux-x86_64
 
       - name: Install Zig
         if: steps.cache-lib.outputs.cache-hit != 'true' && steps.cache-zig.outputs.cache-hit != 'true'
         run: |
-          ZIG_VERSION=0.15.2
+          ZIG_VERSION=0.16.0
           curl -L "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" | tar -xJ -C /opt
 
       - name: Add Zig to PATH
         if: steps.cache-lib.outputs.cache-hit != 'true'
-        run: echo "/opt/zig-x86_64-linux-0.15.2" >> "$GITHUB_PATH"
+        run: echo "/opt/zig-x86_64-linux-0.16.0" >> "$GITHUB_PATH"
 
       - name: Build libghostty-vt
         if: steps.cache-lib.outputs.cache-hit != 'true'

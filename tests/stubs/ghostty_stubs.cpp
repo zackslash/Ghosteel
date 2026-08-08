@@ -1,7 +1,7 @@
 // Stub implementations of the Ghostty C API for test builds, allowing
 // ghosttyvt.cpp (and terminalview.cpp) to link without the real
-// libghostty-vt.a. Most are no-ops; ghostty_terminal_mode_set records
-// its calls (see ghostty_stubs.h) for contract tests.
+// libghostty-vt.a. Most are no-ops; ghostty_terminal_set records mode
+// calls (see ghostty_stubs.h) for contract tests.
 
 #include "ghostty_stubs.h"
 
@@ -16,7 +16,7 @@ static std::map<GhosttyMode, bool> g_stubs_modesSet;
 // ---- Terminal ----
 
 GHOSTTY_API GhosttyResult ghostty_terminal_new(
-    const GhosttyAllocator*, GhosttyTerminal* out, const GhosttyTerminalOptions*)
+    const GhosttyAllocator*, GhosttyTerminal* out, uint16_t, uint16_t)
 {
     if (out) *out = (GhosttyTerminal)1;
     return GHOSTTY_SUCCESS;
@@ -27,8 +27,13 @@ GHOSTTY_API void ghostty_terminal_free(GhosttyTerminal) {}
 GHOSTTY_API void ghostty_terminal_reset(GhosttyTerminal) {}
 
 GHOSTTY_API GhosttyResult ghostty_terminal_set(
-    GhosttyTerminal, GhosttyTerminalOption, const void*)
+    GhosttyTerminal, GhosttyTerminalOption option, const void* value)
 {
+    if ((option == GHOSTTY_TERMINAL_OPT_MODE ||
+         option == GHOSTTY_TERMINAL_OPT_MODE_DEFAULT) && value) {
+        auto* cfg = static_cast<const GhosttyTerminalModeConfig*>(value);
+        g_stubs_modesSet[cfg->mode] = cfg->value;
+    }
     return GHOSTTY_SUCCESS;
 }
 
@@ -54,20 +59,6 @@ GHOSTTY_API void ghostty_terminal_scroll_viewport(
 GHOSTTY_API GhosttyResult ghostty_terminal_resize(
     GhosttyTerminal, uint16_t, uint16_t, uint32_t, uint32_t)
 {
-    return GHOSTTY_SUCCESS;
-}
-
-GHOSTTY_API GhosttyResult ghostty_terminal_mode_get(
-    GhosttyTerminal, GhosttyMode, bool* out_value)
-{
-    if (out_value) *out_value = false;
-    return GHOSTTY_SUCCESS;
-}
-
-GHOSTTY_API GhosttyResult ghostty_terminal_mode_set(
-    GhosttyTerminal, GhosttyMode mode, bool value)
-{
-    g_stubs_modesSet[mode] = value;
     return GHOSTTY_SUCCESS;
 }
 

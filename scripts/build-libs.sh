@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build libghostty-vt static libraries for all Sailfish OS architectures.
-# Requires Zig 0.15.2 (see README for installation).
+# Requires Zig 0.16.0 (see README for installation).
 #
 # Usage: ./scripts/build-libs.sh [aarch64|armv7hl|i486|all]
 
@@ -11,7 +11,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 GHOSTTY_DIR="$PROJECT_ROOT/ghostty"
 LIB_DIR="$PROJECT_ROOT/lib"
 
-ZIG_VERSION_REQUIRED="0.15.2"
+ZIG_VERSION_REQUIRED="0.16.0"
 ZIG="${ZIG:-zig}"
 
 # Check Zig version
