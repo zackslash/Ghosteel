@@ -1209,7 +1209,7 @@ Page {
         // tints the panel light while preserving the gradient translucency.
         Rectangle {
             anchors.fill: parent
-            color: Settings.colorScheme === "light" ? Qt.rgba(1, 1, 1, 0.8) : "transparent"
+            color: Settings.colorScheme === "light" ? Qt.rgba(1, 1, 1, 0.6) : "transparent"
         }
 
         SilicaFlickable {
