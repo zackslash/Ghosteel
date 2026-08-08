@@ -460,11 +460,11 @@ Drivs av libghostty terminalmotor</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Auto följer din stämning</translation>
+        <translation>Automatisk följer din miljö</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Auto</translation>
+        <translation>Automatisk</translation>
     </message>
 </context>
 <context>

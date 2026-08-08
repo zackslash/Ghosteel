@@ -461,7 +461,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Авто следует вашей атмосфере</translation>
+        <translation>Авто следует вашему оформлению</translation>
     </message>
     <message>
         <source>Auto</source>

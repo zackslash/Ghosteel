@@ -460,11 +460,11 @@ Käyttää libghostty-pääteohjelmaa</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Auto seuraa tunnelmaasi</translation>
+        <translation>Automaattinen seuraa ympäristöäsi</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Auto</translation>
+        <translation>Automaattinen</translation>
     </message>
 </context>
 <context>

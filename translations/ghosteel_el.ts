@@ -460,7 +460,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Αυτόματο ακολουθεί την ατμόσφαιρά σας</translation>
+        <translation>Αυτόματο ακολουθεί το περιβάλλον σας</translation>
     </message>
     <message>
         <source>Auto</source>

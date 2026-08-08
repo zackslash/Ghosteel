@@ -464,10 +464,6 @@ Mħaddem minn magna terminali libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
-    <message>
-        <source>Change font size of the session with a two-finger pinch gesture</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>TerminalPage</name>

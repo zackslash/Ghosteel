@@ -460,11 +460,11 @@ Aangedreven door de libghostty terminal-engine</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Auto volgt je sfeer</translation>
+        <translation>Automatisch volgt je omgeving</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Auto</translation>
+        <translation>Automatisch</translation>
     </message>
 </context>
 <context>

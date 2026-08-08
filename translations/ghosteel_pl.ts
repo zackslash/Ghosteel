@@ -461,11 +461,11 @@ Obsługiwany przez silnik terminala libghostty</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Auto podąża za Twoim klimatem</translation>
+        <translation>Automatycznie podąża za Twoim motywem</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Auto</translation>
+        <translation>Automatycznie</translation>
     </message>
 </context>
 <context>

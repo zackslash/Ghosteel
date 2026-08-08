@@ -460,11 +460,11 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>
-        <translation>Auto folgt deinem Ambiente</translation>
+        <translation>Automatisch folgt deinem Ambiente</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Auto</translation>
+        <translation>Automatisch</translation>
     </message>
 </context>
 <context>
