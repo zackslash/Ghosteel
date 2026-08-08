@@ -6,7 +6,7 @@ Page {
     id: settingsPage
     allowedOrientations: Orientation.All
 
-    property var colorSchemes: ["dark", "light"]
+    property var colorSchemes: ["auto", "dark", "light"]
 
     SilicaFlickable {
         anchors.fill: parent
@@ -20,7 +20,8 @@ Page {
                     SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
-                    schemeCombo.currentIndex = 0
+                    schemeCombo.currentIndex = 1
+                    Settings.followAmbience = false
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
                     urlAutoDetectToggle.checked = true
@@ -102,18 +103,25 @@ Page {
                 id: schemeCombo
                 width: parent.width
                 label: qsTr("Color scheme")
-                currentIndex: {
-                    var idx = colorSchemes.indexOf(Settings.colorScheme)
-                    return idx >= 0 ? idx : 0
-                }
+                description: qsTr("Auto follows your ambience")
+                currentIndex: Settings.followAmbience ? 0
+                    : (Settings.colorScheme === "light" ? 2 : 1)
 
                 menu: ContextMenu {
+                    MenuItem { text: qsTr("Auto") }
                     MenuItem { text: qsTr("Dark") }
                     MenuItem { text: qsTr("Light") }
                 }
 
                 onCurrentIndexChanged: {
-                    Settings.colorScheme = colorSchemes[currentIndex]
+                    var choice = colorSchemes[currentIndex]
+                    if (choice === "auto") {
+                        Settings.followAmbience = true
+                        Settings.colorScheme = (Theme.colorScheme === Theme.DarkOnLight) ? "light" : "dark"
+                    } else {
+                        Settings.followAmbience = false
+                        Settings.colorScheme = choice
+                    }
                 }
             }
 
