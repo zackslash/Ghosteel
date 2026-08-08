@@ -2,7 +2,7 @@
 #define SESSIONMANAGER_H
 
 #include <QObject>
-#include <QQmlListProperty>
+#include <QAbstractListModel>
 #include <QVector>
 #include <QTimer>
 #include <QLocalServer>
@@ -19,12 +19,11 @@ class ScrollEncryptor;
 class Settings;
 class SessionStore;
 
-class SessionManager : public QObject
+class SessionManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int activeSessionIndex READ activeSessionIndex WRITE setActiveSessionIndex NOTIFY activeSessionIndexChanged)
     Q_PROPERTY(int sessionCount READ sessionCount NOTIFY sessionCountChanged)
-    Q_PROPERTY(QQmlListProperty<TerminalView> sessions READ sessions NOTIFY sessionsChanged)
     Q_PROPERTY(bool dbusRegistered READ dbusRegistered NOTIFY dbusRegisteredChanged)
     Q_PROPERTY(int activeSessionFontSize READ activeSessionFontSize NOTIFY activeSessionFontSizeChanged)
     Q_PROPERTY(bool keepAwakeActive READ keepAwakeActive NOTIFY keepAwakeActiveCountChanged)
@@ -36,6 +35,11 @@ public:
     explicit SessionManager(const QString &settingsPath, QObject *parent = nullptr);
     ~SessionManager();
 
+    // QAbstractListModel overrides
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
+
     int activeSessionIndex() const { return m_activeSessionIndex; }
     void setActiveSessionIndex(int index);
 
@@ -43,8 +47,6 @@ public:
 
     bool dbusRegistered() const { return m_dbusRegistered; }
     void setDbusRegistered(bool registered);
-
-    QQmlListProperty<TerminalView> sessions();
 
     Q_INVOKABLE TerminalView* createSession();
     TerminalView* createSessionWithCommand(const QString &name, const QStringList &commandArgs);
@@ -89,7 +91,7 @@ public:
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
     Q_INVOKABLE int displayToActual(int displayIndex) const;
-    Q_INVOKABLE int actualToDisplay(int actualIndex) const;
+    int actualToDisplay(int actualIndex) const;
     Q_INVOKABLE int sortMode() const;
     Q_INVOKABLE void setSortMode(int mode);
 
@@ -114,15 +116,11 @@ public:
 Q_SIGNALS:
     void activeSessionIndexChanged();
     void sessionCountChanged();
-    void sessionsChanged();
     void sessionCreated(int index);
     void sessionRemoved(int index, int sessionId);
     void sessionSwitched(int index);
-    void sessionNameChanged(int idx);
-    void sessionAutorunCommandChanged(int idx);
     void sessionKeybarOpenChanged(int idx);
     void sessionKeyboardVisibleChanged(int idx);
-    void sessionKeepAwakeChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
     void dbusRegisteredChanged();
     void activeSessionFontSizeChanged();
@@ -137,8 +135,16 @@ Q_SIGNALS:
     void showSessionList(); // Request QML to show session picker
 
 private:
-    static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
-    static TerminalView* sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index);
+    enum SessionRoles {
+        NameRole = Qt::UserRole + 1,
+        IdRole,
+        DisplayNameRole,
+        AutorunCommandRole,
+        WorkingDirectoryRole,
+        IsActiveRole,
+        KeepAwakeRole
+    };
+
     static QString socketPath();
 
     void scheduleSave();           // metadata changed — arms timer + marks sessions dirty
@@ -162,6 +168,14 @@ private Q_SLOTS:
     void onNewInstanceConnection();
 
 private:
+    // Index model:
+    //   m_sessions       — actual sessions, in creation/persistence order.
+    //   m_sortedIndices  — display→actual map; m_sortedIndices[d] is the actual
+    //                      index shown at QML row d. Always populated for a
+    //                      non-empty session set (identity order under SortManual).
+    //   rowCount()/data()/beginInsertRows/etc. speak DISPLAY indices.
+    //   sessionName()/setSessionName()/etc. speak ACTUAL indices.
+    //   QML converts via displayToActual(index) where needed.
     QVector<SessionInfo> m_sessions;
     QVector<int> m_sortedIndices; // display index → actual m_sessions index
     int m_activeSessionIndex = -1;

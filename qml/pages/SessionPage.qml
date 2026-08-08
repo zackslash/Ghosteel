@@ -6,13 +6,6 @@ Page {
     objectName: "sessionPage"
     allowedOrientations: Orientation.All
 
-    // Revision counter — bumped on sort/session changes to force
-    // stale displayToActual() bindings to re-evaluate.
-    // Any binding that displays per-session data (name, working dir, etc.)
-    // MUST reference this via `var _ = sessionPage._sortRevision` to
-    // re-evaluate on reorder/rename. See existing usages for the pattern.
-    property int _sortRevision: 0
-
     property string sortDescription: ""
     Component.onCompleted: updateSortDescription()
     function updateSortDescription() {
@@ -21,6 +14,12 @@ Page {
         else if (mode === 2) sortDescription = qsTr("Sorted by created")
         else if (mode === 3) sortDescription = qsTr("Sorted by name")
         else sortDescription = ""
+    }
+
+    // Keep the sort description in sync when the sort mode changes.
+    Connections {
+        target: SessionManager
+        onSortOrderChanged: updateSortDescription()
     }
 
     // Rename dialog
@@ -130,20 +129,7 @@ Page {
             bottom: newSessionButton.top
         }
 
-        model: SessionManager.sessionCount
-
-        Connections {
-            target: SessionManager
-            onSortOrderChanged: {
-                _sortRevision++
-                sessionPage.updateSortDescription()
-            }
-            onActiveSessionIndexChanged: _sortRevision++
-            onSessionNameChanged: _sortRevision++
-            onSessionAutorunCommandChanged: _sortRevision++
-            onSessionKeepAwakeChanged: _sortRevision++
-            onSessionsChanged: _sortRevision++
-        }
+        model: SessionManager
 
         header: PageHeader {
             title: qsTr("Sessions")
@@ -168,24 +154,7 @@ Page {
         delegate: ListItem {
             id: sessionDelegate
             contentHeight: delegateContent.height + Theme.paddingSmall * 2
-            highlighted: actualIndex === SessionManager.activeSessionIndex
-
-            property int actualIndex: {
-                var _ = _sortRevision // force re-evaluation on sort change
-                return SessionManager.displayToActual(index)
-            }
-            property string sessionName: {
-                var _ = _sortRevision // force re-evaluation on sort change
-                return SessionManager.sessionName(actualIndex)
-            }
-            property string autorunCommand: {
-                var _ = _sortRevision // force re-evaluation on sort change
-                return SessionManager.sessionAutorunCommand(actualIndex)
-            }
-            property bool keepAwake: {
-                var _ = _sortRevision // force re-evaluation on sort change
-                return SessionManager.sessionKeepAwake(actualIndex)
-            }
+            highlighted: model.isActive
 
             onClicked: {
                 pageStack.pop()
@@ -222,7 +191,7 @@ Page {
                         source: "image://theme/icon-m-charging"
                         width: Theme.iconSizeSmall
                         height: Theme.iconSizeSmall
-                        opacity: sessionDelegate.keepAwake ? 1 : 0
+                        opacity: model.keepAwake ? 1 : 0
                         visible: opacity > 0
                         anchors.verticalCenter: parent.verticalCenter
                         Behavior on opacity {
@@ -232,10 +201,7 @@ Page {
 
                     // Session name (or exec command for -e sessions)
                     Label {
-                        text: {
-                            var _ = sessionPage._sortRevision // force re-evaluation on sort change
-                            return SessionManager.sessionDisplayName(sessionDelegate.actualIndex)
-                        }
+                        text: model.displayName
                         color: sessionDelegate.highlighted
                                ? Theme.highlightColor
                                : Theme.primaryColor
@@ -247,10 +213,7 @@ Page {
                 // Working directory subtitle
                 Label {
                     visible: text.length > 0
-                    text: {
-                        var _ = sessionPage._sortRevision // force re-evaluation on sort change
-                        return SessionManager.sessionWorkingDirectory(actualIndex)
-                    }
+                    text: model.workingDirectory
                     color: sessionDelegate.highlighted
                            ? Theme.secondaryHighlightColor
                            : Theme.secondaryColor
@@ -262,8 +225,8 @@ Page {
 
                 // Autorun command subtitle
                 Label {
-                    visible: sessionDelegate.autorunCommand.length > 0
-                    text: "\u25B6 " + sessionDelegate.autorunCommand
+                    visible: model.autorunCommand.length > 0
+                    text: "\u25B6 " + model.autorunCommand
                     color: sessionDelegate.highlighted
                            ? Theme.secondaryHighlightColor
                            : Theme.secondaryColor
@@ -280,8 +243,8 @@ Page {
                     text: qsTr("Rename")
                     onClicked: {
                         var dialog = renameDialogComponent.createObject(sessionPage, {
-                            sessionIndex: actualIndex,
-                            currentName: sessionDelegate.sessionName
+                            sessionIndex: SessionManager.displayToActual(index),
+                            currentName: model.name
                         })
                         pageStack.push(dialog)
                     }
@@ -290,22 +253,22 @@ Page {
                     text: qsTr("Autorun command")
                     onClicked: {
                         var dialog = autorunDialogComponent.createObject(sessionPage, {
-                            sessionIndex: actualIndex,
-                            currentCommand: SessionManager.sessionAutorunCommand(actualIndex)
+                            sessionIndex: SessionManager.displayToActual(index),
+                            currentCommand: model.autorunCommand
                         })
                         pageStack.push(dialog)
                     }
                 }
                 MenuItem {
-                    text: sessionDelegate.keepAwake
+                    text: model.keepAwake
                           ? qsTr("Stop keeping in background")
                           : qsTr("Keep running in background")
                     onClicked: {
-                        if (sessionDelegate.keepAwake) {
-                            SessionManager.setSessionKeepAwake(actualIndex, false)
+                        if (model.keepAwake) {
+                            SessionManager.setSessionKeepAwake(SessionManager.displayToActual(index), false)
                         } else {
                             var dialog = keepAwakeDialogComponent.createObject(sessionPage, {
-                                sessionIndex: actualIndex
+                                sessionIndex: SessionManager.displayToActual(index)
                             })
                             pageStack.push(dialog)
                         }
@@ -315,7 +278,7 @@ Page {
                     text: qsTr("Remove")
                     enabled: SessionManager.sessionCount > 1
                     onClicked: {
-                        var id = SessionManager.sessionId(actualIndex)
+                        var id = model.id
                         sessionDelegate.remorseAction(
                             qsTr("Removing session"),
                             function() { SessionManager.removeSessionById(id) }

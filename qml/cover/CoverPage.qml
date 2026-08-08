@@ -2,10 +2,6 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 CoverBackground {
-    // Revision counter — bumped on sort/session changes to force
-    // stale displayToActual() bindings to re-evaluate.
-    property int _sortRevision: 0
-
     readonly property int _visibleCount: Math.min(5, SessionManager.sessionCount)
 
     Label {
@@ -20,17 +16,6 @@ CoverBackground {
         color: Theme.highlightColor
         text: appWindow.windowTitle || qsTr("Ghosteel")
         truncationMode: TruncationMode.Fade
-    }
-
-    Connections {
-        target: SessionManager
-        onSortOrderChanged: _sortRevision++
-        onActiveSessionIndexChanged: _sortRevision++
-        onSessionNameChanged: _sortRevision++
-        onSessionKeepAwakeChanged: _sortRevision++
-        // Rebuilds after remove/restore don't emit sortOrderChanged —
-        // catch them via the post-rebuild signal.
-        onSessionsChanged: _sortRevision++
     }
 
     Column {
@@ -80,26 +65,12 @@ CoverBackground {
 
         Repeater {
             id: sessionRepeater
-            model: _visibleCount
+            model: SessionManager
 
             Row {
-                property int actualIndex: {
-                    // Read _sortRevision so this binding re-evaluates on
-                    // sort/rename/switch — QML can't track side-effects
-                    // inside displayToActual(), so we need an explicit dep.
-                    var _ = _sortRevision
-                    return SessionManager.displayToActual(index)
-                }
-                property bool isActive: actualIndex === SessionManager.activeSessionIndex
-                property bool keepAwake: {
-                    // Read _sortRevision so this binding re-evaluates on
-                    // keepAwake toggle — sessionKeepAwake is Q_INVOKABLE
-                    // so QML can't track it without an explicit dependency
-                    // (same workaround as actualIndex above).
-                    var _ = _sortRevision
-                    return SessionManager.sessionKeepAwake(actualIndex)
-                }
-
+                // Cap the cover list at 5 sessions; the overflow label below
+                // signals when more exist. Hidden rows take no space in the Column.
+                visible: index < _visibleCount
                 spacing: Theme.paddingSmall
                 width: parent.width
 
@@ -108,12 +79,12 @@ CoverBackground {
                     width: Theme.iconSizeSmall
                     height: Theme.iconSizeSmall
                     radius: width / 2
-                    color: parent.isActive ? Theme.highlightColor : Theme.secondaryColor
+                    color: model.isActive ? Theme.highlightColor : Theme.secondaryColor
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Image {
-                    visible: parent.keepAwake
+                    visible: model.keepAwake
                     source: "image://theme/icon-m-charging"
                     width: Theme.iconSizeSmall
                     height: Theme.iconSizeSmall
@@ -122,14 +93,8 @@ CoverBackground {
 
                 Label {
                     width: parent.width - (Theme.iconSizeSmall * 2) - (Theme.paddingSmall * 2)
-                    text: {
-                        // Depend on _sortRevision so the binding re-evaluates
-                        // when a session is renamed (even if the actual index
-                        // didn't change, e.g. in manual sort mode).
-                        var _ = _sortRevision
-                        return SessionManager.sessionDisplayName(parent.actualIndex)
-                    }
-                    color: parent.isActive ? Theme.highlightColor : Theme.secondaryColor
+                    text: model.displayName
+                    color: model.isActive ? Theme.highlightColor : Theme.secondaryColor
                     font.pixelSize: Theme.fontSizeSmall
                     truncationMode: TruncationMode.Fade
                     anchors.verticalCenter: parent.verticalCenter
