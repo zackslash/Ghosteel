@@ -547,9 +547,9 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
+        QSignalSpy spy(&mgr, &QAbstractItemModel::dataChanged);
 
-        // Set same value — should not emit signal
+        // Set same value — should not emit dataChanged
         mgr.setSessionAutorunCommand(0, "htop");
         QCOMPARE(spy.count(), 0);
     }
@@ -562,11 +562,19 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
+        QSignalSpy spy(&mgr, &QAbstractItemModel::dataChanged);
 
         mgr.setSessionAutorunCommand(0, "vim");
         QCOMPARE(spy.count(), 1);
         QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("vim"));
+
+        // dataChanged must carry the AutorunCommandRole so the QML
+        // delegate's model.autorunCommand binding re-evaluates. The role
+        // enum is private to SessionManager; AutorunCommandRole is the
+        // 4th role (Qt::UserRole + 4).
+        QVariantList args = spy.takeFirst();
+        QVector<int> roles = args.at(2).value<QVector<int>>();
+        QVERIFY(roles.contains(Qt::UserRole + 4));
     }
 
     void testFullSaveRestoreCycleWithAutorun()
@@ -1384,10 +1392,10 @@ private slots:
 
     void testSortedIndicesValidDuringSignalHandlers()
     {
-        // Regression: when signals fire, displayToActual() must return
-        // valid mappings because rebuildSortedIndices() now runs BEFORE
-        // signal emissions.  Verify by reading displayToActual() inside
-        // a signal handler.
+        // Regression: when model signals fire, displayToActual() must return
+        // valid mappings because the sort indices are rebuilt before the
+        // layout/row signals are emitted. Verify by reading displayToActual()
+        // inside the model's signal handlers.
         Settings settings(m_settingsPath);
         SessionManager mgr(&settings);
         mgr.restoreSessions();
@@ -1402,30 +1410,33 @@ private slots:
 
         mgr.setSortMode(3); // SortAlphabetical — Alpha(1), Middle(2), Zebra(0)
 
-        // Capture displayToActual(0) from inside a sessionsChanged handler
-        int display0ActualFromSignal = -1;
-
-        connect(&mgr, &SessionManager::sessionsChanged, [&]() {
-            // At this point, rebuildSortedIndices() must have already run
-            display0ActualFromSignal = mgr.displayToActual(0);
+        // Capture displayToActual(0) from inside a layoutChanged handler.
+        // setSortMode() rebuilds the sort order before emitting layoutChanged,
+        // so the display→actual mapping must already be valid when it fires.
+        int display0ActualFromLayout = -1;
+        connect(&mgr, &QAbstractItemModel::layoutChanged, [&]() {
+            display0ActualFromLayout = mgr.displayToActual(0);
         });
 
-        // Switch active session — triggers rebuild + activeSessionIndexChanged
-        // (sessionsChanged is not emitted by setActiveSessionIndex, so test
-        // with setSortMode which does emit it)
         mgr.setSortMode(0); // SortManual — insertion order
-        QCOMPARE(display0ActualFromSignal, mgr.displayToActual(0));
+        QCOMPARE(display0ActualFromLayout, mgr.displayToActual(0));
 
-        // Now test removeSession — emits sessionsChanged after rebuild
-        display0ActualFromSignal = -1;
+        // Now test removeSession — endRemoveRows() emits rowsRemoved after
+        // the sort order has been rebuilt, so displayToActual(0) must be
+        // valid inside the handler.
+        int display0ActualFromRemoval = -1;
+        connect(&mgr, &QAbstractItemModel::rowsRemoved, [&]() {
+            display0ActualFromRemoval = mgr.displayToActual(0);
+        });
+
         mgr.setSortMode(3); // Back to alphabetical
         int firstActual = mgr.displayToActual(0); // "Alpha"
         mgr.removeSession(firstActual);
 
-        // During the sessionsChanged signal, displayToActual(0) should
-        // have returned a valid (non-negative) index
-        QVERIFY(display0ActualFromSignal >= 0);
-        QCOMPARE(display0ActualFromSignal, mgr.displayToActual(0));
+        // During the rowsRemoved signal, displayToActual(0) should have
+        // returned a valid (non-negative) index
+        QVERIFY(display0ActualFromRemoval >= 0);
+        QCOMPARE(display0ActualFromRemoval, mgr.displayToActual(0));
     }
 
     // --- -e / --exec and -s / --session tests ---
