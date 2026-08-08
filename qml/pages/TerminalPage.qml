@@ -1294,8 +1294,10 @@ Page {
                             anchors.fill: keyIcon
                             source: keyIcon
                             visible: keyIcon.visible
-                            // dark tint on the light overlay; #FFFFFF = no-op (dark keeps theme color)
-                            color: Settings.colorScheme === "light" ? Theme.darkPrimaryColor : "#FFFFFF"
+                            // Highlighted (keyboard toggle active): accent color.
+                            // Light scheme: dark tint. Dark scheme: #FFFFFF = no-op.
+                            color: keyDelegate.highlighted ? Theme.highlightColor
+                                : (Settings.colorScheme === "light" ? Theme.darkPrimaryColor : "#FFFFFF")
                         }
 
                         // Label for text keys (Tab, Esc, Ctrl, Alt, F-keys, etc.)
