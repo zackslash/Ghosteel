@@ -547,9 +547,9 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
+        QSignalSpy spy(&mgr, &QAbstractItemModel::dataChanged);
 
-        // Set same value — should not emit signal
+        // Set same value — should not emit dataChanged
         mgr.setSessionAutorunCommand(0, "htop");
         QCOMPARE(spy.count(), 0);
     }
@@ -562,11 +562,19 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        QSignalSpy spy(&mgr, &SessionManager::sessionAutorunCommandChanged);
+        QSignalSpy spy(&mgr, &QAbstractItemModel::dataChanged);
 
         mgr.setSessionAutorunCommand(0, "vim");
         QCOMPARE(spy.count(), 1);
         QCOMPARE(mgr.sessionAutorunCommand(0), QStringLiteral("vim"));
+
+        // dataChanged must carry the AutorunCommandRole so the QML
+        // delegate's model.autorunCommand binding re-evaluates. The role
+        // enum is private to SessionManager; AutorunCommandRole is the
+        // 4th role (Qt::UserRole + 4).
+        QVariantList args = spy.takeFirst();
+        QVector<int> roles = args.at(2).value<QVector<int>>();
+        QVERIFY(roles.contains(Qt::UserRole + 4));
     }
 
     void testFullSaveRestoreCycleWithAutorun()

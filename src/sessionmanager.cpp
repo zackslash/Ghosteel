@@ -655,7 +655,6 @@ void SessionManager::setSessionAutorunCommand(int index, const QString &cmd)
         return;
 
     m_sessions[index].autorunCommand = cmd;
-    Q_EMIT sessionAutorunCommandChanged(index);
 
     // Emit dataChanged for the autorun role so the QML delegate's
     // model.autorunCommand binding re-evaluates.

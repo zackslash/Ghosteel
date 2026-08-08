@@ -16,6 +16,12 @@ Page {
         else sortDescription = ""
     }
 
+    // Keep the sort description in sync when the sort mode changes.
+    Connections {
+        target: SessionManager
+        onSortOrderChanged: updateSortDescription()
+    }
+
     // Rename dialog
     Component {
         id: renameDialogComponent

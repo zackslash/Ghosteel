@@ -112,7 +112,6 @@ Q_SIGNALS:
     void sessionCreated(int index);
     void sessionRemoved(int index, int sessionId);
     void sessionSwitched(int index);
-    void sessionAutorunCommandChanged(int idx);
     void sessionKeybarOpenChanged(int idx);
     void sessionKeyboardVisibleChanged(int idx);
     void sessionsRestored(); // Emitted once after restoreSessions() completes
