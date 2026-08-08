@@ -1204,14 +1204,14 @@ Page {
             position: Dock.Bottom
         }
 
-        // Scheme-dependent tint over PanelBackground. The light tint ensures
-        // the keybar appears light when the terminal scheme is light, since
-        // PanelBackground follows the ambience which may not match.
+        // Scheme-dependent tint over PanelBackground. Only tints when the
+        // terminal scheme differs from the ambience to avoid mismatched keybar.
         Rectangle {
             anchors.fill: parent
             color: Settings.colorScheme === "light"
                    ? Qt.rgba(1, 1, 1, 0.6)
-                   : "transparent"
+                   : (Theme.colorScheme === Theme.DarkOnLight
+                      ? Qt.rgba(0, 0, 0, 0.5) : "transparent")
         }
 
         SilicaFlickable {
