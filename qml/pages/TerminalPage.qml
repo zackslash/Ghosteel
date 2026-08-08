@@ -1197,19 +1197,19 @@ Page {
             NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
         }
 
-        // Match DockedPanel's default translucent gradient background
+        // Match DockedPanel's default translucent gradient background.
+        // Kept visible in both schemes — the overlay tints it for light mode.
         PanelBackground {
             anchors.fill: parent
             position: Dock.Bottom
-            visible: Settings.colorScheme !== "light"
         }
 
-        // Scheme-dependent overlay for light mode. PanelBackground follows
-        // the ambience, which may not match the terminal color scheme.
-        // White masks the ambience tint in light mode; dark mode reuses PanelBackground.
+        // Scheme-dependent tint. PanelBackground follows the ambience, which
+        // may not match the terminal color scheme. Semi-transparent white
+        // tints the panel light while preserving the gradient translucency.
         Rectangle {
             anchors.fill: parent
-            color: Settings.colorScheme === "light" ? "#FFFFFF" : "transparent"
+            color: Settings.colorScheme === "light" ? Qt.rgba(1, 1, 1, 0.8) : "transparent"
         }
 
         SilicaFlickable {
