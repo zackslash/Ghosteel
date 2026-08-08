@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QAbstractListModel>
-#include <QQmlListProperty>
 #include <QVector>
 #include <QTimer>
 #include <QLocalServer>
@@ -25,7 +24,6 @@ class SessionManager : public QAbstractListModel
     Q_OBJECT
     Q_PROPERTY(int activeSessionIndex READ activeSessionIndex WRITE setActiveSessionIndex NOTIFY activeSessionIndexChanged)
     Q_PROPERTY(int sessionCount READ sessionCount NOTIFY sessionCountChanged)
-    Q_PROPERTY(QQmlListProperty<TerminalView> sessions READ sessions NOTIFY sessionsChanged)
     Q_PROPERTY(bool dbusRegistered READ dbusRegistered NOTIFY dbusRegisteredChanged)
     Q_PROPERTY(int activeSessionFontSize READ activeSessionFontSize NOTIFY activeSessionFontSizeChanged)
 
@@ -47,8 +45,6 @@ public:
 
     bool dbusRegistered() const { return m_dbusRegistered; }
     void setDbusRegistered(bool registered);
-
-    QQmlListProperty<TerminalView> sessions();
 
     Q_INVOKABLE TerminalView* createSession();
     TerminalView* createSessionWithCommand(const QString &name, const QStringList &commandArgs);
@@ -113,7 +109,6 @@ public:
 Q_SIGNALS:
     void activeSessionIndexChanged();
     void sessionCountChanged();
-    void sessionsChanged();
     void sessionCreated(int index);
     void sessionRemoved(int index, int sessionId);
     void sessionSwitched(int index);
@@ -143,8 +138,6 @@ private:
         IsActiveRole
     };
 
-    static int sessionCountCallback(QQmlListProperty<TerminalView> *prop);
-    static TerminalView* sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index);
     static QString socketPath();
 
     void scheduleSave();           // metadata changed — arms timer + marks sessions dirty

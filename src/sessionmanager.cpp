@@ -203,9 +203,8 @@ void SessionManager::setActiveSessionIndex(int index)
     int oldActive = m_activeSessionIndex;
     bool sortRebuilt = false;
 
-    // Update last-used timestamp and rebuild sort order BEFORE emitting
-    // signals, so QML bindings that call displayToActual() see the
-    // correct mapping when they re-evaluate.
+    // Rebuild sort order and emit layoutChanged BEFORE activeSessionIndexChanged,
+    // so handlers see a consistent display→actual mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
         layoutAboutToBeChanged();
@@ -215,6 +214,8 @@ void SessionManager::setActiveSessionIndex(int index)
 
     m_activeSessionIndex = index;
 
+    // m_activeSessionIndex must be set before layoutChanged/dataChanged,
+    // because views re-read IsActiveRole during those signals.
     if (sortRebuilt) {
         layoutChanged();
     } else {
@@ -236,29 +237,6 @@ void SessionManager::setActiveSessionIndex(int index)
     Q_EMIT sessionSwitched(index);
 
     scheduleSave();
-}
-
-QQmlListProperty<TerminalView> SessionManager::sessions()
-{
-    return QQmlListProperty<TerminalView>(this, nullptr,
-                                          &SessionManager::sessionCountCallback,
-                                          &SessionManager::sessionAtCallback);
-}
-
-int SessionManager::sessionCountCallback(QQmlListProperty<TerminalView> *prop)
-{
-    SessionManager *manager = static_cast<SessionManager *>(prop->object);
-    if (!manager)
-        return 0;
-    return manager->m_sessions.size();
-}
-
-TerminalView* SessionManager::sessionAtCallback(QQmlListProperty<TerminalView> *prop, int index)
-{
-    SessionManager *manager = static_cast<SessionManager *>(prop->object);
-    if (!manager || index < 0 || index >= manager->m_sessions.size())
-        return nullptr;
-    return manager->m_sessions.at(index).view;
 }
 
 QString SessionManager::clipboardText() const
@@ -368,7 +346,6 @@ TerminalView* SessionManager::createSession()
     info.lastUsedAt = info.createdAt;
     info.view = view;
 
-    m_sessions.append(info);
     finishSessionCreation(view, info);
     return view;
 }
@@ -393,8 +370,6 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
     info.view = view;
 
     view->setCommandArgs(commandArgs);
-
-    m_sessions.append(info);
 
     // Auto-remove on exit; delay for errors so user sees the message.
     // Success: only remove anonymous sessions (command finished normally).
@@ -423,11 +398,44 @@ TerminalView* SessionManager::createSessionWithCommand(const QString &name, cons
 void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info)
 {
     connectSessionSignals(view, info.id);
+
+    // Compute the predicted display position BEFORE appending — the model
+    // contract requires rowCount to stay unchanged until beginInsertRows.
+    int predictedPos;
+    switch (sortMode()) {
+    case Settings::SortLastUsed:
+    case Settings::SortCreated:
+        // The newest session has the freshest last-used/created timestamp,
+        // so it sorts to the front of the display list.
+        predictedPos = 0;
+        break;
+    case Settings::SortAlphabetical: {
+        // Rank the new name among the existing sessions, matching the
+        // case-insensitive comparison used by rebuildSortedIndices().
+        // Ties fall through to the end, preserving stable-sort semantics.
+        const QString newName = info.name.toLower();
+        predictedPos = m_sessions.size();
+        for (int i = 0; i < m_sessions.size(); ++i) {
+            if (newName < m_sessions.at(i).name.toLower()) {
+                predictedPos = i;
+                break;
+            }
+        }
+        break;
+    }
+    default: // SortManual — the new session is appended at the end
+        predictedPos = m_sessions.size();
+        break;
+    }
+
+    // Insert into the model before calling setActiveSessionIndex, so the
+    // new row exists when dataChanged(IsActiveRole) fires.
+    beginInsertRows(QModelIndex(), predictedPos, predictedPos);
+    m_sessions.append(info);
     rebuildSortedIndices();
-    int index = m_sessions.size() - 1;
-    int displayPos = actualToDisplay(index);
-    beginInsertRows(QModelIndex(), displayPos, displayPos);
     endInsertRows();
+
+    int index = m_sessions.size() - 1;
     Q_EMIT sessionCountChanged();
     Q_EMIT sessionCreated(index);
     setActiveSessionIndex(index);
@@ -461,9 +469,8 @@ void SessionManager::removeSession(int index)
 
     SessionInfo info = m_sessions.takeAt(index);
 
-    // Adjust active session index silently first, then rebuild sort order.
-    // Signals are deferred so that QML bindings calling displayToActual()
-    // see the correct mapping when they re-evaluate.
+    // Rebuild sort order and emit layoutChanged BEFORE activeSessionIndexChanged,
+    // so handlers see a consistent display→actual mapping when they re-evaluate.
     if (m_sessions.isEmpty()) {
         m_activeSessionIndex = -1;
     } else if (wasBeforeActive) {
@@ -683,6 +690,7 @@ int SessionManager::displayToActual(int displayIndex) const
 int SessionManager::actualToDisplay(int actualIndex) const
 {
     if (m_sortedIndices.isEmpty()) {
+        // No sorting active — display index == actual index
         if (actualIndex < 0 || actualIndex >= m_sessions.size())
             return -1;
         return actualIndex;
@@ -952,6 +960,11 @@ bool SessionManager::restoreSessions()
 
     m_store->cleanupScrollbackFiles();
 
+    // Announce the insert before loading the data, so rowCount never changes
+    // ahead of beginInsertRows (Qt model contract). count was capped above and
+    // the early return guarantees at least one row.
+    beginInsertRows(QModelIndex(), 0, count - 1);
+
     for (int i = 0; i < count; i++) {
         QString group = QStringLiteral("sessionData/session_%1").arg(i);
         s.beginGroup(group);
@@ -1014,10 +1027,7 @@ bool SessionManager::restoreSessions()
 
     // Build sort order and notify the model of all new rows at once
     rebuildSortedIndices();
-    if (!m_sessions.isEmpty()) {
-        beginInsertRows(QModelIndex(), 0, m_sessions.size() - 1);
-        endInsertRows();
-    }
+    endInsertRows();
     Q_EMIT sessionCountChanged();
 
     // Restore active session by ID (or by legacy index)
@@ -1049,6 +1059,7 @@ QVariant SessionManager::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_sortedIndices.size())
         return QVariant();
+    // QML row is a display (sorted) index — translate to actual m_sessions index.
     int actual = m_sortedIndices.at(index.row());
     if (actual < 0 || actual >= m_sessions.size())
         return QVariant();
