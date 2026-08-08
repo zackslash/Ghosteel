@@ -459,6 +459,14 @@ Pokreće libghostty terminalski motor</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Промени величину фонта сесије гестом штипања са два прста</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Ауто прати ваш амбијент</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Ауто</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -545,6 +553,10 @@ Pokreće libghostty terminalski motor</translation>
     <message>
         <source>Default</source>
         <translation>Подразумевано</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Zvono</translation>
     </message>
 </context>
 </TS>

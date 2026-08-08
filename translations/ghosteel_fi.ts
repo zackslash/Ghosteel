@@ -458,6 +458,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Muuta istunnon fontin kokoa kahden sormen nipistys-eleellä</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto seuraa tunnelmaasi</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ Käyttää libghostty-pääteohjelmaa</translation>
     <message>
         <source>Default</source>
         <translation>Oletus</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Äänimerkki</translation>
     </message>
 </context>
 </TS>

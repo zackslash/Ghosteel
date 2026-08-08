@@ -459,6 +459,14 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Zmień rozmiar czcionki sesji za pomocą gestu uszczypnięcia dwoma palcami</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto podąża za Twoim klimatem</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -545,6 +553,10 @@ Obsługiwany przez silnik terminala libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Domyślny</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Dzwonek</translation>
     </message>
 </context>
 </TS>

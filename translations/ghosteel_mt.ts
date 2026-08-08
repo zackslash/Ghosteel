@@ -457,8 +457,16 @@ Mħaddem minn magna terminali libghostty</translation>
         <translation>Daqs tal-font awtomatika</translation>
     </message>
     <message>
-        <source>Settings</source>
-        <translation>Issettjar</translation>
+        <source>Auto follows your ambience</source>
+        <translation>Auto isegwi l-ambjent tiegħek</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>Change font size of the session with a two-finger pinch gesture</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -546,6 +554,10 @@ Mħaddem minn magna terminali libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Awtomatiku</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Qanpiena</translation>
     </message>
 </context>
 </TS>

@@ -459,6 +459,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Змяняйце памер шрыфту сеансу жэстам шчыпка двума пальцамі</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Аўта наследуе вашу атмасферу</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Аўта</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -545,6 +553,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>Па змаўчанні</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Званок</translation>
     </message>
 </context>
 </TS>

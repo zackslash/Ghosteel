@@ -458,6 +458,14 @@ Alimentato dal motore di terminale libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Cambia la dimensione del carattere della sessione con un gesto di pizzicotto a due dita</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto segue la tua atmosfera</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ Alimentato dal motore di terminale libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Predefinito</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Campanella</translation>
     </message>
 </context>
 </TS>

@@ -459,6 +459,14 @@ Propulsat de motorul de terminal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Modifică mărimea fontului sesiunii cu un gest de ciupire cu două degete</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto urmează ambientul</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -545,6 +553,10 @@ Propulsat de motorul de terminal libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Implicit</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Sunet de alertă</translation>
     </message>
 </context>
 </TS>

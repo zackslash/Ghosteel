@@ -458,6 +458,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>შეცვალეთ სესიის ფონტის ზომა ორი თითის დაჭერის ჟესტით</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>ავტო მიჰყვება თქვენს ატმოსფეროს</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>ავტო</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +552,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>ნაგულისხმევი</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>ზარი</translation>
     </message>
 </context>
 </TS>

@@ -459,6 +459,14 @@ Poháněno terminálovým enginem libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Změňte velikost písma relace gestem štípnutí dvěma prsty</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automaticky následuje vaše prostředí</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automaticky</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -545,6 +553,10 @@ Poháněno terminálovým enginem libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Výchozí</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Zvonek</translation>
     </message>
 </context>
 </TS>
