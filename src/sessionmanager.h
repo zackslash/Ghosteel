@@ -84,7 +84,7 @@ public:
 
     // Session ordering — maps display index (sorted) to actual m_sessions index
     Q_INVOKABLE int displayToActual(int displayIndex) const;
-    Q_INVOKABLE int actualToDisplay(int actualIndex) const;
+    int actualToDisplay(int actualIndex) const;
     Q_INVOKABLE int sortMode() const;
     Q_INVOKABLE void setSortMode(int mode);
 
@@ -112,7 +112,6 @@ Q_SIGNALS:
     void sessionCreated(int index);
     void sessionRemoved(int index, int sessionId);
     void sessionSwitched(int index);
-    void sessionNameChanged(int idx);
     void sessionAutorunCommandChanged(int idx);
     void sessionKeybarOpenChanged(int idx);
     void sessionKeyboardVisibleChanged(int idx);
@@ -163,7 +162,8 @@ private:
     // Index model:
     //   m_sessions       — actual sessions, in creation/persistence order.
     //   m_sortedIndices  — display→actual map; m_sortedIndices[d] is the actual
-    //                      index shown at QML row d. Empty = identity mapping.
+    //                      index shown at QML row d. Always populated for a
+    //                      non-empty session set (identity order under SortManual).
     //   rowCount()/data()/beginInsertRows/etc. speak DISPLAY indices.
     //   sessionName()/setSessionName()/etc. speak ACTUAL indices.
     //   QML converts via displayToActual(index) where needed.

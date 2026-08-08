@@ -403,12 +403,33 @@ void SessionManager::finishSessionCreation(TerminalView *view, SessionInfo &info
     // contract requires rowCount to stay unchanged until beginInsertRows.
     int predictedPos;
     switch (sortMode()) {
-    case Settings::SortLastUsed:
-    case Settings::SortCreated:
-        // The newest session has the freshest last-used/created timestamp,
-        // so it sorts to the front of the display list.
-        predictedPos = 0;
+    case Settings::SortLastUsed: {
+        // Find the first session the new one outranks, matching the strict
+        // '>' comparison in rebuildSortedIndices(). Timestamp ties (same
+        // millisecond) fall through to the end, preserving stable-sort
+        // semantics (old-before-new for equal timestamps).
+        const qint64 newTs = info.lastUsedAt;
+        predictedPos = m_sortedIndices.size();
+        for (int i = 0; i < m_sortedIndices.size(); ++i) {
+            if (newTs > m_sessions.at(m_sortedIndices.at(i)).lastUsedAt) {
+                predictedPos = i;
+                break;
+            }
+        }
         break;
+    }
+    case Settings::SortCreated: {
+        // Same scan as SortLastUsed, keyed on the creation timestamp.
+        const qint64 newTs = info.createdAt;
+        predictedPos = m_sortedIndices.size();
+        for (int i = 0; i < m_sortedIndices.size(); ++i) {
+            if (newTs > m_sessions.at(m_sortedIndices.at(i)).createdAt) {
+                predictedPos = i;
+                break;
+            }
+        }
+        break;
+    }
     case Settings::SortAlphabetical: {
         // Rank the new name among the existing sessions, matching the
         // case-insensitive comparison used by rebuildSortedIndices().
@@ -583,7 +604,6 @@ void SessionManager::setSessionName(int index, const QString &name)
         if (displayPos >= 0 && displayPos < m_sortedIndices.size())
             Q_EMIT dataChanged(this->index(displayPos), this->index(displayPos), roles);
     }
-    Q_EMIT sessionNameChanged(index);
 
     scheduleSave();
 }
