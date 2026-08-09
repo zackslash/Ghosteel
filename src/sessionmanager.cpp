@@ -40,6 +40,27 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     m_encryptor = new ScrollEncryptor(this);
     m_store = std::make_unique<SessionStore>(m_settings, m_encryptor);
 
+    // Async scrollback encryption completes on the GUI thread event loop.
+    // Clear the in-flight guard so the session can be saved again; on success
+    // clear dirty (data is on disk), on failure leave dirty so the save is
+    // retried on the next opportunity (e.g. availabilityChanged).
+    connect(m_store.get(), &SessionStore::saveCompleted, this, [this](int sessionId) {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        m_sessions[idx].scrollbackSaveInFlight = false;
+        m_sessions[idx].scrollbackDirty = false;
+        m_sessions[idx].lastScrollbackSaveMs = QDateTime::currentMSecsSinceEpoch();
+    });
+    connect(m_store.get(), &SessionStore::saveFailed, this, [this](int sessionId) {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        // Clear the in-flight guard only; keep scrollbackDirty so the session
+        // is retried (the content was not persisted).
+        m_sessions[idx].scrollbackSaveInFlight = false;
+    });
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
@@ -204,7 +225,7 @@ void SessionManager::setActiveSessionIndex(int index)
     bool sortRebuilt = false;
 
     // Rebuild sort order and emit layoutChanged BEFORE activeSessionIndexChanged,
-    // so handlers see a consistent display→actual mapping when they re-evaluate.
+    // so handlers see a consistent display->actual mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
         layoutAboutToBeChanged();
@@ -301,7 +322,7 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 
     // justRestored must be cleared before the first data-driven contentChanged
     // runs, or that handler will keep skipping saves. titleChanged (shells that
-    // set a title) fires synchronously from onPtyData → vtWrite, before the
+    // set a title) fires synchronously from onPtyData -> vtWrite, before the
     // update() that emits contentChanged; ptyDataReceived fires earlier still
     // (before vtWrite) and also covers title-less shells like sh/dash. Hence
     // two connections — whichever fires first wins.
@@ -493,7 +514,7 @@ void SessionManager::removeSession(int index)
     SessionInfo info = m_sessions.takeAt(index);
 
     // Rebuild sort order and call endRemoveRows() BEFORE activeSessionIndexChanged,
-    // so handlers see a consistent display→actual mapping when they re-evaluate.
+    // so handlers see a consistent display->actual mapping when they re-evaluate.
     if (m_sessions.isEmpty()) {
         m_activeSessionIndex = -1;
     } else if (wasBeforeActive) {

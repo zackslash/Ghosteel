@@ -160,14 +160,14 @@ private Q_SLOTS:
 private:
     // Index model:
     //   m_sessions       — actual sessions, in creation/persistence order.
-    //   m_sortedIndices  — display→actual map; m_sortedIndices[d] is the actual
+    //   m_sortedIndices  — display->actual map; m_sortedIndices[d] is the actual
     //                      index shown at QML row d. Always populated for a
     //                      non-empty session set (identity order under SortManual).
     //   rowCount()/data()/beginInsertRows/etc. speak DISPLAY indices.
     //   sessionName()/setSessionName()/etc. speak ACTUAL indices.
     //   QML converts via displayToActual(index) where needed.
     QVector<SessionInfo> m_sessions;
-    QVector<int> m_sortedIndices; // display index → actual m_sessions index
+    QVector<int> m_sortedIndices; // display index -> actual m_sessions index
     int m_activeSessionIndex = -1;
     int m_nextSessionId = 1;
 

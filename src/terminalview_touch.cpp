@@ -7,7 +7,7 @@
 #include <cmath>
 
 namespace {
-// Qt wheel delta is in 1/8° units; 120 units = 15° = 3 lines → 40 units/line.
+// Qt wheel delta is in 1/8° units; 120 units = 15° = 3 lines -> 40 units/line.
 constexpr qreal kWheelUnitsPerLine = 40.0;
 }   // namespace
 
@@ -228,7 +228,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         setKeepTouchGrab(false);
         qreal dx = event->pos().x() - m_swipeStartX;
         if (qAbs(dx) > width() * SwipeCommitFraction) {
-            Q_EMIT sessionSwipeCommitted(dx < 0 ? 1 : -1);   // leftward → next session
+            Q_EMIT sessionSwipeCommitted(dx < 0 ? 1 : -1);   // leftward -> next session
         } else {
             Q_EMIT sessionSwipeCancelled();
         }
@@ -408,7 +408,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
     // TUI mode (mouse tracking): accept + grab + forward as synthetic
     // mouse/wheel events.  Normal mode: fall through to QQuickItem —
     // accepting would break the Flickable's press-delay disambiguation
-    // (instant drag → pull-down, press-hold → selection).
+    // (instant drag -> pull-down, press-hold -> selection).
 
     if (m_mouseTrackingActive) {
         if (event->type() == QEvent::TouchBegin && points.size() == 1) {
@@ -503,7 +503,7 @@ void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
 
 void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points)
 {
-    resetSessionSwipe();   // a second finger lands → abandon any in-progress swipe
+    resetSessionSwipe();   // a second finger lands -> abandon any in-progress swipe
 
     // Shell exited — ignore multi-touch, let it fall through to parent
     if (m_shellExited)

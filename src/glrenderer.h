@@ -347,7 +347,7 @@ private:
         };
         QVector<KittyPlacementSnapshot> m_kittyPlacements;
         bool m_kittyGraphicsEnabled = false;
-        QVector<GLuint> m_kittyTexturesToDelete;  // deferred GL deletions (GUI→render)
+        QVector<GLuint> m_kittyTexturesToDelete;  // deferred GL deletions (GUI->render)
 
         // Kitty image shader (textured quad, premultiplied alpha)
         QOpenGLShaderProgram *m_kittyProgram = nullptr;

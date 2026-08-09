@@ -20,7 +20,8 @@ constexpr qint64 kMaxScrollbackFileBytes = 4 * 1024 * 1024;
 }   // namespace
 
 SessionStore::SessionStore(Settings *settings, ScrollEncryptor *encryptor)
-    : m_settings(settings)
+    : QObject(nullptr)
+    , m_settings(settings)
     , m_encryptor(encryptor)
 {
 }
@@ -92,7 +93,7 @@ QString SessionStore::scrollbackFilePath(int sessionId) const
     return scrollbackDir() + QStringLiteral("/session_%1.vt").arg(sessionId);
 }
 
-void SessionStore::saveSessionScrollback(SessionInfo &info)
+void SessionStore::saveSessionScrollback(SessionInfo &info, bool forceSync)
 {
     if (!info.view)
         return;
@@ -100,30 +101,74 @@ void SessionStore::saveSessionScrollback(SessionInfo &info)
     uint16_t cols = 0, rows = 0;
     QByteArray data = info.view->exportScrollback(cols, rows);
     if (data.isEmpty()) {
-        info.scrollbackDirty = false;
+        // Nothing to persist. Route through saveCompleted so the manager's
+        // handler updates scrollbackDirty and the save-throttle timestamp the
+        // same way a real (encrypted) save does — otherwise the throttle
+        // never engages after an empty export.
+        Q_EMIT saveCompleted(info.id);
         return;
     }
 
-    QByteArray output;
-    if (m_encryptor && m_encryptor->isAvailable())
-        output = m_encryptor->encrypt(data);
-    if (output.isEmpty()) {
+    if (!m_encryptor)
+        return; // No encryption subsystem — leave dirty for later.
+
+    if (forceSync) {
+        // aboutToQuit / destructor fallback: the event loop is stopping, so an
+        // async D-Bus reply would never be delivered. Blocking here is fine —
+        // the GUI is going away and persistence must be guaranteed.
+        const QByteArray output = m_encryptor->encrypt(data);
+        if (output.isEmpty()) {
+            qWarning() << "Ghosteel: Scrollback encryption failed for session"
+                       << info.id << ", skipping";
+            return; // Don't write plaintext to disk; leave dirty.
+        }
+        writeScrollbackToDisk(info.id, output);
+        return;
+    }
+
+    // Async path: startRequest() returns immediately and the callback fires on
+    // the GUI thread event loop when the crypto daemon replies. No
+    // waitForFinished(), so the GUI thread never stalls on D-Bus.
+    const int sessionId = info.id;
+    info.scrollbackSaveInFlight = true;
+    const bool started = m_encryptor->encryptAsync(data,
+        [this, sessionId](const QByteArray &encrypted) {
+            writeScrollbackToDisk(sessionId, encrypted);
+        });
+    if (!started) {
+        // Encryption unavailable — leave dirty for a later retry.
+        info.scrollbackSaveInFlight = false;
+        qWarning() << "Ghosteel: Async scrollback encryption unavailable for session"
+                   << sessionId << ", leaving dirty for retry";
+    }
+}
+
+void SessionStore::writeScrollbackToDisk(int sessionId, const QByteArray &encrypted)
+{
+    // Persistence may have been disabled while the D-Bus request was in flight
+    // — don't recreate a file the purge just removed.
+    if (!m_settings->scrollbackPersistence()) {
+        Q_EMIT saveFailed(sessionId);
+        return;
+    }
+
+    if (encrypted.isEmpty()) {
         qWarning() << "Ghosteel: Scrollback encryption failed for session"
-                   << info.id << ", skipping";
+                   << sessionId << ", skipping";
+        Q_EMIT saveFailed(sessionId);
         return; // Don't write plaintext to disk
     }
 
     // Atomic write via QSaveFile — commit() is a POSIX rename(),
     // which is atomic on the same filesystem. No window where both
     // old and new files are gone.
-    QSaveFile saveFile(scrollbackFilePath(info.id));
+    QSaveFile saveFile(scrollbackFilePath(sessionId));
     if (saveFile.open(QIODevice::WriteOnly)) {
-        if (saveFile.write(output) != -1) {
+        if (saveFile.write(encrypted) != -1) {
             // fsync before rename to ensure data is on disk —
             // protects against power loss between write and rename
             ::fsync(saveFile.handle());
             if (saveFile.commit()) {
-                info.scrollbackDirty = false;
                 // fsync the parent directory so the rename's dirent update
                 // survives a power loss (file content is already durable).
                 int dirFd = ::open(scrollbackDir().toUtf8().constData(), O_RDONLY);
@@ -134,13 +179,17 @@ void SessionStore::saveSessionScrollback(SessionInfo &info)
                 } else {
                     qWarning() << "Scrollback: dir fsync open failed:" << std::strerror(errno);
                 }
-            } else {
-                qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
+                Q_EMIT saveCompleted(sessionId);
+                return;
             }
+            qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
         } else {
             qWarning() << "Failed to write scrollback:" << saveFile.errorString();
         }
+    } else {
+        qWarning() << "Failed to open scrollback:" << saveFile.errorString();
     }
+    Q_EMIT saveFailed(sessionId);
 }
 
 bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int activeIndex, bool force)
@@ -162,6 +211,10 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
     bool anyThrottled = false;
 
     auto trySave = [&](SessionInfo &info) {
+        // Skip sessions with an async encrypt request still in flight —
+        // avoid a second concurrent encrypt racing the in-flight one.
+        if (!force && info.scrollbackSaveInFlight)
+            return;
         if (!info.scrollbackDirty)
             return;  // cheap pre-check; saveSessionScrollback does not re-check dirty
         if (!force && info.lastScrollbackSaveMs > 0
@@ -170,9 +223,7 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
             anyThrottled = true;
             return;
         }
-        saveSessionScrollback(info);  // clears dirty on success
-        if (!info.scrollbackDirty)
-            info.lastScrollbackSaveMs = now;
+        saveSessionScrollback(info, force);  // async (or sync on quit); dirty cleared by saveCompleted handler
     };
 
     // Process active session first for priority on quit

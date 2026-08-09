@@ -22,6 +22,15 @@
 // only does blocking read() and delivers data to the main thread via
 // dataReady signal with an explicit Qt::QueuedConnection.
 
+// Result of a single-pass grid walk for search: the per-row text plus, for
+// each row, a mapping from cell column -> QChar index within that row's text.
+// Wide chars occupy two cells, and supplementary-plane codepoints (emoji)
+// expand to two QChars (a surrogate pair), so the mapping accounts for both.
+struct VtSearchText {
+    QStringList lines;              // one string per grid row
+    QVector<QVector<int>> mapping;  // per row: cell column -> QChar offset
+};
+
 class GhosttyVt : public QObject
 {
     Q_OBJECT
@@ -78,7 +87,11 @@ public:
                                 uint32_t cellW, uint32_t cellH,
                                 uint32_t paddingTop);
     void setMouseButtonPressed(bool pressed);
-    QStringList extractSearchText();
+    // Single-pass grid walk producing both the per-row search text and the
+    // cell->QChar mapping for search highlighting (wide chars occupy two cells,
+    // supplementary codepoints expand to two QChars). Replaces the former
+    // extractSearchText() + TerminalView::buildCellMapping() double walk.
+    VtSearchText extractSearchText();
     bool isSearchTextDirty() const { return m_searchTextDirty; }
     // Mark the search cache stale. Call after operations that invalidate the
     // cached row text (e.g. ghostty_terminal_resize) so the next findNext/

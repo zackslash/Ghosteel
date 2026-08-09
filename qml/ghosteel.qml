@@ -30,7 +30,7 @@ ApplicationWindow {
 
     function resolveAmbience() {
         if (Settings.followAmbience)
-            // Light ambience (DarkOnLight) → light terminal bg; everything else → dark
+            // Light ambience (DarkOnLight) -> light terminal bg; everything else -> dark
             Settings.colorScheme = (Theme.colorScheme === Theme.DarkOnLight) ? "light" : "dark"
     }
 

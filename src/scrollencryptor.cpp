@@ -261,6 +261,53 @@ QByteArray ScrollEncryptor::encrypt(const QByteArray &plaintext)
     return output;
 }
 
+bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback callback)
+{
+    if (!m_available || !m_keyReference || plaintext.isEmpty())
+        return false;
+
+    const QByteArray iv = nextIV();
+    if (iv.isEmpty())
+        return false;
+
+    const QByteArray padded = pkcs7Pad(plaintext);
+
+    // Parented to this for lifetime (auto-delete if destroyed mid-request).
+    // The callback runs on the GUI thread because enc is the connect
+    // context object and was created here.
+    auto *enc = new EncryptRequest(this);
+    enc->setManager(m_cryptoManager.get());
+    enc->setData(padded);
+    enc->setInitializationVector(iv);
+    enc->setKey(*m_keyReference);
+    enc->setBlockMode(CryptoManager::BlockModeCbc);
+    enc->setPadding(CryptoManager::EncryptionPaddingNone);
+    enc->setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
+
+    QObject::connect(enc, &EncryptRequest::statusChanged,
+                     enc, [enc, callback, iv]() {
+        if (enc->status() != Sailfish::Crypto::Request::Finished)
+            return;
+        QByteArray output;
+        if (enc->result().code() == Sailfish::Crypto::Result::Succeeded) {
+            output.reserve(HEADER_SIZE + enc->ciphertext().size());
+            output.append(MAGIC, 4);
+            output.append(QByteArray(4, '\x00')); // reserved
+            output.append(iv);
+            output.append(enc->ciphertext());
+        } else {
+            qWarning() << "Ghosteel: Async encryption failed:"
+                       << enc->result().errorCode()
+                       << enc->result().errorMessage();
+        }
+        callback(output);
+        enc->deleteLater();
+    });
+
+    enc->startRequest();
+    return true;
+}
+
 QByteArray ScrollEncryptor::decrypt(const QByteArray &ciphertextWithHeader)
 {
     if (!m_available || !m_keyReference)
@@ -309,6 +356,7 @@ ScrollEncryptor::ScrollEncryptor(QObject *parent) : QObject(parent) {
 ScrollEncryptor::~ScrollEncryptor() = default;
 bool ScrollEncryptor::isAvailable() const { return false; }
 QByteArray ScrollEncryptor::encrypt(const QByteArray &) { return QByteArray(); }
+bool ScrollEncryptor::encryptAsync(const QByteArray &, EncryptCallback) { return false; }
 QByteArray ScrollEncryptor::decrypt(const QByteArray &) { return QByteArray(); }
 void ScrollEncryptor::replenishIVs() {}
 void ScrollEncryptor::initializeNow() { initializeAsync(); }

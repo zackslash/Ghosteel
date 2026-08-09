@@ -436,7 +436,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     }
 
     // Start here (not from render()) so the first trail frame lands in this
-    // same sync→render cycle.
+    // same sync->render cycle.
     if (m_cursorMoved
             && q->m_wantsCursorTrails
             && q->m_customShaderPath.isEmpty()

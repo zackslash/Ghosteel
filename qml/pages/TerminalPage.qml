@@ -21,7 +21,7 @@ Page {
     // Track active modifiers for virtual keyboard sticky keys
     property int activeModifiers: 0
 
-    // --- Session-swipe (horizontal drag → switch session) animation state ---
+    // --- Session-swipe (horizontal drag -> switch session) animation state ---
     property real swipePanX: 0          // drives glOverlayWrapper.transform.x (live content)
     property real snapshotPanX: 0       // drives snapshotSource.transform.x (frozen old frame)
     property bool swipeActive: false    // true during a live/animating swipe
@@ -382,6 +382,7 @@ Page {
         var sessionFontSize = SessionManager.activeSessionFontSize
         t.fontSize = sessionFontSize > 0 ? sessionFontSize : Settings.fontSize
         applyTerminalTheme(t)
+        searchPanel.updateSearchPanelHeight()
         if (focus !== false)
             t.forceActiveFocus()
 
@@ -854,7 +855,7 @@ Page {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         // Decouple from keybar's animated y to avoid per-frame terminal resize
-        // (C++ geometryChanged → PTY SIGWINCH) during the 200ms slide. The margin
+        // (C++ geometryChanged -> PTY SIGWINCH) during the 200ms slide. The margin
         // snaps to the keybar's resting height immediately; the keybar's own
         // Behavior-on-y provides the visual slide on top (higher z).
         anchors.bottomMargin: keybar.open ? keybar.height : 0
@@ -947,8 +948,8 @@ Page {
                 color: Settings.colorScheme === "light" ? "#FFFFFF" : "#1E1E1E"
                 opacity: Settings.backgroundOpacity
                 visible: swipeActive && swipePhase !== "sliding"
-                //   _d < 0 (content slid left):  past the right edge → fills right void
-                //   _d > 0 (content slid right): before the left edge → fills left void
+                //   _d < 0 (content slid left):  past the right edge -> fills right void
+                //   _d > 0 (content slid right): before the left edge -> fills left void
                 readonly property real _d: Math.round(swipePanX)
                 x: _d < 0 ? glOverlay.width : _d * -1
                 width: Math.abs(_d)
@@ -975,7 +976,7 @@ Page {
                 return Math.max(0, Math.min(1, p)) * 0.85
             }
             text: {
-                var dir = swipePanX < 0 ? 1 : -1   // leftward → next
+                var dir = swipePanX < 0 ? 1 : -1   // leftward -> next
                 var count = SessionManager.sessionCount
                 // Mirror switchSession(): navigate by ACTUAL (vector) index, not
                 // display index. Under SortLastUsed the display order shifts on
