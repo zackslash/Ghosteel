@@ -189,6 +189,25 @@ private slots:
         QCOMPARE(result2.lines, -1);
         QVERIFY(qAbs(result2.accumulator - (-0.1)) < 0.001);
     }
+
+    void testIsSoftWrappedWrapFlag()
+    {
+        // WRAP flag set: always soft-wrapped regardless of content
+        QVERIFY(TextUtil::isSoftWrapped(true, false));
+        QVERIFY(TextUtil::isSoftWrapped(true, true));
+    }
+
+    void testIsSoftWrappedHeuristic()
+    {
+        // WRAP flag false, last cell has content: heuristic fires
+        QVERIFY(TextUtil::isSoftWrapped(false, true));
+    }
+
+    void testIsSoftWrappedNoWrap()
+    {
+        // WRAP flag false, last cell empty: hard newline
+        QVERIFY(!TextUtil::isSoftWrapped(false, false));
+    }
 };
 
 QTEST_MAIN(TestTextUtil)

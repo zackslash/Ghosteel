@@ -1050,8 +1050,8 @@ bool SessionManager::restoreSessions()
         // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
-// Apply persisted font size immediately so the save path reads back
-// the correct value for non-active sessions (not the stale default 18).
+        // Apply persisted font size immediately so the save path reads back
+        // the correct value for non-active sessions (not the stale default 18).
         if (fontSize > 0)
             view->setFontSize(fontSize);
         else

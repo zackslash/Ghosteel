@@ -126,8 +126,8 @@ void SessionManager::onNewInstanceConnection()
         processMessage();
     } else {
         // disconnected also covers: client connects, never writes, drops.
-        // Use a one-shot guard so readyRead + disconnected can't double-fire.
-        auto *guard = new bool(false);
+        // Use a shared guard so readyRead + disconnected can't double-fire.
+        auto guard = std::make_shared<bool>(false);
         connect(socket, &QLocalSocket::readyRead, this, [processMessage, guard]() {
             if (*guard) return;
             *guard = true;

@@ -2735,8 +2735,9 @@ private slots:
     void testScrollbackThrottleSkipsWithinWindow()
     {
         // The per-session 5s scrollback throttle must skip a second save
-        // attempt inside the window. exportScrollback is called once on the
-        // first attempt (counter 1) and skipped on the second (stays 1).
+        // attempt inside the window. With empty export data, saveCompleted
+        // fires synchronously and sets lastScrollbackSaveMs, so the second
+        // attempt IS throttled by the real throttle guard.
         // Uses a created (non-restored) session so justRestored is false.
         Settings settings(m_settingsPath);
         settings.setScrollbackPersistence(true); // enable the scrollback save path under test
@@ -2871,6 +2872,45 @@ private slots:
         QCOMPARE(v0->fontSize(), 20);
         QCOMPARE(v1->fontSize(), 24);
         QCOMPARE(v2->fontSize(), 16);
+    }
+
+    // Model contract: verify data() returns correct values for each role
+    // through QModelIndex, and that roleNames() matches the expected set.
+    // This locks the QML-facing API that delegates bind to.
+    void testModelDataRolesContract()
+    {
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        mgr.createSession(); // session 0
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        // roleNames must expose all six roles
+        auto roles = mgr.roleNames();
+        QCOMPARE(roles.count(), 6);
+        QVERIFY(roles.value(Qt::UserRole + 1) == "name");
+        QVERIFY(roles.value(Qt::UserRole + 2) == "id");
+        QVERIFY(roles.value(Qt::UserRole + 3) == "displayName");
+        QVERIFY(roles.value(Qt::UserRole + 4) == "autorunCommand");
+        QVERIFY(roles.value(Qt::UserRole + 5) == "workingDirectory");
+        QVERIFY(roles.value(Qt::UserRole + 6) == "isActive");
+
+        // data() through QModelIndex for each role
+        QModelIndex idx = mgr.index(0, 0);
+        QVERIFY(idx.isValid());
+
+        QCOMPARE(idx.data(Qt::UserRole + 1).toString(), mgr.sessionName(0));
+        QCOMPARE(idx.data(Qt::UserRole + 2).toInt(), mgr.sessionId(0));
+        QCOMPARE(idx.data(Qt::UserRole + 3).toString(), mgr.sessionName(0)); // name is set, so displayName falls back to it
+        QCOMPARE(idx.data(Qt::UserRole + 4).toString(), mgr.sessionAutorunCommand(0));
+        QCOMPARE(idx.data(Qt::UserRole + 5).toString(), mgr.sessionWorkingDirectory(0));
+        QCOMPARE(idx.data(Qt::UserRole + 6).toBool(), true); // only session is active
+
+        // Out-of-range and parent index return invalid (empty) data
+        QVERIFY(!mgr.index(-1, 0).isValid());
+        QVERIFY(!mgr.index(mgr.rowCount(), 0).isValid());
+        QVERIFY(!idx.data(Qt::UserRole + 99).isValid());
     }
 
     // T1: scrollbackDirty is cleared at export time. When encryptAsync

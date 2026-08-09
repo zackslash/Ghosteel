@@ -69,6 +69,14 @@ struct CellCoord { uint16_t col; uint16_t row; };
 QVector<LinkSpan> findUrls(const QString &flatText,
                            const QVector<CellCoord> &charMap);
 
+// Determines whether a terminal row is soft-wrapped (content continues
+// on the next row without a hard newline). Primary: the terminal WRAP
+// flag (set by autowrap on program output). Fallback: full-width
+// heuristic for shell/readline wrapping which positions the cursor
+// manually instead of triggering autowrap. May false-positive on an
+// exact-width input line followed by Enter.
+bool isSoftWrapped(bool wrapFlag, bool lastCellHadContent);
+
 } // namespace TextUtil
 
 #endif // TEXTUTIL_H

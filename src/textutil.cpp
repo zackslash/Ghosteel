@@ -165,4 +165,11 @@ QVector<LinkSpan> findUrls(const QString &flatText,
     return results;
 }
 
+bool isSoftWrapped(bool wrapFlag, bool lastCellHadContent)
+{
+    if (wrapFlag)
+        return true;
+    return lastCellHadContent;
+}
+
 } // namespace TextUtil
