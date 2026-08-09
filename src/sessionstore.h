@@ -12,17 +12,18 @@ class ScrollEncryptor;
 class TerminalView;
 
 // Session scrollback lifecycle (restore -> dirty -> save):
-//   1. restoreSessions() creates each view, sets justRestored=true.
-//      Geometry-update repaints fire contentChanged immediately, but
-//      the handler no-ops while justRestored is true (avoids re-encrypting
-//      just-restored scrollback on launch).
-//   2. First real PTY byte arrives -> titleChanged fires synchronously
-//      (inside vtWrite, before update() emits contentChanged) -> clears
-//      justRestored. Subsequent contentChanged marks scrollbackDirty and
-//      schedules a debounced save.
+//   1. restoreSessions() creates each view and feeds saved scrollback
+//      into it. The justRestored flag suppresses geometry-repaint
+//      contentChanged during restore (before any PTY data exists).
+//   2. First real PTY data -> onPtyData -> contentChanged marks
+//      scrollbackDirty and schedules a debounced save.
 //   3. Debounce timer (500ms) or aboutToQuit -> saveScrollbackIncremental()
-//      encrypts only dirty sessions, active session first.
-//   4. If encryption was unavailable at restore time, the file is queued
+//      exports and encrypts dirty sessions (active first).
+//   4. scrollbackDirty is cleared at export time (before encryptAsync), so
+//      output arriving during the D-Bus round-trip re-dirties and triggers
+//      a retry. A per-session generation counter discards stale callbacks
+//      (after a newer save, quit-time sync save, or session removal).
+//   5. If encryption was unavailable at restore time, the file is queued
 //      in the caller's pending-restore vector and retried once when
 //      ScrollEncryptor::availabilityChanged fires.
 
@@ -51,7 +52,7 @@ struct SessionInfo {
     bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
     bool isCommandSession() const { return !execArgs.isEmpty(); }
     bool scrollbackDirty = false;  // True if scrollback changed since last encrypt+save
-    bool justRestored = false;     // True after restoreSessions(); skip dirty-marking until PTY data arrives
+    bool justRestored = false;     // True after restoreSessions(); suppresses geometry-repaint contentChanged until first PTY data
     bool scrollbackSaveInFlight = false; // True while an async encrypt request is pending for this session
     qint64 lastScrollbackSaveMs = 0; // Epoch ms of last successful scrollback save (throttle under continuous output)
 };
@@ -87,6 +88,10 @@ public:
 
     QString scrollbackFilePath(int sessionId) const;
 
+    // Called by SessionManager on session removal to discard any
+    // in-flight async callback for that session.
+    void invalidateSaveGeneration(int sessionId) { m_saveGenerations[sessionId]++; }
+
 Q_SIGNALS:
     // Async scrollback encryption + write completed (data now on disk).
     void saveCompleted(int sessionId);
@@ -109,6 +114,11 @@ private:
     void writeScrollbackToDisk(int sessionId, const QByteArray &encrypted);
 
     QString scrollbackDir() const;
+
+    // Per-session save generation: incremented each time a save starts.
+    // The async callback checks this to discard stale writes (e.g. after
+    // a newer save or session removal has superseded the in-flight one).
+    QHash<int, int> m_saveGenerations;
 };
 
 #endif // SESSIONSTORE_H

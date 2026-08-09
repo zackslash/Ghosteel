@@ -41,24 +41,33 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     m_store = std::make_unique<SessionStore>(m_settings, m_encryptor);
 
     // Async scrollback encryption completes on the GUI thread event loop.
-    // Clear the in-flight guard so the session can be saved again; on success
-    // clear dirty (data is on disk), on failure leave dirty so the save is
-    // retried on the next opportunity (e.g. availabilityChanged).
+    // scrollbackDirty is cleared synchronously at export time in
+    // saveSessionScrollback (before encryptAsync starts), so output arriving
+    // during the D-Bus round-trip re-dirties the flag and triggers a retry.
+    // saveCompleted just clears the in-flight guard and records the timestamp.
     connect(m_store.get(), &SessionStore::saveCompleted, this, [this](int sessionId) {
         int idx = sessionIndexById(sessionId);
         if (idx < 0)
             return;
         m_sessions[idx].scrollbackSaveInFlight = false;
-        m_sessions[idx].scrollbackDirty = false;
         m_sessions[idx].lastScrollbackSaveMs = QDateTime::currentMSecsSinceEpoch();
+        // Content may have arrived during the in-flight save and re-dirtied
+        // (cleared at export time, before encryptAsync). Re-arm so the next
+        // debounce cycle flushes it; throttle in trySave paces it.
+        if (m_sessions[idx].scrollbackDirty)
+            scheduleScrollbackSave();
     });
     connect(m_store.get(), &SessionStore::saveFailed, this, [this](int sessionId) {
         int idx = sessionIndexById(sessionId);
         if (idx < 0)
             return;
-        // Clear the in-flight guard only; keep scrollbackDirty so the session
-        // is retried (the content was not persisted).
+        // Clear the in-flight guard; re-dirty so the save is retried.
         m_sessions[idx].scrollbackSaveInFlight = false;
+        m_sessions[idx].scrollbackDirty = true;
+        // Update throttle timestamp so persistent failures don't spin at
+        // 500ms forever — the 5s throttle in trySave paces retries.
+        m_sessions[idx].lastScrollbackSaveMs = QDateTime::currentMSecsSinceEpoch();
+        scheduleScrollbackSave();
     });
 
     m_saveTimer = new QTimer(this);
@@ -512,6 +521,10 @@ void SessionManager::removeSession(int index)
     beginRemoveRows(QModelIndex(), displayRow, displayRow);
 
     SessionInfo info = m_sessions.takeAt(index);
+
+    // Invalidate any in-flight async save for this session so the callback
+    // doesn't recreate the scrollback file for a dead session.
+    m_store->invalidateSaveGeneration(info.id);
 
     // Rebuild sort order and call endRemoveRows() BEFORE activeSessionIndexChanged,
     // so handlers see a consistent display->actual mapping when they re-evaluate.

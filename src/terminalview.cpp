@@ -529,6 +529,10 @@ void TerminalView::copySelection()
                     cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
                     &rawCell) == GHOSTTY_SUCCESS
                     && GhosttyVt::isWideSpacerCell(rawCell)) {
+                // A wide-char spacer at the last column means the head cell
+                // (col-1) fills the row. Treat that as content for the heuristic.
+                if (rowIdx < endRow && colIdx == m_cols - 1)
+                    lastCellHadContent = true;
                 colIdx++;
                 continue;
             }

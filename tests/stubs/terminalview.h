@@ -117,13 +117,13 @@ public:
     void cleanup() {}
 
     // Stub for scrollback persistence (GhosttyVt not available in stubs).
-    // Returns empty (no real scrollback), but counts calls so tests can
-    // observe whether saveSessionScrollback was invoked (it calls
-    // exportScrollback before its empty-data early-return). A flat counter
-    // means the save was either throttled or blocked by justRestored.
-    QByteArray exportScrollback(uint16_t &, uint16_t &) const { m_exportScrollbackCount++; return {}; }
+    // Returns empty by default (no real scrollback), but tests can provide
+    // non-empty data via setExportScrollbackData to exercise the async save
+    // path (dirty-clear-at-export, re-dirty-on-failure, retry scheduling).
+    QByteArray exportScrollback(uint16_t &, uint16_t &) const { m_exportScrollbackCount++; return m_exportScrollbackData; }
     int exportScrollbackCount() const { return m_exportScrollbackCount; }
     void resetExportScrollbackCount() { m_exportScrollbackCount = 0; }
+    void setExportScrollbackData(const QByteArray &d) { m_exportScrollbackData = d; }
 
     // Test helpers — allow tests to control the stub's state
     void setTitle(const QString &t) { m_title = t; Q_EMIT titleChanged(); }
@@ -181,6 +181,7 @@ private:
     QStringList m_commandArgs;
     bool m_shellExited = false;
     mutable int m_exportScrollbackCount = 0;
+    QByteArray m_exportScrollbackData;
 
     int m_currentMatchIndex = -1;
     bool m_searchActive = false;

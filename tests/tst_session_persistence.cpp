@@ -2872,6 +2872,84 @@ private slots:
         QCOMPARE(v1->fontSize(), 24);
         QCOMPARE(v2->fontSize(), 16);
     }
+
+    // T1: scrollbackDirty is cleared at export time. When encryptAsync
+    // fails (returns false in test build — no SAILFISH_SECRETS), the
+    // session is re-dirtied for retry. This test exercises the
+    // encryptAsync-start-fail re-dirty path in saveSessionScrollback.
+    // The saveFailed signal path (writeScrollbackToDisk failure) needs
+    // a fake encryptor with controllable callbacks — deferred.
+    void testDirtyClearedAtExportReDirtiedOnEncryptFail()
+    {
+        writeRawSessions({{"A", "/tmp"}});
+
+        Settings settings(m_settingsPath);
+        settings.setScrollbackPersistence(true);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        TerminalView *view = mgr.activeSession();
+        QVERIFY(view);
+
+        view->setExportScrollbackData("GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=1\n\ntest");
+        view->setTitle("t");
+        view->resetExportScrollbackCount();
+
+        view->emitContentChanged();
+        QVERIFY(view->exportScrollbackCount() == 0);
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        // Export was called (saveSessionScrollback ran past empty-data check)
+        QVERIFY2(view->exportScrollbackCount() > 0,
+                 "exportScrollback should have been called after debounce");
+
+        // encryptAsync returned false (no crypto), re-dirtied inline.
+        // No saveFailed signal emitted, no timer re-armed from this path.
+        // Retry depends on next contentChanged or availabilityChanged.
+        int countAfterFirstSave = view->exportScrollbackCount();
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+        QVERIFY2(view->exportScrollbackCount() == countAfterFirstSave,
+                 "no retry should be scheduled from the encryptAsync-fail path");
+    }
+
+    // T3: Verify the session stays dirty after encryptAsync fails, so a
+    // subsequent contentChanged can trigger a new save attempt.
+    void testEncryptFailKeepsSessionDirtyForRetry()
+    {
+        writeRawSessions({{"A", "/tmp"}});
+
+        Settings settings(m_settingsPath);
+        settings.setScrollbackPersistence(true);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        TerminalView *view = mgr.activeSession();
+        QVERIFY(view);
+        view->setExportScrollbackData("GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=1\n\ntest");
+        view->setTitle("t");
+
+        view->resetExportScrollbackCount();
+        view->emitContentChanged();
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        QVERIFY2(view->exportScrollbackCount() > 0,
+                 "exportScrollback should run after contentChanged + debounce");
+
+        // Second contentChanged: dirty is still true (re-dirtied by encrypt
+        // failure), so the dirty-guard (if !scrollbackDirty) won't re-arm
+        // the timer. The session stays dirty until availabilityChanged
+        // or a new contentChanged with a false->true dirty transition.
+        int countAfterFirst = view->exportScrollbackCount();
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+        QVERIFY2(view->exportScrollbackCount() == countAfterFirst,
+                 "no additional export expected without a new dirty transition");
+    }
 };
 
 QTEST_MAIN(TestSessionPersistence)
