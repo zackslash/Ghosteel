@@ -19,8 +19,9 @@ namespace Sailfish { namespace Crypto { class CryptoManager; class Key; } }
 // rather than falling back to plaintext. Scrollback is silently dropped
 // when encryption is unavailable.
 //
-// Thread safety: main thread only. Uses async startRequest() for encryption,
-// sync for decryption.
+// Thread safety: main thread only. All paths use startRequest(); encrypt()
+// and decrypt() block on waitForFinished(), encryptAsync() returns
+// immediately and delivers via callback on the GUI thread event loop.
 class ScrollEncryptor : public QObject
 {
     Q_OBJECT

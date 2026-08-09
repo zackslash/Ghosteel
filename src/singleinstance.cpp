@@ -126,7 +126,17 @@ void SessionManager::onNewInstanceConnection()
         processMessage();
     } else {
         // disconnected also covers: client connects, never writes, drops.
-        connect(socket, &QLocalSocket::readyRead, this, processMessage);
-        connect(socket, &QLocalSocket::disconnected, this, processMessage);
+        // Use a shared guard so readyRead + disconnected can't double-fire.
+        auto guard = std::make_shared<bool>(false);
+        connect(socket, &QLocalSocket::readyRead, this, [processMessage, guard]() {
+            if (*guard) return;
+            *guard = true;
+            processMessage();
+        });
+        connect(socket, &QLocalSocket::disconnected, this, [processMessage, guard]() {
+            if (*guard) return;
+            *guard = true;
+            processMessage();
+        });
     }
 }

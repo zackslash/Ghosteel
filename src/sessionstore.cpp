@@ -210,7 +210,7 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
 
     // Throttle scrollback saves under continuous output (tail -f, builds):
     // exportScrollback + Sailfish-Secrets D-Bus + fsync is expensive on a
-    // handset, and contentChanged fires every repaint, so an unthrottled
+    // handset, and contentChanged fires per PTY data chunk, so an unthrottled
     // 500ms debounce would re-encrypt ~2x/sec. Cap each session to one save
     // per kMinScrollbackIntervalMs; force=true (quit) bypasses it. A sporadic
     // edit landing inside a window is deferred up to ~5s — acceptable for
@@ -223,7 +223,8 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
         // Skip sessions with an async encrypt request still in flight —
         // avoid a second concurrent encrypt racing the in-flight one.
         // Mark as throttled so the timer re-arms and retries once the
-        // in-flight save completes.
+        // in-flight save completes. Bypassed on quit (force=true) via the
+        // generation counter which discards the older callback.
         if (!force && info.scrollbackSaveInFlight) {
             anyThrottled = true;
             return;
@@ -236,7 +237,7 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
             anyThrottled = true;
             return;
         }
-        saveSessionScrollback(info, force);  // dirty cleared synchronously at export above
+        saveSessionScrollback(info, force);  // dirty cleared synchronously at export inside saveSessionScrollback
     };
 
     // Process active session first for priority on quit

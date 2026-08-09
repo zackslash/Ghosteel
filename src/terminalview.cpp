@@ -574,8 +574,7 @@ void TerminalView::copySelection()
                                              &rawRow) == GHOSTTY_SUCCESS) {
                 ghostty_row_get(rawRow, GHOSTTY_ROW_DATA_WRAP, &isWrapped);
             }
-            if (!isWrapped && lastCellHadContent)
-                isWrapped = true;
+            isWrapped = TextUtil::isSoftWrapped(isWrapped, lastCellHadContent);
 
             if (!isWrapped)
                 text += QLatin1Char('\n');

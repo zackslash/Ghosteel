@@ -41,10 +41,11 @@ void TerminalView::closeSearch()
 
 void TerminalView::setSearchPattern(const QString &pattern)
 {
-    if (pattern == m_searchPattern)
+    QString trimmed = pattern.trimmed();
+    if (trimmed == m_searchPattern)
         return;
 
-    m_searchPattern = pattern;
+    m_searchPattern = trimmed;
 
     if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty())) {
         VtSearchText st = m_vt->extractSearchText();
