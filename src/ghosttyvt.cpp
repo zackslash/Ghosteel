@@ -540,7 +540,7 @@ VtSearchText GhosttyVt::extractSearchText()
     uint32_t graphemeBuf[128];
 
     // Single pass over the grid: build the row text and, simultaneously, the
-    // cell→QChar mapping. Wide chars take 2 cells; supplementary-plane
+    // cell->QChar mapping. Wide chars take 2 cells; supplementary-plane
     // codepoints (emoji) expand to 2 QChars (a surrogate pair). Each cell's
     // mapping records the QChar offset where its grapheme cluster starts.
     // Formerly extractSearchText() + buildCellMapping() each walked the grid.
@@ -615,48 +615,83 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     if (outCols == 0 || totalRows == 0)
         return {};
 
-    // Format the entire terminal (scrollback + active screen) via the ghostty
-    // formatter API instead of a per-cell grid_ref walk (~600k FFI calls for
-    // full scrollback). unwrap merges soft-wrapped rows (replaces the manual
-    // WRAP_CONTINUATION check); trim strips trailing whitespace per row
-    // (replaces the manual rtrim). selection=NULL formats everything. Plain
-    // output uses '\n' line endings — restoreScrollback accepts both.
-    GhosttyFormatter formatter = nullptr;
-    GhosttyFormatterTerminalOptions fopts = GHOSTTY_INIT_SIZED(GhosttyFormatterTerminalOptions);
-    fopts.unwrap = true;
-    fopts.trim = true;
-    // fopts.emit is intentionally left at its zero-init value
-    // (GHOSTTY_FORMATTER_FORMAT_PLAIN, enum value 0) — assigning it directly
-    // would collide with Qt's empty `emit` macro (the same conflict
-    // ghosttyvt.h works around at include time).
-    static_assert(GHOSTTY_FORMATTER_FORMAT_PLAIN == 0,
-                  "Plain format must remain the zero-init default");
-
+    // Using grid_ref API — the formatter API passes GhosttyFormatterTerminalOptions
+    // by value, which corrupts on 32-bit x86 (i486 emulator target).
     QByteArray result;
-    if (ghostty_formatter_terminal_new(nullptr, &formatter, m_terminal, fopts)
-            != GHOSTTY_SUCCESS || !formatter) {
-        return {};  // No fallback path — persist nothing rather than a partial export.
+    result.reserve(static_cast<int>(totalRows * outCols * 4));
+    uint32_t graphemeBuf[128];
+    QByteArray lineBuf;
+
+    for (size_t row = 0; row < totalRows; row++) {
+        QByteArray line;
+        line.reserve(outCols);
+
+        for (uint16_t col = 0; col < outCols; col++) {
+            GhosttyPoint point = {};
+            point.tag = GHOSTTY_POINT_TAG_SCREEN;
+            point.value.coordinate.x = col;
+            point.value.coordinate.y = static_cast<uint32_t>(row);
+
+            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
+                line.append(' ');
+                continue;
+            }
+
+            GhosttyCell cell = 0;
+            if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
+                    && isWideSpacerCell(cell))
+                continue;
+
+            size_t graphemeLen = 0;
+            if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
+                    == GHOSTTY_SUCCESS && graphemeLen > 0) {
+                line.append(QString::fromUcs4(graphemeBuf, graphemeLen).toUtf8());
+            } else {
+                line.append(' ');
+            }
+        }
+
+        while (!line.isEmpty() && line.endsWith(' '))
+            line.chop(1);
+
+        bool isContinuation = false;
+        if (row > 0) {
+            GhosttyPoint firstCol = {};
+            firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
+            firstCol.value.coordinate.x = 0;
+            firstCol.value.coordinate.y = static_cast<uint32_t>(row);
+            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
+                GhosttyRow rowHandle = 0;
+                if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {
+                    bool wc = false;
+                    if (ghostty_row_get(rowHandle, GHOSTTY_ROW_DATA_WRAP_CONTINUATION, &wc) == GHOSTTY_SUCCESS)
+                        isContinuation = wc;
+                }
+            }
+        }
+
+        if (isContinuation) {
+            lineBuf.append(line);
+        } else {
+            if (!lineBuf.isEmpty()) {
+                result.append(lineBuf);
+                result.append("\r\n");
+            }
+            lineBuf = line;
+        }
     }
 
-    uint8_t *buf = nullptr;
-    size_t bufLen = 0;
-    if (ghostty_formatter_format_alloc(formatter, nullptr, &buf, &bufLen) == GHOSTTY_SUCCESS
-            && buf != nullptr && bufLen > 0) {
-        result = QByteArray(reinterpret_cast<const char *>(buf), static_cast<int>(bufLen));
+    if (!lineBuf.isEmpty()) {
+        result.append(lineBuf);
+        result.append("\r\n");
     }
-    ghostty_free(nullptr, buf, bufLen);
-    ghostty_formatter_free(formatter);
 
-    if (result.isEmpty())
-        return {};  // Nothing but blank rows — nothing worth persisting.
+    while (result.endsWith("\r\n"))
+        result.chop(2);
 
-    // Strip the active prompt line — when the shell is waiting for input,
-    // the last line is just the prompt (e.g. "[user@host ~]$"). On restore,
-    // the shell prints a fresh prompt, so exporting the old one causes
-    // duplicate prompts to accumulate across restarts.
-    // Detection: if the cursor is at the end of the last line with nothing
-    // typed after it, the line is just a prompt — safe to strip.
-    {
+    if (!result.isEmpty()) {
         uint16_t cursorX = 0;
         ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_CURSOR_X, &cursorX);
 
@@ -672,7 +707,9 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             else
                 result.clear();
 
-            while (result.endsWith('\n'))
+            while (result.endsWith("\r\n"))
+                result.chop(2);
+            while (result.endsWith('\r'))
                 result.chop(1);
         }
     }

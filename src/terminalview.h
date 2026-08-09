@@ -182,7 +182,7 @@ Q_SIGNALS:
     // multi-touch/TUI begin, true on end.
     void requestParentInteractive(bool interactive);
 
-    // Session-swipe gesture (horizontal one-finger drag → switch session).
+    // Session-swipe gesture (horizontal one-finger drag -> switch session).
     // QML drives the slide animation + switchSession() from these. Guarded:
     // only emitted in NORMAL single-finger mode, pre-selection window, never
     // during TUI/multitouch/handle/link.
@@ -246,7 +246,7 @@ private:
     void handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points);
     void handleMultiTouchEnd();
 
-    // TUI single-finger touch → synthetic mouse/wheel events
+    // TUI single-finger touch -> synthetic mouse/wheel events
     void handleTuiTouchBegin(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchUpdate(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchEnd(QTouchEvent *event, const QList<QTouchEvent::TouchPoint> &points);
@@ -266,7 +266,7 @@ private:
 
     QString m_title;
 
-    // --- Touch text selection (long-press → drag → copy) ---
+    // --- Touch text selection (long-press -> drag -> copy) ---
     bool m_selecting = false;
     bool m_magnifierVisible = false;
     QPointF m_selStart;   // pixel coordinates
@@ -310,8 +310,8 @@ private:
 
     // --- Pinch-to-zoom state ---
     // Touch state machine:
-    //   Idle → [≥2 fingers] → MultiTouch (Undecided → Scrolling | Pinching)
-    //   MultiTouch → [all fingers up or drop below 2] → Idle
+    //   Idle -> [≥2 fingers] -> MultiTouch (Undecided -> Scrolling | Pinching)
+    //   MultiTouch -> [all fingers up or drop below 2] -> Idle
     //   TUI mode: single-finger touches are grabbed and forwarded as synthetic mouse events
     //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
@@ -328,13 +328,13 @@ private:
     static constexpr qreal ScrollMinDistancePx = 40.0;
     static constexpr qreal PinchScaleExponent = 0.6; // <1 dampens; 0.5=sqrt, 1.0=linear
 
-    // --- Session-swipe gesture (horizontal one-finger drag → switch session) ---
+    // --- Session-swipe gesture (horizontal one-finger drag -> switch session) ---
     bool    m_sessionSwiping = false;
     bool    m_sessionSwipeEnabled = true; // QML-bound gate (false for single session)
     qreal   m_swipeStartX    = 0.0;   // captured at classify time, not at press
     static constexpr qreal SwipeMinHorizontalPx = 24.0; // < ScrollMinDistancePx (40)
     static constexpr qreal SwipeDominanceRatio  = 1.5;  // |dx| must exceed |dy| * this
-    static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width → commit
+    static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width -> commit
 
     // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;
@@ -362,7 +362,7 @@ private:
     bool m_searchActive = false;
     QString m_searchPattern;
     QStringList m_searchCache;       // Cached terminal text (one string per row)
-    QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
+    QVector<QVector<int>> m_cellMapping; // Per row: cell index -> character index offset
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
     int m_searchPanelHeight = 0;

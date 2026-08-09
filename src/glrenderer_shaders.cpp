@@ -160,7 +160,7 @@ static const char *magFragmentShaderSource =
     "    gl_FragColor = vec4(color.rgb * edgeAlpha, color.a * edgeAlpha);\n"
     "}\n";
 
-// GLSL ES 2.0 blit shaders — pipeline FBO → Qt FBO copy
+// GLSL ES 2.0 blit shaders — pipeline FBO -> Qt FBO copy
 static const char *blitVertexShaderSource =
     "attribute vec2 position;\n"
     "attribute vec2 texcoord;\n"

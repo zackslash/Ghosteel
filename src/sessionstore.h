@@ -11,16 +11,16 @@ class Settings;
 class ScrollEncryptor;
 class TerminalView;
 
-// Session scrollback lifecycle (restore → dirty → save):
+// Session scrollback lifecycle (restore -> dirty -> save):
 //   1. restoreSessions() creates each view, sets justRestored=true.
 //      Geometry-update repaints fire contentChanged immediately, but
 //      the handler no-ops while justRestored is true (avoids re-encrypting
 //      just-restored scrollback on launch).
-//   2. First real PTY byte arrives → titleChanged fires synchronously
-//      (inside vtWrite, before update() emits contentChanged) → clears
+//   2. First real PTY byte arrives -> titleChanged fires synchronously
+//      (inside vtWrite, before update() emits contentChanged) -> clears
 //      justRestored. Subsequent contentChanged marks scrollbackDirty and
 //      schedules a debounced save.
-//   3. Debounce timer (500ms) or aboutToQuit → saveScrollbackIncremental()
+//   3. Debounce timer (500ms) or aboutToQuit -> saveScrollbackIncremental()
 //      encrypts only dirty sessions, active session first.
 //   4. If encryption was unavailable at restore time, the file is queued
 //      in the caller's pending-restore vector and retried once when
@@ -32,8 +32,8 @@ class TerminalView;
 //  No name           Regular shell session         Anonymous command session
 //  Named             Named shell session           Named command session
 //
-// Auto-remove: exit 0 → anonymous only; exit ≠ 0 → all command sessions.
-// restartShell() clears execArgs → cancels pending auto-remove.
+// Auto-remove: exit 0 -> anonymous only; exit ≠ 0 -> all command sessions.
+// restartShell() clears execArgs -> cancels pending auto-remove.
 struct SessionInfo {
     int id;
     QString name;

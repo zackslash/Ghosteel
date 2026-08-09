@@ -207,7 +207,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
 
         // Clamp against GL_MAX_TEXTURE_SIZE (queried lazily on the render thread).
         // Without this, a malicious/buggy VT can request enormous dimensions and
-        // overflow size_t (4*W*H wraps on 32-bit ARM) in the gray→RGBA conversion
+        // overflow size_t (4*W*H wraps on 32-bit ARM) in the gray->RGBA conversion
         // below, causing a heap over-read before glTexImage2D ever rejects it.
         if (m_maxTextureSize == 0) {
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
@@ -234,7 +234,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             GhosttyKittyImageFormat fmt = snap.format;
 
             // Validate the source buffer has enough bytes for the declared
-            // format/dimensions before any read (gray→RGBA loop or glTexImage2D).
+            // format/dimensions before any read (gray->RGBA loop or glTexImage2D).
             // Guards against truncated payloads and, with the clamp above, the
             // size_t overflow case on 32-bit ARM.
             size_t srcBpp = 4;
@@ -276,7 +276,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                     // Falling through would pass the undersized gray buffer to
                     // glTexImage2D (expects RGBA), causing a heap over-read.
                     qWarning() << "Kitty image: failed to allocate" << convertedLen
-                               << "bytes for gray→RGBA conversion (image"
+                               << "bytes for gray->RGBA conversion (image"
                                << snap.imageId << imgW << "x" << imgH << ")";
                     continue;
                 }

@@ -34,13 +34,13 @@ private slots:
         QCOMPARE(terminalCharWidth(0x03C9), 1); // ω
     }
     void boxDrawingIsNarrow() {
-        // East Asian Ambiguous → 1 cell in non-CJK locale (SailfishOS default).
+        // East Asian Ambiguous -> 1 cell in non-CJK locale (SailfishOS default).
         QCOMPARE(terminalCharWidth(0x2500), 1); // ─
         QCOMPARE(terminalCharWidth(0x2551), 1); // ║
         QCOMPARE(terminalCharWidth(0x2569), 1); // ╩
     }
     void softHyphenIsNarrow() {
-        // U+00AD is explicitly excluded from the combining table → width 1.
+        // U+00AD is explicitly excluded from the combining table -> width 1.
         QCOMPARE(terminalCharWidth(0x00AD), 1);
     }
 
@@ -80,15 +80,15 @@ private slots:
         QCOMPARE(terminalStringWidth(QString("")), 0);
     }
     void stringWidthSurrogates() {
-        // "a😀b" → 1 + 2 + 1 = 4. (Concatenate literals so the hex escape
+        // "a😀b" -> 1 + 2 + 1 = 4. (Concatenate literals so the hex escape
         // doesn't greedily consume the trailing 'b' as a hex digit.)
         QString s = QString::fromUtf8("a\xF0\x9F\x98\x80" "b");
         QCOMPARE(terminalStringWidth(s), 4);
     }
     void stringWidthCombining() {
-        // Precomposed é (U+00E9) → 1
+        // Precomposed é (U+00E9) -> 1
         QCOMPARE(terminalStringWidth(QString::fromUtf8("\xC3\xA9")), 1);
-        // Decomposed "e" + combining acute (U+0301) → 1 + 0 = 1
+        // Decomposed "e" + combining acute (U+0301) -> 1 + 0 = 1
         QCOMPARE(terminalStringWidth(QString::fromUtf8("e\xCC\x81")), 1);
     }
     void stringWidthMixedLine() {
@@ -98,7 +98,7 @@ private slots:
 
     // --- Boundary cases on the wide ternary ---
     void halfwidthIsNarrow() {
-        // 0xFF61 is just past the fullwidth range 0xFF00-0xFF60 → narrow.
+        // 0xFF61 is just past the fullwidth range 0xFF00-0xFF60 -> narrow.
         QCOMPARE(terminalCharWidth(0xFF61), 1);
     }
     void wideBracketIsWide() {
@@ -106,7 +106,7 @@ private slots:
         QCOMPARE(terminalCharWidth(0x2329), 2);
     }
     void powerlineIsNarrow() {
-        // U+E0B0 powerline glyph: Private Use Area, not Wide → 1 cell.
+        // U+E0B0 powerline glyph: Private Use Area, not Wide -> 1 cell.
         QCOMPARE(terminalCharWidth(0xE0B0), 1);
     }
 
@@ -123,7 +123,7 @@ private slots:
         QCOMPARE(fitToDisplayWidth(s, 3), QString("a") + QString::fromUtf8("\xF0\x9F\x98\x80"));
     }
     void fitCyrillicOnePerCell() {
-        // "Привет" capped at 3 cells → "При".
+        // "Привет" capped at 3 cells -> "При".
         QCOMPARE(fitToDisplayWidth(QString::fromUtf8("Привет"), 3),
                  QString::fromUtf8("При"));
     }

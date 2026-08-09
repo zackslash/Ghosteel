@@ -65,7 +65,7 @@ private slots:
 
     void testNegativeCoordinates()
     {
-        // qFloor(-5) = -5, -5/10 = -1 → out of bounds
+        // qFloor(-5) = -5, -5/10 = -1 -> out of bounds
         QPointF result = TextUtil::cellFromPixel(QPointF(-5, 10), 10, 10, 80, 24, 0);
         QCOMPARE(result, QPointF(-1, -1));
     }
@@ -78,7 +78,7 @@ private slots:
 
     void testTopPaddingArea()
     {
-        // qFloor(3 - 5) = -2, -2/10 = -1 → out of bounds
+        // qFloor(3 - 5) = -2, -2/10 = -1 -> out of bounds
         QPointF result = TextUtil::cellFromPixel(QPointF(10, 3), 10, 10, 80, 24, 5);
         QCOMPARE(result, QPointF(-1, -1));
     }
@@ -173,7 +173,7 @@ private slots:
 
     void testTopPaddingExceedsHeight()
     {
-        // height(10) <= topPadding(50) → early return with minimum dimensions
+        // height(10) <= topPadding(50) -> early return with minimum dimensions
         auto d = TextUtil::calculateDimensions(800, 10, 10, 20, 50);
         QCOMPARE(d.cols, static_cast<uint16_t>(2));
         QCOMPARE(d.rows, static_cast<uint16_t>(2));

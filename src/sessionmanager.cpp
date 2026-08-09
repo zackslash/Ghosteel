@@ -225,7 +225,7 @@ void SessionManager::setActiveSessionIndex(int index)
     bool sortRebuilt = false;
 
     // Rebuild sort order and emit layoutChanged BEFORE activeSessionIndexChanged,
-    // so handlers see a consistent display→actual mapping when they re-evaluate.
+    // so handlers see a consistent display->actual mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
         layoutAboutToBeChanged();
@@ -322,7 +322,7 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 
     // justRestored must be cleared before the first data-driven contentChanged
     // runs, or that handler will keep skipping saves. titleChanged (shells that
-    // set a title) fires synchronously from onPtyData → vtWrite, before the
+    // set a title) fires synchronously from onPtyData -> vtWrite, before the
     // update() that emits contentChanged; ptyDataReceived fires earlier still
     // (before vtWrite) and also covers title-less shells like sh/dash. Hence
     // two connections — whichever fires first wins.
@@ -514,7 +514,7 @@ void SessionManager::removeSession(int index)
     SessionInfo info = m_sessions.takeAt(index);
 
     // Rebuild sort order and call endRemoveRows() BEFORE activeSessionIndexChanged,
-    // so handlers see a consistent display→actual mapping when they re-evaluate.
+    // so handlers see a consistent display->actual mapping when they re-evaluate.
     if (m_sessions.isEmpty()) {
         m_activeSessionIndex = -1;
     } else if (wasBeforeActive) {

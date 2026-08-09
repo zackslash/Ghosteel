@@ -39,7 +39,7 @@ void TerminalView::refreshLinks()
 
     m_currentLinks.clear();
 
-    // Serialize visible viewport to flat text + QChar→cell map, mirroring
+    // Serialize visible viewport to flat text + QChar->cell map, mirroring
     // Ghostty's renderer/link.zig: build one string, run regex, map offsets
     // back to cells.
     //

@@ -70,7 +70,7 @@ void GLRenderer::Renderer::buildMagnifierVertices(int fboW, int fboH)
     int destX = static_cast<int>(fingerPos.x()) - TerminalView::MagnifierWidth / 2;
     int destY = static_cast<int>(fingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
 
-    // destY < 0 ⇒ magnifier would clip top → flip below finger
+    // destY < 0 ⇒ magnifier would clip top -> flip below finger
     if (destY < 0)
         destY = static_cast<int>(fingerPos.y()) + TerminalView::MagnifierOffset;
     destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);
@@ -435,7 +435,7 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
     // Fill the cell-grid leftover (width % cellWidth, often ~1px) so the FBO
     // is bg-filled edge-to-edge — without this the transparent clear-color
     // strip shows as a gap when content slides during a session swipe.
-    // Texcoord (0,0) → atlas reserved transparent pixel → bg-only output
+    // Texcoord (0,0) -> atlas reserved transparent pixel -> bg-only output
     // (same as empty cells). Strips split on the grid boundary to avoid
     // double-applying the premultiplied bg at the corner.
     float sAlpha = m_bgOpacity;

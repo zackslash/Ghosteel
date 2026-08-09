@@ -404,7 +404,7 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 2);
         QCOMPARE(mgr.sessionName(0), QStringLiteral("A"));
         QCOMPARE(mgr.sessionName(1), QStringLiteral("C"));
-        QCOMPARE(mgr.activeSessionIndex(), 0); // first in sort order (manual → raw 0)
+        QCOMPARE(mgr.activeSessionIndex(), 0); // first in sort order (manual -> raw 0)
     }
 
     void testRemoveActiveSessionFirstOfThree()
@@ -464,7 +464,7 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 4);
         QCOMPARE(mgr.activeSessionIndex(), 3); // "D" is active
 
-        mgr.removeSession(0); // remove "A" (before active → active shifts down)
+        mgr.removeSession(0); // remove "A" (before active -> active shifts down)
         QCOMPARE(mgr.sessionCount(), 3);
         QCOMPARE(mgr.activeSessionIndex(), 2); // shifted down from 3
         QCOMPARE(mgr.sessionName(0), QStringLiteral("B"));
@@ -1412,7 +1412,7 @@ private slots:
 
         // Capture displayToActual(0) from inside a layoutChanged handler.
         // setSortMode() rebuilds the sort order before emitting layoutChanged,
-        // so the display→actual mapping must already be valid when it fires.
+        // so the display->actual mapping must already be valid when it fires.
         int display0ActualFromLayout = -1;
         connect(&mgr, &QAbstractItemModel::layoutChanged, [&]() {
             display0ActualFromLayout = mgr.displayToActual(0);

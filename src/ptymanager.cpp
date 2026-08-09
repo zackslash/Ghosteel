@@ -350,7 +350,7 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
             m_childPid = -1;
             Q_EMIT shellExited(kExecFailedExitCode);
         }
-        // else: n == 0 means EOF → exec succeeded (pipe closed by CLOEXEC)
+        // else: n == 0 means EOF -> exec succeeded (pipe closed by CLOEXEC)
     });
 
     return true;
@@ -457,7 +457,7 @@ void PtyManager::stop(bool synchronous)
                 qWarning() << "PtyReaderThread did not exit after fd close; async cleanup";
                 // Detach from parent so ~PtyManager doesn't try to delete a
                 // still-running QThread (would abort: "QThread: Destroyed
-                // while thread is still running"). The finished→deleteLater
+                // while thread is still running"). The finished->deleteLater
                 // connection below owns lifecycle once the thread exits.
                 m_readerThread->setParent(nullptr);
                 connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
