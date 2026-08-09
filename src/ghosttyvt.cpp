@@ -561,6 +561,8 @@ VtSearchText GhosttyVt::extractSearchText()
             GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
             if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
                 line += QLatin1Char(' ');
+                if (charIdx < line.size())
+                    charIdx = std::min(charIdx + 1, line.size());
                 continue;
             }
 

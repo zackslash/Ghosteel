@@ -72,7 +72,7 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
 
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
-    m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
+    m_saveTimer->setInterval(500); // 500ms debounce — same interval as Settings::m_saveTimer
     connect(m_saveTimer, &QTimer::timeout, this, [this]() {
         // Only rewrite the settings file when session metadata actually
         // changed — a scrollback-only arm (scheduleScrollbackSave) leaves
@@ -739,7 +739,7 @@ void SessionManager::setSessionKeyboardVisible(int index, bool visible)
 int SessionManager::displayToActual(int displayIndex) const
 {
     if (m_sortedIndices.isEmpty()) {
-        // No sorting active — display index == actual index
+        // No sessions — nothing to map
         if (displayIndex < 0 || displayIndex >= m_sessions.size())
             return -1;
         return displayIndex;
@@ -752,7 +752,7 @@ int SessionManager::displayToActual(int displayIndex) const
 int SessionManager::actualToDisplay(int actualIndex) const
 {
     if (m_sortedIndices.isEmpty()) {
-        // No sorting active — display index == actual index
+        // No sessions — nothing to map
         if (actualIndex < 0 || actualIndex >= m_sessions.size())
             return -1;
         return actualIndex;
@@ -1050,8 +1050,8 @@ bool SessionManager::restoreSessions()
         // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
-        // Apply persisted font size immediately so the save path reads back the correct value
-        // the correct value for non-active sessions (not the stale default 18).
+// Apply persisted font size immediately so the save path reads back
+// the correct value for non-active sessions (not the stale default 18).
         if (fontSize > 0)
             view->setFontSize(fontSize);
         else
