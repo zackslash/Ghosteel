@@ -285,8 +285,8 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
     enc->setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
 
     QObject::connect(enc, &EncryptRequest::statusChanged,
-                     enc, [enc, callback, iv](Sailfish::Crypto::Request::Status status) {
-        if (status != Sailfish::Crypto::Request::Finished)
+                     enc, [enc, callback, iv]() {
+        if (enc->status() != Sailfish::Crypto::Request::Finished)
             return;
         QByteArray output;
         if (enc->result().code() == Sailfish::Crypto::Result::Succeeded) {
