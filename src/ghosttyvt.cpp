@@ -656,33 +656,23 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     // duplicate prompts to accumulate across restarts.
     // Detection: if the cursor is at the end of the last line with nothing
     // typed after it, the line is just a prompt — safe to strip.
-    if (!result.isEmpty()) {
+    {
         uint16_t cursorX = 0;
         ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_CURSOR_X, &cursorX);
 
         int lastNl = result.lastIndexOf('\n');
         QByteArray lastLine = (lastNl >= 0) ? result.mid(lastNl + 1) : result;
-        // Trim trailing \r for length comparison
         QByteArray trimmed = lastLine;
         while (trimmed.endsWith('\r'))
             trimmed.chop(1);
 
-        // Compare cursor column (cells) against the prompt's display width,
-        // not its UTF-8 byte count — multibyte prompts otherwise defeat the
-        // duplicate-prompt strip.
         if (cursorX > 0 && cursorX >= terminalStringWidth(QString::fromUtf8(trimmed))) {
-            // Cursor is at or past end of last line — it's an un-typed prompt.
-            // Strip the last line entirely.
             if (lastNl >= 0)
                 result.resize(lastNl);
             else
                 result.clear();
 
-            // Re-strip blank lines exposed by the removal. Accepts both \n
-            // (formatter plain output) and \r\n (legacy manual output).
             while (result.endsWith('\n'))
-                result.chop(1);
-            while (result.endsWith('\r'))
                 result.chop(1);
         }
     }
