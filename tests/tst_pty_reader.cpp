@@ -26,12 +26,10 @@ private slots:
         const char *msg = "hello terminal\n";
         ::write(pipefd[1], msg, strlen(msg));
 
-        // Give the reader thread time to pick up the data
         QVERIFY(dataSpy.wait(2000));
         QCOMPARE(dataSpy.count(), 1);
         QCOMPARE(dataSpy.at(0).at(0).toByteArray(), QByteArray("hello terminal\n"));
 
-        // Close write end to trigger EOF
         ::close(pipefd[1]);
 
         // readFinished may already have arrived before we get here (the
@@ -54,15 +52,11 @@ private slots:
 
         reader.start();
 
-        // Write two chunks back-to-back — no sleep needed.
-        // The pipe buffers them; the reader may deliver as 1 or 2 signals.
         ::write(pipefd[1], "chunk1", 6);
         ::write(pipefd[1], "chunk2", 6);
 
-        // Wait for at least one data signal (both chunks may arrive together)
         QVERIFY(dataSpy.wait(2000));
 
-        // Drain any additional signals that arrived in the meantime
         while (dataSpy.wait(200))
             ;
 
@@ -87,7 +81,6 @@ private slots:
 
         reader.start();
 
-        // Close write end immediately — should trigger EOF
         ::close(pipefd[1]);
 
         QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(2000));
@@ -105,18 +98,67 @@ private slots:
 
         reader.start();
 
-        // Write a byte so the thread wakes from poll() and we know
-        // it's actively looping, then request interruption.
         ::write(pipefd[1], "x", 1);
         QVERIFY(dataSpy.wait(2000));
 
         reader.requestInterruption();
 
-        // readFinished must not fire on interruption (only EOF/error).
         QVERIFY(reader.wait(3000));
         QCOMPARE(finishedSpy.count(), 0);
 
         ::close(pipefd[1]);
+    }
+
+    void testInvalidUserShellSurfacesError()
+    {
+        // A user-configured shell that doesn't exist should emit
+        // shellExited(kExecFailedExitCode) instead of silently
+        // falling back to /bin/sh.
+        PtyManager pty;
+        pty.setShellCommand(QStringLiteral("/nonexistent/shell/path"));
+        QSignalSpy exitSpy(&pty, &PtyManager::shellExited);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        // Wait for shellExited with a generous timeout — the child
+        // fails execlp, writes errno via execPipe, exits 127.
+        QVERIFY(exitSpy.wait(5000));
+
+        QCOMPARE(exitSpy.count(), 1);
+        QCOMPARE(exitSpy.at(0).at(0).toInt(), PtyManager::kExecFailedExitCode);
+
+        pty.stop();
+    }
+
+    void testSystemShellFallbackPreserved()
+    {
+        // Empty m_shellCommand + bad $SHELL should fall back to /bin/sh
+        // (the fallback is preserved for system shells).
+        PtyManager pty;
+        // Save and corrupt $SHELL
+        QByteArray savedShell = qgetenv("SHELL");
+        qputenv("SHELL", "/nonexistent/default/shell");
+
+        QSignalSpy exitSpy(&pty, &PtyManager::shellExited);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        // /bin/sh should start successfully — shellExited should NOT
+        // fire with kExecFailedExitCode. It may fire with a normal exit
+        // when we stop the pty, or not at all within the timeout.
+        // If it fires quickly, the exit code must NOT be kExecFailedExitCode.
+        if (exitSpy.wait(1000)) {
+            QVERIFY2(exitSpy.at(0).at(0).toInt() != PtyManager::kExecFailedExitCode,
+                     "System shell fallback to /bin/sh should not emit exec-failed code");
+        }
+
+        pty.stop();
+
+        // Restore $SHELL
+        if (!savedShell.isEmpty())
+            qputenv("SHELL", savedShell.constData());
+        else
+            qunsetenv("SHELL");
     }
 };
 
