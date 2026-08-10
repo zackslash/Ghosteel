@@ -150,10 +150,15 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
     // (including setenv) here can deadlock. Build all child inputs on this stack.
 
-    // Determine shell — prefer configured command, then $SHELL, then /bin/sh
+    // Determine shell — prefer configured command, then $SHELL, then /bin/sh.
+    // Track whether the user explicitly configured this shell: the child's
+    // fallback to sh is skipped for user-configured shells so that an invalid
+    // path surfaces the "Command not found" overlay instead of silently
+    // launching /bin/sh. System shells ($SHELL, /bin/sh) keep the fallback.
+    const bool userConfigured = !m_shellCommand.isEmpty();
     const char *shell = nullptr;
     QByteArray shellBytes;
-    if (!m_shellCommand.isEmpty()) {
+    if (userConfigured) {
         shellBytes = m_shellCommand.toUtf8();
         shell = shellBytes.constData();
     }
@@ -178,7 +183,8 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 
     if (pid == 0) {
         execlp(shell, shell, nullptr);
-        execlp("sh", "sh", nullptr);  // fallback
+        if (!userConfigured)
+            execlp("sh", "sh", nullptr);  // fallback for system shells only
         int execErr = errno;
         ssize_t written = ::write(execPipe[1], &execErr, sizeof(execErr));
         (void)written;
