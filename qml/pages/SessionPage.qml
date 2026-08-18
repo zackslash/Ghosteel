@@ -208,21 +208,19 @@ Page {
                 MenuItem {
                     text: qsTr("Rename")
                     onClicked: {
-                        var dialog = renameDialogComponent.createObject(sessionPage, {
+                        pageStack.push(renameDialogComponent, {
                             sessionId: model.id,
                             currentName: model.name
                         })
-                        pageStack.push(dialog)
                     }
                 }
                 MenuItem {
                     text: qsTr("Autorun command")
                     onClicked: {
-                        var dialog = autorunDialogComponent.createObject(sessionPage, {
+                        pageStack.push(autorunDialogComponent, {
                             sessionId: model.id,
                             currentCommand: model.autorunCommand
                         })
-                        pageStack.push(dialog)
                     }
                 }
                 MenuItem {

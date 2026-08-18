@@ -31,6 +31,35 @@
 struct VtSearchText {
     QStringList lines;              // one string per grid row
     QVector<QVector<int>> mapping;  // per row: cell column -> QChar offset
+
+    // Logical-line join for matching across autowrap continuations.
+    // logicalLines[i] is the concatenation (no separator) of the physical
+    // rows logicalLineStartRow[i] .. +logicalLineRowCount[i]-1. Rows are
+    // joined when a row carries the WRAP_CONTINUATION flag (terminal
+    // autowrap); shell/readline soft wraps that reposition the cursor
+    // manually set no flag and cannot be detected — an inherent VT100
+    // information-theoretic limit. Search deliberately matches only rows
+    // flagged WRAP_CONTINUATION; a content heuristic (TextUtil::isSoftWrapped)
+    // exists for copy joining, but it is a heuristic, not detection, and is
+    // not used for search. Short rows from wide chars are real content and
+    // join fully; a phantom trailing blank after explicit last-column
+    // positioning is accepted as rare.
+    // Per-row lines/mapping are kept unchanged so highlighting stays per
+    // physical row.
+    QStringList logicalLines;
+    QVector<int> logicalLineStartRow;
+    QVector<int> logicalLineRowCount;
+};
+
+// One physical-row slice of a logical search match (a match found in the
+// joined text of a logical line may span an autowrap row boundary). Expressed
+// in cells so renderers can highlight each slice directly: row is the absolute
+// grid row, cellCol the first cell column, cellWidth the covered cell count
+// (wide-char spacer cells inside the run are counted).
+struct SearchMatchSegment {
+    int row;
+    int cellCol;
+    int cellWidth;
 };
 
 class GhosttyVt : public QObject
@@ -114,17 +143,23 @@ public:
     // Returns empty string if no hyperlink. Uses GHOSTTY_POINT_TAG_VIEWPORT.
     QString getHyperlinkAt(uint16_t col, uint32_t row) const;
 
-    // Returns true if the cell at (col, row) is a wide-character spacer
-    // (the invisible second half of a CJK/emoji character).
-    static bool isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row);
-
-    // True if `cell` is a wide-char spacer (head or tail). Prefer this over
-    // isWideCharSpacer() when you already hold a cell, to avoid a redundant ghostty_terminal_grid_ref call.
+    // True if `cell` is a wide-char spacer (head or tail). Works on the cell
+    // directly — no extra ghostty_terminal_grid_ref call needed.
     static bool isWideSpacerCell(GhosttyCell cell);
     // True only if `cell` is a SPACER_TAIL (head sits at col-1). Use when
     // walking left to find a wide char's head; SPACER_HEAD's head is on the
     // next row, so a left-walk would land on the wrong cell.
     static bool isWideSpacerTailCell(GhosttyCell cell);
+
+    // Splits a match of `patternLen` QChars starting at `joinedIndex` in the
+    // joined text of logical line `logicalLine` into one SearchMatchSegment
+    // per spanned physical row. Pure text math over extractSearchText()'s
+    // outputs — no terminal access — so it is unit-testable without a live
+    // grid. Rows advance by lines[r].size() (the same lengths that built the
+    // joined text), and the per-row reverse mapping (QChar offset -> cell,
+    // spacer cells -1) is applied within each segment.
+    static QVector<SearchMatchSegment> splitSearchMatch(
+        const VtSearchText &st, int logicalLine, int joinedIndex, int patternLen);
 
 Q_SIGNALS:
     void titleChanged(const QString &title);
@@ -157,6 +192,7 @@ private:
     Osc52State m_osc52State = OSC52_IDLE;
     QByteArray m_osc52Kind;     // Selection target: "c", "s", "p", etc.
     QByteArray m_osc52Data;     // Base64 payload accumulator
+    bool m_osc52Overflowed = false; // Set when payload bytes were dropped at the cap
     static const int MaxOsc52KindLen = 16;
     static const int MaxOsc52DataLen = 1024 * 1024; // 1MB base64 cap
 };

@@ -1080,7 +1080,8 @@ bool SessionManager::restoreSessions()
         m_sessions.append(info);
 
         // Mark as just-restored so the contentChanged handler skips
-        // geometry-update repaints; cleared by titleChanged (real PTY data).
+        // geometry-update repaints; cleared by titleChanged or ptyDataReceived
+        // (whichever fires first when real PTY data arrives).
         m_sessions.last().justRestored = true;
 
         connectSessionSignals(view, info.id);

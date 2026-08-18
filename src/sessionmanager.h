@@ -89,15 +89,19 @@ public:
     Q_INVOKABLE void setSortMode(int mode);
 
     // Single-instance guard: returns true if another instance is already running.
-    // Call before creating SessionManager. If true, a "raise" message was sent
-    // to the existing instance and the caller should exit.
+    // The pending CLI request (exec:/switch: payload built from the -e/-s
+    // arguments) is encoded and sent to the running instance — with no CLI
+    // args a plain raise is sent — then the caller should exit. Call before
+    // creating SessionManager.
     static bool checkSingleInstance(const QString &execCommand = QString(),
                                     const QStringList &execArgs = QStringList(),
                                     const QString &sessionName = QString());
 
     // Start the single-instance socket server. Call after D-Bus registration
     // so that future instances can detect this one.
-    void startSingleInstanceServer();
+    // Returns false when another running instance was detected (caller must
+    // exit), true otherwise (including best-effort listen failures).
+    bool startSingleInstanceServer();
 
     // Store CLI arguments for deferred processing after QML initialization.
     void setCliArgs(const QString &execCommand, const QStringList &execArgs,

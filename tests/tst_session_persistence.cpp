@@ -13,6 +13,32 @@
 #include "sessionmanager.h"
 #include "settings.h"
 
+// RAII restore of XDG_RUNTIME_DIR: the single-instance tests redirect it to
+// a per-test QTemporaryDir. The old value must be restored even when an
+// assertion fails mid-test — otherwise subsequent tests inherit an env
+// pointing into a destroyed temporary directory.
+class RuntimeDirGuard
+{
+public:
+    explicit RuntimeDirGuard(const QString &path)
+    {
+        m_oldValue = qgetenv("XDG_RUNTIME_DIR");
+        qputenv("XDG_RUNTIME_DIR", path.toUtf8());
+    }
+    ~RuntimeDirGuard()
+    {
+        if (m_oldValue.isEmpty())
+            qunsetenv("XDG_RUNTIME_DIR");
+        else
+            qputenv("XDG_RUNTIME_DIR", m_oldValue);
+    }
+    RuntimeDirGuard(const RuntimeDirGuard &) = delete;
+    RuntimeDirGuard &operator=(const RuntimeDirGuard &) = delete;
+
+private:
+    QByteArray m_oldValue;
+};
+
 class TestSessionPersistence : public QObject
 {
     Q_OBJECT
@@ -3053,6 +3079,80 @@ private slots:
         int idx = mgr.sessionCount() - 1;
         QCOMPARE(mgr.sessionName(idx), QStringLiteral("dead"));
         QCOMPARE(mgr.sessionExecCommand(idx), QStringLiteral("ssh"));
+    }
+
+    // --- Single-instance socket tests ---
+
+    void testSingleInstanceStartupRace()
+    {
+        // Isolate the socket in a unique runtime dir so both managers share
+        // one socket path. The guard restores XDG_RUNTIME_DIR on scope exit
+        // even if an assertion below fails.
+        QTemporaryDir runtimeDir;
+        QVERIFY(runtimeDir.isValid());
+        RuntimeDirGuard envGuard(runtimeDir.path());
+
+        SessionManager manager1(m_settingsPath);
+        QVERIFY(manager1.startSingleInstanceServer());
+
+        QSignalSpy createdSpy(&manager1, &SessionManager::sessionCreated);
+
+        // Second instance carries CLI args (ghosteel -e top); its server
+        // start detects manager1 and forwards the exec: message to it.
+        SessionManager manager2(m_settingsPath);
+        manager2.setCliArgs("top", QStringList(), QString());
+        QVERIFY(!manager2.startSingleInstanceServer());
+
+        // manager1 receives the forwarded message and creates the session.
+        QTRY_COMPARE(createdSpy.count(), 1);
+        QCOMPARE(manager1.sessionCount(), 1);
+        QCOMPARE(manager1.sessionExecCommand(0), QStringLiteral("top"));
+    }
+
+    void testSingleInstanceStaleSocketFile()
+    {
+        QTemporaryDir runtimeDir;
+        QVERIFY(runtimeDir.isValid());
+        RuntimeDirGuard envGuard(runtimeDir.path());
+
+        // A stale socket file with no listener behind it must not prevent
+        // startSingleInstanceServer() from taking over the socket.
+        const QString path = runtimeDir.path() + QStringLiteral("/ghosteel-singleton");
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("stale");
+        }
+
+        SessionManager mgr(m_settingsPath);
+        QVERIFY(mgr.startSingleInstanceServer());
+    }
+
+    void testSingleInstanceChopRoundTrip()
+    {
+        // The single-'\n' chop lives in onNewInstanceConnection, NOT in
+        // IpcMessage, so it needs a real socket round-trip (the encode/parse
+        // unit tests above call trimmed(), which would hide a trailing-space
+        // truncation). Single write is inherent to the probe forwarding path.
+        QTemporaryDir runtimeDir;
+        QVERIFY(runtimeDir.isValid());
+        RuntimeDirGuard envGuard(runtimeDir.path());
+
+        SessionManager manager1(m_settingsPath);
+        QVERIFY(manager1.startSingleInstanceServer());
+
+        QSignalSpy createdSpy(&manager1, &SessionManager::sessionCreated);
+
+        // A trailing space is the canary: `echo hi ` must arrive intact. The
+        // chop must remove exactly the appended '\n'; a trimmed() regression
+        // would truncate the space before the new session is created.
+        SessionManager manager2(m_settingsPath);
+        manager2.setCliArgs(QStringLiteral("echo hi "), QStringList(), QString());
+        QVERIFY(!manager2.startSingleInstanceServer());
+
+        QTRY_COMPARE(createdSpy.count(), 1);
+        QCOMPARE(manager1.sessionCount(), 1);
+        QCOMPARE(manager1.sessionExecCommand(0), QStringLiteral("echo hi "));
     }
 };
 

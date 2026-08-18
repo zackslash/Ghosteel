@@ -40,7 +40,7 @@ Settings *Settings::instance()
 
 void Settings::load()
 {
-    m_fontSize = m_settings.value(QStringLiteral("font/size"), 18).toInt();
+    m_fontSize = qBound(kMinFontSize, m_settings.value(QStringLiteral("font/size"), 18).toInt(), kMaxFontSize);
     m_fontFamily = m_settings.value(QStringLiteral("font/family"),
                                     QStringLiteral("monospace")).toString();
     m_shellCommand = m_settings.value(QStringLiteral("terminal/shell"), QString()).toString();

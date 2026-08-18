@@ -59,8 +59,9 @@ void GlyphAtlas::destroy()
     m_initialized = false;
 }
 
-void GlyphAtlas::setFont(const QFont &font, int cellWidth, int cellHeight)
+void GlyphAtlas::setFont(const QFont &font, int /* cellWidth */, int /* cellHeight */)
 {
+    // cellWidth/cellHeight are accepted for API stability (the caller passes them) but unused.
     m_font = font;
     m_fontBold = font;
     m_fontBold.setBold(true);
@@ -70,21 +71,18 @@ void GlyphAtlas::setFont(const QFont &font, int cellWidth, int cellHeight)
     m_fontBoldItalic.setBold(true);
     m_fontBoldItalic.setItalic(true);
 
-    m_cellWidth = cellWidth;
-    m_cellHeight = cellHeight;
-
     // Cache QFontMetrics for each variant to avoid per-glyph construction
     m_fm.reset(new QFontMetrics(m_font));
     m_fmBold.reset(new QFontMetrics(m_fontBold));
     m_fmItalic.reset(new QFontMetrics(m_fontItalic));
     m_fmBoldItalic.reset(new QFontMetrics(m_fontBoldItalic));
-    m_ascent = m_fm->ascent();
 
     m_cache.clear();
     m_clusterCache.clear();
     m_packX = 1;
     m_packY = 0;
     m_rowHeight = 0;
+    m_epoch++; // invalidates UVs baked before the wipe
 
     if (m_initialized) {
         QImage staging(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
@@ -125,6 +123,18 @@ const GlyphInfo &GlyphAtlas::glyphCluster(const uint32_t *buf, uint32_t len,
 
 void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInfo &info)
 {
+    QString str = QString::fromUcs4(&codepoint, 1);
+    info = rasterizeText(str, bold, italic);
+}
+
+void GlyphAtlas::rasterizeCluster(const ClusterKey &key, GlyphInfo &info)
+{
+    QString str = QString::fromUcs4(key.codepoints, key.len);
+    info = rasterizeText(str, key.bold, key.italic);
+}
+
+GlyphInfo GlyphAtlas::rasterizeText(const QString &text, bool bold, bool italic)
+{
     const QFont &font = (bold && italic) ? m_fontBoldItalic
                       : bold ? m_fontBold
                       : italic ? m_fontItalic
@@ -134,11 +144,10 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
                            : italic ? *m_fmItalic
                            : *m_fm;
 
-    QString str = QString::fromUcs4(&codepoint, 1);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-    int glyphWidth = fm.horizontalAdvance(str);
+    int glyphWidth = fm.horizontalAdvance(text);
 #else
-    int glyphWidth = fm.width(str);
+    int glyphWidth = fm.width(text);
 #endif
     int glyphHeight = fm.height();
 
@@ -152,12 +161,11 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
         clearAtlas();
         if (!allocateSlot(glyphWidth, glyphHeight, x, y)) {
             // Still can't fit — return placeholder
-            info = {0, 0, 0, 0, m_cellWidth, m_ascent, 0, 0};
-            return;
+            return GlyphInfo{0, 0, 0, 0};
         }
     }
 
-    // Ensure scratch is large enough for this glyph (grows monotonically, reused thereafter)
+    // Ensure scratch is large enough for this glyph/cluster (grows monotonically, reused thereafter)
     if (m_glyphScratch.width() < glyphWidth || m_glyphScratch.height() < glyphHeight) {
         m_glyphScratch = QImage(qMax(m_glyphScratch.width(), glyphWidth),
                                 qMax(m_glyphScratch.height(), glyphHeight),
@@ -169,19 +177,16 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
     painter.setFont(font);
     painter.setPen(Qt::white);
     painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.drawText(0, fm.ascent(), str);
+    painter.drawText(0, fm.ascent(), text);
     painter.end();
 
+    GlyphInfo info;
     info.u0 = static_cast<float>(x) / m_atlasWidth;
     info.v0 = static_cast<float>(y) / m_atlasHeight;
     info.u1 = static_cast<float>(x + glyphWidth) / m_atlasWidth;
     info.v1 = static_cast<float>(y + glyphHeight) / m_atlasHeight;
-    info.advance = glyphWidth;
-    info.ascent = fm.ascent();
-    info.width = glyphWidth;
-    info.height = glyphHeight;
 
-    // Re-stride the glyph into a tightly-packed upload buffer.
+    // Re-stride the glyph or cluster into a tightly-packed upload buffer.
     // m_glyphScratch bytesPerLine may be wider than glyphWidth*4 (the scratch
     // is reused at the width of the widest glyph seen so far), but GL reads
     // exactly glyphWidth*4 bytes per row (no GL_UNPACK_ROW_LENGTH in GLES2).
@@ -197,79 +202,7 @@ void GlyphAtlas::rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInf
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, glyphWidth, glyphHeight,
                     GL_RGBA, GL_UNSIGNED_BYTE, m_uploadBuf.constData());
-}
-
-void GlyphAtlas::rasterizeCluster(const ClusterKey &key, GlyphInfo &info)
-{
-    const QFont &font = (key.bold && key.italic) ? m_fontBoldItalic
-                      : key.bold ? m_fontBold
-                      : key.italic ? m_fontItalic
-                      : m_font;
-    const QFontMetrics &fm = (key.bold && key.italic) ? *m_fmBoldItalic
-                           : key.bold ? *m_fmBold
-                           : key.italic ? *m_fmItalic
-                           : *m_fm;
-
-    QString str = QString::fromUcs4(key.codepoints, key.len);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-    int glyphWidth = fm.horizontalAdvance(str);
-#else
-    int glyphWidth = fm.width(str);
-#endif
-    int glyphHeight = fm.height();
-
-    if (glyphWidth < 1)  glyphWidth  = 1;
-    if (glyphHeight < 1) glyphHeight = 1;
-
-    int x, y;
-    if (!allocateSlot(glyphWidth, glyphHeight, x, y)) {
-        // Atlas full — clear and re-rasterize lazily
-        qWarning() << "GlyphAtlas: atlas full, clearing and reinitializing";
-        clearAtlas();
-        if (!allocateSlot(glyphWidth, glyphHeight, x, y)) {
-            // Still can't fit — return placeholder
-            info = {0, 0, 0, 0, m_cellWidth, m_ascent, 0, 0};
-            return;
-        }
-    }
-
-    // Ensure scratch is large enough for this cluster (grows monotonically, reused thereafter)
-    if (m_glyphScratch.width() < glyphWidth || m_glyphScratch.height() < glyphHeight) {
-        m_glyphScratch = QImage(qMax(m_glyphScratch.width(), glyphWidth),
-                                qMax(m_glyphScratch.height(), glyphHeight),
-                                QImage::Format_RGBA8888);
-    }
-    m_glyphScratch.fill(Qt::transparent);
-
-    QPainter painter(&m_glyphScratch);
-    painter.setFont(font);
-    painter.setPen(Qt::white);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.drawText(0, fm.ascent(), str);
-    painter.end();
-
-    info.u0 = static_cast<float>(x) / m_atlasWidth;
-    info.v0 = static_cast<float>(y) / m_atlasHeight;
-    info.u1 = static_cast<float>(x + glyphWidth) / m_atlasWidth;
-    info.v1 = static_cast<float>(y + glyphHeight) / m_atlasHeight;
-    info.advance = glyphWidth;
-    info.ascent = fm.ascent();
-    info.width = glyphWidth;
-    info.height = glyphHeight;
-
-    // Re-stride into a tightly-packed upload buffer (same rationale as rasterizeGlyph).
-    const int bpp = 4;
-    const int bytesPerLine = glyphWidth * bpp;
-    m_uploadBuf.resize(bytesPerLine * glyphHeight);
-    for (int row = 0; row < glyphHeight; ++row) {
-        const uchar *src = m_glyphScratch.constScanLine(row);
-        memcpy(m_uploadBuf.data() + row * bytesPerLine, src, bytesPerLine);
-    }
-
-    Q_ASSERT(x + glyphWidth <= m_atlasWidth && y + glyphHeight <= m_atlasHeight);
-    glBindTexture(GL_TEXTURE_2D, m_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, glyphWidth, glyphHeight,
-                    GL_RGBA, GL_UNSIGNED_BYTE, m_uploadBuf.constData());
+    return info;
 }
 
 bool GlyphAtlas::allocateSlot(int glyphWidth, int glyphHeight, int &x, int &y)
@@ -307,6 +240,7 @@ void GlyphAtlas::clearAtlas()
     m_packX = 1;
     m_packY = 0;
     m_rowHeight = 0;
+    m_epoch++; // invalidates UVs baked before the wipe
     QImage staging(m_atlasWidth, m_atlasHeight, QImage::Format_RGBA8888);
     staging.fill(Qt::transparent);
     glBindTexture(GL_TEXTURE_2D, m_texture);

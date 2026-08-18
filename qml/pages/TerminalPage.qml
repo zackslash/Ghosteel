@@ -77,11 +77,16 @@ Page {
                 // Re-focus and restore keyboard state. The compositor
                 // deactivates the text input context when the app is
                 // backgrounded, same as drag-dismiss.
-                if (SessionManager.sessionKeyboardVisible(idx)) {
-                    dragDismissReShowTimer.start()
-                } else {
-                    terminal.suppressNextKeyboardAutoShow()
-                    terminal.forceActiveFocus()
+                // Guard on page status: this signal fires regardless of stack
+                // position, so with a dialog (rename, clipboard, link) above
+                // this page focus must stay with the dialog, not the terminal.
+                if (page.status === PageStatus.Active) {
+                    if (SessionManager.sessionKeyboardVisible(idx)) {
+                        dragDismissReShowTimer.start()
+                    } else {
+                        terminal.suppressNextKeyboardAutoShow()
+                        terminal.forceActiveFocus()
+                    }
                 }
             }
         }
@@ -113,6 +118,9 @@ Page {
 
     property int currentSessionIndex: -1  // Tracked imperatively to avoid binding race
     property int currentSessionId: -1     // Stable key for sessionUIState lookups
+    // Launch-only init (single-session indicator + startup keyboard restore)
+    // runs exactly once, on whichever code path first attaches a session.
+    property bool _launchInitDone: false
     property TerminalView terminal: null
 
     // Pending clipboard read dialog parameters (used by keyboard dismiss timer)
@@ -393,6 +401,8 @@ Page {
         t.linkActivated.connect(showLinkDialog)
         t.zoomRequested.disconnect(onZoomRequested)
         t.zoomRequested.connect(onZoomRequested)
+        t.searchToggled.disconnect(onSearchToggled)
+        t.searchToggled.connect(onSearchToggled)
         t.pinchingChanged.disconnect(onPinchingChanged)
         t.pinchingChanged.connect(onPinchingChanged)
         t.requestParentInteractive.disconnect(onRequestParentInteractive)
@@ -418,6 +428,16 @@ Page {
         altActive = (mods & modsAlt) !== 0
     }
 
+    // C++ flipped its search state; mirror it on the panel (menu-item flow).
+    function onSearchToggled() {
+        if (searchPanel.open) {
+            searchPanel.open = false   // onOpenChanged calls closeSearch() (idempotent)
+        } else {
+            searchPanel.open = true
+            searchField.forceActiveFocus()
+        }
+    }
+
     function detachTerminal(t) {
         if (!t) return
         t.titleChanged.disconnect(updateWindowTitle)
@@ -427,6 +447,7 @@ Page {
         t.toggleKeybar.disconnect(onToggleKeybar)
         t.linkActivated.disconnect(showLinkDialog)
         t.zoomRequested.disconnect(onZoomRequested)
+        t.searchToggled.disconnect(onSearchToggled)
         t.pinchingChanged.disconnect(onPinchingChanged)
         t.requestParentInteractive.disconnect(onRequestParentInteractive)
         t.sessionSwipeStarted.disconnect(onSessionSwipeStarted)
@@ -450,6 +471,9 @@ Page {
     }
 
     Component.onCompleted: {
+        // QML completion-ordering pitfall: children complete before parents,
+        // and this initial page completes before ApplicationWindow runs
+        // restoreSessions(), so activeSession() is null here.
         var t = SessionManager.activeSession()
         if (t) {
             var idx = SessionManager.activeSessionIndex
@@ -474,6 +498,7 @@ Page {
                 scrollIndicator.flash()
             // Show session indicator on launch so the user knows which session they're in
             sessionIndicator.show(SessionManager.sessionDisplayName(idx))
+            _launchInitDone = true
         }
     }
 
@@ -582,13 +607,32 @@ Page {
             if (SessionManager.sessionCount > 1) {
                 sessionIndicator.show(SessionManager.sessionDisplayName(index))
             }
+            // Launch-only extras, run exactly once on the first successful
+            // session attach (see Component.onCompleted above).
+            if (!_launchInitDone) {
+                // Single-session launch: show which session we're in
+                if (SessionManager.sessionCount <= 1)
+                    sessionIndicator.show(SessionManager.sessionDisplayName(index))
+                // im->show() from focusInEvent may not work on startup if the
+                // Wayland surface isn't mapped yet. Delay and show explicitly.
+                if (SessionManager.sessionKeyboardVisible(index))
+                    dragDismissReShowTimer.start()
+                _launchInitDone = true
+            }
         }
         onSessionRemoved: {
             // Clean up runtime UI state for removed session (ID never reused)
             delete sessionUIState[sessionId]
-            // Adjust for vector shift when removal was before current index
-            if (index < currentSessionIndex)
-                currentSessionIndex--
+            // Recompute from the stable session id: when the removed session
+            // was active, sessionSwitched (emitted before sessionRemoved)
+            // already set the correct new index, so a naive decrement for the
+            // vector shift would double-adjust and point at the wrong session.
+            // For background removals no switch fires at all and this
+            // recompute lands on the (possibly shifted) active session
+            // directly — no fallback decrement is reachable either way.
+            var idx = SessionManager.sessionIndexById(currentSessionId)
+            if (idx >= 0)
+                currentSessionIndex = idx
         }
         onDesktopNotification: {
             terminalNotification.summary = summary

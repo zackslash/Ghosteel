@@ -34,7 +34,7 @@ bool SessionManager::checkSingleInstance(const QString &execCommand,
     return false;
 }
 
-void SessionManager::startSingleInstanceServer()
+bool SessionManager::startSingleInstanceServer()
 {
     m_localServer = new QLocalServer(this);
 
@@ -50,24 +50,41 @@ void SessionManager::startSingleInstanceServer()
             QLocalSocket probe;
             probe.connectToServer(path);
             if (probe.waitForConnected(200)) {
-                qWarning() << "Ghosteel: Another instance detected via socket probe";
+                // Another instance beat us to the socket during the startup
+                // race (its server started listening after our initial
+                // checkSingleInstance probe). Reuse this already-connected
+                // socket to forward our pending CLI request to the primary,
+                // best-effort, then exit.
+                if (m_cliExecCommand.isEmpty() && m_cliSessionName.isEmpty()) {
+                    // Plain duplicate launch — mirror checkSingleInstance's
+                    // encoding (empty args encode as IpcMessage::Raise).
+                    probe.write(IpcMessage::encode(QString(), QStringList(), QString()));
+                } else {
+                    // Forward the CLI request (Exec path — the primary will
+                    // run it / switch to the requested session).
+                    probe.write(IpcMessage::encode(m_cliExecCommand, m_cliExecArgs, m_cliSessionName));
+                }
+                probe.waitForBytesWritten(1000);
+                probe.disconnectFromServer();
+                qWarning() << "Ghosteel: Another instance detected via socket probe; duplicate exiting";
                 failServer();
-                return;
+                return false;
             }
             QLocalServer::removeServer(path);
             if (!m_localServer->listen(path)) {
                 qWarning() << "Ghosteel: Single-instance server failed:" << m_localServer->errorString();
                 failServer();
-                return;
+                return true;
             }
         } else {
             qWarning() << "Ghosteel: Single-instance server failed:" << m_localServer->errorString();
             failServer();
-            return;
+            return true;
         }
     }
     connect(m_localServer, &QLocalServer::newConnection,
             this, &SessionManager::onNewInstanceConnection);
+    return true;
 }
 
 void SessionManager::setCliArgs(const QString &execCommand,
@@ -101,10 +118,31 @@ void SessionManager::onNewInstanceConnection()
 {
     QLocalSocket *socket = m_localServer->nextPendingConnection();
     if (!socket) return;
+    // nextPendingConnection() returns an unparented socket — a peer that
+    // connects then neither writes nor disconnects would otherwise leak fd +
+    // object until exit. Parenting ties teardown to the manager (the
+    // deleteLater paths below still work on a parented object).
+    socket->setParent(this);
 
     // Race: sender may have written and disconnected before we get here.
     auto processMessage = [this, socket]() {
-        QByteArray data = socket->readAll().trimmed();
+        // Bounded read: 64 KiB caps memory use in this intentionally
+        // unauthenticated IPC design. Read one byte past the cap so an
+        // oversized message is detected and discarded whole — truncating it
+        // would cut mid-args and still run a mangled command. (Only the
+        // session name is bounded at 128 chars; command/args are unbounded
+        // user input.)
+        QByteArray data = socket->read(64 * 1024 + 1);
+        if (data.size() > 64 * 1024) {
+            qWarning() << "Ghosteel: IPC message exceeds 64 KiB, discarding";
+            socket->deleteLater();
+            return;
+        }
+        // Chop exactly one trailing newline (encode() appends '\n'); unlike
+        // trimmed(), this preserves trailing whitespace in a forwarded last
+        // arg such as `sh -c 'echo hi '`.
+        if (data.endsWith('\n'))
+            data.chop(1);
         socket->deleteLater();
 
         IpcMessage parsed = IpcMessage::parse(data);
