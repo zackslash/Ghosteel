@@ -36,7 +36,6 @@ GLRenderer::GLRenderer(QQuickItem *parent)
     m_cachedMetrics.fontSize = s->fontSize();
     m_cachedMetrics.backgroundOpacity = s->backgroundOpacity();
 
-    // Cursor trails animation timer
     m_wantsCursorTrails = s->cursorTrails();
     if (m_wantsCursorTrails)
         m_shaderAnimTimer.start(33, this); // ~30fps
@@ -49,7 +48,6 @@ GLRenderer::GLRenderer(QQuickItem *parent)
         update();
     });
 
-    // Custom shader path
     m_customShaderPath = s->customShaderPath();
     connect(s, &Settings::customShaderPathChanged, this, [this]() {
         m_customShaderPath = Settings::instance()->customShaderPath();
@@ -65,14 +63,12 @@ void GLRenderer::setSource(QObject *source)
     if (m_source == source)
         return;
 
-    // Disconnect previous source
     if (m_source) {
         disconnect(m_source, nullptr, this, nullptr);
     }
 
     m_source = source;
 
-    // Connect TerminalView signals to trigger GL repaint and metric invalidation
     TerminalView *tv = qobject_cast<TerminalView *>(m_source);
     if (tv) {
         connect(tv, &TerminalView::repaintRequested, this, &QQuickItem::update);
@@ -118,7 +114,6 @@ QQuickFramebufferObject::Renderer *GLRenderer::createRenderer() const
 
 GLRenderer::Renderer::Renderer()
 {
-    // Initialize palette data to zeros to avoid uninitialized memory
     memset(m_postPaletteData, 0, sizeof(m_postPaletteData));
 }
 
@@ -215,7 +210,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 {
     GLRenderer *q = static_cast<GLRenderer *>(item);
 
-    // Skip sync work when GL overlay is not visible
     if (!q->isVisible())
         return;
 
@@ -235,6 +229,11 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     if (gen != m_lastMetricsGeneration) {
         m_lastMetricsGeneration = gen;
         m_cellWidth = 0; // force re-init below
+        // m_atlas.setFont() below wipes the atlas texture and both glyph caches,
+        // so the UVs baked in m_cellVertices now sample an empty atlas. Ghostty
+        // never marks the grid dirty for a settings change, so force a vertex
+        // rebuild this frame regardless of its dirty flag.
+        m_forceVertexRebuild = true;
     }
 
     uint16_t cols = 0, rows = 0;
@@ -251,7 +250,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     float fgG = colors.foreground.g / 255.0f;
     float fgB = colors.foreground.b / 255.0f;
 
-    // Phase 5B: cache colors for post shader uniforms
+    // Cache colors for post shader uniforms
     m_postBgR = bgR; m_postBgG = bgG; m_postBgB = bgB;
     m_postFgR = fgR; m_postFgG = fgG; m_postFgB = fgB;
     m_postCursorColorHasValue = colors.cursor_has_value;
@@ -399,7 +398,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_draggingHandle = m_terminalView->draggingHandle();
         m_magnifierBorderColor = m_terminalView->magnifierBorderColor();
 
-        // Compute finger position: if dragging handle 1, use selStart; else use selEnd
         if (m_draggingHandle == 1)
             m_magnifierFingerPos = m_selStart;
         else
@@ -511,11 +509,12 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 
     GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
-    if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE)
+    if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !m_forceVertexRebuild)
         return;
 
     m_gridDirty = true;
     buildCellVertices(state);
+    m_forceVertexRebuild = false;
     m_dirty = true;
 }
 
@@ -598,7 +597,6 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
 
 bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *fbo)
 {
-    // Update timing uniforms
     if (!m_timerStarted) {
         m_elapsedTimer.start();
         m_lastFrameNs = 0;
@@ -637,7 +635,6 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
     if (canSkipPipeline)
         m_shouldStopAnimTimer = true;
 
-    // Create/resize pipeline FBO
     int oldPipeW = m_pipelineTexW, oldPipeH = m_pipelineTexH;
     createPipelineFbo(fbo->width(), fbo->height());
     if (m_postShaders.size() > 1)
@@ -649,7 +646,6 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         return false;
 
     if (!canSkipPipeline) {
-        // Render terminal to pipeline FBO
         glBindFramebuffer(GL_FRAMEBUFFER, m_pipelineFbo);
         glViewport(0, 0, fbo->width(), fbo->height());
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -662,7 +658,6 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         glDisable(GL_BLEND);
     }
 
-    // Post-process to Qt's default FBO
     if (m_postShaders.size() > 1 && m_pingPongFbo) {
         GLuint textures[2] = { m_pipelineTex, m_pingPongTex };
         GLuint fbos[2] = { m_pipelineFbo, m_pingPongFbo };
@@ -689,7 +684,12 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     QMatrix4x4 proj;
     proj.ortho(0, width, 0, height, -1, 1);
 
-    // Cell grid
+    // Kitty below-text layer: drawn before the cell grid so it sits
+    // beneath cell backgrounds and glyphs. BELOW_BG is not rendered
+    // (would need a bg-only pass).
+    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
+                        width, height);
+
     glActiveTexture(GL_TEXTURE0);
     m_atlas.bind();
 
@@ -741,14 +741,6 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     m_vbo.release();
     m_program->release();
 
-    // Kitty images: below-text layer (between cell grid and overlays)
-    // Note: BELOW_BG layer (z < INT32_MIN/2) is not rendered.
-    // These placements require drawing behind cell backgrounds,
-    // which would need a separate bg-only render pass.
-    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
-                        width, height);
-
-    // Flat overlay
     buildOverlayVertices(width, height);
     if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
         m_flatProgram->bind();
@@ -771,7 +763,6 @@ void GLRenderer::Renderer::drawScene(int width, int height)
         m_flatProgram->release();
     }
 
-    // Kitty images: above-text layer (above overlays)
     drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
                         width, height);
 }

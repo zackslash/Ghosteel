@@ -47,7 +47,12 @@ struct SessionInfo {
     QStringList execArgs;             // Full command args including binary (for reuse matching)
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
-    TerminalView *view;
+    // QPointer: the QML scene owns the view after reparenting (TerminalPage.qml
+    // attachTerminal), so scene teardown at app exit deletes it before
+    // ~SessionManager runs. QPointer self-nulls on deletion, letting the
+    // destructor and save paths skip already-destroyed views instead of
+    // dereferencing a dangling pointer.
+    QPointer<TerminalView> view;
 
     bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
     bool isCommandSession() const { return !execArgs.isEmpty(); }

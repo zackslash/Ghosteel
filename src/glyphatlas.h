@@ -76,7 +76,6 @@ public:
     void initialize();
     void destroy();
 
-    // Set the font for rasterization
     void setFont(const QFont &font, int cellWidth, int cellHeight);
 
     // Get or rasterize a glyph. Returns texture coordinates.
@@ -92,7 +91,6 @@ public:
     int width() const { return m_atlasWidth; }
     int height() const { return m_atlasHeight; }
 
-    // Cell dimensions (from font metrics)
     int cellWidth() const { return m_cellWidth; }
     int cellHeight() const { return m_cellHeight; }
     int ascent() const { return m_ascent; }

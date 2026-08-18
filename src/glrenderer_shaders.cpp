@@ -550,7 +550,6 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW
     if (loc.iFocus >= 0)
         shader.program->setUniformValue(loc.iFocus, 1);
 
-    // 256-entry RGB palette
     if (loc.iPalette >= 0)
         glUniform3fv(loc.iPalette, 256, m_postPaletteData);
 

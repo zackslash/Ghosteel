@@ -85,26 +85,24 @@ void TerminalView::performSearch()
             int cellWidth = m_searchPattern.size();
             if (row < m_cellMapping.size() && !m_cellMapping[row].isEmpty()) {
                 const QVector<int> &mapping = m_cellMapping[row];
+                // Reverse-map: find the first cell whose QChar offset equals
+                // the match start. Wide-char spacer cells carry -1 (see
+                // GhosttyVt::extractSearchText), so they are skipped here and
+                // can never be mistaken for a match start.
                 for (int cell = 0; cell < mapping.size(); cell++) {
                     if (mapping[cell] == idx) {
                         cellCol = cell;
                         break;
                     }
                 }
+                // Count cells covered by the match. Spacer cells (-1) inside
+                // the run are counted too, so a match ending in a wide char
+                // on the last column still covers its trailing spacer cell.
                 int matchEnd = idx + m_searchPattern.size();
                 cellWidth = 0;
                 for (int cell = cellCol; cell < mapping.size(); cell++) {
                     if (mapping[cell] >= matchEnd)
                         break;
-                    cellWidth++;
-                }
-                // Extend cellWidth past a trailing wide-char spacer tail: the spacer
-                // shares the next cell's charIdx in the mapping (spacers don't advance it).
-                // Note: assumes TAIL spacers (CJK/emoji wide chars); HEAD spacers (rare RTL)
-                // would also satisfy mapping[tail]==mapping[tail+1] and may over-extend.
-                int tail = cellCol + cellWidth;
-                if (tail < mapping.size() && tail + 1 < mapping.size()
-                    && mapping[tail] == mapping[tail + 1]) {
                     cellWidth++;
                 }
                 if (cellWidth == 0)

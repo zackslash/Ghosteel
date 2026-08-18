@@ -23,7 +23,6 @@ void GhosteelAdapter::activateSession(int sessionId)
     // which expects a display (sorted) index.
     m_manager->setActiveSessionIndex(index);
 
-    // Raise the application window to the foreground
     const auto windows = QGuiApplication::topLevelWindows();
     if (!windows.isEmpty())
         windows.first()->requestActivate();

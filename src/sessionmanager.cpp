@@ -95,6 +95,13 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         if (!m_encryptor->isAvailable()) {
             // Encryption init failed — these scrollback files can't be
             // restored; drop the pending list to avoid re-queuing.
+            // Note: this warning covers only pendings queued after a
+            // later-failed availabilityChanged. Pendings queued during
+            // restoreSessions() when initializeNow() failed in the ctor are
+            // silently dropped instead: the deferred singleShot(0) hits the
+            // m_initialized early-return in initializeAsync() without
+            // re-emitting availabilityChanged, so this handler never runs
+            // for them (matches the documented degradation).
             if (!m_pendingScrollbackRestores.isEmpty())
                 qWarning() << "Ghosteel: Encryption unavailable, skipping"
                            << m_pendingScrollbackRestores.size()
@@ -203,8 +210,10 @@ SessionManager::~SessionManager()
     // In tests or abnormal paths, this is the fallback (shells may be dead).
     if (m_sessionsLoaded && !m_savedOnQuit) {
         m_store->saveSessionsMetadata(m_sessions, m_activeSessionIndex, m_nextSessionId);
-        // Views are still alive here (cleaned up below), so we can still flush
-        // the scrollback that aboutToQuit never got to save.
+        // Views may already be gone here (QML scene teardown deletes reparented
+        // views before ~SessionManager runs); saveSessionScrollback skips
+        // sessions whose view is null, so the scrollback that aboutToQuit never
+        // got to save is still flushed for the surviving views.
         m_store->saveScrollbackIncremental(m_sessions, m_activeSessionIndex, true);
     }
 
@@ -281,19 +290,16 @@ void SessionManager::setClipboardText(const QString &text)
 
 void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 {
-    // Route this view's notifications through the aggregated signal
     connect(view, &TerminalView::desktopNotification, this,
             [this, sessionId](const QString &summary, const QString &body) {
         Q_EMIT desktopNotification(sessionId, summary, body);
     });
 
-    // Route clipboard read requests through the aggregated signal
     connect(view, &TerminalView::clipboardReadRequest, this,
             [this, sessionId](const QString &kind) {
         Q_EMIT clipboardReadRequest(sessionId, kind);
     });
 
-    // Route clipboard write results to QML (SessionManager.setClipboardText)
     connect(view, &TerminalView::clipboardTextReady, this,
             [this](const QString &text) {
         Q_EMIT clipboardTextReady(text);
@@ -365,7 +371,6 @@ TerminalView* SessionManager::createSession()
         return nullptr;
     }
 
-    // Create a new TerminalView as a child of this manager
     TerminalView *view = new TerminalView();
 
     SessionInfo info;
@@ -632,7 +637,6 @@ void SessionManager::setSessionName(int index, const QString &name)
         layoutChanged();
     } else {
         rebuildSortedIndices();
-        // Emit dataChanged for name-dependent roles on this row
         QVector<int> roles = {NameRole, DisplayNameRole};
         int displayPos = actualToDisplay(index);
         if (displayPos >= 0 && displayPos < m_sortedIndices.size())
@@ -850,7 +854,8 @@ void SessionManager::processCliArgs()
         if (!m_cliSessionName.isEmpty()) {
             int named = findSessionByName(m_cliSessionName);
             if (named >= 0) {
-                if (m_sessions[named].isCommandSession() && !m_sessions[named].view->shellExited()) {
+                if (m_sessions[named].isCommandSession() && m_sessions[named].view
+                    && !m_sessions[named].view->shellExited()) {
                     // Command still running — switch to it
                     setActiveSessionIndex(named);
                 } else {
@@ -1047,7 +1052,6 @@ bool SessionManager::restoreSessions()
         if (!QDir(workingDir).exists())
             workingDir = QDir::homePath();
 
-        // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
         // Apply persisted font size immediately so the save path reads back
@@ -1079,7 +1083,6 @@ bool SessionManager::restoreSessions()
         // geometry-update repaints; cleared by titleChanged (real PTY data).
         m_sessions.last().justRestored = true;
 
-        // Route this view's session-routed signals through the aggregated signals
         connectSessionSignals(view, info.id);
 
         // Ensure nextSessionId stays ahead of any restored ID
@@ -1087,12 +1090,10 @@ bool SessionManager::restoreSessions()
             m_nextSessionId = savedId + 1;
     }
 
-    // Build sort order and notify the model of all new rows at once
     rebuildSortedIndices();
     endInsertRows();
     Q_EMIT sessionCountChanged();
 
-    // Restore active session by ID (or by legacy index)
     int resolvedActive = resolveActiveSession(activeId, legacyActiveIndex);
     if (resolvedActive >= 0)
         setActiveSessionIndex(resolvedActive);

@@ -42,7 +42,7 @@ void PtyReaderThread::run()
         if (ret < 0) {
             if (errno == EINTR)
                 continue;
-            break; // error
+            break;
         }
         if (ret == 0)
             continue; // timeout, check interruption flag
@@ -265,17 +265,28 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
 
         // Reap a pid queued by a previous stop(false) BEFORE cancelling its
         // timer — otherwise the cancel orphans it as a zombie until the next
-        // stop() / ~PtyManager(). WNOHANG so we don't block the GUI thread; a
-        // still-living child leaves m_pendingReapPid set for stop() to handle.
+        // stop() / ~PtyManager(). WNOHANG so we don't block the GUI thread.
+        // If the old child is still alive (result == 0), leave the pending
+        // timer running — its lambda captured the correct oldPid and its
+        // generation guard already prevents it emitting shellExited for the
+        // old session — and keep m_pendingReapPid set so a later readFinished
+        // (or stop()) reaps it. Only cancel the timer once the pending reap
+        // actually resolved.
+        bool pendingReapStillRunning = false;
         if (m_pendingReapPid > 0) {
             int pendingStatus = 0;
             pid_t pendingResult = ::waitpid(m_pendingReapPid, &pendingStatus, WNOHANG);
-            if (pendingResult != 0)
+            if (pendingResult != 0) {
                 m_pendingReapPid = -1; // reaped (>0) or already gone (<0)
+            } else {
+                pendingReapStillRunning = true;
+            }
         }
 
-        // Cancel any existing waitpid timer (safety)
-        if (m_waitPidTimer) {
+        // Cancel any existing waitpid timer (safety) — unless it is the
+        // pending-reap timer for a still-running old child, which must keep
+        // polling until the old pid is reaped.
+        if (m_waitPidTimer && !pendingReapStillRunning) {
             m_waitPidTimer->stop();
             m_waitPidTimer->deleteLater();
             m_waitPidTimer = nullptr;
@@ -573,7 +584,6 @@ bool PtyManager::writeData(const char *data, size_t len)
     if (m_ptyFd < 0)
         return false;
 
-    // If there's already buffered data, append to it
     if (!m_writeBuffer.isEmpty()) {
         m_writeBuffer.append(data, len);
         return true;
@@ -653,7 +663,6 @@ void PtyManager::drainWriteBuffer()
         }
     }
 
-    // All data written — clear buffer and disable notifier
     resetWriteBuffer();
     if (m_writeNotifier)
         m_writeNotifier->setEnabled(false);

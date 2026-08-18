@@ -13,16 +13,26 @@
 // Recorded mode-set calls for test inspection (see ghostty_stubs.h).
 static std::map<GhosttyMode, bool> g_stubs_modesSet;
 
+// Outstanding-handle counters for lifecycle tests (see ghostty_stubs.h).
+static int g_stubs_outstandingTerminals = 0;
+static int g_stubs_outstandingRenderStates = 0;
+
 // ---- Terminal ----
 
 GHOSTTY_API GhosttyResult ghostty_terminal_new(
     const GhosttyAllocator*, GhosttyTerminal* out, uint16_t, uint16_t)
 {
-    if (out) *out = (GhosttyTerminal)1;
+    if (out) {
+        *out = (GhosttyTerminal)1;
+        g_stubs_outstandingTerminals++;
+    }
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API void ghostty_terminal_free(GhosttyTerminal) {}
+GHOSTTY_API void ghostty_terminal_free(GhosttyTerminal)
+{
+    g_stubs_outstandingTerminals--;
+}
 
 GHOSTTY_API void ghostty_terminal_reset(GhosttyTerminal) {}
 
@@ -77,6 +87,22 @@ extern "C" bool ghostty_stubs_mode_set_called(GhosttyMode mode, bool *out_value)
     if (out_value)
         *out_value = it->second;
     return true;
+}
+
+extern "C" void ghostty_stubs_reset_handles(void)
+{
+    g_stubs_outstandingTerminals = 0;
+    g_stubs_outstandingRenderStates = 0;
+}
+
+extern "C" int ghostty_stubs_outstanding_terminals(void)
+{
+    return g_stubs_outstandingTerminals;
+}
+
+extern "C" int ghostty_stubs_outstanding_render_states(void)
+{
+    return g_stubs_outstandingRenderStates;
 }
 
 GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref(
@@ -140,11 +166,17 @@ GHOSTTY_API GhosttyResult ghostty_grid_ref_hyperlink_uri(
 GHOSTTY_API GhosttyResult ghostty_render_state_new(
     const GhosttyAllocator*, GhosttyRenderState* out)
 {
-    if (out) *out = (GhosttyRenderState)1;
+    if (out) {
+        *out = (GhosttyRenderState)1;
+        g_stubs_outstandingRenderStates++;
+    }
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API void ghostty_render_state_free(GhosttyRenderState) {}
+GHOSTTY_API void ghostty_render_state_free(GhosttyRenderState)
+{
+    g_stubs_outstandingRenderStates--;
+}
 
 GHOSTTY_API GhosttyResult ghostty_render_state_update(
     GhosttyRenderState, GhosttyTerminal)

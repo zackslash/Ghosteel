@@ -23,6 +23,13 @@ void ghostty_stubs_reset_modes(void);
 // Returns false if the mode was never set.
 bool ghostty_stubs_mode_set_called(GhosttyMode mode, bool *out_value);
 
+// Outstanding-handle counters for lifecycle tests (e.g. the GhosttyVt
+// double-create guard). ghostty_terminal_new/free and
+// ghostty_render_state_new/free increment/decrement these.
+void ghostty_stubs_reset_handles(void);
+int ghostty_stubs_outstanding_terminals(void);
+int ghostty_stubs_outstanding_render_states(void);
+
 #ifdef __cplusplus
 }
 #endif

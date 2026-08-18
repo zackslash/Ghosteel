@@ -21,9 +21,7 @@ private:
     QString m_settingsPath;
     QTemporaryDir m_tempDir;
 
-    // Debounce timer interval in SessionManager is 500ms.
-    // We wait 600ms to ensure the timer fires. If the debounce changes,
-    // update this constant to match (debounce + ~100ms margin).
+    // SessionManager debounce is 500ms; wait 600ms (debounce + margin).
     static constexpr int DEBOUNCE_WAIT_MS = 600;
 
     // Helper: write raw session data to settings file.
@@ -187,8 +185,7 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        // restoreSessions caps at 100 and creates all count sessions (even without data).
-        // With count=9999, only the first 100 are created (data exists for 2, defaults for 98).
+        // restoreSessions caps at 100; with count=9999 only the first 100 are created.
         QCOMPARE(mgr.sessionCount(), 100);
     }
 
@@ -872,9 +869,7 @@ private slots:
         SessionManager mgr(&settings);
         mgr.restoreSessions();
 
-        // The restore itself should NOT trigger a save (m_sessionsLoaded is false during restore)
-        // Verify the marker key survived — if saveSessions() ran, it would clear
-        // sessionData but not preserve arbitrary keys outside its groups.
+        // Restore must not trigger a save — the marker key survives only if saveSessions() never ran.
         QSettings s(m_settingsPath, QSettings::IniFormat);
         QCOMPARE(s.value("test/marker").toString(), QStringLiteral("should-survive"));
 
@@ -1219,9 +1214,7 @@ private slots:
 
     void testSortModeDefault()
     {
-        // SessionManager::sortMode() delegates to Settings::instance()
-        // (production singleton).  Test the default via Settings directly
-        // using a fresh temp path, since that's where the default is defined.
+        // sortMode() delegates to the Settings singleton; test the default via a fresh temp path.
         QTemporaryDir dir;
         Settings s(dir.path() + "/sort_test.conf");
         QCOMPARE(s.sessionSortMode(), 1); // SortLastUsed is the default
@@ -1392,10 +1385,8 @@ private slots:
 
     void testSortedIndicesValidDuringSignalHandlers()
     {
-        // Regression: when model signals fire, displayToActual() must return
-        // valid mappings because the sort indices are rebuilt before the
-        // layout/row signals are emitted. Verify by reading displayToActual()
-        // inside the model's signal handlers.
+        // Regression: sort indices are rebuilt before layout/row signals fire;
+        // verify displayToActual() is valid inside the handlers.
         Settings settings(m_settingsPath);
         SessionManager mgr(&settings);
         mgr.restoreSessions();
@@ -1410,9 +1401,7 @@ private slots:
 
         mgr.setSortMode(3); // SortAlphabetical — Alpha(1), Middle(2), Zebra(0)
 
-        // Capture displayToActual(0) from inside a layoutChanged handler.
-        // setSortMode() rebuilds the sort order before emitting layoutChanged,
-        // so the display->actual mapping must already be valid when it fires.
+        // Capture displayToActual(0) inside layoutChanged — the mapping must already be valid when it fires.
         int display0ActualFromLayout = -1;
         connect(&mgr, &QAbstractItemModel::layoutChanged, [&]() {
             display0ActualFromLayout = mgr.displayToActual(0);
@@ -1421,9 +1410,7 @@ private slots:
         mgr.setSortMode(0); // SortManual — insertion order
         QCOMPARE(display0ActualFromLayout, mgr.displayToActual(0));
 
-        // Now test removeSession — endRemoveRows() emits rowsRemoved after
-        // the sort order has been rebuilt, so displayToActual(0) must be
-        // valid inside the handler.
+        // Same for rowsRemoved — the sort order is rebuilt before endRemoveRows().
         int display0ActualFromRemoval = -1;
         connect(&mgr, &QAbstractItemModel::rowsRemoved, [&]() {
             display0ActualFromRemoval = mgr.displayToActual(0);
@@ -2479,9 +2466,7 @@ private slots:
 
     void testContentChangedBlockedByJustRestored()
     {
-        // After restoreSessions(), justRestored=true. Emitting contentChanged
-        // should be a no-op — neither saveSessions nor the scrollback save path
-        // should run — until titleChanged/ptyDataReceived clears it.
+        // After restore, justRestored=true blocks contentChanged until titleChanged/ptyDataReceived clears it.
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
@@ -2519,10 +2504,8 @@ private slots:
 
     void testContentChangedRunsScrollbackNotMetadata()
     {
-        // After justRestored is cleared (titleChanged), contentChanged marks
-        // scrollbackDirty and runs the scrollback save path — but it must NOT
-        // trigger saveSessions, because scrollback content is not session
-        // metadata. This is the Finding-2 flag-gating guarantee.
+        // After justRestored clears, contentChanged runs the scrollback path but must
+        // NOT trigger saveSessions (scrollback is not metadata).
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
@@ -2564,9 +2547,7 @@ private slots:
 
     void testPtyDataClearsJustRestoredThenScrollbackNotMetadata()
     {
-        // Same as above but justRestored is cleared by ptyDataReceived alone
-        // (sh/dash, bare REPLs that never set a title). The flag-gating
-        // guarantee must hold regardless of which signal cleared justRestored.
+        // Same, but justRestored cleared by ptyDataReceived alone (title-less shells).
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
@@ -2647,10 +2628,8 @@ private slots:
 
     void testContentChangedAcrossSessionsNoMetadataSave()
     {
-        // Verify justRestored is per-session: contentChanged on a still-
-        // justRestored session is blocked (exportScrollback not called), while
-        // contentChanged on a cleared session runs the scrollback path. Either
-        // way, saveSessions must not run (scrollback is not metadata).
+        // justRestored is per-session: blocked on the still-restored session, runs on
+        // the cleared one; saveSessions must not run either way.
         writeRawSessions({{"A", "/tmp"}, {"B", "/home"}}, 0);
 
         bool fileExisted = false;
@@ -2698,10 +2677,8 @@ private slots:
 
     void testMetadataMutationTriggersSaveAfterScrollbackArm()
     {
-        // After contentChanged armed the scrollback-only timer without setting
-        // m_sessionsDirty, a real metadata mutation must still set the flag and
-        // trigger saveSessions. Guards against the two schedule paths getting
-        // entangled so metadata stops persisting.
+        // A metadata mutation after a scrollback-only arm must still set m_sessionsDirty
+        // and trigger saveSessions.
         writeRawSessions({{"A", "/tmp"}});
 
         bool fileExisted = false;
@@ -2734,11 +2711,9 @@ private slots:
 
     void testScrollbackThrottleSkipsWithinWindow()
     {
-        // The per-session 5s scrollback throttle must skip a second save
-        // attempt inside the window. With empty export data, saveCompleted
-        // fires synchronously and sets lastScrollbackSaveMs, so the second
-        // attempt IS throttled by the real throttle guard.
-        // Uses a created (non-restored) session so justRestored is false.
+        // The 5s throttle must skip a second save inside the window. Empty export data
+        // makes saveCompleted fire synchronously, so the real throttle guard is
+        // exercised. Created session -> justRestored false.
         Settings settings(m_settingsPath);
         settings.setScrollbackPersistence(true); // enable the scrollback save path under test
         SessionManager mgr(&settings);
@@ -2759,6 +2734,45 @@ private slots:
         view->emitContentChanged(); // second within 5s: throttled
         QTest::qWait(DEBOUNCE_WAIT_MS + 100);
         QCOMPARE(view->exportScrollbackCount(), 1);
+    }
+
+    void testAnonymousCommandSessionSkipsScrollbackSave()
+    {
+        // Anonymous command sessions are never restored, so their scrollback must not
+        // be saved; named sessions still save.
+        Settings settings(m_settingsPath);
+        settings.setScrollbackPersistence(true); // enable the scrollback save path under test
+        SessionManager mgr(&settings);
+        mgr.restoreSessions(); // sets m_sessionsLoaded
+
+        TerminalView *anonView = mgr.createSessionWithCommand(QString(), {"htop"});
+        TerminalView *namedView = mgr.createSession();
+        QVERIFY(anonView);
+        QVERIFY(namedView);
+
+        // Let createSession's metadata save settle (clears m_sessionsDirty)
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        // Non-empty export data on both stub views so a save would be observable
+        anonView->setExportScrollbackData("GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=1\n\ntest");
+        namedView->setExportScrollbackData("GHOSTTY_SCROLLBACK_V1\nCOLS=80\nROWS=1\n\ntest");
+
+        // Created sessions have justRestored=false already; clear per the
+        // existing pattern anyway (no-op for created sessions).
+        anonView->setTitle("htop");
+        namedView->setTitle("named");
+
+        anonView->resetExportScrollbackCount();
+        namedView->resetExportScrollbackCount();
+
+        anonView->emitContentChanged();
+        namedView->emitContentChanged();
+
+        QTest::qWait(DEBOUNCE_WAIT_MS + 100);
+
+        QCOMPARE(anonView->exportScrollbackCount(), 0); // anonymous skipped
+        QVERIFY2(namedView->exportScrollbackCount() >= 1,
+                 "named session scrollback save should run");
     }
 
     // --- Non-active session font size restored ---
@@ -2913,12 +2927,9 @@ private slots:
         QVERIFY(!idx.data(Qt::UserRole + 99).isValid());
     }
 
-    // T1: scrollbackDirty is cleared at export time. When encryptAsync
-    // fails (returns false in test build — no SAILFISH_SECRETS), the
-    // session is re-dirtied for retry. This test exercises the
-    // encryptAsync-start-fail re-dirty path in saveSessionScrollback.
-    // The saveFailed signal path (writeScrollbackToDisk failure) needs
-    // a fake encryptor with controllable callbacks — deferred.
+    // T1: dirty is cleared at export; encryptAsync fails in the test build
+    // (no SAILFISH_SECRETS), re-dirtying for retry. The saveFailed path needs
+    // a fake encryptor — deferred.
     void testDirtyClearedAtExportReDirtiedOnEncryptFail()
     {
         writeRawSessions({{"A", "/tmp"}});
@@ -2946,9 +2957,7 @@ private slots:
         QVERIFY2(view->exportScrollbackCount() > 0,
                  "exportScrollback should have been called after debounce");
 
-        // encryptAsync returned false (no crypto), re-dirtied inline.
-        // No saveFailed signal emitted, no timer re-armed from this path.
-        // Retry depends on next contentChanged or availabilityChanged.
+        // encryptAsync returned false, re-dirtied inline; no timer re-armed from this path.
         int countAfterFirstSave = view->exportScrollbackCount();
         QTest::qWait(DEBOUNCE_WAIT_MS + 100);
         QVERIFY2(view->exportScrollbackCount() == countAfterFirstSave,
@@ -2981,14 +2990,69 @@ private slots:
         QVERIFY2(view->exportScrollbackCount() > 0,
                  "exportScrollback should run after contentChanged + debounce");
 
-        // Second contentChanged: dirty is still true (re-dirtied by encrypt
-        // failure), so the dirty-guard (if !scrollbackDirty) won't re-arm
-        // the timer. The session stays dirty until availabilityChanged
-        // or a new contentChanged with a false->true dirty transition.
+        // Second contentChanged: dirty is still true, so the dirty-guard won't re-arm;
+        // the session stays dirty until availabilityChanged or a new false->true transition.
         int countAfterFirst = view->exportScrollbackCount();
         QTest::qWait(DEBOUNCE_WAIT_MS + 100);
         QVERIFY2(view->exportScrollbackCount() == countAfterFirst,
                  "no additional export expected without a new dirty transition");
+    }
+
+    // --- View lifetime: QML scene teardown deletes reparented views ---
+
+    void testViewDeletedOutOfBandDestructorSafe()
+    {
+        // QML scene teardown deletes the reparented view before ~SessionManager;
+        // SessionInfo::view is a QPointer, so the destructor must skip the dead view.
+        writeRawSessions({{"A", "/tmp"}});
+
+        Settings settings(m_settingsPath);
+        settings.setScrollbackPersistence(true); // exercise the fallback scrollback save
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+        QCOMPARE(mgr.sessionCount(), 1);
+
+        TerminalView *view = mgr.activeSession();
+        QVERIFY(view);
+
+        // Mark the session dirty so the destructor's fallback save reaches
+        // saveSessionScrollback for the dead view.
+        view->setTitle("t");        // clears justRestored
+        view->emitContentChanged(); // marks scrollbackDirty
+
+        // Simulate QML deleting the reparented view out-of-band.
+        delete view;
+
+        // Scope exit destroys the manager — the cleanup loop and fallback save
+        // must skip the dead view without crashing.
+    }
+
+    void testProcessCliArgsSkipsDeletedView()
+    {
+        // processCliArgs() must not dereference a view that QML deleted
+        // out-of-band: the null guard takes the replace/create path instead.
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Dead named command session whose view is deleted out-of-band.
+        TerminalView *deadView = mgr.createSessionWithCommand("dead", QStringList() << "ssh");
+        QVERIFY(deadView);
+        delete deadView;
+
+        // A second live session so the manager still has a valid session.
+        mgr.createSession();
+        QCOMPARE(mgr.sessionCount(), 2);
+
+        // CLI args matching the DEAD session's name: the null guard must skip
+        // the shellExited() dereference and replace the dead session.
+        mgr.setCliArgs("ssh", QStringList(), "dead");
+        mgr.processCliArgs();
+
+        // Dead session replaced by a fresh one with the same name and command.
+        QCOMPARE(mgr.sessionCount(), 2);
+        int idx = mgr.sessionCount() - 1;
+        QCOMPARE(mgr.sessionName(idx), QStringLiteral("dead"));
+        QCOMPARE(mgr.sessionExecCommand(idx), QStringLiteral("ssh"));
     }
 };
 
