@@ -1,4 +1,5 @@
 #include "terminalview.h"
+#include <QTimer>
 #include <algorithm>
 
 namespace {
@@ -15,9 +16,7 @@ void TerminalView::openSearch()
     m_searchActive = true;
 
     if (m_vt) {
-        VtSearchText st = m_vt->extractSearchText();
-        m_searchCache = st.lines;
-        m_cellMapping = st.mapping;
+        m_searchCache = m_vt->extractSearchText();
     }
 
     clearSelection();
@@ -30,10 +29,11 @@ void TerminalView::closeSearch()
 
     m_searchActive = false;
     m_searchPattern.clear();
-    m_searchCache.clear();
-    m_cellMapping.clear();
+    m_searchCache = VtSearchText();
     m_searchMatches.clear();
     m_currentMatchIndex = -1;
+    if (m_searchRefreshTimer)
+        m_searchRefreshTimer->stop();
     update();
     Q_EMIT searchMatchCountChanged();
     Q_EMIT currentMatchIndexChanged();
@@ -47,10 +47,8 @@ void TerminalView::setSearchPattern(const QString &pattern)
 
     m_searchPattern = trimmed;
 
-    if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty())) {
-        VtSearchText st = m_vt->extractSearchText();
-        m_searchCache = st.lines;
-        m_cellMapping = st.mapping;
+    if (m_vt && (m_searchCache.lines.isEmpty() || m_vt->isSearchTextDirty())) {
+        m_searchCache = m_vt->extractSearchText();
     }
 
     performSearch();
@@ -66,57 +64,63 @@ void TerminalView::performSearch()
     m_searchMatches.clear();
     m_currentMatchIndex = -1;
 
-    if (m_searchPattern.isEmpty() || m_searchCache.isEmpty()) {
+    if (m_searchPattern.isEmpty() || m_searchCache.lines.isEmpty()
+        || m_searchCache.logicalLines.isEmpty()) {
         Q_EMIT searchMatchCountChanged();
         Q_EMIT currentMatchIndexChanged();
         return;
     }
 
+    const int patternLen = m_searchPattern.size();
+    int logicalMatches = 0;
     bool searchDone = false;
-    for (int row = 0; row < m_searchCache.size() && !searchDone; row++) {
+
+    // Match against the logical lines (autowrap continuations joined, see
+    // extractSearchText), so a phrase spanning a wrap boundary is found.
+    // Each match is split into one SearchMatchSegment per spanned physical
+    // row, keeping highlighting, scrollbar geometry and scrollToMatch (all
+    // per physical row) unchanged.
+    for (int li = 0; li < m_searchCache.logicalLines.size() && !searchDone; li++) {
+        const QString &joined = m_searchCache.logicalLines[li];
         int col = 0;
-        const QString &line = m_searchCache[row];
-        while (col < line.size()) {
-            int idx = line.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
+        while (col < joined.size()) {
+            int idx = joined.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
             if (idx < 0)
                 break;
 
-            int cellCol = idx; // ASCII default; mapping below adjusts for wide chars.
-            int cellWidth = m_searchPattern.size();
-            if (row < m_cellMapping.size() && !m_cellMapping[row].isEmpty()) {
-                const QVector<int> &mapping = m_cellMapping[row];
-                // Reverse-map: find the first cell whose QChar offset equals
-                // the match start. Wide-char spacer cells carry -1 (see
-                // GhosttyVt::extractSearchText), so they are skipped here and
-                // can never be mistaken for a match start.
-                for (int cell = 0; cell < mapping.size(); cell++) {
-                    if (mapping[cell] == idx) {
-                        cellCol = cell;
-                        break;
-                    }
-                }
-                // Count cells covered by the match. Spacer cells (-1) inside
-                // the run are counted too, so a match ending in a wide char
-                // on the last column still covers its trailing spacer cell.
-                int matchEnd = idx + m_searchPattern.size();
-                cellWidth = 0;
-                for (int cell = cellCol; cell < mapping.size(); cell++) {
-                    if (mapping[cell] >= matchEnd)
-                        break;
-                    cellWidth++;
-                }
-                if (cellWidth == 0)
-                    cellWidth = 1;
-            }
+            const QVector<SearchMatchSegment> segments =
+                GhosttyVt::splitSearchMatch(m_searchCache, li, idx, patternLen);
+            m_searchMatches += segments;
 
-            m_searchMatches.append({row, cellCol, cellWidth});
-            if (m_searchMatches.size() >= kMaxSearchMatches) {
+            // The kMaxSearchMatches cap counts logical matches, not the
+            // per-row segments appended above. The QML "n / total" counter
+            // and m_currentMatchIndex index the segment vector (the
+            // renderer's contract); the stable_sort below restores row order
+            // across overlapping matches.
+            logicalMatches++;
+            if (logicalMatches >= kMaxSearchMatches) {
                 searchDone = true;
                 break;
             }
             col = idx + 1;
         }
     }
+
+    // Renderer contract: glrenderer_geometry.cpp binary-searches this vector
+    // by row (std::lower_bound) and early-breaks past the viewport, so the
+    // segments must be sorted by (row, cellCol). The walk above emits them in
+    // match-start order, and an overlapping match can begin on an earlier row
+    // than the previous match's last segment (rows "aaa"/"aaa", pattern
+    // "aaaa" → [0,0] [1,0] [0,1] ...). stable_sort restores the contract.
+    // Side effect on navigation: a logical match's segments can end up
+    // interleaved with an overlapping neighbor's, so findNext/findPrevious
+    // step per segment in visual (row) order — every segment is still visited
+    // exactly once, in ascending highlight order.
+    std::stable_sort(m_searchMatches.begin(), m_searchMatches.end(),
+                     [](const SearchMatchSegment &a, const SearchMatchSegment &b) {
+                         return a.row < b.row
+                             || (a.row == b.row && a.cellCol < b.cellCol);
+                     });
 
     if (!m_searchMatches.isEmpty())
         m_currentMatchIndex = 0;
@@ -187,9 +191,7 @@ void TerminalView::refreshSearchCachePreservingMatch()
     int prevRow = (m_currentMatchIndex >= 0 && m_currentMatchIndex < m_searchMatches.size())
         ? m_searchMatches[m_currentMatchIndex].row : -1;
 
-    VtSearchText st = m_vt->extractSearchText();
-    m_searchCache = st.lines;
-    m_cellMapping = st.mapping;
+    m_searchCache = m_vt->extractSearchText();
     performSearch();
 
     if (prevRow >= 0) {
@@ -203,7 +205,13 @@ void TerminalView::refreshSearchCachePreservingMatch()
                 bestIdx = i;
             }
         }
-        m_currentMatchIndex = bestIdx;
+        // performSearch() already emitted with the reset value; only notify
+        // QML again when the preserved-match reassignment actually moved it
+        // (otherwise the "n / total" indicator stays in sync).
+        if (bestIdx != m_currentMatchIndex) {
+            m_currentMatchIndex = bestIdx;
+            Q_EMIT currentMatchIndexChanged();
+        }
     }
 }
 

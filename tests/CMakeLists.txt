@@ -173,3 +173,44 @@ add_executable(tst_glyph_cache_key
 )
 target_link_libraries(tst_glyph_cache_key PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
 add_test(NAME GlyphCacheKey COMMAND tst_glyph_cache_key)
+
+# --- Compile smoke: app GUI sources -----------------------------------------
+# The unit tests above deliberately compile most sources against stubs, so
+# type drift in the GUI-only translation units (renderer, view, atlas) is
+# otherwise caught only by the CI RPM build. This object library compiles
+# them for real; nothing links it, so no display or Sailfish-only runtime
+# deps are needed. bellfeedback.cpp (NgfClient) and ghosteel.cpp
+# (sailfishapp) stay out: their headers are Sailfish-only and their logic
+# is thin. Add new GUI sources here when they appear.
+find_package(Qt5 COMPONENTS Quick OpenGL Dbus QUIET)
+if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
+    add_library(compile_smoke OBJECT
+        ${CMAKE_SOURCE_DIR}/../src/glrenderer.cpp
+        ${CMAKE_SOURCE_DIR}/../src/glrenderer_geometry.cpp
+        ${CMAKE_SOURCE_DIR}/../src/glrenderer_kitty.cpp
+        ${CMAKE_SOURCE_DIR}/../src/glrenderer_pipeline.cpp
+        ${CMAKE_SOURCE_DIR}/../src/glrenderer_shaders.cpp
+        ${CMAKE_SOURCE_DIR}/../src/glyphatlas.cpp
+        ${CMAKE_SOURCE_DIR}/../src/terminalview.cpp
+        ${CMAKE_SOURCE_DIR}/../src/terminalview_touch.cpp
+        ${CMAKE_SOURCE_DIR}/../src/terminalview_search.cpp
+        ${CMAKE_SOURCE_DIR}/../src/terminalview_links.cpp
+        ${CMAKE_SOURCE_DIR}/../src/keymapping.cpp
+        ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+        ${CMAKE_SOURCE_DIR}/../src/ptymanager.cpp
+        ${CMAKE_SOURCE_DIR}/../src/sessionmanager.cpp
+        ${CMAKE_SOURCE_DIR}/../src/sessionstore.cpp
+        ${CMAKE_SOURCE_DIR}/../src/singleinstance.cpp
+        ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
+        ${CMAKE_SOURCE_DIR}/../src/settings.cpp
+        ${CMAKE_SOURCE_DIR}/../src/ghosteeladapter.cpp
+    )
+    target_compile_definitions(compile_smoke PRIVATE
+        GHOSTTY_STATIC
+    )
+    target_link_libraries(compile_smoke PRIVATE
+        Qt5::Core Qt5::Gui Qt5::Quick Qt5::OpenGL Qt5::DBus
+    )
+else()
+    message(STATUS "Qt Quick/OpenGL dev packages not found; skipping compile_smoke")
+endif()

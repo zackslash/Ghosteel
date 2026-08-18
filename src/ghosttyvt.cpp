@@ -110,6 +110,7 @@ void GhosttyVt::destroy()
     m_osc52State = OSC52_IDLE;
     m_osc52Kind.clear();
     m_osc52Data.clear();
+    m_osc52Overflowed = false;
 
     if (m_mouseEncoder) {
         ghostty_mouse_encoder_free(m_mouseEncoder);
@@ -143,6 +144,15 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
                ch == '?' || ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
     };
     auto emitOsc52 = [&]() {
+        // If the payload overflowed the cap, ignore the sequence entirely
+        // (xterm/ghostty semantics) rather than emitting a silently-truncated
+        // clipboard write. A '?' read query can't overflow — the cap path only
+        // triggers on data accumulation — so reads are unaffected.
+        if (m_osc52Overflowed) {
+            m_osc52Overflowed = false;
+            m_osc52State = OSC52_IDLE;
+            return;
+        }
         if (m_osc52Kind == "c" || m_osc52Kind == "C") {
             if (m_osc52Data == "?")
                 Q_EMIT clipboardReadRequest(QString::fromUtf8(m_osc52Kind));
@@ -243,6 +253,7 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
         case OSC52_SEMI:
             m_osc52Kind.clear();
             m_osc52Data.clear();
+            m_osc52Overflowed = false; // new sequence — clear any prior overflow
             if (c == ';') {
                 m_osc52Kind.append('c');
                 m_osc52State = OSC52_DATA;
@@ -269,8 +280,11 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             } else if (c == 0x1b) {
                 // Could be ST terminator (ESC \)
                 m_osc52State = OSC52_ST_ESC;
-            } else if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(c)) {
-                m_osc52Data.append(static_cast<char>(c));
+            } else if (isBase64Char(c)) {
+                if (m_osc52Data.size() < MaxOsc52DataLen)
+                    m_osc52Data.append(static_cast<char>(c));
+                else
+                    m_osc52Overflowed = true; // payload exceeds cap — mark for ignore
             }
             break;
         case OSC52_ST_ESC:
@@ -279,8 +293,12 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             } else {
                 // Not ST — ESC is not valid base64, drop it and resume
                 // accumulating the following char if it is valid base64.
-                if (m_osc52Data.size() < MaxOsc52DataLen && isBase64Char(c))
-                    m_osc52Data.append(static_cast<char>(c));
+                if (isBase64Char(c)) {
+                    if (m_osc52Data.size() < MaxOsc52DataLen)
+                        m_osc52Data.append(static_cast<char>(c));
+                    else
+                        m_osc52Overflowed = true; // payload exceeds cap — mark for ignore
+                }
                 m_osc52State = OSC52_DATA;
             }
             break;
@@ -361,21 +379,92 @@ bool GhosttyVt::isWideSpacerTailCell(GhosttyCell cell)
     return wide == GHOSTTY_CELL_WIDE_SPACER_TAIL;
 }
 
-bool GhosttyVt::isWideCharSpacer(GhosttyTerminal terminal, uint16_t col, uint32_t row)
+QVector<SearchMatchSegment> GhosttyVt::splitSearchMatch(
+    const VtSearchText &st, int logicalLine, int joinedIndex, int patternLen)
 {
-    if (!terminal)
-        return false;
-    GhosttyPoint point = {};
-    point.tag = GHOSTTY_POINT_TAG_SCREEN;
-    point.value.coordinate.x = col;
-    point.value.coordinate.y = row;
-    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
-    if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS)
-        return false;
-    GhosttyCell cell = 0;
-    if (ghostty_grid_ref_cell(&ref, &cell) != GHOSTTY_SUCCESS)
-        return false;
-    return isWideSpacerCell(cell);
+    QVector<SearchMatchSegment> segments;
+    if (logicalLine < 0 || logicalLine >= st.logicalLines.size()
+        || joinedIndex < 0 || patternLen <= 0)
+        return segments;
+
+    const QString &joined = st.logicalLines[logicalLine];
+    if (joinedIndex + patternLen > joined.size())
+        return segments;
+
+    const int firstRow = st.logicalLineStartRow[logicalLine];
+    const int rowCount = st.logicalLineRowCount[logicalLine];
+
+    // Walk to the physical row containing the match start. The while-loop
+    // also steps past the row when the match starts exactly at a join
+    // boundary (idx == row end), landing on the next row with offset 0.
+    // rowCount bounds the walk; extractSearchText always
+    // produces consistent joins, so the bound only guards malformed input.
+    int segRow = firstRow;
+    int rowOffset = 0;
+    const int lastRow = firstRow + rowCount - 1;
+    while (segRow < lastRow && rowOffset + st.lines[segRow].size() <= joinedIndex) {
+        rowOffset += st.lines[segRow].size();
+        segRow++;
+    }
+
+    int remain = patternLen;
+    int charInRow = joinedIndex - rowOffset;
+    while (remain > 0 && segRow <= lastRow) {
+        const QString &line = st.lines[segRow];
+        const int segLen = qMin(remain, line.size() - charInRow);
+        if (segLen <= 0) {
+            // Zero-length row mid-logical-line (no text, e.g. all spacer
+            // cells): nothing to slice on this row — step past it. Progress
+            // is guaranteed: segRow increments each iteration.
+            segRow++;
+            charInRow = 0;
+            continue;
+        }
+
+        int cellCol = charInRow; // ASCII default; mapping adjusts for wide chars
+        int cellWidth = segLen;
+        if (segRow < st.mapping.size() && !st.mapping[segRow].isEmpty()) {
+            const QVector<int> &rowMap = st.mapping[segRow];
+            // Reverse-map: first cell whose QChar offset equals the segment
+            // start. Wide-char spacer cells carry -1, so they can never be
+            // mistaken for a segment start. If the exact offset is absent
+            // (match starts inside a grapheme cluster), fall back to the
+            // first cell mapping past it — the raw QChar index would drift
+            // right on rows containing wide chars or clusters.
+            int exactCell = -1;
+            int afterCell = -1;
+            for (int cell = 0; cell < rowMap.size(); cell++) {
+                if (rowMap[cell] == charInRow) {
+                    exactCell = cell;
+                    break;
+                }
+                if (afterCell < 0 && rowMap[cell] > charInRow)
+                    afterCell = cell;
+            }
+            if (exactCell >= 0)
+                cellCol = exactCell;
+            else if (afterCell >= 0)
+                cellCol = afterCell;
+            // Count cells covered by this segment. Spacer cells (-1) inside
+            // the run are counted too, so a segment ending in a wide char on
+            // the last column still covers its trailing spacer cell.
+            const int segEnd = charInRow + segLen;
+            cellWidth = 0;
+            for (int cell = cellCol; cell < rowMap.size(); cell++) {
+                if (rowMap[cell] >= segEnd)
+                    break;
+                cellWidth++;
+            }
+            if (cellWidth == 0)
+                cellWidth = 1;
+        }
+
+        segments.append({segRow, cellCol, cellWidth});
+        remain -= segLen;
+        segRow++;
+        charInRow = 0;
+    }
+    return segments;
 }
 
 QString GhosttyVt::getHyperlinkAt(uint16_t col, uint32_t row) const
@@ -535,6 +624,9 @@ VtSearchText GhosttyVt::extractSearchText()
     const int colsInt = static_cast<int>(cols);
     out.lines.reserve(static_cast<int>(totalRows));
     out.mapping.reserve(static_cast<int>(totalRows));
+    out.logicalLines.reserve(static_cast<int>(totalRows));
+    out.logicalLineStartRow.reserve(static_cast<int>(totalRows));
+    out.logicalLineRowCount.reserve(static_cast<int>(totalRows));
     uint32_t graphemeBuf[128];
 
     // Single pass over the grid: build the row text and, simultaneously, the
@@ -594,6 +686,43 @@ VtSearchText GhosttyVt::extractSearchText()
 
         out.lines.append(line);
         out.mapping.append(rowMapping);
+    }
+
+    // Group rows into logical lines for matching across autowrap
+    // continuations — see the VtSearchText doc for the WRAP_CONTINUATION
+    // semantics.
+    int lineStart = 0;
+    for (size_t row = 1; row <= totalRows; row++) {
+        bool isContinuation = false;
+        if (row < totalRows) {
+            GhosttyPoint firstCol = {};
+            firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
+            firstCol.value.coordinate.x = 0;
+            firstCol.value.coordinate.y = static_cast<uint32_t>(row);
+            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
+                GhosttyRow rowHandle = 0;
+                if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {
+                    bool wc = false;
+                    if (ghostty_row_get(rowHandle, GHOSTTY_ROW_DATA_WRAP_CONTINUATION, &wc) == GHOSTTY_SUCCESS)
+                        isContinuation = wc;
+                }
+            }
+        }
+        if (row == totalRows || !isContinuation) {
+            // Close the logical line [lineStart, row-1].
+            QString joined;
+            int total = 0;
+            for (int r = lineStart; r < static_cast<int>(row); r++)
+                total += out.lines[r].size();
+            joined.reserve(total);
+            for (int r = lineStart; r < static_cast<int>(row); r++)
+                joined += out.lines[r];
+            out.logicalLines.append(joined);
+            out.logicalLineStartRow.append(lineStart);
+            out.logicalLineRowCount.append(static_cast<int>(row) - lineStart);
+            lineStart = static_cast<int>(row);
+        }
     }
 
     m_searchTextDirty = false;
@@ -657,9 +786,6 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             }
         }
 
-        while (!line.isEmpty() && line.endsWith(' '))
-            line.chop(1);
-
         bool isContinuation = false;
         if (row > 0) {
             GhosttyPoint firstCol = {};
@@ -678,16 +804,34 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         }
 
         if (isContinuation) {
+            // This row continues the previous one (WRAP_CONTINUATION is set
+            // on the row AFTER the wrap). Append unconditionally: a row
+            // that wraps is full-width by construction (autowrap fires only
+            // after the last cell is written), so a space in its final cell
+            // is a real inter-word space that must survive the join.
             lineBuf.append(line);
         } else {
-            if (!lineBuf.isEmpty()) {
-                result.append(lineBuf);
+            // Logical-line end: flush the completed line, trimming only its
+            // END — trailing padding exists only on the last row of a
+            // logical line. The incoming row seeds the next lineBuf
+            // UNtrimmed: it may itself wrap (full-width with a real
+            // trailing space), and restoreScrollback re-trims line ends on
+            // replay for the pending-wrap double-skip.
+            QByteArray flushed = lineBuf;
+            while (!flushed.isEmpty() && flushed.endsWith(' '))
+                flushed.chop(1);
+            if (!flushed.isEmpty()) {
+                result.append(flushed);
                 result.append("\r\n");
             }
             lineBuf = line;
         }
     }
 
+    // Flush the trailing logical line, trimming its end as in the per-line
+    // flush above (the last row may be a partial continuation).
+    while (!lineBuf.isEmpty() && lineBuf.endsWith(' '))
+        lineBuf.chop(1);
     if (!lineBuf.isEmpty()) {
         result.append(lineBuf);
         result.append("\r\n");

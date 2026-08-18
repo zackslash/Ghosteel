@@ -139,53 +139,6 @@ void GLRenderer::Renderer::destroyPipelineFbo()
     m_pipelineTexH = 0;
 }
 
-void GLRenderer::Renderer::createPingPongFbo(int w, int h)
-{
-    if (m_pingPongFbo && m_pingPongTexW == w && m_pingPongTexH == h)
-        return;
-
-    destroyPingPongFbo();
-
-    glGenTextures(1, &m_pingPongTex);
-    glBindTexture(GL_TEXTURE_2D, m_pingPongTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glGenFramebuffers(1, &m_pingPongFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_pingPongFbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_pingPongTex, 0);
-
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-        qWarning() << "GLRenderer: ping-pong FBO incomplete, status=" << status;
-        destroyPingPongFbo();
-    } else {
-        m_pingPongTexW = w;
-        m_pingPongTexH = h;
-        qDebug() << "GLRenderer: ping-pong FBO created" << w << "x" << h;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void GLRenderer::Renderer::destroyPingPongFbo()
-{
-    if (m_pingPongFbo) {
-        glDeleteFramebuffers(1, &m_pingPongFbo);
-        m_pingPongFbo = 0;
-    }
-    if (m_pingPongTex) {
-        glDeleteTextures(1, &m_pingPongTex);
-        m_pingPongTex = 0;
-    }
-    m_pingPongTexW = 0;
-    m_pingPongTexH = 0;
-}
-
 void GLRenderer::Renderer::runPostProcessPass(PostShader &shader, GLuint inputTex, GLuint outputFbo, int w, int h)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, outputFbo);

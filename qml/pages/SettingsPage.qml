@@ -18,6 +18,7 @@ Page {
                 text: qsTr("Reset to defaults")
                 onClicked: {
                     Settings.fontSize = 18           // Reset global default for new sessions
+                    fontSlider.value = 18            // Re-sync the handle: the value binding breaks while dragging
                     SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
@@ -26,6 +27,7 @@ Page {
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
                     urlAutoDetectToggle.checked = true
+                    Settings.kittyGraphics = true
                     Settings.customShaderPath = ""
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days

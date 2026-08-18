@@ -19,6 +19,41 @@ void GLRenderer::Renderer::createVBO()
     m_vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 }
 
+void GLRenderer::Renderer::bindCellVertexFormat()
+{
+    // Bind the cell VBO and (re-)establish the interleaved CellVertex layout
+    // for the cell program. ES2 has no VAOs, so attrib enable/pointer state is
+    // global and other passes (kitty) may have repointed the same attribute
+    // indices at their own buffers — re-assert everything before every draw of
+    // the split cell pass.
+    m_vbo.bind();
+    const int stride = 13 * sizeof(float);
+    if (m_positionAttr >= 0) {
+        glEnableVertexAttribArray(m_positionAttr);
+        glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
+    }
+    if (m_texcoordAttr >= 0) {
+        glEnableVertexAttribArray(m_texcoordAttr);
+        glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(2 * sizeof(float)));
+    }
+    if (m_fgColorAttr >= 0) {
+        glEnableVertexAttribArray(m_fgColorAttr);
+        glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(4 * sizeof(float)));
+    }
+    if (m_bgColorAttr >= 0) {
+        glEnableVertexAttribArray(m_bgColorAttr);
+        glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(8 * sizeof(float)));
+    }
+    if (m_decoAttr >= 0) {
+        glEnableVertexAttribArray(m_decoAttr);
+        glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(12 * sizeof(float)));
+    }
+}
+
 void GLRenderer::Renderer::createFlatVBO()
 {
     m_flatVbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
@@ -147,7 +182,7 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         // match passes visibleEndRow, so no further pre-filtering is needed.
         const auto firstVisible = std::lower_bound(
             m_searchMatches.begin(), m_searchMatches.end(), visibleStartRow,
-            [](const TerminalView::SearchMatch &m, int row) { return m.row < row; });
+            [](const SearchMatchSegment &m, int row) { return m.row < row; });
         int startIdx = static_cast<int>(firstVisible - m_searchMatches.begin());
 
         for (int i = startIdx; i < m_searchMatches.size(); ++i) {
@@ -305,9 +340,8 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
     }
 }
 
-void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
+void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
 {
-    m_cellVertices.clear();
     m_cellVertices.reserve(m_cols * m_rows * 6);
 
     float bgAlpha = m_bgOpacity;
@@ -469,5 +503,26 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
         m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+    }
+}
+
+void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
+{
+    // Rasterizing a glyph can fill the atlas mid-walk: clearAtlas() wipes the
+    // texture and restarts shelf packing, so every quad emitted before the
+    // wipe holds UVs into the now-repacked region (visible corruption until
+    // the next rebuild). Capture the epoch; if it changed by the end of the
+    // walk, rebuild once. The single retry handles the common single-wipe case
+    // (the glyph caches are warm after the first pass). If wipes cascade
+    // (working set exceeds the atlas) the retry itself can hold stale UVs —
+    // accepted rather than looping.
+    const int startEpoch = m_atlas.epoch();
+
+    m_cellVertices.clear();
+    appendCellVertices(state);
+
+    if (m_atlas.epoch() != startEpoch) {
+        m_cellVertices.clear();
+        appendCellVertices(state);
     }
 }

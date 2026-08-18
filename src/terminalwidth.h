@@ -22,13 +22,16 @@ inline int terminalWidthBisearch(unsigned int ucs, const WidthInterval *table, i
 {
     int min = 0;
     int mid;
-    if (ucs < table[0].first || ucs > table[max].last)
+    // Codepoints fit int comfortably (<= 0x10FFFF); compare signed to
+    // match the table fields.
+    const int u = static_cast<int>(ucs);
+    if (u < table[0].first || u > table[max].last)
         return 0;
     while (max >= min) {
         mid = (min + max) / 2;
-        if (ucs > table[mid].last)
+        if (u > table[mid].last)
             min = mid + 1;
-        else if (ucs < table[mid].first)
+        else if (u < table[mid].first)
             max = mid - 1;
         else
             return 1;

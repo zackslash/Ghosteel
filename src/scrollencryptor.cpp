@@ -67,6 +67,43 @@ using Sailfish::Crypto::DecryptRequest;
 static const QString COLLECTION_NAME = QStringLiteral("ghosteel");
 static const QString KEY_NAME = QStringLiteral("ScrollbackKey");
 
+// Minimal encrypt/decrypt round-trip probe validating a key reference before
+// adopting it after a failed GenerateStoredKey. The daemon's "already exists"
+// error text is plugin-specific and unstable across plugin releases; probing
+// is text-independent.
+static bool probeKeyReference(CryptoManager *manager, const Key &key)
+{
+    const QByteArray iv(16, '\0');
+    const QByteArray plaintext("ghosteel-key-probe");
+
+    EncryptRequest enc;
+    enc.setManager(manager);
+    enc.setData(ScrollEncryptor::pkcs7Pad(plaintext));
+    enc.setInitializationVector(iv);
+    enc.setKey(key);
+    enc.setBlockMode(CryptoManager::BlockModeCbc);
+    enc.setPadding(CryptoManager::EncryptionPaddingNone);
+    enc.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
+    enc.startRequest();
+    enc.waitForFinished();
+    if (enc.result().code() != Sailfish::Crypto::Result::Succeeded)
+        return false;
+
+    DecryptRequest dec;
+    dec.setManager(manager);
+    dec.setData(enc.ciphertext());
+    dec.setInitializationVector(iv);
+    dec.setKey(key);
+    dec.setBlockMode(CryptoManager::BlockModeCbc);
+    dec.setPadding(CryptoManager::EncryptionPaddingNone);
+    dec.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
+    dec.startRequest();
+    dec.waitForFinished();
+
+    return dec.result().code() == Sailfish::Crypto::Result::Succeeded
+           && ScrollEncryptor::pkcs7Unpad(dec.plaintext()) == plaintext;
+}
+
 ScrollEncryptor::ScrollEncryptor(QObject *parent)
     : QObject(parent)
     , m_secretManager(std::make_unique<SecretManager>())
@@ -173,12 +210,12 @@ bool ScrollEncryptor::ensureKey()
     genKey.waitForFinished();
 
     if (genKey.result().code() != Sailfish::Crypto::Result::Succeeded) {
-        // KeyAlreadyExists — the key was created on a previous launch.
-        // Build a reference from the identifier to use it.
-        if (genKey.result().errorCode() == Sailfish::Crypto::Result::StorageError
-                && genKey.result().errorMessage().contains(QStringLiteral("already exists"))) {
-            m_keyReference = std::make_unique<Key>(KEY_NAME, COLLECTION_NAME,
-                    CryptoManager::DefaultCryptoStoragePluginName);
+        // Don't match on the daemon's error text (unstable across plugin
+        // releases); probe the key reference instead.
+        Key keyRef(KEY_NAME, COLLECTION_NAME,
+                   CryptoManager::DefaultCryptoStoragePluginName);
+        if (probeKeyReference(m_cryptoManager.get(), keyRef)) {
+            m_keyReference = std::make_unique<Key>(keyRef);
             return true;
         }
         qWarning() << "Ghosteel: GenerateStoredKey failed:"

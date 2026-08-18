@@ -58,12 +58,9 @@ inline uint qHash(const ClusterKey &k, uint seed = 0) {
     return h;
 }
 
-// Packed glyph info in atlas
+// Packed glyph info in atlas (UV rect only — the renderer consumes nothing else)
 struct GlyphInfo {
     float u0, v0, u1, v1;
-    int advance;
-    int ascent;
-    int width, height;
 };
 
 class GlyphAtlas : protected QOpenGLFunctions
@@ -88,16 +85,16 @@ public:
 
     void bind();
 
-    int width() const { return m_atlasWidth; }
-    int height() const { return m_atlasHeight; }
-
-    int cellWidth() const { return m_cellWidth; }
-    int cellHeight() const { return m_cellHeight; }
-    int ascent() const { return m_ascent; }
+    // Incremented on every clearAtlas()/setFont(). Consumers can detect that
+    // the atlas was wiped and re-packed mid-build (which invalidates UVs
+    // computed before the wipe) by comparing epoch() before and after.
+    int epoch() const { return m_epoch; }
 
 private:
     void rasterizeGlyph(uint codepoint, bool bold, bool italic, GlyphInfo &info);
     void rasterizeCluster(const ClusterKey &key, GlyphInfo &info);
+    // Shared rasterization core for single glyphs and grapheme clusters.
+    GlyphInfo rasterizeText(const QString &text, bool bold, bool italic);
     bool allocateSlot(int glyphWidth, int glyphHeight, int &x, int &y);
     void clearAtlas();
 
@@ -114,22 +111,22 @@ private:
     std::unique_ptr<QFontMetrics> m_fmBold;
     std::unique_ptr<QFontMetrics> m_fmItalic;
     std::unique_ptr<QFontMetrics> m_fmBoldItalic;
-    int m_cellWidth = 0;
-    int m_cellHeight = 0;
-    int m_ascent = 0;
 
     // Packing state (simple shelf algorithm)
     int m_packX = 0;
     int m_packY = 0;
     int m_rowHeight = 0;
 
+    // Bumped on every atlas wipe (clearAtlas/setFont) — see epoch().
+    int m_epoch = 0;
+
     QHash<GlyphKey, GlyphInfo> m_cache;
     QHash<ClusterKey, GlyphInfo> m_clusterCache;
 
-    // Small persistent scratch for single-glyph rasterization; grown on demand, filled transparent per use.
+    // Small persistent scratch for glyphs and grapheme clusters; grown on demand, filled transparent per use.
     QImage m_glyphScratch;
 
-    // Per-glyph tightly-packed upload buffer; see rasterizeGlyph() for the re-stride rationale.
+    // Shared tightly-packed upload buffer; see rasterizeText() for the re-stride rationale.
     QByteArray m_uploadBuf;
 };
 

@@ -169,7 +169,10 @@ int main(int argc, char *argv[])
 
     // Start single-instance socket server so future D-Bus activations
     // can detect this instance instead of spawning a duplicate.
-    sessionManager->startSingleInstanceServer();
+    // Returns false when a duplicate was detected during the startup race
+    // window; its CLI args were already forwarded. Returning before
+    // setSource is intended — no UI was shown.
+    if (!sessionManager->startSingleInstanceServer()) return 0;
 
     // Expose version strings to QML (always defined via -D flags from ghosteel.pro)
     view->rootContext()->setContextProperty(QStringLiteral("appVersion"), QStringLiteral(GIT_VERSION));

@@ -14,8 +14,6 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QLineF>
-#include <algorithm>
-#include <cmath>
 #include <sys/ioctl.h>
 
 TerminalView::TerminalView(QQuickItem *parent)
@@ -78,11 +76,32 @@ TerminalView::TerminalView(QQuickItem *parent)
     });
     connect(Settings::instance(), &Settings::fontFamilyChanged, this, [this]() {
         updateFontMetrics();
+        if (width() > 0 && height() > 0) {
+            // A family swap can alter cell pixels while keeping the grid
+            // counts identical; recalculateDimensions() covers both paths —
+            // the cols/rows-changed resize and the pixel-only refresh when
+            // the counts happen to coincide.
+            recalculateDimensions(true);
+        }
         update();
     });
     connect(Settings::instance(), &Settings::urlAutoDetectChanged, this, [this]() {
         m_linkScanDirty = true;
         update();
+    });
+
+    // Trailing edge of the search-cache refresh throttle: armed when PTY
+    // output arrives inside the throttle window so the final refresh still
+    // runs once output pauses (otherwise stale highlights until the next user
+    // action). The guard re-checks search state so a timeout after
+    // closeSearch()/restartShell() is a no-op.
+    m_searchRefreshTimer = new QTimer(this);
+    m_searchRefreshTimer->setSingleShot(true);
+    connect(m_searchRefreshTimer, &QTimer::timeout, this, [this]() {
+        if (m_searchActive && !m_searchPattern.isEmpty()
+            && m_vt && m_vt->isSearchTextDirty()) {
+            refreshSearchCachePreservingMatch();
+        }
     });
 
     m_blinkTimerId = startTimer(BlinkInterval);
@@ -121,7 +140,7 @@ void TerminalView::geometryChanged(const QRectF &newGeometry,
     recalculateDimensions();
 }
 
-void TerminalView::recalculateDimensions()
+void TerminalView::recalculateDimensions(bool cellPixelsChanged)
 {
     // Guard against zero cell dimensions (font not yet initialized)
     if (m_cellWidth <= 0 || m_cellHeight <= 0)
@@ -164,14 +183,33 @@ void TerminalView::recalculateDimensions()
             // resize entirely: setupTerminal() would re-run m_commandArgs and
             // silently re-execute the exited ssh/command behind the exit overlay
             // (the GhosttyVt double-create guard independently prevents the
-            // handle leak, but not the silent re-execution). Note this gate only
-            // catches the exec-failure/never-started path: after a NORMAL shell
-            // exit the stale childPid is still > 0, so geometry changes take the
-            // resize branch above. restartShell() rebuilds everything on tap.
+            // handle leak, but not the silent re-execution). This gate
+            // only catches the exec-failure/never-started path: after a
+            // NORMAL shell exit the PTY reap timer clears childPid within
+            // ~100-200ms, so post-reap geometry changes fall through to the
+            // no-op branch below and never re-execute the exited command.
+            // restartShell() rebuilds everything on tap.
             setupTerminal();
         }
 
         m_linkScanDirty = true; // Viewport geometry changed — re-scan links
+        update();
+    } else if (cellPixelsChanged && m_pty && m_pty->childPid() > 0
+               && m_vt && m_vt->terminal()) {
+        // Cell pixels changed (font size/family) while the grid counts happen
+        // to coincide (e.g. floor(h/23) == floor(h/24)). The terminal and the
+        // mouse encoder still hold the old cell size — refresh them
+        // explicitly. Same cols/rows, so the grid content (and search
+        // offsets) is untouched; no markSearchTextDirty needed.
+        ghostty_terminal_resize(m_vt->terminal(), m_cols, m_rows,
+                                m_cellWidth, m_cellHeight);
+        m_vt->updateMouseEncoderSize(
+            static_cast<uint32_t>(width()),
+            static_cast<uint32_t>(height()),
+            static_cast<uint32_t>(m_cellWidth),
+            static_cast<uint32_t>(m_cellHeight),
+            static_cast<uint32_t>(m_topPadding));
+        m_linkScanDirty = true; // Cell geometry changed — re-scan links
         update();
     }
 }
@@ -195,6 +233,10 @@ void TerminalView::focusOutEvent(QFocusEvent *event)
     // App background / focus loss mid-swipe would otherwise leave the flag set
     // and misclassify the next touch.
     resetSessionSwipe();
+
+    // No release follows a key pressed before focus loss; drop the shortcut
+    // match so a later release (e.g. after refocus) isn't wrongly swallowed.
+    m_lastConsumedShortcutKey = 0;
 
     QInputMethod *im = QGuiApplication::inputMethod();
     if (im)
@@ -384,15 +426,30 @@ void TerminalView::onPtyData(const QByteArray &data)
                    data.size());
     m_linkScanDirty = true;
 
+    // PTY output can scroll content under the selection, which is anchored to
+    // viewport pixels (copySelection re-derives cells from the stored pixels).
+    // Clear it so the selection doesn't silently cover different text — for
+    // the same reason the two-finger-scroll and key-input paths clear it.
+    if (m_selecting)
+        clearSelection();
+
     // Live output shifts rows while the search panel is open; refresh the
     // match cache on a throttle so highlights don't drift stale until the
     // user navigates. Skipped when no search is active or the pattern is
     // empty (nothing to keep in sync).
     if (m_searchActive && !m_searchPattern.isEmpty()) {
         const qint64 now = QDateTime::currentMSecsSinceEpoch();
-        if (now - m_lastSearchRefreshMs >= SearchRefreshIntervalMs) {
+        const qint64 elapsed = now - m_lastSearchRefreshMs;
+        if (elapsed >= SearchRefreshIntervalMs) {
             m_lastSearchRefreshMs = now;
+            if (m_searchRefreshTimer->isActive())
+                m_searchRefreshTimer->stop();
             refreshSearchCachePreservingMatch();
+        } else if (!m_searchRefreshTimer->isActive()) {
+            // Output paused inside the throttle window — arm the trailing
+            // edge for the remaining time so the final refresh still runs.
+            m_searchRefreshTimer->start(
+                SearchRefreshIntervalMs - static_cast<int>(elapsed));
         }
     }
 
@@ -628,10 +685,11 @@ void TerminalView::setFontSize(int size)
     updateFontMetrics();
     Q_EMIT fontSizeChanged();
 
-    // Trigger geometry recalculation — cell dimensions changed so
-    // cols/rows will differ, causing a terminal resize
+    // Trigger geometry recalculation — cell dimensions changed, which usually
+    // also changes cols/rows; recalculateDimensions() falls back to a
+    // pixel-only refresh when the counts happen to coincide.
     if (width() > 0 && height() > 0) {
-        recalculateDimensions();
+        recalculateDimensions(true);
     }
 }
 
@@ -1006,22 +1064,48 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
     GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
 
     if ((mods & GHOSTTY_MODS_CTRL) && (mods & GHOSTTY_MODS_SHIFT)) {
-        if (key == GHOSTTY_KEY_C) { copySelection(); event->accept(); return; }
-        if (key == GHOSTTY_KEY_V) { paste(); event->accept(); return; }
-        if (key == GHOSTTY_KEY_EQUAL) { Q_EMIT zoomRequested(1);  event->accept(); return; }  // Ctrl+Shift+=
-        if (key == GHOSTTY_KEY_MINUS) { Q_EMIT zoomRequested(-1); event->accept(); return; }  // Ctrl+Shift+-
-        if (key == GHOSTTY_KEY_F) {
-            if (m_searchActive)
-                closeSearch();
-            else
-                openSearch();
-            event->accept();
-            return;
+        const bool isShortcutKey = key == GHOSTTY_KEY_C
+            || key == GHOSTTY_KEY_V
+            || key == GHOSTTY_KEY_EQUAL
+            || key == GHOSTTY_KEY_MINUS
+            || key == GHOSTTY_KEY_F
+            || key == GHOSTTY_KEY_ARROW_LEFT
+            || key == GHOSTTY_KEY_ARROW_RIGHT
+            || key == GHOSTTY_KEY_K;
+        if (isShortcutKey) {
+            // Autorepeat of a consumed shortcut must not fall through (hold-to-toggle spam).
+            if (event->isAutoRepeat()) {
+                event->accept();
+                return;
+            }
+
+            // No PRESS is sent for consumed shortcuts; remember the key so the release is swallowed.
+            if (key == GHOSTTY_KEY_C) { copySelection(); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
+            if (key == GHOSTTY_KEY_V) { paste(); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
+            if (key == GHOSTTY_KEY_EQUAL) { Q_EMIT zoomRequested(1);  m_lastConsumedShortcutKey = event->key(); event->accept(); return; }  // Ctrl+Shift+=
+            if (key == GHOSTTY_KEY_MINUS) { Q_EMIT zoomRequested(-1); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }  // Ctrl+Shift+-
+            if (key == GHOSTTY_KEY_F) {
+                if (m_searchActive)
+                    closeSearch();
+                else
+                    openSearch();
+                // Emit AFTER the state flip but BEFORE recording the consumed
+                // key: the handler synchronously focuses the search field,
+                // whose focusOutEvent zeroes m_lastConsumedShortcutKey — the
+                // assignment below must run last to win.
+                Q_EMIT searchToggled();
+                m_lastConsumedShortcutKey = event->key();
+                event->accept();
+                return;
+            }
+            if (key == GHOSTTY_KEY_ARROW_LEFT)  { Q_EMIT navigateSession(-1); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
+            if (key == GHOSTTY_KEY_ARROW_RIGHT) { Q_EMIT navigateSession(1);  m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
+            if (key == GHOSTTY_KEY_K) { Q_EMIT toggleKeybar(); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
         }
-        if (key == GHOSTTY_KEY_ARROW_LEFT)  { Q_EMIT navigateSession(-1); event->accept(); return; }
-        if (key == GHOSTTY_KEY_ARROW_RIGHT) { Q_EMIT navigateSession(1);  event->accept(); return; }
-        if (key == GHOSTTY_KEY_K) { Q_EMIT toggleKeybar(); event->accept(); return; }
     }
+
+    // Any other key press invalidates the shortcut-release match.
+    m_lastConsumedShortcutKey = 0;
 
     // Auto-repeat maps to REPEAT action (enables Kitty protocol repeat)
     GhosttyKeyAction action = event->isAutoRepeat()
@@ -1040,6 +1124,13 @@ void TerminalView::keyReleaseEvent(QKeyEvent *event)
 {
     // Ignore auto-repeat release events — they fire between PRESS/REPEAT
     if (event->isAutoRepeat()) {
+        event->accept();
+        return;
+    }
+
+    // Swallow the release of a shortcut-consumed press (see m_lastConsumedShortcutKey doc).
+    if (event->key() == m_lastConsumedShortcutKey) {
+        m_lastConsumedShortcutKey = 0;
         event->accept();
         return;
     }

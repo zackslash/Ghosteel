@@ -22,12 +22,12 @@ CoverBackground {
         id: sessionList
         anchors {
             top: titleLabel.bottom
-            topMargin: Theme.paddingSmall
             left: parent.left
             right: parent.right
             bottom: coverAction.top
-            bottomMargin: Theme.paddingSmall
             margins: Theme.paddingLarge
+            topMargin: Theme.paddingSmall
+            bottomMargin: Theme.paddingSmall
         }
         spacing: Theme.paddingSmall
 
