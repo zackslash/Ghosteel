@@ -44,8 +44,7 @@ CoverBackground {
             model: SessionManager
 
             Row {
-                // Cap the cover list at 5 sessions; the overflow label below
-                // signals when more exist. Hidden rows take no space in the Column.
+                // Cap the list at 5; hidden rows take no space in the Column.
                 visible: index < _visibleCount
                 spacing: Theme.paddingSmall
                 width: parent.width

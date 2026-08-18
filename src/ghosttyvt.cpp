@@ -17,6 +17,13 @@ GhosttyVt::~GhosttyVt()
 
 bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
 {
+    // Double-create guard: if this object already owns handles (e.g. a resize
+    // path re-ran create() after the shell exited), tear them down first so the
+    // old GhosttyTerminal (3MB scrollback + render state) is not leaked by
+    // overwriting the pointers below.
+    if (m_terminal || m_renderState || m_keyEncoder || m_mouseEncoder)
+        destroy();
+
     m_ptyWriteFn = writeFn;
 
     GhosttyResult res = ghostty_terminal_new(nullptr, &m_terminal, cols, rows);
@@ -56,7 +63,6 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     ghostty_terminal_set(m_terminal,
                          GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_MEDIUM_FILE, &kittyFileMedium);
 
-    // Set callbacks
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_USERDATA, this);
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
                          reinterpret_cast<const void *>(writePtyCallback));
@@ -65,7 +71,6 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
     ghostty_terminal_set(m_terminal, GHOSTTY_TERMINAL_OPT_BELL,
                          reinterpret_cast<const void *>(bellCallback));
 
-    // Create render state
     res = ghostty_render_state_new(nullptr, &m_renderState);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_render_state_new failed:" << res;
@@ -73,7 +78,6 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
         return false;
     }
 
-    // Create key encoder
     res = ghostty_key_encoder_new(nullptr, &m_keyEncoder);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_key_encoder_new failed:" << res;
@@ -81,10 +85,8 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
         return false;
     }
 
-    // Sync encoder options from terminal
     ghostty_key_encoder_setopt_from_terminal(m_keyEncoder, m_terminal);
 
-    // Create mouse encoder
     res = ghostty_mouse_encoder_new(nullptr, &m_mouseEncoder);
     if (res != GHOSTTY_SUCCESS) {
         qWarning() << "ghostty_mouse_encoder_new failed:" << res;
@@ -92,7 +94,6 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
         return false;
     }
 
-    // Sync mouse encoder options from terminal (tracking mode, format)
     ghostty_mouse_encoder_setopt_from_terminal(m_mouseEncoder, m_terminal);
 
     return true;
@@ -106,7 +107,6 @@ void GhosttyVt::destroy()
     m_osc777Title.clear();
     m_osc777Body.clear();
 
-    // Reset OSC 52 scanner
     m_osc52State = OSC52_IDLE;
     m_osc52Kind.clear();
     m_osc52Data.clear();
@@ -326,7 +326,6 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     if (utf8 && utf8Len > 0)
         ghostty_key_event_set_utf8(event, utf8, utf8Len);
 
-    // Query required size
     size_t required = 0;
     ghostty_key_encoder_encode(m_keyEncoder, event, nullptr, 0, &required);
 
@@ -450,7 +449,6 @@ QByteArray GhosttyVt::encodeMouseEvent(GhosttyMouseAction action,
     GhosttyMousePosition pos = {x, y};
     ghostty_mouse_event_set_position(event, pos);
 
-    // Query required size
     size_t required = 0;
     ghostty_mouse_encoder_encode(m_mouseEncoder, event, nullptr, 0, &required);
 
@@ -543,7 +541,6 @@ VtSearchText GhosttyVt::extractSearchText()
     // cell->QChar mapping. Wide chars take 2 cells; supplementary-plane
     // codepoints (emoji) expand to 2 QChars (a surrogate pair). Each cell's
     // mapping records the QChar offset where its grapheme cluster starts.
-    // Formerly extractSearchText() + buildCellMapping() each walked the grid.
     for (size_t row = 0; row < totalRows; row++) {
         QString line;
         line.reserve(cols);
@@ -566,11 +563,17 @@ VtSearchText GhosttyVt::extractSearchText()
                 continue;
             }
 
-            // Wide-char spacer — no text content; charIdx stays put so the
-            // spacer cell maps to the same offset as its head cell.
+            // Wide-char spacer — no text content; charIdx stays put. Mark the
+            // cell with -1 so consumers can distinguish spacers from real
+            // cells: a spacer must never be treated as the start of a match.
+            // Before this mapping, a spacer aliased the next cell's offset
+            // (charIdx had already advanced past the head cell's grapheme),
+            // so the reverse-map could land one cell early on the spacer.
+            // The spacer's cell must still be counted when a match spans it.
             GhosttyCell cell = 0;
             if (ghostty_grid_ref_cell(&ref, &cell) == GHOSTTY_SUCCESS
                     && isWideSpacerCell(cell)) {
+                rowMapping[col] = -1;
                 continue;
             }
 
@@ -747,14 +750,9 @@ void GhosttyVt::restoreScrollback(const QByteArray &data, uint16_t actualCols)
         return;
 
     // Replay text as VT input. Trim trailing spaces to avoid pending-wrap
-    // double-skip: when a line fills the full terminal width, the cursor
-    // reaches the right margin and sets a pending-wrap flag. A subsequent
-    // \r\n then resolves the wrap (moving down) AND the \n moves down again,
-    // producing an extra blank line. Trimming prevents the line from reaching
-    // the full width.
-    //
-    // For lines that are STILL full-width after trimming (rare), use \r
-    // instead of \r\n — the pending wrap resolves on \r, giving one line break.
+    // double-skip: a full-width line sets a pending-wrap flag that \r\n
+    // would resolve twice (extra blank line). Lines still full-width after
+    // trimming use \r instead — the wrap resolves on \r, one line break.
     QByteArray replayData;
     int targetCols = static_cast<int>(actualCols);
     replayData.reserve(textData.size());

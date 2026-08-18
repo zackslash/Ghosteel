@@ -336,10 +336,13 @@ void TerminalView::wheelEvent(QWheelEvent *event)
     int lines = scrollResult.lines;
 
     if (lines != 0) {
-        // Ghostty scroll: negative delta = scroll up (toward scrollback)
+        // Ghostty scroll: negative delta = scroll up (toward scrollback).
+        // Wheel-up yields positive angleDelta, so newDelta is negative and
+        // `lines` is negative — pass it through directly, matching the
+        // two-finger reference path (delta = lines).
         GhosttyTerminalScrollViewport scroll = {};
         scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-        scroll.value.delta = -lines;
+        scroll.value.delta = lines;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
         m_linkScanDirty = true;
         update();
@@ -715,6 +718,15 @@ void TerminalView::timerEvent(QTimerEvent *event)
         }
         if (cursorBlinking) {
             m_cursorBlinkVisible = !m_cursorBlinkVisible;
+            update();
+        } else if (!m_cursorBlinkVisible) {
+            // Steady cursor (DECSCUSR 2/4/6): ghostty reports CURSOR_BLINKING
+            // false, so the toggle above never runs and m_cursorBlinkVisible
+            // keeps whatever phase the blink left it in — a 50% chance of being
+            // stuck invisible (rendering gates on it in glrenderer.cpp). Force
+            // it visible once; no repaint spam since the flag is already true
+            // on subsequent ticks.
+            m_cursorBlinkVisible = true;
             update();
         }
         return;

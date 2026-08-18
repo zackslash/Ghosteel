@@ -53,6 +53,7 @@ bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 
 #include <QDebug>
 #include <QTimer>
+#include <memory>
 #include <random>
 
 using Sailfish::Secrets::SecretManager;
@@ -274,7 +275,11 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
 
     // Parented to this for lifetime (auto-delete if destroyed mid-request).
     // The callback runs on the GUI thread because enc is the connect
-    // context object and was created here.
+    // context object and was created here. A one-shot timeout guards against
+    // a dead crypto daemon: if statusChanged never fires, the timeout invokes
+    // the callback with empty output (SessionStore treats empty as failure and
+    // emits saveFailed) and deletes the request. The shared `done` guard
+    // ensures the timeout and statusChanged can never both run the callback.
     auto *enc = new EncryptRequest(this);
     enc->setManager(m_cryptoManager.get());
     enc->setData(padded);
@@ -284,10 +289,15 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
     enc->setPadding(CryptoManager::EncryptionPaddingNone);
     enc->setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
 
+    auto done = std::make_shared<bool>(false);
+
     QObject::connect(enc, &EncryptRequest::statusChanged,
-                     enc, [enc, callback, iv]() {
+                     enc, [enc, callback, iv, done]() {
         if (enc->status() != Sailfish::Crypto::Request::Finished)
             return;
+        if (*done)
+            return;
+        *done = true;
         QByteArray output;
         if (enc->result().code() == Sailfish::Crypto::Result::Succeeded) {
             output.reserve(HEADER_SIZE + enc->ciphertext().size());
@@ -303,6 +313,25 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
         callback(output);
         enc->deleteLater();
     });
+
+    // One-shot timeout: if the crypto daemon dies mid-request, statusChanged
+    // never fires and the callback would never run, leaving SessionStore's
+    // scrollbackSaveInFlight stuck true while the save timer re-arms forever.
+    // Empty output on timeout routes through the same failure path as a
+    // failed request (saveFailed -> re-dirty for retry).
+    auto *timeoutTimer = new QTimer(enc);
+    timeoutTimer->setSingleShot(true);
+    timeoutTimer->setInterval(15000);
+    QObject::connect(timeoutTimer, &QTimer::timeout, enc, [enc, callback, done]() {
+        if (*done)
+            return;
+        *done = true;
+        qWarning() << "Ghosteel: Async encryption timed out after 15s, "
+                      "treating as failure";
+        callback(QByteArray());
+        enc->deleteLater();
+    });
+    timeoutTimer->start();
 
     enc->startRequest();
     return true;

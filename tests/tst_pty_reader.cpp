@@ -34,11 +34,8 @@ private slots:
         // Close write end to trigger EOF
         ::close(pipefd[1]);
 
-        // readFinished may already have arrived before we get here (the
-        // reader thread's 200ms poll cycle can see EOF and emit before
-        // this call), so check the spy count first and only wait if it
-        // hasn't fired yet. Plain finishedSpy.wait() would time out and
-        // fail intermittently when the signal already arrived.
+        // readFinished may already have fired (200ms poll cycle); check the
+        // count first — plain wait() would time out intermittently.
         QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(2000));
         reader.wait(3000);
     }

@@ -86,7 +86,7 @@ void GLRenderer::Renderer::detectES300()
 
     m_es300 = true;
     qDebug() << "GLRenderer: ES 3.0 confirmed (probe shader compiled)";
-    // Marshal to the GUI thread — Settings is main-thread-only (settings.h:11-12)
+    // Marshal to the GUI thread — Settings is main-thread-only
     QMetaObject::invokeMethod(Settings::instance(),
         "setShaderPipelineAvailable", Qt::QueuedConnection, Q_ARG(bool, true));
 }
@@ -199,7 +199,7 @@ void GLRenderer::Renderer::runPostProcessPass(PostShader &shader, GLuint inputTe
     uploadPostShaderUniforms(shader, w, h);
 
     // No VBO: post vertex shader synthesises a fullscreen triangle from
-    // gl_VertexID (see glrenderer.cpp:191). 3 verts cover [-1,-1]..[3,3].
+    // gl_VertexID; 3 verts cover [-1,-1]..[3,3].
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     shader.program->release();

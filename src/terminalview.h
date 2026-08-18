@@ -366,6 +366,10 @@ private:
     QVector<SearchMatch> m_searchMatches;
     int m_currentMatchIndex = -1;
     int m_searchPanelHeight = 0;
+    // Throttle for refreshing the search cache on live PTY output while the
+    // search panel is open (matches the link-scan throttle interval).
+    qint64 m_lastSearchRefreshMs = 0;
+    static const int SearchRefreshIntervalMs = 250;
 
     // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
     QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport

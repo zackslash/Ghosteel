@@ -39,6 +39,28 @@ private slots:
                  "create() did not enable cursor blinking mode");
         QVERIFY(value);
     }
+
+    // Double-create guard: create() must tear down old handles first, or a
+    // resize re-run after shell exit would leak the terminal (3MB scrollback + render state).
+    void testDoubleCreateDoesNotLeakTerminal()
+    {
+        ghostty_stubs_reset_handles();
+        {
+            GhosttyVt vt;
+            QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+            QCOMPARE(ghostty_stubs_outstanding_terminals(), 1);
+            QCOMPARE(ghostty_stubs_outstanding_render_states(), 1);
+
+            // Second create() must destroy the first terminal before allocating
+            // a new one — exactly one outstanding handle remains.
+            QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+            QCOMPARE(ghostty_stubs_outstanding_terminals(), 1);
+            QCOMPARE(ghostty_stubs_outstanding_render_states(), 1);
+        }
+        // Destructor calls destroy() — all handles released.
+        QCOMPARE(ghostty_stubs_outstanding_terminals(), 0);
+        QCOMPARE(ghostty_stubs_outstanding_render_states(), 0);
+    }
 };
 
 QTEST_MAIN(TestDefaultModes)

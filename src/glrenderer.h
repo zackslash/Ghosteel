@@ -131,13 +131,11 @@ private:
         void blitPipelineToFbo(QOpenGLFramebufferObject *fbo);
         void buildMagnifierVertices(int fboW, int fboH);
 
-        // Refactored render sub-methods
         bool renderPostProcessPipeline(QOpenGLFramebufferObject *fbo);
         void renderDirectToFbo(QOpenGLFramebufferObject *fbo);
         void renderShellExitText(QOpenGLFramebufferObject *fbo);
         void buildCellVertices(GhosttyRenderState state);
 
-        // Phase 5B: post-processing pipeline
         void detectES300();
         void createPipelineFbo(int w, int h);
         void destroyPipelineFbo();
@@ -210,6 +208,14 @@ private:
         bool m_animationSettled = false;
         bool m_gridDirty = true;
 
+        // Set when the metrics generation changed — a font family or
+        // background-opacity settings change, a per-session font size change
+        // (pinch zoom), setSource(), or the first-ever frame (m_lastMetricsGeneration
+        // starts at -1). m_atlas.setFont() wiped the glyph caches, so stale cell
+        // vertices would sample an empty atlas. Forces buildCellVertices() this
+        // frame even when ghostty reports the grid not dirty.
+        bool m_forceVertexRebuild = false;
+
         // Cross-thread flag: render thread requests GUI thread to stop the shader
         // animation timer once the trail has fully settled and the frame is static.
         // Consumed in synchronize() where QBasicTimer can be safely touched (owned
@@ -278,7 +284,7 @@ private:
         int m_blitPositionAttr = -1;
         int m_blitTexcoordAttr = -1;
 
-        // Phase 5B: ES 3.0 post-processing pipeline
+        // ES 3.0 post-processing pipeline
         bool m_es300 = false;
         bool m_postShaderActive = false;
 

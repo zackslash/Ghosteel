@@ -58,8 +58,8 @@ TerminalView::TerminalView(QQuickItem *parent)
         filtered.reserve(decoded.size());
         for (int i = 0; i < decoded.size(); i++) {
             unsigned char c = static_cast<unsigned char>(decoded[i]);
-            if (c == 0) continue; // strip null bytes
-            if (c < 0x20 && c != '\n' && c != '\r' && c != '\t') continue; // strip control chars
+            if (c == 0) continue;
+            if (c < 0x20 && c != '\n' && c != '\r' && c != '\t') continue;
             filtered.append(static_cast<char>(c));
         }
         Q_EMIT clipboardTextReady(QString::fromUtf8(filtered));
@@ -68,7 +68,6 @@ TerminalView::TerminalView(QQuickItem *parent)
         Q_EMIT clipboardReadRequest(kind);
     });
 
-    // Live-apply settings changes to running terminal
     connect(Settings::instance(), &Settings::colorSchemeChanged, this, [this]() {
         if (m_vt && m_vt->terminal()) {
             applyColorScheme();
@@ -152,7 +151,6 @@ void TerminalView::recalculateDimensions()
 
                 m_vt->markSearchTextDirty(); // reflow moves search offsets
 
-                // Update mouse encoder geometry
                 m_vt->updateMouseEncoderSize(
                     static_cast<uint32_t>(width()),
                     static_cast<uint32_t>(height()),
@@ -160,7 +158,16 @@ void TerminalView::recalculateDimensions()
                     static_cast<uint32_t>(m_cellHeight),
                     static_cast<uint32_t>(m_topPadding));
             }
-        } else {
+        } else if (!m_shellExited) {
+            // Shell not running yet (first resize before PTY start) — build the
+            // terminal now. When the shell HAS exited (m_shellExited), skip the
+            // resize entirely: setupTerminal() would re-run m_commandArgs and
+            // silently re-execute the exited ssh/command behind the exit overlay
+            // (the GhosttyVt double-create guard independently prevents the
+            // handle leak, but not the silent re-execution). Note this gate only
+            // catches the exec-failure/never-started path: after a NORMAL shell
+            // exit the stale childPid is still > 0, so geometry changes take the
+            // resize branch above. restartShell() rebuilds everything on tap.
             setupTerminal();
         }
 
@@ -205,7 +212,6 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
         // If sticky modifiers are active (Ctrl/Alt from keybar toggle),
         // send as a key event with modifiers, then clear them.
         if (m_stickyModifiers != 0) {
-            // Map the first character to a GhosttyKey
             QChar ch = event->commitString().at(0).toLower();
             GhosttyKey key = KeyMapping::mapCharToKey(ch);
 
@@ -267,7 +273,6 @@ QVariant TerminalView::inputMethodQuery(Qt::InputMethodQuery query) const
         if (m_cols == 0 || m_rows == 0)
             return QRectF();
 
-        // Get cursor position from render state
         GhosttyRenderState state = m_vt ? m_vt->renderState() : nullptr;
         if (!state)
             return QRectF();
@@ -378,6 +383,18 @@ void TerminalView::onPtyData(const QByteArray &data)
     m_vt->vtWrite(reinterpret_cast<const uint8_t *>(data.constData()),
                    data.size());
     m_linkScanDirty = true;
+
+    // Live output shifts rows while the search panel is open; refresh the
+    // match cache on a throttle so highlights don't drift stale until the
+    // user navigates. Skipped when no search is active or the pattern is
+    // empty (nothing to keep in sync).
+    if (m_searchActive && !m_searchPattern.isEmpty()) {
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if (now - m_lastSearchRefreshMs >= SearchRefreshIntervalMs) {
+            m_lastSearchRefreshMs = now;
+            refreshSearchCachePreservingMatch();
+        }
+    }
 
     // GL is the only renderer — update immediately. Qt's scene graph
     // coalesces multiple update() calls into a single frame.
@@ -794,7 +811,6 @@ void TerminalView::selectWordAt(const QPointF &pos)
     if (!state)
         return;
 
-    // Get the row's cells to scan for word boundaries
     GhosttyRenderStateRowIterator iterator;
     ghostty_render_state_row_iterator_new(nullptr, &iterator);
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
@@ -862,14 +878,12 @@ void TerminalView::selectWordAt(const QPointF &pos)
     int endCol = col;
 
     if (tappedIsWord) {
-        // Expand left to find word start
         while (startCol > 0) {
             uint32_t ch = getGraphemeAt(startCol - 1);
             if (!TextUtil::isWordChar(ch))
                 break;
             startCol--;
         }
-        // Expand right to find word end
         while (endCol < m_cols - 1) {
             uint32_t ch = getGraphemeAt(endCol + 1);
             if (!TextUtil::isWordChar(ch))
@@ -879,7 +893,6 @@ void TerminalView::selectWordAt(const QPointF &pos)
     } else {
         // Non-word character: empty cells select a contiguous run; everything else selects a single char.
         if (tappedChar == 0) {
-            // Empty cell — select a run of empty cells
             while (startCol > 0) {
                 uint32_t ch = getGraphemeAt(startCol - 1);
                 if (ch != 0) break;
@@ -897,7 +910,6 @@ void TerminalView::selectWordAt(const QPointF &pos)
     ghostty_render_state_row_cells_free(cells);
     ghostty_render_state_row_iterator_free(iterator);
 
-    // Convert cell boundaries to pixel coordinates
     m_selStart = QPointF(startCol * m_cellWidth, row * m_cellHeight + m_topPadding);
     m_selEnd = QPointF((endCol + 1) * m_cellWidth - 1, row * m_cellHeight + m_topPadding);
     m_selecting = true;
@@ -916,7 +928,6 @@ void TerminalView::selectLineAt(const QPointF &pos)
 
     int row = static_cast<int>(cell.y());
 
-    // Select entire row from column 0 to last column
     m_selStart = QPointF(0, row * m_cellHeight + m_topPadding);
     m_selEnd = QPointF(m_cols * m_cellWidth - 1, row * m_cellHeight + m_topPadding);
     m_selecting = true;

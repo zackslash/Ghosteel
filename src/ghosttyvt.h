@@ -26,6 +26,8 @@
 // each row, a mapping from cell column -> QChar index within that row's text.
 // Wide chars occupy two cells, and supplementary-plane codepoints (emoji)
 // expand to two QChars (a surrogate pair), so the mapping accounts for both.
+// Wide-char spacer cells carry -1: they hold no text and must never be
+// treated as a match start (see performSearch).
 struct VtSearchText {
     QStringList lines;              // one string per grid row
     QVector<QVector<int>> mapping;  // per row: cell column -> QChar offset
@@ -89,8 +91,7 @@ public:
     void setMouseButtonPressed(bool pressed);
     // Single-pass grid walk producing both the per-row search text and the
     // cell->QChar mapping for search highlighting (wide chars occupy two cells,
-    // supplementary codepoints expand to two QChars). Replaces the former
-    // extractSearchText() + TerminalView::buildCellMapping() double walk.
+    // supplementary codepoints expand to two QChars).
     VtSearchText extractSearchText();
     bool isSearchTextDirty() const { return m_searchTextDirty; }
     // Mark the search cache stale. Call after operations that invalidate the
