@@ -429,7 +429,17 @@ Page {
     }
 
     // C++ flipped its search state; mirror it on the panel (menu-item flow).
+    // Guard on page status like the reactivation handler above: the signal
+    // fires from the terminal's key handler even when a dialog or page sits
+    // on top, and focusing the hidden search field would steal focus from it
+    // and raise the keyboard over the dialog.
     function onSearchToggled() {
+        if (page.status !== PageStatus.Active) {
+            if (searchPanel.open)
+                searchPanel.open = false   // onOpenChanged calls closeSearch() (idempotent)
+            terminal.closeSearch()
+            return
+        }
         if (searchPanel.open) {
             searchPanel.open = false   // onOpenChanged calls closeSearch() (idempotent)
         } else {

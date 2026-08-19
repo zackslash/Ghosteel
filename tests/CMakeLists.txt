@@ -182,7 +182,7 @@ add_test(NAME GlyphCacheKey COMMAND tst_glyph_cache_key)
 # deps are needed. bellfeedback.cpp (NgfClient) and ghosteel.cpp
 # (sailfishapp) stay out: their headers are Sailfish-only and their logic
 # is thin. Add new GUI sources here when they appear.
-find_package(Qt5 COMPONENTS Quick OpenGL Dbus QUIET)
+find_package(Qt5 COMPONENTS Quick OpenGL DBus QUIET)
 if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
     add_library(compile_smoke OBJECT
         ${CMAKE_SOURCE_DIR}/../src/glrenderer.cpp
