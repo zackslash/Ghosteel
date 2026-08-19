@@ -569,7 +569,7 @@ Mħaddem minn magna terminali libghostty</translation>
     </message>
     <message>
         <source>Shell failed to start</source>
-        <translation>Il-Shell ma bdietx</translation>
+        <translation>Il-Shell ma bedax</translation>
     </message>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>

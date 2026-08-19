@@ -571,7 +571,7 @@ Toetab libghostty terminalimootorit</translation>
     </message>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
-        <translation>„%1“ käivitamine ebaõnnestus (%2). Kasutatakse Shelli „%3“.</translation>
+        <translation>„%1“ käivitamine ebaõnnestus (%2). Kasutatakse shelli „%3“.</translation>
     </message>
 </context>
 </TS>

@@ -572,7 +572,7 @@ Powered by libghostty terminal engine</source>
     </message>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
-        <translation>Не ўдалося запусціць «%1» (%2). Выкарыстоўваецца «%3».</translation>
+        <translation>Не ўдалося запусціць «%1» (%2). Будзе выкарыстоўвацца «%3».</translation>
     </message>
 </context>
 </TS>

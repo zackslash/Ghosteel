@@ -570,7 +570,7 @@ A libghostty terminálmotor hajtja</translation>
     </message>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
-        <translation>A(z) „%1” nem indítható (%2). Helyette a(z) „%3” lesz használva.</translation>
+        <translation>A(z) „%1” nem indítható (%2). Helyette a(z) „%3” kerül használatra.</translation>
     </message>
 </context>
 </TS>

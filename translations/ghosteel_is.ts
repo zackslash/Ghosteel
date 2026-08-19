@@ -571,7 +571,7 @@ Keyrt af libghostty skjáhermisvél</translation>
     </message>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
-        <translation>Ekki tókst að ræsa &apos;%1&apos; (%2). &apos;%3&apos; verður notaður.</translation>
+        <translation>Ekki tókst að ræsa &apos;%1&apos; (%2). &apos;%3&apos; verður notað í staðinn.</translation>
     </message>
 </context>
 </TS>

@@ -571,7 +571,7 @@ Propulsé par le moteur de terminal libghostty</translation>
     </message>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
-        <translation>« %1 » n&apos;a pas pu être démarré (%2). « %3 » sera utilisé.</translation>
+        <translation>« %1 » n&apos;a pas pu être démarré (%2). « %3 » sera utilisé.</translation>
     </message>
 </context>
 </TS>
