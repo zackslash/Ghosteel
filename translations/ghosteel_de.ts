@@ -565,5 +565,13 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
         <source>Bell</source>
         <translation>Glocke</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell konnte nicht gestartet werden</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ konnte nicht gestartet werden (%2). „%3“ wird verwendet.</translation>
+    </message>
 </context>
 </TS>

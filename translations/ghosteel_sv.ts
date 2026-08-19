@@ -565,5 +565,13 @@ Drivs av libghostty terminalmotor</translation>
         <source>Bell</source>
         <translation>Signal</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell kunde inte startas</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>&apos;%1&apos; kunde inte startas (%2). &apos;%3&apos; används.</translation>
+    </message>
 </context>
 </TS>

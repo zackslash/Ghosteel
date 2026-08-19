@@ -565,5 +565,13 @@ Impulsado polo motor de terminal libghostty</translation>
         <source>Bell</source>
         <translation>Campá</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Non se puido iniciar o Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Non se puido iniciar «%1» (%2). Usarase «%3».</translation>
+    </message>
 </context>
 </TS>

@@ -566,5 +566,13 @@ Varomas libghostty terminalo variklio</translation>
         <source>Bell</source>
         <translation>Signalas</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Nepavyko paleisti Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Nepavyko paleisti „%1“ (%2). Bus naudojamas „%3“.</translation>
+    </message>
 </context>
 </TS>

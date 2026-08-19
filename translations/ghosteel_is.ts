@@ -565,5 +565,13 @@ Keyrt af libghostty skjáhermisvél</translation>
         <source>Bell</source>
         <translation>Bjalla</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Ekki tókst að ræsa Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Ekki tókst að ræsa &apos;%1&apos; (%2). &apos;%3&apos; verður notaður.</translation>
+    </message>
 </context>
 </TS>

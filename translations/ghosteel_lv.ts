@@ -566,5 +566,13 @@ Darbina libghostty termināla dzinējs</translation>
         <source>Bell</source>
         <translation>Zvans</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Neizdevās palaist Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Neizdevās palaist &apos;%1&apos; (%2). Tiks izmantots &apos;%3&apos;.</translation>
+    </message>
 </context>
 </TS>

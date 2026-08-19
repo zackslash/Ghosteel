@@ -565,5 +565,13 @@ Powered by libghostty terminal engine</source>
         <source>Bell</source>
         <translation>Κουδούνι</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Αποτυχία εκκίνησης του Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Αδυναμία εκκίνησης του «%1» (%2). Θα χρησιμοποιηθεί το «%3».</translation>
+    </message>
 </context>
 </TS>

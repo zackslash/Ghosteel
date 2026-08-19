@@ -565,5 +565,13 @@ libghostty terminal motorrak bultzatuta</translation>
         <source>Bell</source>
         <translation>Txirrina</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Ezin izan da Shell abiarazi</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Ezin izan da &apos;%1&apos; abiarazi (%2). &apos;%3&apos; erabiliko da.</translation>
+    </message>
 </context>
 </TS>

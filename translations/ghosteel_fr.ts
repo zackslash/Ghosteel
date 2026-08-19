@@ -565,5 +565,13 @@ Propulsé par le moteur de terminal libghostty</translation>
         <source>Bell</source>
         <translation>Signal sonore</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Impossible de démarrer le Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>« %1 » n&apos;a pas pu être démarré (%2). « %3 » sera utilisé.</translation>
+    </message>
 </context>
 </TS>

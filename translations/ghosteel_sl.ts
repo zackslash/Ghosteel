@@ -567,5 +567,13 @@ Poganja terminalski pogon libghostty</translation>
         <source>Bell</source>
         <translation>Zvonček</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shella ni bilo mogoče zagnati</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ ni bilo mogoče zagnati (%2). Uporabljen bo „%3“.</translation>
+    </message>
 </context>
 </TS>

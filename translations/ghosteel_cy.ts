@@ -568,5 +568,13 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <source>Bell</source>
         <translation>Cloch</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Methwyd cychwyn Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Methwyd cychwyn &apos;%1&apos; (%2). Defnyddir &apos;%3&apos;.</translation>
+    </message>
 </context>
 </TS>

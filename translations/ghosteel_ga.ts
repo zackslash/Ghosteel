@@ -566,5 +566,13 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
         <source>Bell</source>
         <translation>Clog</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Theip ar thosú Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Níorbh fhéidir &apos;%1&apos; a thosú (%2). Bainfear úsáid as &apos;%3&apos;.</translation>
+    </message>
 </context>
 </TS>

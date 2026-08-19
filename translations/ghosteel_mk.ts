@@ -566,5 +566,13 @@ Powered by libghostty terminal engine</source>
         <source>Bell</source>
         <translation>Ѕвонче</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell не може да се стартува</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ не може да се стартува (%2). Ќе се користи „%3“.</translation>
+    </message>
 </context>
 </TS>

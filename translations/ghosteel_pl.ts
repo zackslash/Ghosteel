@@ -566,5 +566,13 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <source>Bell</source>
         <translation>Dzwonek</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Nie udało się uruchomić Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Nie można uruchomić „%1” (%2). Zamiast tego użyto „%3”.</translation>
+    </message>
 </context>
 </TS>

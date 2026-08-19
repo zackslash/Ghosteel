@@ -564,5 +564,13 @@ A libghostty terminálmotor hajtja</translation>
         <source>Bell</source>
         <translation>Csengő</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>A Shell indítása sikertelen</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>A(z) „%1” nem indítható (%2). Helyette a(z) „%3” lesz használva.</translation>
+    </message>
 </context>
 </TS>

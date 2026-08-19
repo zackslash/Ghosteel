@@ -566,5 +566,13 @@ Pokreće libghostty terminalski motor</translation>
         <source>Bell</source>
         <translation>Zvono</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell nije mogao da se pokrene</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ nije mogao da se pokrene (%2). Koristiće se „%3“.</translation>
+    </message>
 </context>
 </TS>

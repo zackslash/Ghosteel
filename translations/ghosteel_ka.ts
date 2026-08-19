@@ -565,5 +565,13 @@ Powered by libghostty terminal engine</source>
         <source>Bell</source>
         <translation>ზარი</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell-ის გაშვება ვერ მოხერხდა</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“-ის გაშვება ვერ მოხერხდა (%2). გამოყენებული იქნება „%3“.</translation>
+    </message>
 </context>
 </TS>

@@ -565,5 +565,13 @@ Aangedreven door de libghostty terminal-engine</translation>
         <source>Bell</source>
         <translation>Bel</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Kan Shell niet starten</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Kan &apos;%1&apos; niet starten (%2). Er wordt &apos;%3&apos; gebruikt.</translation>
+    </message>
 </context>
 </TS>

@@ -565,5 +565,13 @@ Drevet av libghostty terminalmotor</translation>
         <source>Bell</source>
         <translation>Signal</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Klarte ikke å starte Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Klarte ikke å starte «%1» (%2). Bruker «%3».</translation>
+    </message>
 </context>
 </TS>

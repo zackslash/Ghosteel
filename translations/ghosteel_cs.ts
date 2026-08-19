@@ -566,5 +566,13 @@ Poháněno terminálovým enginem libghostty</translation>
         <source>Bell</source>
         <translation>Zvonek</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell se nepodařilo spustit</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ se nepodařilo spustit (%2). Použije se „%3“.</translation>
+    </message>
 </context>
 </TS>

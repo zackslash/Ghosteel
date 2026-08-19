@@ -565,5 +565,13 @@ Powered by libghostty terminal engine</source>
         <source>Bell</source>
         <translation>Զանգ</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Չհաջողվեց գործարկել Shell-ը</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Հնարավոր չէ գործարկել «%1»-ը (%2). Կօգտագործվի «%3»-ը.</translation>
+    </message>
 </context>
 </TS>
