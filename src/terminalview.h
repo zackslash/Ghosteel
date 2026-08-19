@@ -123,8 +123,16 @@ public:
     // Expose GhosttyVt for GL renderer access
     GhosttyVt *vt() const { return m_vt; }
 
-    // Expose cursor blink state for GL renderer (single source of truth)
-    bool cursorBlinkVisible() const { return m_cursorBlinkVisible; }
+    // Cursor blink state for the GL renderer (single source of truth).
+    // Derived from a monotonic phase rather than accumulated timer ticks, so
+    // stalled or coalesced GUI-thread wakeups can no longer desync the
+    // blink: visibility follows elapsed time, not event count.
+    bool cursorBlinkVisible() const
+    {
+        if (blinkPinnedSolid())
+            return true;
+        return (m_blinkEpoch.elapsed() / BlinkInterval) % 2 == 0;
+    }
 
     // Shared constants for selection handles and magnifier
     static const int HandleRadius = 14; // px — touch-friendly target size
@@ -229,6 +237,32 @@ private:
     void sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
                         const QPointF &pos, GhosttyMods mods);
     void resetBlinkOnInput();
+
+    // Start (or refresh) the post-input blink hold. Restarting the phase
+    // clock alongside the hold keeps BlinkPauseMs an exact multiple of
+    // BlinkInterval, so the hold always expires at the start of a fresh ON
+    // window instead of joining the free-running phase mid-window (which
+    // showed as a single short out-of-time blink after holding a key).
+    void holdBlinkSolid()
+    {
+        m_lastInputTime.start();
+        m_blinkEpoch.restart();
+    }
+
+    // True while blink visibility is pinned solid: during the post-input
+    // hold, or for a steady cursor (DECSCUSR 2/4/6).
+    bool blinkPinnedSolid() const
+    {
+        if (m_lastInputTime.isValid() && m_lastInputTime.elapsed() < BlinkPauseMs)
+            return true;
+        GhosttyRenderState state = m_vt ? m_vt->renderState() : nullptr;
+        bool cursorBlinking = true;
+        if (state)
+            ghostty_render_state_get(state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING,
+                                     &cursorBlinking);
+        return !cursorBlinking;
+    }
     void runAutorunCommand();
 
     void updateFontMetrics();
@@ -352,11 +386,13 @@ private:
     static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width -> commit
 
     // --- Cursor blinking (pauses after input for 1s) ---
+    // The timer only drives repaints; visibility is phase-derived at frame
+    // time in cursorBlinkVisible().
     int m_blinkTimerId = 0;
-    bool m_cursorBlinkVisible = true;
     static const int BlinkInterval = 500; // ms
     static const int BlinkPauseMs = 1000; // ms — pause after input
     QElapsedTimer m_lastInputTime;
+    QElapsedTimer m_blinkEpoch;
 
     // --- Shell exit state ---
     bool m_shellExited = false;

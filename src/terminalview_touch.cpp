@@ -46,8 +46,7 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
     }
 
     if (event->button() == Qt::LeftButton) {
-        m_cursorBlinkVisible = true;
-        m_lastInputTime.start();
+        holdBlinkSolid();
 
         m_mouseTrackingActive = m_vt->isMouseTracking();
 
@@ -150,7 +149,7 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
         // Magnifier stays visible during handle drags — no velocity-based hiding.
         // It was set visible on mousePress and should remain so until release.
 
-        m_lastInputTime.start();
+        holdBlinkSolid();
 
         update();
         event->accept();
@@ -172,7 +171,7 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
 
         // Keep cursor blink paused during active selection to prevent
         // full redraws that cause magnifier flicker
-        m_lastInputTime.start();
+        holdBlinkSolid();
 
         update();
         event->accept();
@@ -780,35 +779,12 @@ void TerminalView::timerEvent(QTimerEvent *event)
         return;
     }
     if (event->timerId() == m_blinkTimerId) {
-        if (m_lastInputTime.isValid() &&
-            m_lastInputTime.elapsed() < BlinkPauseMs) {
-            m_cursorBlinkVisible = true;
+        // Metronome repaint for the phase-derived blink in
+        // cursorBlinkVisible(). Skip the repaint while visibility is pinned
+        // solid (post-input hold or a steady DECSCUSR cursor); nothing can
+        // change on screen until the hold lapses or the mode flips.
+        if (!blinkPinnedSolid())
             update();
-            return;
-        }
-
-        // Blink cursor by default. Only stop when terminal explicitly requests
-        // a steady cursor (DECSCUSR mode 2, 4, or 6).
-        GhosttyRenderState state = m_vt ? m_vt->renderState() : nullptr;
-        bool cursorBlinking = true;
-        if (state) {
-            ghostty_render_state_get(state,
-                                     GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING,
-                                     &cursorBlinking);
-        }
-        if (cursorBlinking) {
-            m_cursorBlinkVisible = !m_cursorBlinkVisible;
-            update();
-        } else if (!m_cursorBlinkVisible) {
-            // Steady cursor (DECSCUSR 2/4/6): ghostty reports CURSOR_BLINKING
-            // false, so the toggle above never runs and m_cursorBlinkVisible
-            // keeps whatever phase the blink left it in — a 50% chance of being
-            // stuck invisible (rendering gates on it in glrenderer.cpp). Force
-            // it visible once; no repaint spam since the flag is already true
-            // on subsequent ticks.
-            m_cursorBlinkVisible = true;
-            update();
-        }
         return;
     }
     QQuickItem::timerEvent(event);

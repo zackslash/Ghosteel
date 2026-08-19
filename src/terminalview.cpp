@@ -105,6 +105,7 @@ TerminalView::TerminalView(QQuickItem *parent)
         }
     });
 
+    m_blinkEpoch.start();
     m_blinkTimerId = startTimer(BlinkInterval);
 }
 
@@ -1075,8 +1076,7 @@ void TerminalView::sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton 
 
 void TerminalView::resetBlinkOnInput()
 {
-    m_cursorBlinkVisible = true;
-    m_lastInputTime.start();
+    holdBlinkSolid();
     clearSelection();
 }
 
