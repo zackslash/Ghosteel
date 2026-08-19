@@ -258,6 +258,7 @@ private slots:
 
         QSignalSpy noticeSpy(&pty, &PtyManager::shellFallbackNotice);
         QSignalSpy exitSpy(&pty, &PtyManager::shellExited);
+        QSignalSpy dataSpy(&pty, &PtyManager::dataReady);
 
         QVERIFY(pty.startShell(80, 24));
 
@@ -273,6 +274,80 @@ private slots:
 
         QVERIFY(!exitSpy.wait(500)
                 || exitSpy.at(0).at(0).toInt() != PtyManager::kExecFailedExitCode);
+
+        // The hop 2->3 notice line names the takeover shell.
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return all.contains("using sh");
+        }(), 5000);
+
+        pty.stop();
+    }
+
+    void testAllShellsFailSurfacesError()
+    {
+        // Every hop fails (empty PATH kills the sh hop too): total failure
+        // surfaces the exec-failed exit code, the overlay contract.
+        PtyManager pty;
+        pty.setShellCommand(QStringLiteral("/nonexistent/a"));
+        QByteArray savedShell = qgetenv("SHELL");
+        QByteArray savedPath = qgetenv("PATH");
+        qputenv("SHELL", "/nonexistent/b");
+        qputenv("PATH", "/nonexistent");
+
+        QSignalSpy exitSpy(&pty, &PtyManager::shellExited);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        if (!savedShell.isEmpty())
+            qputenv("SHELL", savedShell.constData());
+        else
+            qunsetenv("SHELL");
+        if (!savedPath.isEmpty())
+            qputenv("PATH", savedPath.constData());
+        else
+            qunsetenv("PATH");
+
+        QVERIFY(exitSpy.wait(5000));
+        QCOMPARE(exitSpy.count(), 1);
+        QCOMPARE(exitSpy.at(0).at(0).toInt(), PtyManager::kExecFailedExitCode);
+
+        pty.stop();
+    }
+
+    void testDuplicateShellHopsDeduplicated()
+    {
+        // A configured shell equal to $SHELL is tried once: exactly one
+        // in-terminal notice, fallback straight to sh.
+        PtyManager pty;
+        pty.setShellCommand(QStringLiteral("/nonexistent/same"));
+        QByteArray savedShell = qgetenv("SHELL");
+        qputenv("SHELL", "/nonexistent/same");
+
+        QSignalSpy noticeSpy(&pty, &PtyManager::shellFallbackNotice);
+        QSignalSpy dataSpy(&pty, &PtyManager::dataReady);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        if (!savedShell.isEmpty())
+            qputenv("SHELL", savedShell.constData());
+        else
+            qunsetenv("SHELL");
+
+        QVERIFY(noticeSpy.wait(5000));
+        QCOMPARE(noticeSpy.count(), 1);
+        QCOMPARE(noticeSpy.at(0).at(0).toString(), QStringLiteral("/nonexistent/same"));
+        QCOMPARE(noticeSpy.at(0).at(1).toString(), QStringLiteral("sh"));
+
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            const int first = all.indexOf("ghosteel:");
+            return first != -1 && all.lastIndexOf("ghosteel:") == first;
+        }(), 5000);
 
         pty.stop();
     }
