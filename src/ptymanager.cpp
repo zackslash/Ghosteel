@@ -214,11 +214,16 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     }
 
     // One notice line per adjacent hop pair, written to the pty (fd 2) before
-    // the fallback exec. Plain ASCII; strerror is not async-signal-safe.
+    // the fallback exec. Translated in the parent; the child only writes the
+    // pre-built UTF-8 bytes. No strerror text here: the child cannot call
+    // it (not async-signal-safe), and the system notification carries the
+    // reason anyway.
+    const QString fallbackTpl = tr("%1 could not be started, using %2");
     QByteArray noticeLines[2];
     for (int i = 0; i + 1 < hopCount; ++i) {
-        noticeLines[i] = QByteArray("\r\nghosteel: ") + hops[i]
-            + " could not be started, using " + hops[i + 1] + "\r\n";
+        noticeLines[i] = (QStringLiteral("\r\nghosteel: ")
+            + fallbackTpl.arg(hopNames.at(i)).arg(hopNames.at(i + 1))
+            + QStringLiteral("\r\n")).toUtf8();
     }
 
     const char *homeDir = getenv("HOME");
@@ -249,8 +254,9 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
                                  " bash-only PS1 that zsh prints literally.\n");
                         rc.write("PROMPT='[%n@%m %1~]%# '\n");
                         rc.close();
-                        zshBootNotice = QByteArray("\r\nghosteel: created")
-                            + " ~/.zshrc with a Sailfish prompt fix\r\n";
+                        zshBootNotice = (QStringLiteral("\r\nghosteel: ")
+                            + tr("created ~/.zshrc with a Sailfish prompt fix")
+                            + QStringLiteral("\r\n")).toUtf8();
                     }
                 }
                 break;
