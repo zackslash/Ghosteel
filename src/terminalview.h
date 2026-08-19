@@ -173,6 +173,7 @@ Q_SIGNALS:
     void navigateSession(int direction);
     void toggleKeybar();
     void commandExited(int exitCode);
+    void shellFallbackNotice(const QString &failedShell, const QString &usedShell, const QString &reason);
     void shellRestarted();
     void topPaddingChanged();
     void contentChanged(); // Emitted on real content change (PTY data) for scrollback tracking

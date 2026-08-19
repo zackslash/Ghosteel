@@ -140,6 +140,17 @@ Page {
         expireTimeout: 1
     }
 
+    // Shell fallback notification: shown when a configured shell fails to
+    // start and a fallback shell is used instead
+    Notification {
+        id: shellFallbackNotification
+        appName: "Ghosteel"
+        summary: ""
+        body: ""
+        urgency: Notification.Normal
+        expireTimeout: 5000
+    }
+
     // Rate limit bell feedback to prevent haptic motor/audio spam
     Timer {
         id: bellCooldown
@@ -393,6 +404,8 @@ Page {
         t.stickyModifiersChanged.connect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
         t.terminalBell.connect(onTerminalBell)
+        t.shellFallbackNotice.disconnect(onShellFallbackNotice)
+        t.shellFallbackNotice.connect(onShellFallbackNotice)
         t.navigateSession.disconnect(onNavigateSession)
         t.navigateSession.connect(onNavigateSession)
         t.toggleKeybar.disconnect(onToggleKeybar)
@@ -453,6 +466,7 @@ Page {
         t.titleChanged.disconnect(updateWindowTitle)
         t.stickyModifiersChanged.disconnect(onTerminalStickyModifiersChanged)
         t.terminalBell.disconnect(onTerminalBell)
+        t.shellFallbackNotice.disconnect(onShellFallbackNotice)
         t.navigateSession.disconnect(onNavigateSession)
         t.toggleKeybar.disconnect(onToggleKeybar)
         t.linkActivated.disconnect(showLinkDialog)
@@ -725,6 +739,12 @@ Page {
         if (mode === 2 || mode === 3) {
             bellFeedback.playBell()
         }
+    }
+
+    function onShellFallbackNotice(failedShell, usedShell, reason) {
+        shellFallbackNotification.summary = qsTr("Shell failed to start")
+        shellFallbackNotification.body = qsTr("'%1' could not be started (%2). Using '%3'.").arg(failedShell).arg(reason).arg(usedShell)
+        shellFallbackNotification.publish()
     }
 
     function onNavigateSession(direction) {
