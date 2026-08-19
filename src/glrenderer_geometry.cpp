@@ -2,10 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 
 namespace {
 constexpr int kFloatsPerFlatVertex = 6;     // pos(2) + color(4) — matches flat-vertex layout
-constexpr uint32_t kMaxGraphemeLen = 128;   // matches ghostty Cell.grapheme cap
+constexpr uint32_t kMaxGraphemeLen = 128;   // buffer must hold >= 1 + ghostty's grapheme_max_len (64); BUF is fetched unconditionally and ghostty truncates clusters at 64
 constexpr float kArrowLen = 8.0f;
 constexpr float kArrowHalfWidth = 6.0f;
 constexpr int kLinkR = 100, kLinkG = 180, kLinkB = 255, kLinkA = 200;
@@ -340,13 +341,105 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
     }
 }
 
+void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRenderStateRowCells cells, float y, int *outVertexCount)
+{
+    const int start = out.size();
+
+    const float bgAlpha = m_bgOpacity;
+    const float bgR = m_postBgR, bgG = m_postBgG, bgB = m_postBgB;
+    const float fgR = m_postFgR, fgG = m_postFgG, fgB = m_postFgB;
+
+    int x = 0;
+    while (ghostty_render_state_row_cells_next(cells)) {
+        GhosttyCell rawCell = 0;
+        GhosttyStyle cellStyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
+        uint32_t graphemesLen = 0;
+        uint32_t graphemesBuf[kMaxGraphemeLen];
+        GhosttyColorRgb cellFg, cellBg;
+
+        // The four infallible keys are fetched in one batch. FG/BG are fetched
+        // separately because each returns GHOSTTY_INVALID_VALUE when the cell
+        // has no explicit color of that type, and get_multi stops at the first
+        // failing key — batching them would drop the other color entirely.
+        GhosttyRenderStateRowCellsData keys[] = {
+            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
+            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
+            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
+        };
+        void *values[] = { &rawCell, &cellStyle, &graphemesLen, graphemesBuf };
+        ghostty_render_state_row_cells_get_multi(cells, 4, keys, values, nullptr);
+
+        const bool haveFg = ghostty_render_state_row_cells_get(
+            cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR, &cellFg) == GHOSTTY_SUCCESS;
+        const bool haveBg = ghostty_render_state_row_cells_get(
+            cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR, &cellBg) == GHOSTTY_SUCCESS;
+
+        GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+        if (rawCell != 0) {
+            ghostty_cell_get(rawCell, GHOSTTY_CELL_DATA_WIDE, &wide);
+        }
+
+        // Spacer-tail skip:
+        // The preceding WIDE_WIDE head already emitted a 2-cell quad covering
+        // this spacer's screen position (head advanced x by 2*cellWidth).
+        // Do NOT advance x — bare continue.
+        if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL) {
+            continue;
+        }
+
+        float cBgR = bgR, cBgG = bgG, cBgB = bgB;
+        if (haveBg) {
+            cBgR = cellBg.r / 255.0f;
+            cBgG = cellBg.g / 255.0f;
+            cBgB = cellBg.b / 255.0f;
+        }
+
+        float cFgR = fgR, cFgG = fgG, cFgB = fgB;
+        if (haveFg) {
+            cFgR = cellFg.r / 255.0f;
+            cFgG = cellFg.g / 255.0f;
+            cFgB = cellFg.b / 255.0f;
+        }
+
+        float deco = 0.0f;
+        if (cellStyle.underline > 0) deco = 1.0f;
+        else if (cellStyle.strikethrough) deco = 2.0f;
+
+        float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
+        float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
+
+        float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
+        if (graphemesLen > 0 && graphemesLen <= kMaxGraphemeLen) {
+            const GlyphInfo &gi = (graphemesLen == 1)
+                ? m_atlas.glyph(graphemesBuf[0], cellStyle.bold, cellStyle.italic)
+                : m_atlas.glyphCluster(graphemesBuf, graphemesLen, cellStyle.bold, cellStyle.italic);
+            u0 = gi.u0; v0 = gi.v0; u1 = gi.u1; v1 = gi.v1;
+        }
+
+        int cellSpan = (wide == GHOSTTY_CELL_WIDE_WIDE) ? 2 : 1;
+        float x0 = static_cast<float>(x);
+        float y0 = y;
+        float x1 = static_cast<float>(x + cellSpan * m_cellWidth);
+        float y1 = y + m_cellHeight;
+
+        out.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+        out.append({x1, y0, u1, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+        out.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+        out.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+        out.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+        out.append({x0, y1, u0, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+
+        x += cellSpan * m_cellWidth;
+    }
+
+    if (outVertexCount)
+        *outVertexCount = out.size() - start;
+}
+
 void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
 {
     m_cellVertices.reserve(m_cols * m_rows * 6);
-
-    float bgAlpha = m_bgOpacity;
-    float bgR = m_postBgR, bgG = m_postBgG, bgB = m_postBgB;
-    float fgR = m_postFgR, fgG = m_postFgG, fgB = m_postFgB;
 
     GhosttyRenderStateRowIterator iterator;
     ghostty_render_state_row_iterator_new(nullptr, &iterator);
@@ -355,105 +448,30 @@ void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
     GhosttyRenderStateRowCells cells;
     ghostty_render_state_row_cells_new(nullptr, &cells);
 
+    m_rowVertexStart.clear();
+    m_rowVertexCount.clear();
+    m_topPaddingAtBuild = m_topPadding;
+    m_viewportWidthAtBuild = m_viewportWidth;
+    m_viewportHeightAtBuild = m_viewportHeight;
+
     int y = m_topPadding;
-    int rowIdx = 0;
     while (ghostty_render_state_row_iterator_next(iterator)) {
         ghostty_render_state_row_get(iterator,
                                      GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
                                      &cells);
 
-        int x = 0;
-        int colIdx = 0;
-        while (ghostty_render_state_row_cells_next(cells)) {
-            GhosttyCell rawCell = 0;
-            GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-            if (ghostty_render_state_row_cells_get(cells,
-                    GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW, &rawCell) == GHOSTTY_SUCCESS
-                    && rawCell != 0) {
-                ghostty_cell_get(rawCell, GHOSTTY_CELL_DATA_WIDE, &wide);
-            }
-
-            // Spacer-tail skip:
-            // The preceding WIDE_WIDE head already emitted a 2-cell quad covering
-            // this spacer's screen position (head advanced x by 2*cellWidth).
-            // Do NOT advance x — bare continue.
-            if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL) {
-                continue;
-            }
-
-            GhosttyColorRgb cellBg;
-            float cBgR = bgR, cBgG = bgG, cBgB = bgB;
-            if (ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_BG_COLOR,
-                    &cellBg) == GHOSTTY_SUCCESS) {
-                cBgR = cellBg.r / 255.0f;
-                cBgG = cellBg.g / 255.0f;
-                cBgB = cellBg.b / 255.0f;
-            }
-
-            GhosttyColorRgb cellFg;
-            float cFgR = fgR, cFgG = fgG, cFgB = fgB;
-            if (ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_FG_COLOR,
-                    &cellFg) == GHOSTTY_SUCCESS) {
-                cFgR = cellFg.r / 255.0f;
-                cFgG = cellFg.g / 255.0f;
-                cFgB = cellFg.b / 255.0f;
-            }
-
-            GhosttyStyle cellStyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
-            ghostty_render_state_row_cells_get(
-                cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
-                &cellStyle);
-            float deco = 0.0f;
-            if (cellStyle.underline > 0) deco = 1.0f;
-            else if (cellStyle.strikethrough) deco = 2.0f;
-
-            float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
-            float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
-
-            uint32_t graphemesLen = 0;
-            ghostty_render_state_row_cells_get(
-                cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
-                &graphemesLen);
-
-            float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
-            if (graphemesLen > 0 && graphemesLen <= kMaxGraphemeLen) {
-                uint32_t buf[kMaxGraphemeLen];
-                ghostty_render_state_row_cells_get(
-                    cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
-                    buf);
-
-                const GlyphInfo &gi = (graphemesLen == 1)
-                    ? m_atlas.glyph(buf[0], cellStyle.bold, cellStyle.italic)
-                    : m_atlas.glyphCluster(buf, graphemesLen, cellStyle.bold, cellStyle.italic);
-                u0 = gi.u0; v0 = gi.v0; u1 = gi.u1; v1 = gi.v1;
-            }
-
-            // Quad emission — width from grid wide flag
-            int cellSpan = (wide == GHOSTTY_CELL_WIDE_WIDE) ? 2 : 1;
-            float x0 = static_cast<float>(x);
-            float y0 = static_cast<float>(y);
-            float x1 = static_cast<float>(x + cellSpan * m_cellWidth);
-            float y1 = static_cast<float>(y + m_cellHeight);
-
-            m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x1, y0, u1, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-            m_cellVertices.append({x0, y1, u0, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
-
-            x += cellSpan * m_cellWidth;
-            colIdx += cellSpan;
-        }
+        int count = 0;
+        emitRowVertices(m_cellVertices, cells, static_cast<float>(y), &count);
+        m_rowVertexStart.append(m_cellVertices.size() - count);
+        m_rowVertexCount.append(count);
 
         y += m_cellHeight;
-        rowIdx++;
     }
 
     ghostty_render_state_row_cells_free(cells);
     ghostty_render_state_row_iterator_free(iterator);
+
+    m_stripVertexStart = m_cellVertices.size();
 
     // Fill the cell-grid leftover (width % cellWidth, often ~1px) so the FBO
     // is bg-filled edge-to-edge — without this the transparent clear-color
@@ -504,6 +522,85 @@ void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
         m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
     }
+}
+
+void GLRenderer::Renderer::updateCellVertices(GhosttyRenderState state)
+{
+    // The per-row segment bookkeeping must match the grid; if it does not
+    // (e.g. a full build was skipped), fall back to a full rebuild.
+    // buildCellVertices re-records the segment bookkeeping; the caller still
+    // runs ghostty_render_state_clean() after this returns.
+    if (m_rowVertexCount.size() != m_rows) {
+        buildCellVertices(state);
+        return;
+    }
+
+    const int startEpoch = m_atlas.epoch();
+
+    GhosttyRenderStateRowIterator iterator;
+    ghostty_render_state_row_iterator_new(nullptr, &iterator);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR, &iterator);
+
+    GhosttyRenderStateRowCells cells;
+    ghostty_render_state_row_cells_new(nullptr, &cells);
+
+    QVector<CellVertex> newVerts;
+    newVerts.reserve(m_cellVertices.size());
+    QVector<int> newRowStart;
+    QVector<int> newRowCount;
+    newRowStart.reserve(m_rows);
+    newRowCount.reserve(m_rows);
+
+    // Merge the dirty-row stream with the grid rows: dirty rows are emitted
+    // fresh, clean rows are spliced verbatim from the old segments. The
+    // iterator stays positioned on the current dirty row for row_get.
+    uint16_t nextDirtyY = 0;
+    bool haveDirty = ghostty_render_state_row_iterator_next_dirty(iterator, &nextDirtyY);
+    // DIRTY_PARTIAL with no dirty rows: the grid is unchanged, so the current
+    // vertex buffer is already correct. Skip the full copy/splice/swap.
+    if (!haveDirty) {
+        ghostty_render_state_row_cells_free(cells);
+        ghostty_render_state_row_iterator_free(iterator);
+        return;
+    }
+    for (int r = 0; r < m_rows; ++r) {
+        int count = 0;
+        if (haveDirty && nextDirtyY == static_cast<uint16_t>(r)) {
+            ghostty_render_state_row_get(iterator, GHOSTTY_RENDER_STATE_ROW_DATA_CELLS, &cells);
+            emitRowVertices(newVerts, cells, static_cast<float>(m_topPadding + r * m_cellHeight), &count);
+            haveDirty = ghostty_render_state_row_iterator_next_dirty(iterator, &nextDirtyY);
+        } else {
+            count = m_rowVertexCount[r];
+            // Single copy straight into newVerts (reserved to the old size),
+            // avoiding the temporary QVector that mid() + += would create.
+            std::copy(m_cellVertices.constData() + m_rowVertexStart[r],
+                      m_cellVertices.constData() + m_rowVertexStart[r] + m_rowVertexCount[r],
+                      std::back_inserter(newVerts));
+        }
+        newRowStart.append(newVerts.size() - count);
+        newRowCount.append(count);
+    }
+
+    // Strips depend only on metrics/viewport, which force a full rebuild
+    // when they change; splice them verbatim.
+    const int stripCount = m_cellVertices.size() - m_stripVertexStart;
+    newVerts += m_cellVertices.mid(m_stripVertexStart, stripCount);
+
+    ghostty_render_state_row_cells_free(cells);
+    ghostty_render_state_row_iterator_free(iterator);
+
+    // Glyph rasterization during the walk can wipe the atlas, invalidating
+    // UVs baked into both fresh and copied segments; fall back to a full
+    // rebuild (its own epoch-retry logic then applies).
+    if (m_atlas.epoch() != startEpoch) {
+        buildCellVertices(state);
+        return;
+    }
+
+    m_cellVertices = newVerts;
+    m_rowVertexStart = newRowStart;
+    m_rowVertexCount = newRowCount;
+    m_stripVertexStart = newVerts.size() - stripCount;
 }
 
 void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)

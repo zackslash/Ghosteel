@@ -146,7 +146,9 @@ private:
         void renderDirectToFbo(QOpenGLFramebufferObject *fbo);
         void renderShellExitText(QOpenGLFramebufferObject *fbo);
         void appendCellVertices(GhosttyRenderState state);
+        void emitRowVertices(QVector<CellVertex> &out, GhosttyRenderStateRowCells cells, float y, int *outVertexCount);
         void buildCellVertices(GhosttyRenderState state);
+        void updateCellVertices(GhosttyRenderState state);
 
         void detectES300();
         void createPipelineFbo(int w, int h);
@@ -191,6 +193,20 @@ private:
 
         // Terminal state snapshot (populated in synchronize, consumed in render)
         QVector<CellVertex> m_cellVertices;
+        // Per-grid-row vertex segments within m_cellVertices (start index +
+        // vertex count), then the fixed bg-fill strips at m_stripVertexStart.
+        // Recorded on every full build; the partial-redraw path splices clean
+        // rows verbatim from these ranges.
+        QVector<int> m_rowVertexStart;
+        QVector<int> m_rowVertexCount;
+        int m_stripVertexStart = 0;
+        // Padding value baked into the last full build; a mismatch forces a
+        // full rebuild (see synchronize()).
+        int m_topPaddingAtBuild = 0;
+        // Viewport dimensions baked into the strip geometry at the last full
+        // build; a mismatch forces a full rebuild (see synchronize()).
+        int m_viewportWidthAtBuild = 0;
+        int m_viewportHeightAtBuild = 0;
         int m_vertexCount = 0;
         bool m_dirty = false;
         int m_cellWidth = 0;
