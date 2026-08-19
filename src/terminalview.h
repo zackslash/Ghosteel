@@ -238,15 +238,25 @@ private:
                         const QPointF &pos, GhosttyMods mods);
     void resetBlinkOnInput();
 
-    // Start (or refresh) the post-input blink hold. Restarting the phase
-    // clock alongside the hold keeps BlinkPauseMs an exact multiple of
-    // BlinkInterval, so the hold always expires at the start of a fresh ON
-    // window instead of joining the free-running phase mid-window (which
-    // showed as a single short out-of-time blink after holding a key).
+    // Start (or refresh) the post-input blink hold. The phase clock restarts
+    // with the hold so the hold (an exact multiple of the blink interval)
+    // always expires at the start of a fresh ON window, and the blink timer
+    // re-arms to that expiry so its first tick lands just past the boundary.
     void holdBlinkSolid()
     {
         m_lastInputTime.start();
         m_blinkEpoch.restart();
+        armBlinkTimer(BlinkPauseMs + BlinkGuardMs);
+    }
+
+    // Arm the blink timer to fire ms from now, precisely. Ticks are aimed
+    // just past phase boundaries (BlinkGuardMs) so coarse-timer jitter can
+    // never flip which phase window a frame samples.
+    void armBlinkTimer(int ms)
+    {
+        if (m_blinkTimerId)
+            killTimer(m_blinkTimerId);
+        m_blinkTimerId = startTimer(ms, Qt::PreciseTimer);
     }
 
     // True while blink visibility is pinned solid: during the post-input
@@ -386,11 +396,12 @@ private:
     static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width -> commit
 
     // --- Cursor blinking (pauses after input for 1s) ---
-    // The timer only drives repaints; visibility is phase-derived at frame
-    // time in cursorBlinkVisible().
+    // Visibility is phase-derived at frame time in cursorBlinkVisible();
+    // the timer only triggers repaints, re-armed per phase boundary.
     int m_blinkTimerId = 0;
     static const int BlinkInterval = 500; // ms
     static const int BlinkPauseMs = 1000; // ms — pause after input
+    static const int BlinkGuardMs = 50; // ms — tick offset past each boundary
     QElapsedTimer m_lastInputTime;
     QElapsedTimer m_blinkEpoch;
 

@@ -779,12 +779,17 @@ void TerminalView::timerEvent(QTimerEvent *event)
         return;
     }
     if (event->timerId() == m_blinkTimerId) {
-        // Metronome repaint for the phase-derived blink in
-        // cursorBlinkVisible(). Skip the repaint while visibility is pinned
-        // solid (post-input hold or a steady DECSCUSR cursor); nothing can
-        // change on screen until the hold lapses or the mode flips.
+        // Repaint for the phase-derived blink in cursorBlinkVisible().
+        // Ticks land just past each phase boundary, so jitter cannot flip
+        // the sampled window; skip the repaint while visibility is pinned
+        // solid (post-input hold or a steady DECSCUSR cursor) and re-arm
+        // for the next boundary regardless.
         if (!blinkPinnedSolid())
             update();
+        const qint64 elapsed = m_blinkEpoch.elapsed();
+        const int next = static_cast<int>(
+            BlinkInterval - (elapsed % BlinkInterval) + BlinkGuardMs);
+        armBlinkTimer(qMax(next, 1));
         return;
     }
     QQuickItem::timerEvent(event);

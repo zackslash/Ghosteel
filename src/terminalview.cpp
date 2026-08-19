@@ -106,7 +106,7 @@ TerminalView::TerminalView(QQuickItem *parent)
     });
 
     m_blinkEpoch.start();
-    m_blinkTimerId = startTimer(BlinkInterval);
+    armBlinkTimer(BlinkInterval + BlinkGuardMs);
 }
 
 TerminalView::~TerminalView()
