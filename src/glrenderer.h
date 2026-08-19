@@ -165,7 +165,7 @@ private:
         void snapshotKittyGraphics(GhosttyTerminal terminal, GhosttyVt *vt);
         void cleanupKittyCache();
         void drainPendingKittyDeletions();
-        bool kittyUploadFailed(uint32_t imageId, uint64_t generation) const;
+        bool kittyUploadFailed(uint32_t imageId, uint64_t generation);
         void forgetKittyFailedUpload(uint32_t imageId);
 
         QOpenGLShaderProgram *m_program = nullptr;
@@ -342,6 +342,7 @@ private:
         uint32_t m_kittyFrameCounter = 0;
         static const int MAX_KITTY_TEXTURES = 32;
         static const int KITTY_EVICTION_FRAMES = 120;
+        static const int KITTY_FAILED_RETRY_FRAMES = 600;
         // Queried lazily on the render thread (first kitty upload) to clamp
         // image dimensions against GL_MAX_TEXTURE_SIZE before allocation.
         GLint m_maxTextureSize = 0;
@@ -368,9 +369,15 @@ private:
 
         // Negative cache of failed kitty texture uploads ((imageId, generation)
         // pairs). Prevents re-copying and re-attempting a failing glTexImage2D
-        // every frame; entries are dropped when the image's generation changes
-        // or the image is evicted/replaced.
-        struct KittyFailedUpload { uint32_t imageId; uint64_t generation; };
+        // every frame; entries are dropped when the image's generation changes,
+        // when the image is evicted/replaced, or after KITTY_FAILED_RETRY_FRAMES
+        // so a transient GL_OUT_OF_MEMORY is retried instead of hiding a valid
+        // image forever.
+        struct KittyFailedUpload {
+            uint32_t imageId;
+            uint64_t generation;
+            uint32_t lastAttemptFrame;
+        };
         QVector<KittyFailedUpload> m_kittyFailedUploads;
 
         // Scene-external deltas that require a pipeline redraw even when the
