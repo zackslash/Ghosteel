@@ -124,9 +124,7 @@ public:
     GhosttyVt *vt() const { return m_vt; }
 
     // Cursor blink state for the GL renderer (single source of truth).
-    // Derived from a monotonic phase rather than accumulated timer ticks, so
-    // stalled or coalesced GUI-thread wakeups can no longer desync the
-    // blink: visibility follows elapsed time, not event count.
+    // Phase-derived; see the blink helpers in TextUtil.
     bool cursorBlinkVisible() const
     {
         if (blinkPinnedSolid())
@@ -249,9 +247,6 @@ private:
         armBlinkTimer(BlinkPauseMs + BlinkGuardMs);
     }
 
-    // Arm the blink timer to fire ms from now, precisely. Ticks are aimed
-    // just past phase boundaries (BlinkGuardMs) so timer jitter can never
-    // flip which phase window a frame samples.
     void armBlinkTimer(int ms)
     {
         if (m_blinkTimerId)
@@ -402,8 +397,6 @@ private:
     static const int BlinkInterval = 500; // ms
     static const int BlinkPauseMs = 1000; // ms, pause after input
     static const int BlinkGuardMs = 50; // ms, tick offset past each boundary
-    // The hold must expire on an ON window boundary; otherwise the cursor
-    // would join the phase mid-window at hold end.
     static_assert(BlinkPauseMs % BlinkInterval == 0,
                   "BlinkPauseMs must be a multiple of BlinkInterval");
     QElapsedTimer m_lastInputTime;

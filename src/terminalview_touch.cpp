@@ -779,11 +779,9 @@ void TerminalView::timerEvent(QTimerEvent *event)
         return;
     }
     if (event->timerId() == m_blinkTimerId) {
-        // Repaint for the phase-derived blink in cursorBlinkVisible().
-        // Ticks land just past each phase boundary, so jitter cannot flip
-        // the sampled window; skip the repaint while visibility is pinned
-        // solid (post-input hold or a steady DECSCUSR cursor) and re-arm
-        // for the next boundary regardless.
+        // Repaint for the phase-derived blink in cursorBlinkVisible();
+        // skip while visibility is pinned solid (nothing on screen can
+        // change) but re-arm regardless so ticks stay past phase boundaries.
         if (!blinkPinnedSolid())
             update();
         const int next = TextUtil::nextBlinkTickDelay(
