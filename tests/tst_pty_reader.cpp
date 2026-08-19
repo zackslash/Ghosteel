@@ -449,6 +449,54 @@ private slots:
         pty.stop();
     }
 
+    void testFallbackNoticePrecedesBootstrapNotice()
+    {
+        // When the user shell fails and $SHELL resolves to zsh, the
+        // fallback notice is written before the bootstrap notice: both
+        // travel fd 2 in child write order.
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString zshPath = home.path() + QStringLiteral("/zsh");
+        QVERIFY(QFile::copy(QStringLiteral("/bin/sh"), zshPath));
+        QVERIFY(QFile::setPermissions(zshPath, QFileDevice::ReadOwner
+                                                   | QFileDevice::WriteOwner
+                                                   | QFileDevice::ExeOwner));
+
+        PtyManager pty;
+        pty.setShellCommand(QStringLiteral("/nonexistent/fish"));
+        QByteArray savedHome = qgetenv("HOME");
+        QByteArray savedShell = qgetenv("SHELL");
+        qputenv("HOME", home.path().toUtf8());
+        qputenv("SHELL", zshPath.toUtf8());
+
+        QSignalSpy noticeSpy(&pty, &PtyManager::shellFallbackNotice);
+        QSignalSpy dataSpy(&pty, &PtyManager::dataReady);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        if (!savedHome.isEmpty())
+            qputenv("HOME", savedHome.constData());
+        else
+            qunsetenv("HOME");
+        if (!savedShell.isEmpty())
+            qputenv("SHELL", savedShell.constData());
+        else
+            qunsetenv("SHELL");
+
+        QVERIFY(noticeSpy.wait(5000));
+
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            const int fallback = all.indexOf("could not be started, using");
+            const int created = all.indexOf("ghosteel: created ~/.zshrc");
+            return fallback != -1 && created != -1 && fallback < created;
+        }(), 5000);
+
+        pty.stop();
+    }
+
     void testSystemShellFallbackPreserved()
     {
         // Empty m_shellCommand + bad $SHELL should fall back to sh
