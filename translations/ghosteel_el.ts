@@ -574,4 +574,15 @@ Powered by libghostty terminal engine</source>
         <translation>Αδυναμία εκκίνησης του «%1» (%2). Θα χρησιμοποιηθεί το «%3».</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Αδυναμία εκκίνησης του «%1», χρησιμοποιείται το «%2».</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>δημιουργήθηκε ~/.zshrc με διόρθωση της προτροπής Sailfish</translation>
+    </message>
+</context>
 </TS>

@@ -573,4 +573,15 @@ A libghostty terminálmotor hajtja</translation>
         <translation>A(z) „%1” nem indítható (%2). Helyette a(z) „%3” kerül használatra.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>A(z) „%1” nem indítható, helyette a(z) „%2” kerül használatra.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>~/.zshrc létrehozva Sailfish-promptjavítással</translation>
+    </message>
+</context>
 </TS>

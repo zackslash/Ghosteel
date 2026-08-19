@@ -574,4 +574,15 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <translation>&apos;%1&apos; ei voitu käynnistää (%2). Käytetään &apos;%3&apos;.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>&apos;%1&apos; ei voitu käynnistää, käytetään &apos;%2&apos;.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>luotiin ~/.zshrc, jossa on korjaus Sailfish-kehotteeseen</translation>
+    </message>
+</context>
 </TS>

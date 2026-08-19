@@ -577,4 +577,15 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <translation>Methwyd cychwyn &apos;%1&apos; (%2). Defnyddir &apos;%3&apos;.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Methwyd cychwyn &apos;%1&apos;, defnyddir &apos;%2&apos;.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>crëwyd ~/.zshrc gyda thrwsio prompt Sailfish</translation>
+    </message>
+</context>
 </TS>

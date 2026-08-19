@@ -573,4 +573,15 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <translation>&apos;%1&apos; başlatılamadı (%2). &apos;%3&apos; kullanılacak.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>&apos;%1&apos; başlatılamadı, &apos;%2&apos; kullanılıyor.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>~/.zshrc oluşturuldu, Sailfish istem düzeltmesiyle</translation>
+    </message>
+</context>
 </TS>

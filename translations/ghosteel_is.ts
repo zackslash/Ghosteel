@@ -574,4 +574,15 @@ Keyrt af libghostty skjáhermisvél</translation>
         <translation>Ekki tókst að ræsa &apos;%1&apos; (%2). &apos;%3&apos; verður notað í staðinn.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Ekki tókst að ræsa &apos;%1&apos;, &apos;%2&apos; er notað í staðinn.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>~/.zshrc búið til með lagfæringu á Sailfish-promptnum</translation>
+    </message>
+</context>
 </TS>

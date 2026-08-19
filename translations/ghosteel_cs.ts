@@ -575,4 +575,15 @@ Poháněno terminálovým enginem libghostty</translation>
         <translation>„%1“ se nepodařilo spustit (%2). Použije se „%3“.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“ se nepodařilo spustit, používá se „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>vytvořen ~/.zshrc s opravou výzvy Sailfish</translation>
+    </message>
+</context>
 </TS>

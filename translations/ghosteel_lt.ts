@@ -575,4 +575,15 @@ Varomas libghostty terminalo variklio</translation>
         <translation>Nepavyko paleisti „%1“ (%2). Bus naudojamas „%3“.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Nepavyko paleisti „%1“, naudojamas „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>sukurtas ~/.zshrc su Sailfish prompto pataisymu</translation>
+    </message>
+</context>
 </TS>

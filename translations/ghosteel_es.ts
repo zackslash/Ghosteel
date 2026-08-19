@@ -574,4 +574,15 @@ Impulsado por el motor de terminal libghostty</translation>
         <translation>No se pudo iniciar «%1» (%2). Se usará «%3».</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>No se pudo iniciar «%1», se usa «%2».</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>se creó ~/.zshrc con una corrección del prompt de Sailfish</translation>
+    </message>
+</context>
 </TS>

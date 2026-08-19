@@ -574,4 +574,15 @@ Alimentato dal motore di terminale libghostty</translation>
         <translation>Impossibile avviare «%1» (%2). Verrà usata «%3».</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Impossibile avviare «%1», viene usata «%2».</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>creato ~/.zshrc con una correzione del prompt Sailfish</translation>
+    </message>
+</context>
 </TS>

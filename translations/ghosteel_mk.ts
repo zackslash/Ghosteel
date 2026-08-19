@@ -575,4 +575,15 @@ Powered by libghostty terminal engine</source>
         <translation>„%1“ не може да се стартува (%2). Ќе се користи „%3“.</translation>
     </message>
 </context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“ не може да се стартува, се користи „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>создаден е ~/.zshrc со исправка на Sailfish prompt-от</translation>
+    </message>
+</context>
 </TS>
