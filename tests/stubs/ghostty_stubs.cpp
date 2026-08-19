@@ -306,14 +306,13 @@ GHOSTTY_API GhosttyResult ghostty_render_state_get_multi(
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API GhosttyResult ghostty_render_state_set(
-    GhosttyRenderState, GhosttyRenderStateOption, const void*)
+GHOSTTY_API GhosttyResult ghostty_render_state_clean(GhosttyRenderState)
 {
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API GhosttyResult ghostty_render_state_colors_get(
-    GhosttyRenderState, GhosttyRenderStateColors*)
+GHOSTTY_API GhosttyResult ghostty_render_state_set(
+    GhosttyRenderState, GhosttyRenderStateOption, const void*)
 {
     return GHOSTTY_SUCCESS;
 }
@@ -328,6 +327,14 @@ GHOSTTY_API GhosttyResult ghostty_render_state_row_iterator_new(
 GHOSTTY_API bool ghostty_render_state_row_iterator_next(
     GhosttyRenderStateRowIterator)
 {
+    return false;
+}
+
+GHOSTTY_API bool ghostty_render_state_row_iterator_next_dirty(
+    GhosttyRenderStateRowIterator, uint16_t*)
+{
+    // No render-state row model in the stubs; report no dirty rows,
+    // consistent with ghostty_render_state_row_iterator_next().
     return false;
 }
 
@@ -380,9 +387,13 @@ GHOSTTY_API GhosttyResult ghostty_render_state_row_cells_get(
 }
 
 GHOSTTY_API GhosttyResult ghostty_render_state_row_cells_get_multi(
-    GhosttyRenderStateRowCells, size_t,
-    const GhosttyRenderStateRowCellsData*, void**, size_t*)
+    GhosttyRenderStateRowCells, size_t count,
+    const GhosttyRenderStateRowCellsData*, void**, size_t* out_written)
 {
+    // No render-state row model in the stubs, so there is nothing to write;
+    // just report all keys as written. No test reads these outputs (the row
+    // iterator reports no cells), so leaving them untouched is safe.
+    if (out_written) *out_written = count;
     return GHOSTTY_SUCCESS;
 }
 

@@ -258,7 +258,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_ROWS, &rows);
 
     GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
-    ghostty_render_state_colors_get(state, &colors);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_COLORS, &colors);
 
     float bgR = colors.background.r / 255.0f;
     float bgG = colors.background.g / 255.0f;
@@ -283,21 +283,21 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_postPaletteData[i * 3 + 2] = colors.palette[i].b / 255.0f;
     }
 
-    bool cursorVisible = false, cursorInViewport = false;
-    bool cursorBlinking = true;
+    GhosttyRenderStateCursor cursor = GHOSTTY_INIT_SIZED(GhosttyRenderStateCursor);
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR, &cursor);
+
+    bool cursorVisible = cursor.visible;
+    bool cursorInViewport = cursor.viewport_has_value;
     bool cursorWideTail = false;
     uint16_t cursorX = 0, cursorY = 0;
     GhosttyRenderStateCursorVisualStyle cursorStyle = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISIBLE, &cursorVisible);
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_HAS_VALUE, &cursorInViewport);
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_BLINKING, &cursorBlinking);
     if (cursorVisible && cursorInViewport) {
-        ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_X, &cursorX);
-        ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_Y, &cursorY);
-        ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VISUAL_STYLE, &cursorStyle);
         // Cursor X sits on the spacer-tail of a wide char (head at X-1).
         // See ghostty src/renderer/generic.zig:2521-2534.
-        ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR_VIEWPORT_WIDE_TAIL, &cursorWideTail);
+        cursorX = cursor.viewport_x;
+        cursorY = cursor.viewport_y;
+        cursorStyle = cursor.visual_style;
+        cursorWideTail = cursor.wide_tail;
     }
 
     // Read blink state from TerminalView (single source of truth)
@@ -328,6 +328,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     // Read topPadding every frame (can change without font change)
     m_topPadding = m_terminalView->topPadding();
 
+    bool gridSizeChanged = (cols != m_cols || rows != m_rows);
     m_cols = cols;
     m_rows = rows;
     // Terminal item size — cols/rows were derived from width()/height() in
@@ -584,9 +585,30 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !m_forceVertexRebuild)
         return;
 
-    m_gridDirty = true;
-    buildCellVertices(state);
+    // Full rebuild when ghostty reports FULL, when a metrics change
+    // invalidated the atlas, when the grid geometry changed (incl. the
+    // first frame), or when the top padding or viewport dimensions changed
+    // (padding is baked into every row's y, and both padding and viewport
+    // dims are baked into the strip geometry, so a partial would splice
+    // clean rows/strips at the old values). Otherwise splice only the dirty
+    // rows.
+    bool full = (dirty == GHOSTTY_RENDER_STATE_DIRTY_FULL) || m_forceVertexRebuild
+                || gridSizeChanged || (m_topPadding != m_topPaddingAtBuild)
+                || (m_viewportWidth != m_viewportWidthAtBuild)
+                || (m_viewportHeight != m_viewportHeightAtBuild);
+    if (full)
+        buildCellVertices(state);
+    else
+        updateCellVertices(state);
+
+    // Consume ghostty's dirty state on every path that leaves the branch
+    // above (even when the partial walk found zero dirty rows); skipping
+    // this leaves the dirty state undrained, causing redundant rebuild work
+    // every frame. The early-return path above must NOT clean (that would
+    // drop unrendered frames).
+    ghostty_render_state_clean(state);
     m_forceVertexRebuild = false;
+    m_gridDirty = true;
     m_dirty = true;
 }
 
