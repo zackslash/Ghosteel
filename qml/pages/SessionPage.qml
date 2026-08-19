@@ -27,11 +27,14 @@ Page {
         id: renameDialogComponent
         Dialog {
             id: renameDialog
-            property int sessionIndex: -1
+            // Capture the stable session id; resolve the index fresh on accept (removal-safe).
+            property int sessionId: -1
             property string currentName: ""
             canAccept: renameField.text.trim().length > 0
             onAccepted: {
-                SessionManager.setSessionName(sessionIndex, renameField.text.trim())
+                var idx = SessionManager.sessionIndexById(sessionId)
+                if (idx < 0) return
+                SessionManager.setSessionName(idx, renameField.text.trim())
             }
             onStatusChanged: {
                 if (status === PageStatus.Active) {
@@ -62,11 +65,14 @@ Page {
         id: autorunDialogComponent
         Dialog {
             id: autorunDialog
-            property int sessionIndex: -1
+            // Capture the stable session id; resolve the index fresh on accept (removal-safe).
+            property int sessionId: -1
             property string currentCommand: ""
             canAccept: true // allow empty to clear autorun
             onAccepted: {
-                SessionManager.setSessionAutorunCommand(sessionIndex, autorunField.text.trim())
+                var idx = SessionManager.sessionIndexById(sessionId)
+                if (idx < 0) return
+                SessionManager.setSessionAutorunCommand(idx, autorunField.text.trim())
             }
             onStatusChanged: {
                 if (status === PageStatus.Active) {
@@ -242,21 +248,19 @@ Page {
                 MenuItem {
                     text: qsTr("Rename")
                     onClicked: {
-                        var dialog = renameDialogComponent.createObject(sessionPage, {
-                            sessionIndex: SessionManager.displayToActual(index),
+                        pageStack.push(renameDialogComponent, {
+                            sessionId: model.id,
                             currentName: model.name
                         })
-                        pageStack.push(dialog)
                     }
                 }
                 MenuItem {
                     text: qsTr("Autorun command")
                     onClicked: {
-                        var dialog = autorunDialogComponent.createObject(sessionPage, {
-                            sessionIndex: SessionManager.displayToActual(index),
+                        pageStack.push(autorunDialogComponent, {
+                            sessionId: model.id,
                             currentCommand: model.autorunCommand
                         })
-                        pageStack.push(dialog)
                     }
                 }
                 MenuItem {

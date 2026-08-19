@@ -146,6 +146,14 @@
         <source>Zoom out</source>
         <translation>Zmanjšaj</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tapnite med dvema tipkama za začetek nove vrstice</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Vrstica</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -460,6 +468,14 @@ Poganja terminalski pogon libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Spremeni velikost pisave seje z gesto ščipanja z dvema prstoma</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto sledi vašemu ambientu</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -546,6 +562,10 @@ Poganja terminalski pogon libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Privzeto</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Zvonček</translation>
     </message>
 </context>
 </TS>

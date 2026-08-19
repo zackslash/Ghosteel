@@ -96,15 +96,19 @@ public:
     Q_INVOKABLE void setSortMode(int mode);
 
     // Single-instance guard: returns true if another instance is already running.
-    // Call before creating SessionManager. If true, a "raise" message was sent
-    // to the existing instance and the caller should exit.
+    // The pending CLI request (exec:/switch: payload built from the -e/-s
+    // arguments) is encoded and sent to the running instance — with no CLI
+    // args a plain raise is sent — then the caller should exit. Call before
+    // creating SessionManager.
     static bool checkSingleInstance(const QString &execCommand = QString(),
                                     const QStringList &execArgs = QStringList(),
                                     const QString &sessionName = QString());
 
     // Start the single-instance socket server. Call after D-Bus registration
     // so that future instances can detect this one.
-    void startSingleInstanceServer();
+    // Returns false when another running instance was detected (caller must
+    // exit), true otherwise (including best-effort listen failures).
+    bool startSingleInstanceServer();
 
     // Store CLI arguments for deferred processing after QML initialization.
     void setCliArgs(const QString &execCommand, const QStringList &execArgs,
@@ -170,14 +174,14 @@ private Q_SLOTS:
 private:
     // Index model:
     //   m_sessions       — actual sessions, in creation/persistence order.
-    //   m_sortedIndices  — display→actual map; m_sortedIndices[d] is the actual
+    //   m_sortedIndices  — display->actual map; m_sortedIndices[d] is the actual
     //                      index shown at QML row d. Always populated for a
     //                      non-empty session set (identity order under SortManual).
     //   rowCount()/data()/beginInsertRows/etc. speak DISPLAY indices.
     //   sessionName()/setSessionName()/etc. speak ACTUAL indices.
     //   QML converts via displayToActual(index) where needed.
     QVector<SessionInfo> m_sessions;
-    QVector<int> m_sortedIndices; // display index → actual m_sessions index
+    QVector<int> m_sortedIndices; // display index -> actual m_sessions index
     int m_activeSessionIndex = -1;
     int m_nextSessionId = 1;
 

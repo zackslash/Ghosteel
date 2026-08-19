@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Vähenda</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Puuduta kahe klahvi vahel, et alustada uut rida</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rida</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Toetab libghostty terminalimootorit</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Muuda seansi fondi suurust kahe sõrme näpistamisežestiga</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto järgib teie õhustikku</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Toetab libghostty terminalimootorit</translation>
     <message>
         <source>Default</source>
         <translation>Vaikimisi</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Häire</translation>
     </message>
 </context>
 </TS>

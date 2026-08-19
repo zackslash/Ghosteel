@@ -16,12 +16,14 @@ class Settings : public QObject
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
     Q_PROPERTY(QString shellCommand READ shellCommand WRITE setShellCommand NOTIFY shellCommandChanged)
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
+    Q_PROPERTY(bool followAmbience READ followAmbience WRITE setFollowAmbience NOTIFY followAmbienceChanged)
     Q_PROPERTY(float backgroundOpacity READ backgroundOpacity WRITE setBackgroundOpacity NOTIFY backgroundOpacityChanged)
     Q_PROPERTY(int bellMode READ bellMode WRITE setBellMode NOTIFY bellModeChanged)
     Q_PROPERTY(bool scrollbackPersistence READ scrollbackPersistence WRITE setScrollbackPersistence NOTIFY scrollbackPersistenceChanged)
     Q_PROPERTY(int scrollbackRetentionDays READ scrollbackRetentionDays WRITE setScrollbackRetentionDays NOTIFY scrollbackRetentionDaysChanged)
     Q_PROPERTY(QStringList keybarKeys READ keybarKeys WRITE setKeybarKeys NOTIFY keybarKeysChanged)
     Q_PROPERTY(bool keybarVisible READ keybarVisible WRITE setKeybarVisible NOTIFY keybarVisibleChanged)
+    Q_PROPERTY(QVariantList keybarRowBreaks READ keybarRowBreaks WRITE setKeybarRowBreaks NOTIFY keybarRowBreaksChanged)
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
     Q_PROPERTY(bool pinchToZoom READ pinchToZoom WRITE setPinchToZoom NOTIFY pinchToZoomChanged)
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
@@ -51,7 +53,9 @@ public:
     // Exposed for SessionManager's group-based persistence
     QSettings &raw() { return m_settings; }
 
-    // Public: called by SessionManager after writing via raw()
+    // Internal save plumbing: scheduleSave() arms the debounce timer used by
+    // this class's own setters; save() flushes immediately (sole caller:
+    // SessionStore, after writing via raw()).
     void save();
     void scheduleSave();
 
@@ -68,6 +72,9 @@ public:
 
     QString colorScheme() const { return m_colorScheme; }
     void setColorScheme(const QString &scheme);
+
+    bool followAmbience() const { return m_followAmbience; }
+    void setFollowAmbience(bool enabled);
 
     float backgroundOpacity() const { return m_backgroundOpacity; }
     void setBackgroundOpacity(float opacity);
@@ -86,6 +93,9 @@ public:
 
     bool keybarVisible() const { return m_keybarVisible; }
     void setKeybarVisible(bool visible);
+
+    QVariantList keybarRowBreaks() const { return m_keybarRowBreaks; }
+    void setKeybarRowBreaks(const QVariantList &breaks);
 
     int sessionSortMode() const { return m_sessionSortMode; }
     void setSessionSortMode(int mode);
@@ -118,12 +128,14 @@ Q_SIGNALS:
     void fontFamilyChanged();
     void shellCommandChanged();
     void colorSchemeChanged();
+    void followAmbienceChanged();
     void backgroundOpacityChanged();
     void bellModeChanged();
     void scrollbackPersistenceChanged();
     void scrollbackRetentionDaysChanged();
     void keybarKeysChanged();
     void keybarVisibleChanged();
+    void keybarRowBreaksChanged();
     void sessionSortModeChanged();
     void cursorTrailsChanged();
     void pinchToZoomChanged();
@@ -136,6 +148,7 @@ Q_SIGNALS:
 private:
     explicit Settings(QObject *parent = nullptr);
     void load();
+    QVariantList sanitizeRowBreaks(const QVariantList &breaks) const;
 
     QSettings m_settings;
     QTimer *m_saveTimer;
@@ -143,12 +156,14 @@ private:
     QString m_fontFamily = QStringLiteral("monospace");
     QString m_shellCommand;
     QString m_colorScheme = QStringLiteral("dark");
+    bool m_followAmbience = true; // default: on — follows ambience
     float m_backgroundOpacity = 0.6f;
     int m_bellMode = 1; // default: Vibrate
     bool m_scrollbackPersistence = false; // default: off (opt-in)
     int m_scrollbackRetentionDays = 30;
     QStringList m_keybarKeys;
     bool m_keybarVisible = true;
+    QVariantList m_keybarRowBreaks;
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
     bool m_cursorTrails = true; // default: ON — matches load() default
     bool m_pinchToZoom = false; // default: OFF — pinch gesture changes font size

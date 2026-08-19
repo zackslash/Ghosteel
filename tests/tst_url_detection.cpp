@@ -236,6 +236,22 @@ private slots:
         QCOMPARE(spans[0].uri, QStringLiteral("https://example.com"));
     }
 
+    void urlInQuotes()
+    {
+        // Trailing " and ' are trimmed by the (?<![,.:;'"']) lookbehind, so
+        // the captured URI has no trailing quote.
+        QString flat; QVector<TextUtil::CellCoord> map;
+        buildSingleLine("echo \"see https://ghostty.org\"", 30, flat, map);
+        auto spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://ghostty.org"));
+
+        buildSingleLine("echo 'see https://ghostty.org'", 30, flat, map);
+        spans = TextUtil::findUrls(flat, map);
+        QCOMPARE(spans.size(), 1);
+        QCOMPARE(spans[0].uri, QStringLiteral("https://ghostty.org"));
+    }
+
     void multipleUrls()
     {
         QString flat; QVector<TextUtil::CellCoord> map;

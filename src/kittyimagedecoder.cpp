@@ -82,7 +82,6 @@ static bool decodePngCallback(void* /*userdata*/,
         }
     }
 
-    // Convert to RGBA8888
     img = img.convertToFormat(QImage::Format_RGBA8888);
 
     const int w = img.width();

@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Réduire</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Touchez entre deux touches pour démarrer une nouvelle ligne</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ligne</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -258,7 +266,7 @@
     </message>
     <message>
         <source>Bell</source>
-        <translation>Sonnerie</translation>
+        <translation>Signal sonore</translation>
     </message>
     <message>
         <source>Color scheme</source>
@@ -458,6 +466,14 @@ Propulsé par le moteur de terminal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Modifier la taille de police de la session avec un geste de pincement à deux doigts</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto suit votre ambiance</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Propulsé par le moteur de terminal libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Par défaut</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Signal sonore</translation>
     </message>
 </context>
 </TS>

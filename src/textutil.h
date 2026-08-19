@@ -48,7 +48,9 @@ Dimensions calculateDimensions(int width, int height, int cellWidth, int cellHei
 // This is intentionally broad so that CJK and other scripts are treated as words.
 bool isWordChar(uint32_t codepoint);
 
-// URL detection — matches scheme URLs, file paths, and bare relative paths.
+// URL detection — matches scheme-prefixed URLs (http(s)/ftp with host,
+// file/git/ipfs/ipns/gemini/gopher, and ssh/mailto/tel/magnet/news).
+// No bare or relative paths: every alternative requires a scheme.
 // Ported from Ghostty's config/url.zig (Oniguruma regex).
 struct LinkSpan {
     int startCol;
@@ -68,6 +70,14 @@ const QRegularExpression &urlRegex();
 struct CellCoord { uint16_t col; uint16_t row; };
 QVector<LinkSpan> findUrls(const QString &flatText,
                            const QVector<CellCoord> &charMap);
+
+// Determines whether a terminal row is soft-wrapped (content continues
+// on the next row without a hard newline). Primary: the terminal WRAP
+// flag (set by autowrap on program output). Fallback: full-width
+// heuristic for shell/readline wrapping which positions the cursor
+// manually instead of triggering autowrap. May false-positive on an
+// exact-width input line followed by Enter.
+bool isSoftWrapped(bool wrapFlag, bool lastCellHadContent);
 
 } // namespace TextUtil
 

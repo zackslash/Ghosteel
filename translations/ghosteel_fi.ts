@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Loitonna</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Napauta kahden näppäimen välissä aloittaaksesi uuden rivin</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rivi</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Muuta istunnon fontin kokoa kahden sormen nipistys-eleellä</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automaattinen seuraa ympäristöäsi</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automaattinen</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Käyttää libghostty-pääteohjelmaa</translation>
     <message>
         <source>Default</source>
         <translation>Oletus</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Äänimerkki</translation>
     </message>
 </context>
 </TS>

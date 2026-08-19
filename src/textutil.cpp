@@ -105,7 +105,7 @@ const QRegularExpression &urlRegex()
     // Thread-safe: initialized once on first call.
     static QRegularExpression re(
         QStringLiteral(
-            R"url((?:(?:https?|ftp)://(?:\[[0-9a-fA-F:]+\](?::\d+)?(?:/[\w\-._~:/?#@!$&*+,;=%]*)?|(?=[^\s/?#]*\.)[^()\[\],;\s]+)|(?:file|git|ipfs|ipns|gemini|gopher)://[^()\[\],;\s]+|(?:ssh|mailto|tel|magnet|news):[^()\[\],;\s]+)(?:[\(\[]\w*[\)\]])?(?<![,.:;]))url"
+            R"url((?:(?:https?|ftp)://(?:\[[0-9a-fA-F:]+\](?::\d+)?(?:/[\w\-._~:/?#@!$&*+,;=%]*)?|(?=[^\s/?#]*\.)[^()\[\],;\s]+)|(?:file|git|ipfs|ipns|gemini|gopher)://[^()\[\],;\s]+|(?:ssh|mailto|tel|magnet|news):[^()\[\],;\s]+)(?:[\(\[]\w*[\)\]])?(?<![,.:;'"']))url"
         )
     );
     return re;
@@ -163,6 +163,13 @@ QVector<LinkSpan> findUrls(const QString &flatText,
     }
 
     return results;
+}
+
+bool isSoftWrapped(bool wrapFlag, bool lastCellHadContent)
+{
+    if (wrapFlag)
+        return true;
+    return lastCellHadContent;
 }
 
 } // namespace TextUtil

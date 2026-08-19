@@ -49,7 +49,7 @@ private slots:
 
     void testPkcs7PadExactBlock()
     {
-        // 16 bytes input → needs full 16-byte padding block
+        // 16 bytes input -> needs full 16-byte padding block
         QByteArray data(16, 'A');
         QByteArray padded = ScrollEncryptor::pkcs7Pad(data);
         QCOMPARE(padded.size(), 32);
@@ -58,7 +58,7 @@ private slots:
 
     void testPkcs7PadPartialBlock()
     {
-        // 10 bytes input → needs 6 bytes of padding
+        // 10 bytes input -> needs 6 bytes of padding
         QByteArray data(10, 'B');
         QByteArray padded = ScrollEncryptor::pkcs7Pad(data);
         QCOMPARE(padded.size(), 16);
@@ -101,7 +101,7 @@ private slots:
 
     void testPkcs7UnpadFullBlock()
     {
-        // 16 bytes of 0x10 → empty after unpad
+        // 16 bytes of 0x10 -> empty after unpad
         QByteArray data(16, '\x10');
         QByteArray unpadded = ScrollEncryptor::pkcs7Unpad(data);
         QCOMPARE(unpadded.size(), 0);
@@ -109,14 +109,14 @@ private slots:
 
     void testPkcs7UnpadInvalidPaddingByte()
     {
-        // Padding byte 0 → invalid
+        // Padding byte 0 -> invalid
         QByteArray data(16, '\x00');
         QCOMPARE(ScrollEncryptor::pkcs7Unpad(data), QByteArray());
     }
 
     void testPkcs7UnpadInconsistentPadding()
     {
-        // Mix of padding values → invalid
+        // Mix of padding values -> invalid
         QByteArray data("HELLO");
         data.append('\x0B');
         data.append('\x0C'); // inconsistent
@@ -126,7 +126,7 @@ private slots:
 
     void testPkcs7UnpadPaddingTooLarge()
     {
-        // Padding byte 17 → invalid (> 16)
+        // Padding byte 17 -> invalid (> 16)
         QByteArray data(16, '\x11');
         QCOMPARE(ScrollEncryptor::pkcs7Unpad(data), QByteArray());
     }
@@ -174,6 +174,19 @@ private slots:
 
         QCOMPARE(spy.count(), 1);
         QCOMPARE(encryptor.isAvailable(), false);
+    }
+
+    void testEncryptAsyncUnavailableDoesNotInvokeCallback()
+    {
+        // Stub contract: encryption is never available here, so encryptAsync()
+        // must return false and never invoke the callback.
+        ScrollEncryptor encryptor;
+        bool invoked = false;
+        const bool ok = encryptor.encryptAsync(QByteArray("secret scrollback"),
+            [&invoked](const QByteArray &) { invoked = true; });
+
+        QCOMPARE(ok, false);
+        QCOMPARE(invoked, false);
     }
 };
 

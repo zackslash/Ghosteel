@@ -1,4 +1,5 @@
 #include "terminalview.h"
+#include <QTimer>
 #include <algorithm>
 
 namespace {
@@ -16,7 +17,6 @@ void TerminalView::openSearch()
 
     if (m_vt) {
         m_searchCache = m_vt->extractSearchText();
-        buildCellMapping();
     }
 
     clearSelection();
@@ -29,90 +29,26 @@ void TerminalView::closeSearch()
 
     m_searchActive = false;
     m_searchPattern.clear();
-    m_searchCache.clear();
-    m_cellMapping.clear();
+    m_searchCache = VtSearchText();
     m_searchMatches.clear();
     m_currentMatchIndex = -1;
+    if (m_searchRefreshTimer)
+        m_searchRefreshTimer->stop();
     update();
     Q_EMIT searchMatchCountChanged();
     Q_EMIT currentMatchIndexChanged();
 }
 
-void TerminalView::buildCellMapping()
-{
-    // Wide chars take 2 cells; supplementary-plane codepoints (emoji)
-    // expand to 2 QChars (surrogate pair) in the QString. Each cell's
-    // mapping must reflect the actual QChar count of its grapheme cluster,
-    // or every subsequent cell in the row will be mis-aligned.
-    // Mirrors refreshLinks() (terminalview_links.cpp:96-110) which emits
-    // supplementary codepoints as two QChars pointing at the same cell.
-    m_cellMapping.clear();
-    m_cellMapping.reserve(m_searchCache.size());
-    size_t totalRows = 0;
-    uint16_t cols = 0;
-    GhosttyTerminal terminal = m_vt ? m_vt->terminal() : nullptr;
-    if (terminal) {
-        ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_TOTAL_ROWS, &totalRows);
-        ghostty_terminal_get(terminal, GHOSTTY_TERMINAL_DATA_COLS, &cols);
-    }
-    if (!terminal || cols == 0) {
-        m_cellMapping.resize(m_searchCache.size());
-        return;
-    }
-    const int colsInt = static_cast<int>(cols);
-    uint32_t graphemeBuf[128];
-    for (int row = 0; row < m_searchCache.size(); row++) {
-        QVector<int> mapping;
-        if (row < static_cast<int>(totalRows)) {
-            mapping.resize(colsInt);
-            int charIdx = 0;
-            const QString &line = m_searchCache[row];
-            for (int cell = 0; cell < colsInt; cell++) {
-                mapping[cell] = charIdx;
-
-                GhosttyPoint point = {};
-                point.tag = GHOSTTY_POINT_TAG_SCREEN;
-                point.value.coordinate.x = static_cast<uint16_t>(cell);
-                point.value.coordinate.y = static_cast<uint32_t>(row);
-                GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
-                if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS)
-                    continue;
-
-                // Spacers carry no grapheme — charIdx stays put for the next cell.
-                GhosttyCell cellData = 0;
-                if (ghostty_grid_ref_cell(&ref, &cellData) == GHOSTTY_SUCCESS
-                        && GhosttyVt::isWideSpacerCell(cellData)) {
-                    continue;
-                }
-
-                // Count QChars the cell contributes to the QString:
-                // BMP codepoint = 1, supplementary (e.g. emoji) = 2 (surrogate pair).
-                int advance = 1; // blank cell — extractSearchText appends one space
-                size_t graphemeLen = 0;
-                if (ghostty_grid_ref_graphemes(&ref, graphemeBuf, 128, &graphemeLen)
-                        == GHOSTTY_SUCCESS && graphemeLen > 0) {
-                    advance = 0;
-                    for (size_t g = 0; g < graphemeLen; ++g)
-                        advance += (graphemeBuf[g] > 0xFFFF) ? 2 : 1;
-                }
-                if (charIdx < line.size())
-                    charIdx = std::min(charIdx + advance, line.size());
-            }
-        }
-        m_cellMapping.append(mapping);
-    }
-}
-
 void TerminalView::setSearchPattern(const QString &pattern)
 {
-    if (pattern == m_searchPattern)
+    QString trimmed = pattern.trimmed();
+    if (trimmed == m_searchPattern)
         return;
 
-    m_searchPattern = pattern;
+    m_searchPattern = trimmed;
 
-    if (m_vt && (m_searchCache.isEmpty() || m_vt->isSearchTextDirty())) {
+    if (m_vt && (m_searchCache.lines.isEmpty() || m_vt->isSearchTextDirty())) {
         m_searchCache = m_vt->extractSearchText();
-        buildCellMapping();
     }
 
     performSearch();
@@ -128,59 +64,63 @@ void TerminalView::performSearch()
     m_searchMatches.clear();
     m_currentMatchIndex = -1;
 
-    if (m_searchPattern.isEmpty() || m_searchCache.isEmpty()) {
+    if (m_searchPattern.isEmpty() || m_searchCache.lines.isEmpty()
+        || m_searchCache.logicalLines.isEmpty()) {
         Q_EMIT searchMatchCountChanged();
         Q_EMIT currentMatchIndexChanged();
         return;
     }
 
+    const int patternLen = m_searchPattern.size();
+    int logicalMatches = 0;
     bool searchDone = false;
-    for (int row = 0; row < m_searchCache.size() && !searchDone; row++) {
+
+    // Match against the logical lines (autowrap continuations joined, see
+    // extractSearchText), so a phrase spanning a wrap boundary is found.
+    // Each match is split into one SearchMatchSegment per spanned physical
+    // row, keeping highlighting, scrollbar geometry and scrollToMatch (all
+    // per physical row) unchanged.
+    for (int li = 0; li < m_searchCache.logicalLines.size() && !searchDone; li++) {
+        const QString &joined = m_searchCache.logicalLines[li];
         int col = 0;
-        const QString &line = m_searchCache[row];
-        while (col < line.size()) {
-            int idx = line.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
+        while (col < joined.size()) {
+            int idx = joined.indexOf(m_searchPattern, col, Qt::CaseInsensitive);
             if (idx < 0)
                 break;
 
-            int cellCol = idx; // ASCII default; mapping below adjusts for wide chars.
-            int cellWidth = m_searchPattern.size();
-            if (row < m_cellMapping.size() && !m_cellMapping[row].isEmpty()) {
-                const QVector<int> &mapping = m_cellMapping[row];
-                for (int cell = 0; cell < mapping.size(); cell++) {
-                    if (mapping[cell] == idx) {
-                        cellCol = cell;
-                        break;
-                    }
-                }
-                int matchEnd = idx + m_searchPattern.size();
-                cellWidth = 0;
-                for (int cell = cellCol; cell < mapping.size(); cell++) {
-                    if (mapping[cell] >= matchEnd)
-                        break;
-                    cellWidth++;
-                }
-                // Extend cellWidth past a trailing wide-char spacer tail: the spacer
-                // shares the next cell's charIdx in the mapping (spacers don't advance it).
-                // Note: assumes TAIL spacers (CJK/emoji wide chars); HEAD spacers (rare RTL)
-                // would also satisfy mapping[tail]==mapping[tail+1] and may over-extend.
-                int tail = cellCol + cellWidth;
-                if (tail < mapping.size() && tail + 1 < mapping.size()
-                    && mapping[tail] == mapping[tail + 1]) {
-                    cellWidth++;
-                }
-                if (cellWidth == 0)
-                    cellWidth = 1;
-            }
+            const QVector<SearchMatchSegment> segments =
+                GhosttyVt::splitSearchMatch(m_searchCache, li, idx, patternLen);
+            m_searchMatches += segments;
 
-            m_searchMatches.append({row, cellCol, cellWidth});
-            if (m_searchMatches.size() >= kMaxSearchMatches) {
+            // The kMaxSearchMatches cap counts logical matches, not the
+            // per-row segments appended above. The QML "n / total" counter
+            // and m_currentMatchIndex index the segment vector (the
+            // renderer's contract); the stable_sort below restores row order
+            // across overlapping matches.
+            logicalMatches++;
+            if (logicalMatches >= kMaxSearchMatches) {
                 searchDone = true;
                 break;
             }
             col = idx + 1;
         }
     }
+
+    // Renderer contract: glrenderer_geometry.cpp binary-searches this vector
+    // by row (std::lower_bound) and early-breaks past the viewport, so the
+    // segments must be sorted by (row, cellCol). The walk above emits them in
+    // match-start order, and an overlapping match can begin on an earlier row
+    // than the previous match's last segment (rows "aaa"/"aaa", pattern
+    // "aaaa" → [0,0] [1,0] [0,1] ...). stable_sort restores the contract.
+    // Side effect on navigation: a logical match's segments can end up
+    // interleaved with an overlapping neighbor's, so findNext/findPrevious
+    // step per segment in visual (row) order — every segment is still visited
+    // exactly once, in ascending highlight order.
+    std::stable_sort(m_searchMatches.begin(), m_searchMatches.end(),
+                     [](const SearchMatchSegment &a, const SearchMatchSegment &b) {
+                         return a.row < b.row
+                             || (a.row == b.row && a.cellCol < b.cellCol);
+                     });
 
     if (!m_searchMatches.isEmpty())
         m_currentMatchIndex = 0;
@@ -252,7 +192,6 @@ void TerminalView::refreshSearchCachePreservingMatch()
         ? m_searchMatches[m_currentMatchIndex].row : -1;
 
     m_searchCache = m_vt->extractSearchText();
-    buildCellMapping();
     performSearch();
 
     if (prevRow >= 0) {
@@ -266,7 +205,13 @@ void TerminalView::refreshSearchCachePreservingMatch()
                 bestIdx = i;
             }
         }
-        m_currentMatchIndex = bestIdx;
+        // performSearch() already emitted with the reset value; only notify
+        // QML again when the preserved-match reassignment actually moved it
+        // (otherwise the "n / total" indicator stays in sync).
+        if (bestIdx != m_currentMatchIndex) {
+            m_currentMatchIndex = bestIdx;
+            Q_EMIT currentMatchIndexChanged();
+        }
     }
 }
 

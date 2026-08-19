@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Zoom ud</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tryk mellem to taster for at starte en ny række</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Række</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Drevet af libghostty terminalmotor</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Skift skriftstørrelse i sessionen med en tofingerknib-bevægelse</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto følger dit miljø</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Drevet af libghostty terminalmotor</translation>
     <message>
         <source>Default</source>
         <translation>Standard</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Signal</translation>
     </message>
 </context>
 </TS>

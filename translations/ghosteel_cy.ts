@@ -147,6 +147,14 @@
         <source>Zoom out</source>
         <translation>Chwyddo allan</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tapiwch rhwng dwy allwedd i gychwyn rhes newydd</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rhes</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -461,6 +469,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Newid maint ffont y sesiwn gyda ystum gwasgu dau bys</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto yn dilyn eich amgylchedd</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -547,6 +563,10 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Rhagosodedig</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Cloch</translation>
     </message>
 </context>
 </TS>

@@ -1,5 +1,6 @@
 #include "glrenderer.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace {
@@ -16,6 +17,41 @@ void GLRenderer::Renderer::createVBO()
     m_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     m_vbo.create();
     m_vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+}
+
+void GLRenderer::Renderer::bindCellVertexFormat()
+{
+    // Bind the cell VBO and (re-)establish the interleaved CellVertex layout
+    // for the cell program. ES2 has no VAOs, so attrib enable/pointer state is
+    // global and other passes (kitty) may have repointed the same attribute
+    // indices at their own buffers — re-assert everything before every draw of
+    // the split cell pass.
+    m_vbo.bind();
+    const int stride = 13 * sizeof(float);
+    if (m_positionAttr >= 0) {
+        glEnableVertexAttribArray(m_positionAttr);
+        glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
+    }
+    if (m_texcoordAttr >= 0) {
+        glEnableVertexAttribArray(m_texcoordAttr);
+        glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(2 * sizeof(float)));
+    }
+    if (m_fgColorAttr >= 0) {
+        glEnableVertexAttribArray(m_fgColorAttr);
+        glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(4 * sizeof(float)));
+    }
+    if (m_bgColorAttr >= 0) {
+        glEnableVertexAttribArray(m_bgColorAttr);
+        glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(8 * sizeof(float)));
+    }
+    if (m_decoAttr >= 0) {
+        glEnableVertexAttribArray(m_decoAttr);
+        glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<void*>(12 * sizeof(float)));
+    }
 }
 
 void GLRenderer::Renderer::createFlatVBO()
@@ -69,7 +105,7 @@ void GLRenderer::Renderer::buildMagnifierVertices(int fboW, int fboH)
     int destX = static_cast<int>(fingerPos.x()) - TerminalView::MagnifierWidth / 2;
     int destY = static_cast<int>(fingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
 
-    // destY < 0 ⇒ magnifier would clip top → flip below finger
+    // destY < 0 ⇒ magnifier would clip top -> flip below finger
     if (destY < 0)
         destY = static_cast<int>(fingerPos.y()) + TerminalView::MagnifierOffset;
     destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);
@@ -103,7 +139,6 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
     m_flatVertices.clear();
     m_flatVertexCount = 0;
 
-    // Selection highlights
     if (m_selecting && m_selStart != m_selEnd) {
         float a = m_selectionHighlightColor.alphaF();
         float r = m_selectionHighlightColor.redF() * a;
@@ -136,23 +171,19 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         }
     }
 
-    // Search highlights
     if (m_searchActive && !m_searchMatches.isEmpty()) {
         int scrollOffset = m_scrollOffset;
         int visibleStartRow = scrollOffset;
         int visibleEndRow = scrollOffset + m_rows;
 
-        int startIdx = 0;
-        for (int i = 0; i < m_searchMatches.size(); ++i) {
-            if (m_searchMatches[i].row >= visibleStartRow) {
-                startIdx = i;
-                break;
-            }
-            if (m_searchMatches[i].row > visibleEndRow) {
-                startIdx = m_searchMatches.size();
-                break;
-            }
-        }
+        // m_searchMatches is sorted by row — binary search for the first
+        // match at/after the visible range instead of a linear scan of up to
+        // 10k matches every frame. The draw loop below breaks as soon as a
+        // match passes visibleEndRow, so no further pre-filtering is needed.
+        const auto firstVisible = std::lower_bound(
+            m_searchMatches.begin(), m_searchMatches.end(), visibleStartRow,
+            [](const SearchMatchSegment &m, int row) { return m.row < row; });
+        int startIdx = static_cast<int>(firstVisible - m_searchMatches.begin());
 
         for (int i = startIdx; i < m_searchMatches.size(); ++i) {
             const auto &match = m_searchMatches[i];
@@ -186,7 +217,6 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         }
     }
 
-    // Link underlines
     if (!m_linkSpans.isEmpty()) {
         float la = kLinkA / 255.0f;
         float lr = (kLinkR / 255.0f) * la;
@@ -216,7 +246,6 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         }
     }
 
-    // Shell exit overlay (full-screen semi-transparent rect)
     if (m_shellExited) {
         float a = m_shellExitOverlayColor.alphaF();
         float r = m_shellExitOverlayColor.redF() * a;
@@ -235,7 +264,6 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
         m_flatVertices << x0 << y1 << r << g << b << a;
     }
 
-    // Selection handles (tessellated circles)
     if (m_handlesVisible && m_selecting && !m_magnifierVisible && m_selStart != m_selEnd) {
         int sr = qBound(0, static_cast<int>(m_selStart.y() - m_topPadding) / m_cellHeight, m_rows - 1);
         int sc = qBound(0, static_cast<int>(m_selStart.x()) / m_cellWidth, m_cols - 1);
@@ -247,25 +275,21 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
             qSwap(sc, ec);
         }
 
-        // Border
         float ba = m_selectionHandleBorderColor.alphaF();
         float br = m_selectionHandleBorderColor.redF() * ba;
         float bg = m_selectionHandleBorderColor.greenF() * ba;
         float bb = m_selectionHandleBorderColor.blueF() * ba;
 
-        // Fill
         float fa = m_selectionHandleColor.alphaF();
         float fr = m_selectionHandleColor.redF() * fa;
         float fg = m_selectionHandleColor.greenF() * fa;
         float fb = m_selectionHandleColor.blueF() * fa;
 
-        // Start handle — border then fill
         float sx = sc * m_cellWidth;
         float sy = (sr + 1) * m_cellHeight + m_topPadding;
         appendCircle(sx, sy, TerminalView::HandleRadius + 2, br, bg, bb, ba);
         appendCircle(sx, sy, TerminalView::HandleRadius, fr, fg, fb, fa);
 
-        // End handle — border then fill
         float ex = (ec + 1) * m_cellWidth;
         float ey = (er + 1) * m_cellHeight + m_topPadding;
         appendCircle(ex, ey, TerminalView::HandleRadius + 2, br, bg, bb, ba);
@@ -316,9 +340,8 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
     }
 }
 
-void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
+void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
 {
-    m_cellVertices.clear();
     m_cellVertices.reserve(m_cols * m_rows * 6);
 
     float bgAlpha = m_bgOpacity;
@@ -342,7 +365,6 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
         int x = 0;
         int colIdx = 0;
         while (ghostty_render_state_row_cells_next(cells)) {
-            // Wide flag
             GhosttyCell rawCell = 0;
             GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
             if (ghostty_render_state_row_cells_get(cells,
@@ -390,7 +412,6 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
             float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
             float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
 
-            // Glyph lookup
             uint32_t graphemesLen = 0;
             ghostty_render_state_row_cells_get(
                 cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_LEN,
@@ -437,7 +458,7 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
     // Fill the cell-grid leftover (width % cellWidth, often ~1px) so the FBO
     // is bg-filled edge-to-edge — without this the transparent clear-color
     // strip shows as a gap when content slides during a session swipe.
-    // Texcoord (0,0) → atlas reserved transparent pixel → bg-only output
+    // Texcoord (0,0) -> atlas reserved transparent pixel -> bg-only output
     // (same as empty cells). Strips split on the grid boundary to avoid
     // double-applying the premultiplied bg at the corner.
     float sAlpha = m_bgOpacity;
@@ -482,5 +503,26 @@ void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
         m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x0, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
+    }
+}
+
+void GLRenderer::Renderer::buildCellVertices(GhosttyRenderState state)
+{
+    // Rasterizing a glyph can fill the atlas mid-walk: clearAtlas() wipes the
+    // texture and restarts shelf packing, so every quad emitted before the
+    // wipe holds UVs into the now-repacked region (visible corruption until
+    // the next rebuild). Capture the epoch; if it changed by the end of the
+    // walk, rebuild once. The single retry handles the common single-wipe case
+    // (the glyph caches are warm after the first pass). If wipes cascade
+    // (working set exceeds the atlas) the retry itself can hold stale UVs —
+    // accepted rather than looping.
+    const int startEpoch = m_atlas.epoch();
+
+    m_cellVertices.clear();
+    appendCellVertices(state);
+
+    if (m_atlas.epoch() != startEpoch) {
+        m_cellVertices.clear();
+        appendCellVertices(state);
     }
 }

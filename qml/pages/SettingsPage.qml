@@ -6,7 +6,8 @@ Page {
     id: settingsPage
     allowedOrientations: Orientation.All
 
-    property var colorSchemes: ["dark", "light"]
+    property var colorSchemes: ["auto", "dark", "light"]
+    property bool updatingScheme: false
 
     SilicaFlickable {
         anchors.fill: parent
@@ -17,16 +18,20 @@ Page {
                 text: qsTr("Reset to defaults")
                 onClicked: {
                     Settings.fontSize = 18           // Reset global default for new sessions
+                    fontSlider.value = 18            // Re-sync the handle: the value binding breaks while dragging
                     SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
                     bellModeCombo.currentIndex = 1
-                    schemeCombo.currentIndex = 0
+                    schemeCombo.currentIndex = 0 // Auto
+                    Settings.followAmbience = true
                     opacitySlider.value = 0.6
                     cursorTrailsToggle.checked = true
                     urlAutoDetectToggle.checked = true
+                    Settings.kittyGraphics = true
                     Settings.customShaderPath = ""
                     scrollbackToggle.checked = false
                     retentionCombo.currentIndex = 1  // 30 days
+                    Settings.keybarRowBreaks = []
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
                     Settings.keybarVisible = true
                     pinchToZoomToggle.checked = false
@@ -102,18 +107,28 @@ Page {
                 id: schemeCombo
                 width: parent.width
                 label: qsTr("Color scheme")
-                currentIndex: {
-                    var idx = colorSchemes.indexOf(Settings.colorScheme)
-                    return idx >= 0 ? idx : 0
-                }
+                description: Settings.followAmbience ? qsTr("Auto follows your ambience") : ""
+                // 0=Auto, 1=Dark, 2=Light — matches menu order; followAmbience takes precedence
+                currentIndex: Settings.followAmbience ? 0
+                    : (Settings.colorScheme === "light" ? 2 : 1)
 
                 menu: ContextMenu {
+                    MenuItem { text: qsTr("Auto") }
                     MenuItem { text: qsTr("Dark") }
                     MenuItem { text: qsTr("Light") }
                 }
 
                 onCurrentIndexChanged: {
-                    Settings.colorScheme = colorSchemes[currentIndex]
+                    if (updatingScheme) return
+                    updatingScheme = true
+                    var choice = colorSchemes[currentIndex]
+                    if (choice === "auto") {
+                        Settings.followAmbience = true
+                    } else {
+                        Settings.followAmbience = false
+                        Settings.colorScheme = choice
+                    }
+                    updatingScheme = false
                 }
             }
 

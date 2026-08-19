@@ -14,6 +14,7 @@
 #include "textutil.h"
 
 class PtyManager;
+class QTimer;
 
 class TerminalView : public QQuickItem
 {
@@ -39,9 +40,6 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(bool sessionSwipeEnabled READ sessionSwipeEnabled WRITE setSessionSwipeEnabled NOTIFY sessionSwipeEnabledChanged)
 
 public:
-    // Scrollback search match
-    struct SearchMatch { int row; int cellCol; int cellWidth; };
-
     explicit TerminalView(QQuickItem *parent = nullptr);
     ~TerminalView();
 
@@ -51,6 +49,11 @@ public:
     int stickyModifiers() const { return m_stickyModifiers; }
     void setStickyModifiers(int mods);
     QString selectedText() const { return m_selectedText; }
+    // Number of highlight segments, not logical matches: a phrase spanning a
+    // wrap boundary is split into one segment per physical row. The per-row
+    // split is deliberate — cross-wrap phrases count per physical row — and
+    // both the QML "n / total" counter and findNext/findPrevious step per
+    // segment (segments are the renderer's and the scrollbar's unit).
     int searchMatchCount() const { return m_searchMatches.size(); }
     int currentMatchIndex() const { return m_currentMatchIndex; }
     bool searchActive() const { return m_searchActive; }
@@ -135,7 +138,7 @@ public:
     QPointF selectionStart() const { return m_selStart; }
     QPointF selectionEnd() const { return m_selEnd; }
     bool handlesVisible() const { return m_handlesVisible; }
-    const QVector<SearchMatch>& searchMatches() const { return m_searchMatches; }
+    const QVector<SearchMatchSegment>& searchMatches() const { return m_searchMatches; }
     bool shellExited() const { return m_shellExited; }
     int shellExitCode() const { return m_shellExitCode; }
     bool magnifierVisible() const { return m_magnifierVisible; }
@@ -179,11 +182,14 @@ Q_SIGNALS:
     void pinchingChanged(bool pinching);
     void pinchAtDefaultChanged(bool atDefault);
     void zoomRequested(int delta);       // +1 for zoom in, -1 for zoom out
+    // Ctrl+Shift+F toggled the C++ search state; QML owns the panel, so it
+    // must mirror the toggle (open/focus the field, or close the panel).
+    void searchToggled();
     // Toggle parent SilicaFlickable.interactive — emitted false on
     // multi-touch/TUI begin, true on end.
     void requestParentInteractive(bool interactive);
 
-    // Session-swipe gesture (horizontal one-finger drag → switch session).
+    // Session-swipe gesture (horizontal one-finger drag -> switch session).
     // QML drives the slide animation + switchSession() from these. Guarded:
     // only emitted in NORMAL single-finger mode, pre-selection window, never
     // during TUI/multitouch/handle/link.
@@ -202,6 +208,7 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseUngrabEvent() override;
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
@@ -216,7 +223,7 @@ private slots:
 private:
     void setupTerminal();
     void applyColorScheme();
-    void recalculateDimensions();
+    void recalculateDimensions(bool cellPixelsChanged = false);
     void sendKeyEvent(GhosttyKey key, GhosttyKeyAction action,
                       GhosttyMods mods, const QString &text);
     void sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
@@ -234,7 +241,6 @@ private:
 
     void performSearch();
     void scrollToMatch(int index);
-    void buildCellMapping();
     // Re-extract the search cache after the terminal changed (resize or live
     // PTY output), then re-run performSearch() keeping m_currentMatchIndex on
     // the match nearest to the previously-current match's row.
@@ -245,10 +251,11 @@ private:
 
     // --- Pinch-to-zoom gesture disambiguation ---
     void handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points);
-    void handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points);
-    void handleMultiTouchEnd();
+    void handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points,
+                                Qt::KeyboardModifiers modifiers);
+    void handleMultiTouchEnd(const QList<QTouchEvent::TouchPoint> &points);
 
-    // TUI single-finger touch → synthetic mouse/wheel events
+    // TUI single-finger touch -> synthetic mouse/wheel events
     void handleTuiTouchBegin(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchUpdate(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchEnd(QTouchEvent *event, const QList<QTouchEvent::TouchPoint> &points);
@@ -268,7 +275,7 @@ private:
 
     QString m_title;
 
-    // --- Touch text selection (long-press → drag → copy) ---
+    // --- Touch text selection (long-press -> drag -> copy) ---
     bool m_selecting = false;
     bool m_magnifierVisible = false;
     QPointF m_selStart;   // pixel coordinates
@@ -300,6 +307,12 @@ private:
     qreal m_tuiScrollAccumulator = 0;
     qreal m_tuiDragLastY = 0;
 
+    // Last Qt key consumed as an app shortcut (Ctrl+Shift+C/V/F/...).
+    // keyReleaseEvent swallows the matching non-autorepeat release because no
+    // PRESS was ever sent for it (a stray RELEASE under the Kitty keyboard
+    // protocol). Cleared on any other key press and on focus out.
+    int m_lastConsumedShortcutKey = 0;
+
     // --- Scroll state (two-finger touch + mouse wheel) ---
     qreal m_twoFingerLastY = 0;
     qreal m_scrollAccumulator = 0;
@@ -312,8 +325,8 @@ private:
 
     // --- Pinch-to-zoom state ---
     // Touch state machine:
-    //   Idle → [≥2 fingers] → MultiTouch (Undecided → Scrolling | Pinching)
-    //   MultiTouch → [all fingers up or drop below 2] → Idle
+    //   Idle -> [≥2 fingers] -> MultiTouch (Undecided -> Scrolling | Pinching)
+    //   MultiTouch -> [all fingers up or drop below 2] -> Idle
     //   TUI mode: single-finger touches are grabbed and forwarded as synthetic mouse events
     //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
@@ -330,13 +343,13 @@ private:
     static constexpr qreal ScrollMinDistancePx = 40.0;
     static constexpr qreal PinchScaleExponent = 0.6; // <1 dampens; 0.5=sqrt, 1.0=linear
 
-    // --- Session-swipe gesture (horizontal one-finger drag → switch session) ---
+    // --- Session-swipe gesture (horizontal one-finger drag -> switch session) ---
     bool    m_sessionSwiping = false;
     bool    m_sessionSwipeEnabled = true; // QML-bound gate (false for single session)
     qreal   m_swipeStartX    = 0.0;   // captured at classify time, not at press
     static constexpr qreal SwipeMinHorizontalPx = 24.0; // < ScrollMinDistancePx (40)
     static constexpr qreal SwipeDominanceRatio  = 1.5;  // |dx| must exceed |dy| * this
-    static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width → commit
+    static constexpr qreal SwipeCommitFraction  = 0.25; // release past 25% width -> commit
 
     // --- Cursor blinking (pauses after input for 1s) ---
     int m_blinkTimerId = 0;
@@ -363,15 +376,24 @@ private:
     // --- Scrollback search ---
     bool m_searchActive = false;
     QString m_searchPattern;
-    QStringList m_searchCache;       // Cached terminal text (one string per row)
-    QVector<QVector<int>> m_cellMapping; // Per row: cell index → character index offset
-    QVector<SearchMatch> m_searchMatches;
+    // Cached per-row text/mapping + logical joins (see VtSearchText).
+    VtSearchText m_searchCache;
+    QVector<SearchMatchSegment> m_searchMatches;
     int m_currentMatchIndex = -1;
     int m_searchPanelHeight = 0;
+    // Throttle for refreshing the search cache on live PTY output while the
+    // search panel is open (matches the link-scan throttle interval).
+    qint64 m_lastSearchRefreshMs = 0;
+    static const int SearchRefreshIntervalMs = 250;
+    // Trailing edge of the refresh throttle: armed when PTY output arrives
+    // inside the window so the final refresh still runs once output pauses.
+    // Stopped in closeSearch() (restartShell() calls closeSearch()).
+    QTimer *m_searchRefreshTimer = nullptr;
 
     // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
     QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
     bool m_linkScanDirty = true;       // Set when PTY data arrives, cleared after scan
+    QElapsedTimer m_lastLinkScanTime; // Throttle: limit link scans to ~4Hz
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started

@@ -65,7 +65,7 @@ private slots:
 
     void testNegativeCoordinates()
     {
-        // qFloor(-5) = -5, -5/10 = -1 → out of bounds
+        // qFloor(-5) = -5, -5/10 = -1 -> out of bounds
         QPointF result = TextUtil::cellFromPixel(QPointF(-5, 10), 10, 10, 80, 24, 0);
         QCOMPARE(result, QPointF(-1, -1));
     }
@@ -78,7 +78,7 @@ private slots:
 
     void testTopPaddingArea()
     {
-        // qFloor(3 - 5) = -2, -2/10 = -1 → out of bounds
+        // qFloor(3 - 5) = -2, -2/10 = -1 -> out of bounds
         QPointF result = TextUtil::cellFromPixel(QPointF(10, 3), 10, 10, 80, 24, 5);
         QCOMPARE(result, QPointF(-1, -1));
     }
@@ -173,7 +173,7 @@ private slots:
 
     void testTopPaddingExceedsHeight()
     {
-        // height(10) <= topPadding(50) → early return with minimum dimensions
+        // height(10) <= topPadding(50) -> early return with minimum dimensions
         auto d = TextUtil::calculateDimensions(800, 10, 10, 20, 50);
         QCOMPARE(d.cols, static_cast<uint16_t>(2));
         QCOMPARE(d.rows, static_cast<uint16_t>(2));
@@ -188,6 +188,25 @@ private slots:
         auto result2 = TextUtil::accumulateScroll(-0.5, -0.6);
         QCOMPARE(result2.lines, -1);
         QVERIFY(qAbs(result2.accumulator - (-0.1)) < 0.001);
+    }
+
+    void testIsSoftWrappedWrapFlag()
+    {
+        // WRAP flag set: always soft-wrapped regardless of content
+        QVERIFY(TextUtil::isSoftWrapped(true, false));
+        QVERIFY(TextUtil::isSoftWrapped(true, true));
+    }
+
+    void testIsSoftWrappedHeuristic()
+    {
+        // WRAP flag false, last cell has content: heuristic fires
+        QVERIFY(TextUtil::isSoftWrapped(false, true));
+    }
+
+    void testIsSoftWrappedNoWrap()
+    {
+        // WRAP flag false, last cell empty: hard newline
+        QVERIFY(!TextUtil::isSoftWrapped(false, false));
     }
 };
 

@@ -23,7 +23,7 @@
     </message>
     <message>
         <source>Command not found</source>
-        <translation>No s'ha trobat l'ordre</translation>
+        <translation>No s&apos;ha trobat l&apos;ordre</translation>
     </message>
 </context>
 <context>
@@ -143,6 +143,14 @@
     <message>
         <source>Zoom out</source>
         <translation>Redueix</translation>
+    </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Toqueu entre dues tecles per iniciar una fila nova</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Fila</translation>
     </message>
 </context>
 <context>
@@ -458,6 +466,14 @@ Impulsat pel motor de terminal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Canvia la mida de lletra de la sessió amb un gest de pessic de dos dits</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automàtic segueix el teu ambient</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automàtic</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Impulsat pel motor de terminal libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Predeterminat</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Timbre</translation>
     </message>
 </context>
 </TS>

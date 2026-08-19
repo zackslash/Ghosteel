@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Reducir</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Toca entre dúas teclas para iniciar unha fila nova</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Fila</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Impulsado polo motor de terminal libghostty</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Cambia o tamaño de fonte da sesión cun xesto de belisco de dous dedos</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Auto segue o teu ambiente</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Impulsado polo motor de terminal libghostty</translation>
     <message>
         <source>Default</source>
         <translation>Predeterminado</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Campá</translation>
     </message>
 </context>
 </TS>

@@ -9,20 +9,42 @@
 #include <string.h>
 #include <stdlib.h>
 #include <map>
+#include <string>
+#include <vector>
 
 // Recorded mode-set calls for test inspection (see ghostty_stubs.h).
 static std::map<GhosttyMode, bool> g_stubs_modesSet;
+
+// Outstanding-handle counters for lifecycle tests (see ghostty_stubs.h).
+static int g_stubs_outstandingTerminals = 0;
+static int g_stubs_outstandingRenderStates = 0;
+
+// Opt-in canned grid fixture for exportScrollback tests (see ghostty_stubs.h).
+// Disarmed by default so the zero-output stubs (COLS=0) keep every other test
+// unchanged. When armed, ghostty_terminal_get / grid_ref / row_get serve the
+// fixture's rows x cols of ASCII text plus per-row WRAP_CONTINUATION flags.
+static bool g_stubs_gridArmed = false;
+static uint16_t g_stubs_gridCols = 0;
+static uint16_t g_stubs_gridRows = 0;
+static std::vector<std::string> g_stubs_gridText; // per-row ASCII text
+static std::vector<bool> g_stubs_gridCont;        // per-row WRAP_CONTINUATION
 
 // ---- Terminal ----
 
 GHOSTTY_API GhosttyResult ghostty_terminal_new(
     const GhosttyAllocator*, GhosttyTerminal* out, uint16_t, uint16_t)
 {
-    if (out) *out = (GhosttyTerminal)1;
+    if (out) {
+        *out = (GhosttyTerminal)1;
+        g_stubs_outstandingTerminals++;
+    }
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API void ghostty_terminal_free(GhosttyTerminal) {}
+GHOSTTY_API void ghostty_terminal_free(GhosttyTerminal)
+{
+    g_stubs_outstandingTerminals--;
+}
 
 GHOSTTY_API void ghostty_terminal_reset(GhosttyTerminal) {}
 
@@ -38,9 +60,30 @@ GHOSTTY_API GhosttyResult ghostty_terminal_set(
 }
 
 GHOSTTY_API GhosttyResult ghostty_terminal_get(
-    GhosttyTerminal, GhosttyTerminalData, void* out)
+    GhosttyTerminal, GhosttyTerminalData data, void* out)
 {
-    if (out) memset(out, 0, 8);
+    if (!out)
+        return GHOSTTY_SUCCESS;
+    if (g_stubs_gridArmed) {
+        switch (data) {
+        case GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN:
+            *static_cast<GhosttyTerminalScreen*>(out) = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+            return GHOSTTY_SUCCESS;
+        case GHOSTTY_TERMINAL_DATA_COLS:
+            *static_cast<uint16_t*>(out) = g_stubs_gridCols;
+            return GHOSTTY_SUCCESS;
+        case GHOSTTY_TERMINAL_DATA_TOTAL_ROWS:
+            *static_cast<size_t*>(out) = g_stubs_gridRows;
+            return GHOSTTY_SUCCESS;
+        case GHOSTTY_TERMINAL_DATA_CURSOR_X:
+            // Serve 0 so the last-line elision heuristic never fires.
+            *static_cast<uint16_t*>(out) = 0;
+            return GHOSTTY_SUCCESS;
+        default:
+            break;
+        }
+    }
+    memset(out, 0, 8);
     return GHOSTTY_SUCCESS;
 }
 
@@ -79,9 +122,67 @@ extern "C" bool ghostty_stubs_mode_set_called(GhosttyMode mode, bool *out_value)
     return true;
 }
 
-GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref(
-    GhosttyTerminal, GhosttyPoint, GhosttyGridRef*)
+extern "C" void ghostty_stubs_reset_handles(void)
 {
+    g_stubs_outstandingTerminals = 0;
+    g_stubs_outstandingRenderStates = 0;
+}
+
+extern "C" int ghostty_stubs_outstanding_terminals(void)
+{
+    return g_stubs_outstandingTerminals;
+}
+
+extern "C" int ghostty_stubs_outstanding_render_states(void)
+{
+    return g_stubs_outstandingRenderStates;
+}
+
+// Arm the canned grid fixture. Copies the per-row ASCII text and
+// WRAP_CONTINUATION flags so the caller's buffers need not outlive the call.
+// `cont` is a per-row 0/1 char array (std::vector<bool> has no data()).
+extern "C" void ghostty_stubs_set_grid(
+    uint16_t cols, uint16_t rows, const char* const* text, const char* cont)
+{
+    g_stubs_gridCols = cols;
+    g_stubs_gridRows = rows;
+    g_stubs_gridText.clear();
+    g_stubs_gridCont.clear();
+    g_stubs_gridText.reserve(rows);
+    g_stubs_gridCont.reserve(rows);
+    for (uint16_t r = 0; r < rows; r++) {
+        g_stubs_gridText.push_back(text ? (text[r] ? text[r] : "") : "");
+        g_stubs_gridCont.push_back(cont ? cont[r] != 0 : false);
+    }
+    g_stubs_gridArmed = true;
+}
+
+// Disarm the fixture, restoring the default zero-output stub behavior.
+extern "C" void ghostty_stubs_clear_grid(void)
+{
+    g_stubs_gridArmed = false;
+    g_stubs_gridCols = 0;
+    g_stubs_gridRows = 0;
+    g_stubs_gridText.clear();
+    g_stubs_gridCont.clear();
+}
+
+GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref(
+    GhosttyTerminal, GhosttyPoint point, GhosttyGridRef* ref)
+{
+    if (!ref)
+        return GHOSTTY_SUCCESS;
+    if (g_stubs_gridArmed) {
+        uint16_t x = point.value.coordinate.x;
+        uint32_t y = point.value.coordinate.y;
+        if (x >= g_stubs_gridCols || y >= g_stubs_gridRows)
+            return GHOSTTY_INVALID_VALUE;
+        ref->size = sizeof(GhosttyGridRef);
+        ref->node = nullptr;
+        ref->x = x;
+        ref->y = static_cast<uint16_t>(y);
+        return GHOSTTY_SUCCESS;
+    }
     return GHOSTTY_SUCCESS;
 }
 
@@ -98,8 +199,12 @@ GHOSTTY_API GhosttyResult ghostty_terminal_point_from_grid_ref(
 }
 
 GHOSTTY_API GhosttyResult ghostty_grid_ref_cell(
-    const GhosttyGridRef*, GhosttyCell*)
+    const GhosttyGridRef*, GhosttyCell* out_cell)
 {
+    // Serve the default (0) cell handle: isWideSpacerCell(0) is false, so
+    // the export loop treats every cell as a normal narrow cell.
+    if (out_cell)
+        *out_cell = 0;
     return GHOSTTY_SUCCESS;
 }
 
@@ -110,21 +215,52 @@ GHOSTTY_API GhosttyResult ghostty_cell_get(GhosttyCell, GhosttyCellData, void *o
 }
 
 GHOSTTY_API GhosttyResult ghostty_grid_ref_row(
-    const GhosttyGridRef*, GhosttyRow*)
+    const GhosttyGridRef* ref, GhosttyRow* out_row)
 {
+    if (!ref || !out_row)
+        return GHOSTTY_SUCCESS;
+    if (g_stubs_gridArmed) {
+        // Encode the row index (ref->y) into a nonzero handle so
+        // ghostty_row_get can map it back to the fixture's flag.
+        *out_row = static_cast<GhosttyRow>(ref->y) + 1;
+        return GHOSTTY_SUCCESS;
+    }
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API GhosttyResult ghostty_row_get(GhosttyRow, GhosttyRowData, void *out)
+GHOSTTY_API GhosttyResult ghostty_row_get(GhosttyRow row, GhosttyRowData data, void *out)
 {
-    if (out) *static_cast<bool*>(out) = false;
+    if (!out)
+        return GHOSTTY_SUCCESS;
+    if (g_stubs_gridArmed && data == GHOSTTY_ROW_DATA_WRAP_CONTINUATION) {
+        size_t idx = static_cast<size_t>(row) - 1;
+        bool cont = (idx < g_stubs_gridCont.size()) && g_stubs_gridCont[idx];
+        *static_cast<bool*>(out) = cont;
+        return GHOSTTY_SUCCESS;
+    }
+    *static_cast<bool*>(out) = false;
     return GHOSTTY_SUCCESS;
 }
 
 GHOSTTY_API GhosttyResult ghostty_grid_ref_graphemes(
-    const GhosttyGridRef*, uint32_t*, size_t, size_t *out_len)
+    const GhosttyGridRef* ref, uint32_t* buf, size_t buf_len, size_t *out_len)
 {
-    if (out_len) *out_len = 0;
+    if (out_len)
+        *out_len = 0;
+    if (!ref || !buf || buf_len == 0)
+        return GHOSTTY_SUCCESS;
+    if (g_stubs_gridArmed) {
+        size_t y = ref->y;
+        size_t x = ref->x;
+        if (y < g_stubs_gridText.size() && x < g_stubs_gridText[y].size()) {
+            unsigned char c = static_cast<unsigned char>(g_stubs_gridText[y][x]);
+            if (c != 0) {
+                buf[0] = c;
+                if (out_len)
+                    *out_len = 1;
+            }
+        }
+    }
     return GHOSTTY_SUCCESS;
 }
 
@@ -140,11 +276,17 @@ GHOSTTY_API GhosttyResult ghostty_grid_ref_hyperlink_uri(
 GHOSTTY_API GhosttyResult ghostty_render_state_new(
     const GhosttyAllocator*, GhosttyRenderState* out)
 {
-    if (out) *out = (GhosttyRenderState)1;
+    if (out) {
+        *out = (GhosttyRenderState)1;
+        g_stubs_outstandingRenderStates++;
+    }
     return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API void ghostty_render_state_free(GhosttyRenderState) {}
+GHOSTTY_API void ghostty_render_state_free(GhosttyRenderState)
+{
+    g_stubs_outstandingRenderStates--;
+}
 
 GHOSTTY_API GhosttyResult ghostty_render_state_update(
     GhosttyRenderState, GhosttyTerminal)

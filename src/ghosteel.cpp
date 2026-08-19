@@ -20,9 +20,7 @@
 #include <QDBusConnection>
 #include <QDBusError>
 
-// Re-undefine emit — the Qt headers above re-define it, and any
-// Ghostty header included after this point would see the empty macro.
-// (This is defensive; ghosttyvt.h handles its own includes correctly.)
+// Re-undefine emit — the Qt headers above re-define it.
 #ifdef emit
 #undef emit
 #endif
@@ -92,7 +90,7 @@ int main(int argc, char *argv[])
                 for (int j = i + 2; j < argc; j++)
                     execArgs.append(QString::fromLocal8Bit(argv[j]));
             }
-            break; // everything after "--" is the command verbatim
+            break;
         } else if (arg == QStringLiteral("-e") || arg == QStringLiteral("--exec")) {
             if (i + 1 < argc) {
                 const QString cmd = QString::fromLocal8Bit(argv[i + 1]);
@@ -107,7 +105,7 @@ int main(int argc, char *argv[])
                 execCommand = cmd;
                 for (int j = i + 2; j < argc; j++)
                     execArgs.append(QString::fromLocal8Bit(argv[j]));
-                break; // -e consumes everything after it
+                break;
             } else {
                 fprintf(stderr, "ghosteel: -e requires a command argument\n");
                 return 1;
@@ -115,7 +113,7 @@ int main(int argc, char *argv[])
         } else if (arg == QStringLiteral("-s") || arg == QStringLiteral("--session")) {
             if (i + 1 < argc) {
                 sessionName = QString::fromLocal8Bit(argv[i + 1]);
-                i++; // skip the value
+                i++;
             } else {
                 fprintf(stderr, "ghosteel: -s requires a session name\n");
                 return 1;
@@ -133,18 +131,14 @@ int main(int argc, char *argv[])
     loadTranslations(app.data());
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 
-    // Expose Settings singleton to QML as a context property
     view->rootContext()->setContextProperty(QStringLiteral("Settings"), Settings::instance());
 
-    // Expose SessionManager singleton to QML
     SessionManager *sessionManager = new SessionManager(app.data());
     view->rootContext()->setContextProperty(QStringLiteral("SessionManager"), sessionManager);
 
-    // Expose the bell feedback (ngfd client) to QML
     BellFeedback *bellFeedback = new BellFeedback(app.data());
     view->rootContext()->setContextProperty(QStringLiteral("bellFeedback"), bellFeedback);
 
-    // Store CLI args for deferred processing after QML restoreSessions()
     if (!execCommand.isEmpty() || !sessionName.isEmpty())
         sessionManager->setCliArgs(execCommand, execArgs, sessionName);
 
@@ -175,7 +169,10 @@ int main(int argc, char *argv[])
 
     // Start single-instance socket server so future D-Bus activations
     // can detect this instance instead of spawning a duplicate.
-    sessionManager->startSingleInstanceServer();
+    // Returns false when a duplicate was detected during the startup race
+    // window; its CLI args were already forwarded. Returning before
+    // setSource is intended — no UI was shown.
+    if (!sessionManager->startSingleInstanceServer()) return 0;
 
     // Expose version strings to QML (always defined via -D flags from ghosteel.pro)
     view->rootContext()->setContextProperty(QStringLiteral("appVersion"), QStringLiteral(GIT_VERSION));

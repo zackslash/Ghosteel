@@ -1,6 +1,7 @@
 #include <QtTest>
 #include <QCoreApplication>
 #include <QSignalSpy>
+#include <QFile>
 
 #include <unistd.h>
 #include <cstring>
@@ -34,11 +35,8 @@ private slots:
         // Close write end to trigger EOF
         ::close(pipefd[1]);
 
-        // readFinished may already have arrived before we get here (the
-        // reader thread's 200ms poll cycle can see EOF and emit before
-        // this call), so check the spy count first and only wait if it
-        // hasn't fired yet. Plain finishedSpy.wait() would time out and
-        // fail intermittently when the signal already arrived.
+        // readFinished may already have fired (200ms poll cycle); check the
+        // count first — plain wait() would time out intermittently.
         QVERIFY(finishedSpy.count() > 0 || finishedSpy.wait(2000));
         reader.wait(3000);
     }
@@ -117,6 +115,101 @@ private slots:
         QCOMPARE(finishedSpy.count(), 0);
 
         ::close(pipefd[1]);
+    }
+
+    // --- PtyManager integration: child pid lifecycle ---
+
+    void testShellExitClearsChildPid()
+    {
+        PtyManager pm;
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "exit 0", 80, 24));
+        QVERIFY(pm.childPid() > 0);
+
+        // Shell exits immediately; the reap timer reports the exit code and
+        // clears the pid.
+        QTRY_COMPARE(exitedSpy.count(), 1);
+        QCOMPARE(exitedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(pm.childPid(), -1);
+    }
+
+    void testAsyncStopReapsChildPid()
+    {
+        PtyManager pm;
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "sleep 30", 80, 24));
+        QVERIFY(pm.childPid() > 0);
+
+        pm.stop(false);
+
+        // Spin the event loop until the async pending-reap timer resolves.
+        QTRY_VERIFY(pm.childPid() == -1);
+        QCOMPARE(exitedSpy.count(), 1); // SIGHUP-terminated: one shellExited
+    }
+
+    void testExecFailureReportsFailureCode()
+    {
+        PtyManager pm;
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+
+        QVERIFY(pm.startCommand(QStringLiteral("/nonexistent/ghosteel-binary"),
+                                QStringList(), 80, 24));
+        QVERIFY(pm.childPid() > 0);
+
+        // Exec failure is reported via the exec pipe with the documented code.
+        QTRY_COMPARE(exitedSpy.count(), 1);
+        QCOMPARE(exitedSpy.at(0).at(0).toInt(), PtyManager::kExecFailedExitCode);
+        QCOMPARE(pm.childPid(), -1);
+    }
+
+    void testStopRestartInterleaving()
+    {
+        // restartShell() = stop(false) + immediate startCommand on the same
+        // manager. The async stop leaves the pending-reap timer armed for the
+        // OLD child; the immediate restart bumps the session generation and
+        // re-gates bookkeeping to the new session. The old timer must reap
+        // its SIGHUP'd child without reporting shellExited (generation
+        // guard), and the new session must report exactly one when it too is
+        // asynchronously stopped — one report for the current session, no
+        // duplicate from the stale timer, no lost report.
+        PtyManager pm;
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "sleep 30", 80, 24));
+        const pid_t firstPid = pm.childPid();
+        QVERIFY(firstPid > 0);
+
+        pm.stop(false); // arms the pending-reap timer for firstPid
+
+        // Immediate restart: the new child must get a fresh positive pid,
+        // different from the SIGHUP'd one.
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "sleep 30", 80, 24));
+        const pid_t secondPid = pm.childPid();
+        QVERIFY(secondPid > 0);
+        QVERIFY(secondPid != firstPid);
+
+        // Asynchronously stop the current session too: its pending-reap
+        // timer reports exactly one shellExited. The first session's timer
+        // resolved earlier (SIGHUP kills `sleep 30` promptly; 100 ms poll
+        // cadence) and must have been generation-suppressed — a duplicate
+        // would push the count to 2.
+        pm.stop(false);
+        QTRY_COMPARE(exitedSpy.count(), 1);
+
+        // The pending-reap timer must dispose of the old child: a zombie
+        // would mean the transfer logic regressed. QTRY bounds the wait; we
+        // must not waitpid() here (that would steal the manager's reap).
+        QTRY_VERIFY(!QFile::exists(QStringLiteral("/proc/%1").arg(firstPid)));
+
+        // Synchronous stop after the async sequence is still clean.
+        pm.stop(true);
+        QCOMPARE(pm.childPid(), -1);
     }
 };
 

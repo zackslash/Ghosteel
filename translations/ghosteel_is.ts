@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Minnka aðdrátt</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Ýttu á milli tveggja lykla til að hefja nýja röð</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Röð</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Keyrt af libghostty skjáhermisvél</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Breyttu leturstærð setunnar með tveggja-fingra klemmuhreyfingu</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Sjálfvirkt fylgir umhverfi þínu</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Sjálfvirkt</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>Default</source>
         <translation>Sjálfgefið</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Bjalla</translation>
     </message>
 </context>
 </TS>

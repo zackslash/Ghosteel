@@ -29,7 +29,16 @@ static const char *vertexShaderSource =
     "}\n";
 
 static const char *fragmentShaderSource =
+    // mediump (true fp16 on Mali-4xx / older Adreno fragment shaders) carries
+    // ~1 px error at y >= 1024 device px, misclassifying boundary pixels on
+    // the lower half of tall screens. The guard must live INSIDE the GLSL
+    // source: GL_FRAGMENT_PRECISION_HIGH is defined by the shader compiler,
+    // never the C preprocessor; GL2 emulators may lack highp, hence the fallback.
+    "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+    "precision highp float;\n"
+    "#else\n"
     "precision mediump float;\n"
+    "#endif\n"
     "varying vec2 v_texcoord;\n"
     "varying vec2 v_cell;\n"
     "varying vec4 v_fg_color;\n"
@@ -42,6 +51,7 @@ static const char *fragmentShaderSource =
     "uniform float u_cursorBlink;\n"
     "uniform float u_cursorStyle;\n"
     "uniform float u_topPadding;\n"
+    "uniform float u_pass;\n"  // 0 = background only, 1 = glyphs + decorations
     "void main() {\n"
     "    vec4 fg = v_fg_color;\n"
     "    vec4 bg = v_bg_color;\n"
@@ -60,29 +70,41 @@ static const char *fragmentShaderSource =
     "            float cx = adj_cell.x - u_cursorPos.x * u_cellSize.x;\n"
     "            float cy = adj_cell.y - cellCoord.y * u_cellSize.y;\n"
     "            if (u_cursorStyle < 1.5) {\n"
-    "                fg = v_bg_color;\n"
+    // Block cursor: inverted colors. The inverted bg paints in the bg pass,
+    // the glyphs (inverted fg) paint in the text pass. v_bg_color is
+    // premultiplied (cBg*bgAlpha, bgAlpha); un-premultiply so the inverted
+    // glyph renders at full strength regardless of backgroundOpacity.
+    "                vec4 b = v_bg_color;\n"
+    "                if (b.a > 0.0) { b.rgb /= b.a; b.a = 1.0; }\n"
+    "                fg = b;\n"
     "                bg = v_fg_color;\n"
     "            } else if (u_cursorStyle < 2.5) {\n"
-    "                if (cx < 2.0) {\n"
+    "                if (cx < 2.0 && u_pass > 0.5) {\n"
     "                    gl_FragColor = v_fg_color;\n"
     "                    return;\n"
     "                }\n"
     "            } else if (u_cursorStyle < 3.5) {\n"
-    "                if (cy > u_cellSize.y - 2.0) {\n"
+    "                if (cy > u_cellSize.y - 2.0 && u_pass > 0.5) {\n"
     "                    gl_FragColor = v_fg_color;\n"
     "                    return;\n"
     "                }\n"
     "            } else {\n"
-    "                if (cx < 1.0 || cx > cursorW - 1.0 ||\n"
-    "                    cy < 1.0 || cy > u_cellSize.y - 1.0) {\n"
+    "                if ((cx < 1.0 || cx > cursorW - 1.0 ||\n"
+    "                    cy < 1.0 || cy > u_cellSize.y - 1.0) && u_pass > 0.5) {\n"
     "                    gl_FragColor = v_fg_color;\n"
     "                    return;\n"
     "                }\n"
     "            }\n"
     "        }\n"
     "    }\n"
+    "    if (u_pass < 0.5) {\n"
+    "        // Background-only pass: emit the premultiplied bg color exactly\n"
+    "        // as the single-pass shader would for a cell with no glyph.\n"
+    "        gl_FragColor = bg;\n"
+    "        return;\n"
+    "    }\n"
     "    float glyph_alpha = texture2D(u_atlas, v_texcoord).a;\n"
-    "    vec4 color = mix(bg, fg, glyph_alpha);\n"
+    "    vec4 color = vec4(fg.rgb * glyph_alpha, fg.a * glyph_alpha);\n"
     "    // Text decorations: v_deco encodes type (0=none, 1=underline, 2=strikethrough)\n"
     "    if (v_deco > 0.5 && u_cellSize.x > 0.0) {\n"
     "        float cy = adj_cell.y - floor(adj_cell.y / u_cellSize.y) * u_cellSize.y;\n"
@@ -160,7 +182,7 @@ static const char *magFragmentShaderSource =
     "    gl_FragColor = vec4(color.rgb * edgeAlpha, color.a * edgeAlpha);\n"
     "}\n";
 
-// GLSL ES 2.0 blit shaders — pipeline FBO → Qt FBO copy
+// GLSL ES 2.0 blit shaders — pipeline FBO -> Qt FBO copy
 static const char *blitVertexShaderSource =
     "attribute vec2 position;\n"
     "attribute vec2 texcoord;\n"
@@ -199,8 +221,18 @@ static const char *shadertoyPrefixES300 =
     "precision mediump float;\n"
     "\n"
     "uniform vec3  iResolution;\n"
-    "uniform float iTime;\n"
-    "uniform float iTimeDelta;\n"
+    // Time uniforms are highp: mediump is fp16 on the target GPU class
+    // (Mali/Adreno/PowerVR round uniform values to the declared precision
+    // at upload). From ~256 s of uptime the fp16 ulp (0.25 s) already
+    // exceeds the 0.2 s trail window, so leg progress quantizes to 0 or
+    // past window-end and the smear never renders; by ~512 s even the
+    // 0.49 s leg-validity window is exceeded. ES 3.0 mandates fragment
+    // highp, so this is always safe here. A blanket `precision highp float;`
+    // would force fp32 on all shader math; only the clock uniforms need the range.
+    "uniform highp float iTime;\n"
+    "uniform highp float iTimeDelta;\n"
+    "uniform highp float iTimeCursorChange;\n"
+    "uniform highp float iTimeFocus;\n"
     "uniform float iFrameRate;\n"
     "uniform int   iFrame;\n"
     "uniform float iChannelTime[4];\n"
@@ -215,8 +247,6 @@ static const char *shadertoyPrefixES300 =
     "uniform int   iCurrentCursorStyle;\n"
     "uniform int   iPreviousCursorStyle;\n"
     "uniform int   iCursorVisible;\n"
-    "uniform float iTimeCursorChange;\n"
-    "uniform float iTimeFocus;\n"
     "uniform int   iFocus;\n"
     "uniform vec3  iPalette[256];\n"
     "uniform vec3  iBackgroundColor;\n"
@@ -271,6 +301,9 @@ void GLRenderer::Renderer::createShaders()
     m_cursorBlinkUniform = m_program->uniformLocation("u_cursorBlink");
     m_cursorStyleUniform = m_program->uniformLocation("u_cursorStyle");
     m_topPaddingUniform = m_program->uniformLocation("u_topPadding");
+    m_passUniform = m_program->uniformLocation("u_pass");
+    if (m_passUniform < 0)
+        qWarning() << "GLRenderer: u_pass uniform missing — below-text kitty compositing disabled";
     m_positionAttr = m_program->attributeLocation("position");
     m_texcoordAttr = m_program->attributeLocation("texcoord");
     m_fgColorAttr = m_program->attributeLocation("fg_color");
@@ -550,7 +583,6 @@ void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW
     if (loc.iFocus >= 0)
         shader.program->setUniformValue(loc.iFocus, 1);
 
-    // 256-entry RGB palette
     if (loc.iPalette >= 0)
         glUniform3fv(loc.iPalette, 256, m_postPaletteData);
 

@@ -40,12 +40,13 @@ Settings *Settings::instance()
 
 void Settings::load()
 {
-    m_fontSize = m_settings.value(QStringLiteral("font/size"), 18).toInt();
+    m_fontSize = qBound(kMinFontSize, m_settings.value(QStringLiteral("font/size"), 18).toInt(), kMaxFontSize);
     m_fontFamily = m_settings.value(QStringLiteral("font/family"),
                                     QStringLiteral("monospace")).toString();
     m_shellCommand = m_settings.value(QStringLiteral("terminal/shell"), QString()).toString();
     m_colorScheme = m_settings.value(QStringLiteral("terminal/colorScheme"),
                                      QStringLiteral("dark")).toString();
+    m_followAmbience = m_settings.value(QStringLiteral("terminal/followAmbience"), true).toBool();
     m_backgroundOpacity = qBound(0.0f, m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat(), 1.0f);
     m_bellMode = qBound(0, m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(), 3);
     m_scrollbackPersistence = m_settings.value(QStringLiteral("scrollback/enabled"), false).toBool();
@@ -55,6 +56,7 @@ void Settings::load()
                                QStringLiteral("alt"), QStringLiteral("esc"), QStringLiteral("keyboard")};
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
+    m_keybarRowBreaks = sanitizeRowBreaks(m_settings.value(QStringLiteral("keybar/rowBreaks")).toList());
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), false).toBool();
@@ -153,6 +155,16 @@ void Settings::setColorScheme(const QString &scheme)
     Q_EMIT colorSchemeChanged();
 }
 
+void Settings::setFollowAmbience(bool enabled)
+{
+    if (m_followAmbience == enabled)
+        return;
+    m_followAmbience = enabled;
+    m_settings.setValue(QStringLiteral("terminal/followAmbience"), enabled);
+    scheduleSave();
+    Q_EMIT followAmbienceChanged();
+}
+
 void Settings::setBackgroundOpacity(float opacity)
 {
     if (opacity < 0.0f) opacity = 0.0f;
@@ -217,6 +229,33 @@ void Settings::setKeybarVisible(bool visible)
     m_settings.setValue(QStringLiteral("keybar/visible"), visible);
     scheduleSave();
     Q_EMIT keybarVisibleChanged();
+}
+
+QVariantList Settings::sanitizeRowBreaks(const QVariantList &breaks) const
+{
+    // Clamp to at most 2 entries (max 3 rows), filter invalid values,
+    // drop breaks past the end of keybarKeys (prevents empty trailing rows),
+    // drop out-of-order and duplicate entries (monotonic guard enforces sorting).
+    QVariantList clamped;
+    for (int i = 0; i < breaks.size() && clamped.size() < 2; ++i) {
+        bool ok = false;
+        int val = breaks[i].toInt(&ok);
+        if (ok && val > 0 && val < m_keybarKeys.size()
+            && (clamped.isEmpty() || val > clamped.last().toInt()))
+            clamped.append(val);
+    }
+    return clamped;
+}
+
+void Settings::setKeybarRowBreaks(const QVariantList &breaks)
+{
+    QVariantList clamped = sanitizeRowBreaks(breaks);
+    if (m_keybarRowBreaks == clamped)
+        return;
+    m_keybarRowBreaks = clamped;
+    m_settings.setValue(QStringLiteral("keybar/rowBreaks"), clamped);
+    scheduleSave();
+    Q_EMIT keybarRowBreaksChanged();
 }
 
 void Settings::setSessionSortMode(int mode)

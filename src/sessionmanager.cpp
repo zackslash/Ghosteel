@@ -40,9 +40,39 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
     m_encryptor = new ScrollEncryptor(this);
     m_store = std::make_unique<SessionStore>(m_settings, m_encryptor);
 
+    // Async scrollback encryption completes on the GUI thread event loop.
+    // scrollbackDirty is cleared synchronously at export time in
+    // saveSessionScrollback (before encryptAsync starts), so output arriving
+    // during the D-Bus round-trip re-dirties the flag and triggers a retry.
+    // saveCompleted just clears the in-flight guard and records the timestamp.
+    connect(m_store.get(), &SessionStore::saveCompleted, this, [this](int sessionId) {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        m_sessions[idx].scrollbackSaveInFlight = false;
+        m_sessions[idx].lastScrollbackSaveMs = QDateTime::currentMSecsSinceEpoch();
+        // Content may have arrived during the in-flight save and re-dirtied
+        // (cleared at export time, before encryptAsync). Re-arm so the next
+        // debounce cycle flushes it; throttle in trySave paces it.
+        if (m_sessions[idx].scrollbackDirty)
+            scheduleScrollbackSave();
+    });
+    connect(m_store.get(), &SessionStore::saveFailed, this, [this](int sessionId) {
+        int idx = sessionIndexById(sessionId);
+        if (idx < 0)
+            return;
+        // Clear the in-flight guard; re-dirty so the save is retried.
+        m_sessions[idx].scrollbackSaveInFlight = false;
+        m_sessions[idx].scrollbackDirty = true;
+        // Update throttle timestamp so persistent failures don't spin at
+        // 500ms forever — the 5s throttle in trySave paces retries.
+        m_sessions[idx].lastScrollbackSaveMs = QDateTime::currentMSecsSinceEpoch();
+        scheduleScrollbackSave();
+    });
+
     m_saveTimer = new QTimer(this);
     m_saveTimer->setSingleShot(true);
-    m_saveTimer->setInterval(500); // 500ms debounce — matches Settings class
+    m_saveTimer->setInterval(500); // 500ms debounce — same interval as Settings::m_saveTimer
     connect(m_saveTimer, &QTimer::timeout, this, [this]() {
         // Only rewrite the settings file when session metadata actually
         // changed — a scrollback-only arm (scheduleScrollbackSave) leaves
@@ -65,6 +95,13 @@ SessionManager::SessionManager(Settings *settings, QObject *parent)
         if (!m_encryptor->isAvailable()) {
             // Encryption init failed — these scrollback files can't be
             // restored; drop the pending list to avoid re-queuing.
+            // Note: this warning covers only pendings queued after a
+            // later-failed availabilityChanged. Pendings queued during
+            // restoreSessions() when initializeNow() failed in the ctor are
+            // silently dropped instead: the deferred singleShot(0) hits the
+            // m_initialized early-return in initializeAsync() without
+            // re-emitting availabilityChanged, so this handler never runs
+            // for them (matches the documented degradation).
             if (!m_pendingScrollbackRestores.isEmpty())
                 qWarning() << "Ghosteel: Encryption unavailable, skipping"
                            << m_pendingScrollbackRestores.size()
@@ -173,8 +210,10 @@ SessionManager::~SessionManager()
     // In tests or abnormal paths, this is the fallback (shells may be dead).
     if (m_sessionsLoaded && !m_savedOnQuit) {
         m_store->saveSessionsMetadata(m_sessions, m_activeSessionIndex, m_nextSessionId);
-        // Views are still alive here (cleaned up below), so we can still flush
-        // the scrollback that aboutToQuit never got to save.
+        // Views may already be gone here (QML scene teardown deletes reparented
+        // views before ~SessionManager runs); saveSessionScrollback skips
+        // sessions whose view is null, so the scrollback that aboutToQuit never
+        // got to save is still flushed for the surviving views.
         m_store->saveScrollbackIncremental(m_sessions, m_activeSessionIndex, true);
     }
 
@@ -204,7 +243,7 @@ void SessionManager::setActiveSessionIndex(int index)
     bool sortRebuilt = false;
 
     // Rebuild sort order and emit layoutChanged BEFORE activeSessionIndexChanged,
-    // so handlers see a consistent display→actual mapping when they re-evaluate.
+    // so handlers see a consistent display->actual mapping when they re-evaluate.
     if (index >= 0 && index < m_sessions.size()) {
         m_sessions[index].lastUsedAt = QDateTime::currentMSecsSinceEpoch();
         layoutAboutToBeChanged();
@@ -251,19 +290,16 @@ void SessionManager::setClipboardText(const QString &text)
 
 void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 {
-    // Route this view's notifications through the aggregated signal
     connect(view, &TerminalView::desktopNotification, this,
             [this, sessionId](const QString &summary, const QString &body) {
         Q_EMIT desktopNotification(sessionId, summary, body);
     });
 
-    // Route clipboard read requests through the aggregated signal
     connect(view, &TerminalView::clipboardReadRequest, this,
             [this, sessionId](const QString &kind) {
         Q_EMIT clipboardReadRequest(sessionId, kind);
     });
 
-    // Route clipboard write results to QML (SessionManager.setClipboardText)
     connect(view, &TerminalView::clipboardTextReady, this,
             [this](const QString &text) {
         Q_EMIT clipboardTextReady(text);
@@ -304,7 +340,7 @@ void SessionManager::connectSessionSignals(TerminalView *view, int sessionId)
 
     // justRestored must be cleared before the first data-driven contentChanged
     // runs, or that handler will keep skipping saves. titleChanged (shells that
-    // set a title) fires synchronously from onPtyData → vtWrite, before the
+    // set a title) fires synchronously from onPtyData -> vtWrite, before the
     // update() that emits contentChanged; ptyDataReceived fires earlier still
     // (before vtWrite) and also covers title-less shells like sh/dash. Hence
     // two connections — whichever fires first wins.
@@ -338,7 +374,6 @@ TerminalView* SessionManager::createSession()
         return nullptr;
     }
 
-    // Create a new TerminalView as a child of this manager
     TerminalView *view = new TerminalView();
 
     SessionInfo info;
@@ -495,8 +530,12 @@ void SessionManager::removeSession(int index)
 
     SessionInfo info = m_sessions.takeAt(index);
 
+    // Invalidate any in-flight async save for this session so the callback
+    // doesn't recreate the scrollback file for a dead session.
+    m_store->invalidateSaveGeneration(info.id);
+
     // Rebuild sort order and call endRemoveRows() BEFORE activeSessionIndexChanged,
-    // so handlers see a consistent display→actual mapping when they re-evaluate.
+    // so handlers see a consistent display->actual mapping when they re-evaluate.
     if (m_sessions.isEmpty()) {
         m_activeSessionIndex = -1;
     } else if (wasBeforeActive) {
@@ -603,7 +642,6 @@ void SessionManager::setSessionName(int index, const QString &name)
         layoutChanged();
     } else {
         rebuildSortedIndices();
-        // Emit dataChanged for name-dependent roles on this row
         QVector<int> roles = {NameRole, DisplayNameRole};
         int displayPos = actualToDisplay(index);
         if (displayPos >= 0 && displayPos < m_sortedIndices.size())
@@ -735,7 +773,7 @@ void SessionManager::setSessionKeepAwake(int index, bool enabled)
 int SessionManager::displayToActual(int displayIndex) const
 {
     if (m_sortedIndices.isEmpty()) {
-        // No sorting active — display index == actual index
+        // No sessions — nothing to map
         if (displayIndex < 0 || displayIndex >= m_sessions.size())
             return -1;
         return displayIndex;
@@ -748,7 +786,7 @@ int SessionManager::displayToActual(int displayIndex) const
 int SessionManager::actualToDisplay(int actualIndex) const
 {
     if (m_sortedIndices.isEmpty()) {
-        // No sorting active — display index == actual index
+        // No sessions — nothing to map
         if (actualIndex < 0 || actualIndex >= m_sessions.size())
             return -1;
         return actualIndex;
@@ -861,7 +899,8 @@ void SessionManager::processCliArgs()
         if (!m_cliSessionName.isEmpty()) {
             int named = findSessionByName(m_cliSessionName);
             if (named >= 0) {
-                if (m_sessions[named].isCommandSession() && !m_sessions[named].view->shellExited()) {
+                if (m_sessions[named].isCommandSession() && m_sessions[named].view
+                    && !m_sessions[named].view->shellExited()) {
                     // Command still running — switch to it
                     setActiveSessionIndex(named);
                 } else {
@@ -1059,10 +1098,9 @@ bool SessionManager::restoreSessions()
         if (!QDir(workingDir).exists())
             workingDir = QDir::homePath();
 
-        // Create session with restored settings
         TerminalView *view = new TerminalView();
         view->setWorkingDirectory(workingDir);
-        // Apply persisted font size immediately so the save path reads back the correct value
+        // Apply persisted font size immediately so the save path reads back
         // the correct value for non-active sessions (not the stale default 18).
         if (fontSize > 0)
             view->setFontSize(fontSize);
@@ -1089,10 +1127,10 @@ bool SessionManager::restoreSessions()
         m_sessions.append(info);
 
         // Mark as just-restored so the contentChanged handler skips
-        // geometry-update repaints; cleared by titleChanged (real PTY data).
+        // geometry-update repaints; cleared by titleChanged or ptyDataReceived
+        // (whichever fires first when real PTY data arrives).
         m_sessions.last().justRestored = true;
 
-        // Route this view's session-routed signals through the aggregated signals
         connectSessionSignals(view, info.id);
 
         // Ensure nextSessionId stays ahead of any restored ID
@@ -1100,12 +1138,10 @@ bool SessionManager::restoreSessions()
             m_nextSessionId = savedId + 1;
     }
 
-    // Build sort order and notify the model of all new rows at once
     rebuildSortedIndices();
     endInsertRows();
     Q_EMIT sessionCountChanged();
 
-    // Restore active session by ID (or by legacy index)
     int resolvedActive = resolveActiveSession(activeId, legacyActiveIndex);
     if (resolvedActive >= 0)
         setActiveSessionIndex(resolvedActive);

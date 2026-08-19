@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Намаляване</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Докоснете между два клавиша, за да започнете нов ред</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ред</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Променя размера на шрифта на сесията с жест на прищипване с два пръста</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Авто следва вашата атмосфера</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Авто</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>По подразбиране</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Звънец</translation>
     </message>
 </context>
 </TS>

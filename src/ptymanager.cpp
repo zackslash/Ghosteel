@@ -42,10 +42,18 @@ void PtyReaderThread::run()
         if (ret < 0) {
             if (errno == EINTR)
                 continue;
-            break; // error
+            break;
         }
         if (ret == 0)
             continue; // timeout, check interruption flag
+
+        // Re-check the interruption flag after poll() returns, before touching
+        // revents/read(): stop(false) can run between the loop-top flag check
+        // and this point — it closes this fd, and the next session's forkpty()
+        // may have already reused the number. poll() bound to the OLD file, so
+        // revents below (and the read()) must not run against the reused fd.
+        if (isInterruptionRequested())
+            break;
 
         if (pfd.revents & (POLLERR | POLLNVAL))
             break;
@@ -104,6 +112,11 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     // If exec fails, the child writes errno to the pipe before _exit.
     if (pipe(execPipe) < 0) {
         qWarning() << "pipe() failed:" << strerror(errno);
+        // No child exists; clear any stale pid left by the previous session so
+        // it can't be signaled/parsed later (the kernel may recycle it). The
+        // generation bump above would otherwise make the stop(false) reap
+        // timer's same-generation clear unreachable.
+        m_childPid = -1;
         return false;
     }
     fcntl(execPipe[1], F_SETFD, FD_CLOEXEC);
@@ -126,6 +139,11 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
         qWarning() << "forkpty failed:" << strerror(errno);
         ::close(execPipe[0]);
         ::close(execPipe[1]);
+        // No child exists; clear any stale pid left by the previous session so
+        // it can't be signaled/parsed later (the kernel may recycle it). The
+        // generation bump above would otherwise make the stop(false) reap
+        // timer's same-generation clear unreachable.
+        m_childPid = -1;
         return false;
     }
     if (pid == 0) {
@@ -193,8 +211,10 @@ void PtyManager::setupChildProcess(const char *workingDir, const char *homeDir)
 {
     setsid();
     if (workingDir && workingDir[0]) {
-        if (chdir(workingDir) != 0 && homeDir)
-            (void)chdir(homeDir);
+        // Fall back to HOME; if that fails too the child keeps the
+        // inherited cwd — exec proceeds either way.
+        if (chdir(workingDir) != 0 && homeDir && chdir(homeDir) != 0) {
+        }
     }
 }
 
@@ -242,6 +262,20 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
 
 bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
 {
+    // Defensive cleanup mirroring stop(): a double-start would otherwise leave
+    // a stale exec notifier busy-polling a leaked fd (the notifier-capture
+    // bail for stale activations would silently mask it). Tear down any prior
+    // exec pipe/notifier before wiring the new one.
+    if (m_execNotifier) {
+        m_execNotifier->setEnabled(false);
+        m_execNotifier->deleteLater();
+        m_execNotifier = nullptr;
+    }
+    if (m_execPipeReadFd >= 0) {
+        ::close(m_execPipeReadFd);
+        m_execPipeReadFd = -1;
+    }
+
     ::close(execPipe[1]);
     m_execPipeReadFd = execPipe[0];
     m_childPid = pid;
@@ -265,17 +299,28 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
 
         // Reap a pid queued by a previous stop(false) BEFORE cancelling its
         // timer — otherwise the cancel orphans it as a zombie until the next
-        // stop() / ~PtyManager(). WNOHANG so we don't block the GUI thread; a
-        // still-living child leaves m_pendingReapPid set for stop() to handle.
+        // stop() / ~PtyManager(). WNOHANG so we don't block the GUI thread.
+        // If the old child is still alive (result == 0), leave the pending
+        // timer running — its lambda captured the correct oldPid and its
+        // generation guard already prevents it emitting shellExited for the
+        // old session — and keep m_pendingReapPid set so a later readFinished
+        // (or stop()) reaps it. Only cancel the timer once the pending reap
+        // actually resolved.
+        bool pendingReapStillRunning = false;
         if (m_pendingReapPid > 0) {
             int pendingStatus = 0;
             pid_t pendingResult = ::waitpid(m_pendingReapPid, &pendingStatus, WNOHANG);
-            if (pendingResult != 0)
+            if (pendingResult != 0) {
                 m_pendingReapPid = -1; // reaped (>0) or already gone (<0)
+            } else {
+                pendingReapStillRunning = true;
+            }
         }
 
-        // Cancel any existing waitpid timer (safety)
-        if (m_waitPidTimer) {
+        // Cancel any existing waitpid timer (safety) — unless it is the
+        // pending-reap timer for a still-running old child, which must keep
+        // polling until the old pid is reaped.
+        if (m_waitPidTimer && !pendingReapStillRunning) {
             m_waitPidTimer->stop();
             m_waitPidTimer->deleteLater();
             m_waitPidTimer = nullptr;
@@ -318,6 +363,12 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
                     m_waitPidTimer = nullptr;
                 int exitCode = (result > 0 && WIFEXITED(status))
                     ? WEXITSTATUS(status) : -1;
+                // The pid is reaped (or already gone); clear it before emitting
+                // so a later stop() can't SIGHUP a stale (possibly recycled)
+                // pid and workingDirectory() can't parse a foreign /proc/<pid>/cwd.
+                // Safe: the generation guard above guarantees same-generation
+                // context, i.e. m_childPid is this session's child.
+                m_childPid = -1;
                 Q_EMIT shellExited(exitCode);
             }
         });
@@ -330,7 +381,17 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     // If exec fails, the child writes errno before _exit(127).
     fcntl(m_execPipeReadFd, F_SETFL, O_NONBLOCK);
     m_execNotifier = new QSocketNotifier(m_execPipeReadFd, QSocketNotifier::Read, this);
-    connect(m_execNotifier, &QSocketNotifier::activated, this, [this]() {
+    // Capture the generation at creation, mirroring the reap timers' guard:
+    // if a newer session started while this notifier's delivery was pending,
+    // the exit reporting belongs to the newer session's timers.
+    const uint32_t gen = m_sessionGeneration;
+    QSocketNotifier *notifier = m_execNotifier;
+    connect(notifier, &QSocketNotifier::activated, this, [this, notifier, gen]() {
+        // Stale activation: a newer session's startCommand() replaced
+        // m_execNotifier while this delivery was pending — this activation
+        // belongs to the old pipe and must not touch the member.
+        if (m_execNotifier != notifier)
+            return;
         m_execNotifier->setEnabled(false);
         m_execNotifier->deleteLater();
         m_execNotifier = nullptr;
@@ -341,6 +402,13 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         m_execPipeReadFd = -1;
 
         if (n > 0) {
+            // Bail if this notifier belongs to a previous session, or the
+            // child was already reaped (e.g. readFinished's reap timer beat a
+            // delayed delivery of this notifier) — the exit was reported
+            // elsewhere, so emitting again would duplicate shellExited and
+            // overwrite the final exit code.
+            if (gen != m_sessionGeneration || m_childPid <= 0)
+                return;
             // exec failed — we received the errno from the child
             qWarning() << "Process exec failed:" << strerror(execErr);
             // Bounded reap: the child may not have _exit'd yet (it writes errno
@@ -350,7 +418,7 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
             m_childPid = -1;
             Q_EMIT shellExited(kExecFailedExitCode);
         }
-        // else: n == 0 means EOF → exec succeeded (pipe closed by CLOEXEC)
+        // else: n == 0 means EOF -> exec succeeded (pipe closed by CLOEXEC)
     });
 
     return true;
@@ -391,16 +459,29 @@ void PtyManager::stop(bool synchronous)
         m_execPipeReadFd = -1;
     }
 
-    // Cancel any pending waitpid timer before changing state
-    if (m_waitPidTimer) {
+    // Cancel any pending waitpid timer before changing state. Async-path
+    // exception: a still-unresolved pending-reap timer is left running — it is
+    // self-cleaning and generation-guarded; a newer session's stop reassigns
+    // the m_pendingReapPid bookkeeping, and the old timer stays responsible
+    // via its captured pid.
+    if (m_waitPidTimer && (synchronous || m_pendingReapPid <= 0)) {
         m_waitPidTimer->stop();
         m_waitPidTimer->deleteLater();
         m_waitPidTimer = nullptr;
     }
-    // The async reap timer may have been tracking an old pid; reap it here
-    // regardless of timer state so it can't be orphaned as a zombie.
-    if (m_pendingReapPid > 0) {
+    // The async reap timer may have been tracking an old pid; reap it here so
+    // it can't be orphaned as a zombie. Synchronous path only: in the async
+    // path this bounded reap would block the GUI thread up to 500ms when a
+    // second restartShell arrives while the previous stop(false)'s pending
+    // reap is unresolved (the still-running pending timer reaps it instead).
+    if (synchronous && m_pendingReapPid > 0) {
         reapPidBounded(m_pendingReapPid);
+        // If the pending pid is still this session's current child it is now
+        // definitively reaped — clear it so a later stop() can't SIGHUP a
+        // stale (possibly recycled) pid. Guarded by equality: a new session
+        // would have overwritten m_childPid with a different pid.
+        if (m_childPid == m_pendingReapPid)
+            m_childPid = -1;
         m_pendingReapPid = -1;
     }
 
@@ -449,15 +530,15 @@ void PtyManager::stop(bool synchronous)
         if (m_readerThread) {
             // The old thread's poll timeout (200 ms) exceeds this 100 ms wait, so the
             // async deleteLater-on-finished path below is the expected restart path —
-            // not an exceptional fallback (the loop's flag check gates read(), so the
-            // thread can't touch a reused fd number).
+            // not an exceptional fallback (the thread's post-poll interruption
+            // re-check gates read(), so it can't touch a reused fd number).
             if (m_readerThread->wait(100)) {
                 m_readerThread->deleteLater();
             } else {
                 qWarning() << "PtyReaderThread did not exit after fd close; async cleanup";
                 // Detach from parent so ~PtyManager doesn't try to delete a
                 // still-running QThread (would abort: "QThread: Destroyed
-                // while thread is still running"). The finished→deleteLater
+                // while thread is still running"). The finished->deleteLater
                 // connection below owns lifecycle once the thread exits.
                 m_readerThread->setParent(nullptr);
                 connect(m_readerThread, &QThread::finished, m_readerThread, &QObject::deleteLater);
@@ -573,7 +654,6 @@ bool PtyManager::writeData(const char *data, size_t len)
     if (m_ptyFd < 0)
         return false;
 
-    // If there's already buffered data, append to it
     if (!m_writeBuffer.isEmpty()) {
         m_writeBuffer.append(data, len);
         return true;
@@ -638,14 +718,19 @@ void PtyManager::drainWriteBuffer()
             m_writeOffset += n;
             ptr += n;
             remaining -= n;
-        } else if (n < 0) {
-            if (errno == EINTR)
-                continue;
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // Still full — offset already reflects bytes written
-                return;
-            }
-            qWarning() << "PTY drain write failed:" << strerror(errno);
+        } else if (n < 0 && errno == EINTR) {
+            continue;
+        } else if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            // Still full — offset already reflects bytes written
+            return;
+        } else {
+            // Real error (n < 0) or n == 0 (no progress possible — retrying
+            // the identical write would spin forever). Mirror writeData()'s
+            // handling: drop the pending data and stop draining.
+            if (n < 0)
+                qWarning() << "PTY drain write failed:" << strerror(errno);
+            else
+                qWarning() << "PTY drain write returned 0";
             resetWriteBuffer();
             if (m_writeNotifier)
                 m_writeNotifier->setEnabled(false);
@@ -653,7 +738,6 @@ void PtyManager::drainWriteBuffer()
         }
     }
 
-    // All data written — clear buffer and disable notifier
     resetWriteBuffer();
     if (m_writeNotifier)
         m_writeNotifier->setEnabled(false);

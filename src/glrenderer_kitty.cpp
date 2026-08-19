@@ -141,9 +141,20 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
                     m_kittyTexturesToDelete.append(m_kittyTextures[snap.imageId].texture);
                     m_kittyTextures.remove(snap.imageId);
                     snap.needsUpload = true;
+                    // A new generation may upload fine — drop any stale failure entry.
+                    forgetKittyFailedUpload(snap.imageId);
                 }
             } else {
                 snap.needsUpload = true;
+            }
+
+            // Negative cache: if this (image, generation) already failed to
+            // upload, don't deep-copy the pixels or re-attempt glTexImage2D
+            // every frame. The entry is dropped when the generation changes
+            // (handled above in the generation-mismatch branch) or the image
+            // is evicted/replaced.
+            if (snap.needsUpload && kittyUploadFailed(snap.imageId, gen)) {
+                snap.needsUpload = false;
             }
 
             if (snap.needsUpload) {
@@ -176,6 +187,23 @@ void GLRenderer::Renderer::drainPendingKittyDeletions()
     m_kittyTexturesToDelete.clear();
 }
 
+bool GLRenderer::Renderer::kittyUploadFailed(uint32_t imageId, uint64_t generation) const
+{
+    for (const auto &f : m_kittyFailedUploads) {
+        if (f.imageId == imageId && f.generation == generation)
+            return true;
+    }
+    return false;
+}
+
+void GLRenderer::Renderer::forgetKittyFailedUpload(uint32_t imageId)
+{
+    for (int i = m_kittyFailedUploads.size() - 1; i >= 0; --i) {
+        if (m_kittyFailedUploads[i].imageId == imageId)
+            m_kittyFailedUploads.removeAt(i);
+    }
+}
+
 void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                                                 const QMatrix4x4 &proj, int /* fboW */, int /* fboH */)
 {
@@ -185,7 +213,25 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
     if (!m_kittyGraphicsEnabled)
         return;
 
+    // This layer may be drawn between the two cell passes, i.e. while the cell
+    // VBO is bound to GL_ARRAY_BUFFER. glVertexAttribPointer below feeds a
+    // client-side stack array, which is only valid when no VBO is bound —
+    // otherwise the pointer is read as a byte offset into the bound VBO. Save
+    // the current binding, unbind, and restore it on exit.
+    GLint prevArrayBuffer = 0;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &prevArrayBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     bool hasAnyPlacement = false;
+
+    // Dedup negative-cache entries: an image with multiple placements would
+    // otherwise append one entry per placement on its first failing frame,
+    // crowding out other images' FIFO slots. Membership test is a linear scan
+    // over <=64 entries — trivially cheap.
+    auto appendKittyFailedUpload = [this](uint32_t imageId, uint64_t generation) {
+        if (!kittyUploadFailed(imageId, generation))
+            m_kittyFailedUploads.append({imageId, generation});
+    };
 
     for (const auto &snap : m_kittyPlacements) {
         if (snap.layer != layer)
@@ -198,6 +244,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                 m_kittyTexturesToDelete.append(it.value().texture);
                 m_kittyTextures.erase(it);
             }
+            forgetKittyFailedUpload(snap.imageId);
             continue;
         }
 
@@ -205,9 +252,17 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         if (imgW == 0 || imgH == 0)
             continue;
 
+        // Negative-cache hit: needsUpload=false combined with an absent texture
+        // cache entry uniquely identifies a previously-failed upload — snapshot
+        // only clears needsUpload when (imageId, generation) is in
+        // m_kittyFailedUploads. Skip silently; the failing path already printed
+        // its qWarning once.
+        if (!snap.needsUpload && !m_kittyTextures.contains(snap.imageId))
+            continue;
+
         // Clamp against GL_MAX_TEXTURE_SIZE (queried lazily on the render thread).
         // Without this, a malicious/buggy VT can request enormous dimensions and
-        // overflow size_t (4*W*H wraps on 32-bit ARM) in the gray→RGBA conversion
+        // overflow size_t (4*W*H wraps on 32-bit ARM) in the gray->RGBA conversion
         // below, causing a heap over-read before glTexImage2D ever rejects it.
         if (m_maxTextureSize == 0) {
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
@@ -218,6 +273,9 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             || imgH > static_cast<uint32_t>(m_maxTextureSize)) {
             qWarning() << "Kitty image" << snap.imageId << "dimensions" << imgW << "x" << imgH
                        << "exceed GL_MAX_TEXTURE_SIZE" << m_maxTextureSize << "; skipping upload";
+            // Negative-cache: this image can never upload on this GPU — stop
+            // deep-copying pixels and re-warning every frame.
+            appendKittyFailedUpload(snap.imageId, snap.generation);
             continue;
         }
 
@@ -234,7 +292,7 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             GhosttyKittyImageFormat fmt = snap.format;
 
             // Validate the source buffer has enough bytes for the declared
-            // format/dimensions before any read (gray→RGBA loop or glTexImage2D).
+            // format/dimensions before any read (gray->RGBA loop or glTexImage2D).
             // Guards against truncated payloads and, with the clamp above, the
             // size_t overflow case on 32-bit ARM.
             size_t srcBpp = 4;
@@ -246,6 +304,9 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                 qWarning() << "Kitty image" << snap.imageId << "buffer truncated:" << pixelsLen
                            << "bytes, need" << requiredSrcBytes << "for" << imgW << "x" << imgH
                            << "; skipping upload";
+                // Negative-cache: the payload is corrupt for this generation —
+                // don't re-copy and re-attempt it every frame.
+                appendKittyFailedUpload(snap.imageId, snap.generation);
                 continue;
             }
 
@@ -276,8 +337,11 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
                     // Falling through would pass the undersized gray buffer to
                     // glTexImage2D (expects RGBA), causing a heap over-read.
                     qWarning() << "Kitty image: failed to allocate" << convertedLen
-                               << "bytes for gray→RGBA conversion (image"
+                               << "bytes for gray->RGBA conversion (image"
                                << snap.imageId << imgW << "x" << imgH << ")";
+                    // Negative-cache: allocation is failing persistently — stop
+                    // re-copying and re-attempting every frame.
+                    appendKittyFailedUpload(snap.imageId, snap.generation);
                     continue;
                 }
             }
@@ -297,17 +361,30 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
             GLint prevUnpackAlignment = 4;
             glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpackAlignment);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            glGetError(); // clear stale error flags before the allocation
             glTexImage2D(GL_TEXTURE_2D, 0, glFmt, imgW, imgH, 0,
                          glFmt, GL_UNSIGNED_BYTE, pixels);
+            const GLenum uploadErr = glGetError();
             glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpackAlignment);
             glBindTexture(GL_TEXTURE_2D, 0);
             if (convertedPixels)
                 free(const_cast<uint8_t*>(pixels));
 
+            if (uploadErr != GL_NO_ERROR) {
+                // Driver rejected the allocation (commonly GL_OUT_OF_MEMORY on
+                // large uploads) — the texture name is unusable. Drop it and
+                // skip the cache entry so the placement is skipped this frame.
+                // Negative-cache the (image, generation) so snapshotKittyGraphics
+                // stops re-copying and re-attempting until the generation changes.
+                qWarning() << "Kitty image" << snap.imageId << "upload failed ("
+                           << uploadErr << "), skipping";
+                glDeleteTextures(1, &tex);
+                appendKittyFailedUpload(snap.imageId, snap.generation);
+                continue;
+            }
+
             KittyCachedTexture cached;
             cached.texture = tex;
-            cached.width = imgW;
-            cached.height = imgH;
             cached.lastSeenFrame = m_kittyFrameCounter;
             cached.generation = snap.generation;
             m_kittyTextures.insert(snap.imageId, cached);
@@ -328,10 +405,16 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         float uvX1 = static_cast<float>(info.source_x + info.source_width) / static_cast<float>(imgW);
         float uvY1 = static_cast<float>(info.source_y + info.source_height) / static_cast<float>(imgH);
 
-        // Clip partial visibility (negative viewport_row)
+        // Clip partial visibility (negative viewport_row). The placement
+        // is off-screen by (-viewport_row * cellHeight) - yOffset pixels:
+        // yOffset offsets the image downward within its first cell, so a
+        // positive yOffset means LESS of the image is clipped than the
+        // row count alone suggests, and the visible remainder starts
+        // topPadding + max(0, yOffset - (-viewport_row * cellHeight)).
         if (info.viewport_row < 0) {
-            int clippedPx = (-info.viewport_row) * m_cellHeight;
-            destY = m_topPadding;
+            int rowClipPx = (-info.viewport_row) * m_cellHeight;
+            int clippedPx = qMax(0, rowClipPx - static_cast<int>(yOffset));
+            destY = m_topPadding + qMax(0, static_cast<int>(yOffset) - rowClipPx);
             destH -= clippedPx;
             if (destH <= 0)
                 continue;
@@ -378,10 +461,22 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
         glBindTexture(GL_TEXTURE_2D, 0);
         m_kittyProgram->release();
     }
+
+    // Restore the caller's GL_ARRAY_BUFFER binding (the cell VBO when this runs
+    // between the two cell passes).
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(prevArrayBuffer));
 }
 
 void GLRenderer::Renderer::cleanupKittyCache()
 {
+    // Cap the negative-cache vector: failed uploads never enter m_kittyTextures,
+    // so the eviction-based forget path cannot reclaim them. FIFO-drop the
+    // oldest entries — a dropped entry costs one retry-and-re-fail cycle,
+    // which re-adds it.
+    const int kMaxKittyFailedUploads = 64;
+    while (m_kittyFailedUploads.size() > kMaxKittyFailedUploads)
+        m_kittyFailedUploads.removeFirst();
+
     if (m_kittyTextures.isEmpty())
         return;
 
@@ -414,5 +509,7 @@ void GLRenderer::Renderer::cleanupKittyCache()
             m_kittyTexturesToDelete.append(it.value().texture);
             m_kittyTextures.erase(it);
         }
+        // Evicted — allow a future upload to retry.
+        forgetKittyFailedUpload(id);
     }
 }

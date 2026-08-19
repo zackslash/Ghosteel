@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Σμίκρυνση</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Πατήστε ανάμεσα σε δύο πλήκτρα για να ξεκινήσετε νέα γραμμή</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Γραμμή</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Powered by libghostty terminal engine</source>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Αλλάξτε το μέγεθος γραμματοσειράς της συνεδρίας με χειρονομία τσιμπήματος δύο δαχτύλων</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Αυτόματο ακολουθεί το περιβάλλον σας</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Αυτόματο</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Default</source>
         <translation>Προεπιλογή</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Κουδούνι</translation>
     </message>
 </context>
 </TS>

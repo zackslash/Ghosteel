@@ -20,7 +20,8 @@ constexpr qint64 kMaxScrollbackFileBytes = 4 * 1024 * 1024;
 }   // namespace
 
 SessionStore::SessionStore(Settings *settings, ScrollEncryptor *encryptor)
-    : m_settings(settings)
+    : QObject(nullptr)
+    , m_settings(settings)
     , m_encryptor(encryptor)
 {
 }
@@ -29,7 +30,6 @@ void SessionStore::saveSessionsMetadata(QVector<SessionInfo> &sessions, int acti
 {
     QSettings &s = m_settings->raw();
 
-    // Clear old session entries
     s.remove(QStringLiteral("sessionData"));
 
     // Skip anonymous command sessions during save
@@ -93,38 +93,89 @@ QString SessionStore::scrollbackFilePath(int sessionId) const
     return scrollbackDir() + QStringLiteral("/session_%1.vt").arg(sessionId);
 }
 
-void SessionStore::saveSessionScrollback(SessionInfo &info)
+void SessionStore::saveSessionScrollback(SessionInfo &info, bool forceSync)
 {
     if (!info.view)
         return;
 
     uint16_t cols = 0, rows = 0;
     QByteArray data = info.view->exportScrollback(cols, rows);
+
+    // Clear dirty synchronously at export time (GUI thread, race-free).
+    // Output arriving after this point re-dirties via contentChanged and
+    // triggers a retry on the next debounce cycle.
+    info.scrollbackDirty = false;
+
     if (data.isEmpty()) {
-        info.scrollbackDirty = false;
+        Q_EMIT saveCompleted(info.id);
         return;
     }
 
-    QByteArray output;
-    if (m_encryptor && m_encryptor->isAvailable())
-        output = m_encryptor->encrypt(data);
-    if (output.isEmpty()) {
+    // m_encryptor is always non-null here: SessionStore's single ctor always
+    // receives the always-non-null ScrollEncryptor from SessionManager.
+
+    // Increment generation so any in-flight async callback for this session
+    // is discarded (prevents stale overwrites from a previous save cycle or
+    // a removed session).
+    const int gen = ++m_saveGenerations[info.id];
+
+    if (forceSync) {
+        const QByteArray output = m_encryptor->encrypt(data);
+        if (output.isEmpty()) {
+            info.scrollbackDirty = true; // re-dirty for retry
+            qWarning() << "Ghosteel: Scrollback encryption failed for session"
+                       << info.id << ", skipping";
+            return;
+        }
+        writeScrollbackToDisk(info.id, output);
+        return;
+    }
+
+    // Async path: startRequest() returns immediately and the callback fires on
+    // the GUI thread event loop when the crypto daemon replies. No
+    // waitForFinished(), so the GUI thread never stalls on D-Bus.
+    const int sessionId = info.id;
+    info.scrollbackSaveInFlight = true;
+    const bool started = m_encryptor->encryptAsync(data,
+        [this, sessionId, gen](const QByteArray &encrypted) {
+            if (m_saveGenerations.value(sessionId) != gen)
+                return; // Stale: a newer save or session removal superseded this
+            writeScrollbackToDisk(sessionId, encrypted);
+        });
+    if (!started) {
+        info.scrollbackDirty = true; // re-dirty for retry
+        info.scrollbackSaveInFlight = false;
+        qWarning() << "Ghosteel: Async scrollback encryption unavailable for session"
+                   << sessionId << ", leaving dirty for retry";
+    }
+}
+
+void SessionStore::writeScrollbackToDisk(int sessionId, const QByteArray &encrypted)
+{
+    // Persistence may have been disabled while the D-Bus request was in flight
+    // — don't recreate a file the purge just removed.
+    if (!m_settings->scrollbackPersistence()) {
+        Q_EMIT saveFailed(sessionId);
+        return;
+    }
+
+    if (encrypted.isEmpty()) {
         qWarning() << "Ghosteel: Scrollback encryption failed for session"
-                   << info.id << ", skipping";
+                   << sessionId << ", skipping";
+        Q_EMIT saveFailed(sessionId);
         return; // Don't write plaintext to disk
     }
 
     // Atomic write via QSaveFile — commit() is a POSIX rename(),
     // which is atomic on the same filesystem. No window where both
     // old and new files are gone.
-    QSaveFile saveFile(scrollbackFilePath(info.id));
+    QSaveFile saveFile(scrollbackFilePath(sessionId));
     if (saveFile.open(QIODevice::WriteOnly)) {
-        if (saveFile.write(output) != -1) {
+        if (saveFile.write(encrypted) != -1) {
             // fsync before rename to ensure data is on disk —
             // protects against power loss between write and rename
             ::fsync(saveFile.handle());
             if (saveFile.commit()) {
-                info.scrollbackDirty = false;
                 // fsync the parent directory so the rename's dirent update
                 // survives a power loss (file content is already durable).
                 int dirFd = ::open(scrollbackDir().toUtf8().constData(), O_RDONLY);
@@ -135,13 +186,17 @@ void SessionStore::saveSessionScrollback(SessionInfo &info)
                 } else {
                     qWarning() << "Scrollback: dir fsync open failed:" << std::strerror(errno);
                 }
-            } else {
-                qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
+                Q_EMIT saveCompleted(sessionId);
+                return;
             }
+            qWarning() << "Failed to commit scrollback:" << saveFile.errorString();
         } else {
             qWarning() << "Failed to write scrollback:" << saveFile.errorString();
         }
+    } else {
+        qWarning() << "Failed to open scrollback:" << saveFile.errorString();
     }
+    Q_EMIT saveFailed(sessionId);
 }
 
 bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int activeIndex, bool force)
@@ -153,16 +208,34 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
 
     // Throttle scrollback saves under continuous output (tail -f, builds):
     // exportScrollback + Sailfish-Secrets D-Bus + fsync is expensive on a
-    // handset, and contentChanged fires every repaint, so an unthrottled
+    // handset, and contentChanged fires per PTY data chunk, so an unthrottled
     // 500ms debounce would re-encrypt ~2x/sec. Cap each session to one save
     // per kMinScrollbackIntervalMs; force=true (quit) bypasses it. A sporadic
     // edit landing inside a window is deferred up to ~5s — acceptable for
     // scrollback durability (quit always force-saves).
+    //
+    // Anonymous command sessions are skipped entirely: saveSessionsMetadata
+    // never persists them, so their scrollback files would never be restored
+    // and would linger until the 30-day mtime purge. Named command sessions
+    // still save.
     static constexpr qint64 kMinScrollbackIntervalMs = 5000;
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     bool anyThrottled = false;
 
     auto trySave = [&](SessionInfo &info) {
+        // Anonymous sessions are never restored on launch — don't write
+        // scrollback files for them (consistent with saveSessionsMetadata).
+        if (info.isAnonymous())
+            return;
+        // Skip sessions with an async encrypt request still in flight —
+        // avoid a second concurrent encrypt racing the in-flight one.
+        // Mark as throttled so the timer re-arms and retries once the
+        // in-flight save completes. Bypassed on quit (force=true) via the
+        // generation counter which discards the older callback.
+        if (!force && info.scrollbackSaveInFlight) {
+            anyThrottled = true;
+            return;
+        }
         if (!info.scrollbackDirty)
             return;  // cheap pre-check; saveSessionScrollback does not re-check dirty
         if (!force && info.lastScrollbackSaveMs > 0
@@ -171,9 +244,7 @@ bool SessionStore::saveScrollbackIncremental(QVector<SessionInfo> &sessions, int
             anyThrottled = true;
             return;
         }
-        saveSessionScrollback(info);  // clears dirty on success
-        if (!info.scrollbackDirty)
-            info.lastScrollbackSaveMs = now;
+        saveSessionScrollback(info, force);  // dirty cleared synchronously at export inside saveSessionScrollback
     };
 
     // Process active session first for priority on quit
@@ -218,6 +289,9 @@ void SessionStore::cleanupScrollbackFiles(bool purgeAll)
 void SessionStore::restoreScrollbackForSession(TerminalView *view, int savedId,
                                                QVector<PendingScrollbackRestore> &pending)
 {
+    if (!view)  // View may have been destroyed (QPointer callers) — skip
+        return;
+
     if (!m_settings->scrollbackPersistence())
         return;
 
@@ -236,7 +310,7 @@ void SessionStore::restoreScrollbackForSession(TerminalView *view, int savedId,
         return;
 
     const bool encrypted = ScrollEncryptor::isEncryptedFormat(sbData);
-    if (encrypted && m_encryptor && m_encryptor->isAvailable()) {
+    if (encrypted && m_encryptor->isAvailable()) {
         QByteArray restored = m_encryptor->decrypt(sbData);
         if (!restored.isEmpty())
             view->setPendingScrollback(restored);

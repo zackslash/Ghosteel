@@ -144,6 +144,14 @@
         <source>Zoom out</source>
         <translation>Uitzoomen</translation>
     </message>
+    <message>
+        <source>Tap between two keys to start a new row</source>
+        <translation>Tik tussen twee toetsen om een nieuwe rij te beginnen</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Rij</translation>
+    </message>
 </context>
 <context>
     <name>LicensesPage</name>
@@ -458,6 +466,14 @@ Aangedreven door de libghostty terminal-engine</translation>
         <source>Change font size of the session with a two-finger pinch gesture</source>
         <translation>Wijzig de lettergrootte van de sessie met een tweevinger-knijpgebaar</translation>
     </message>
+    <message>
+        <source>Auto follows your ambience</source>
+        <translation>Automatisch volgt je omgeving</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatisch</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
@@ -544,6 +560,10 @@ Aangedreven door de libghostty terminal-engine</translation>
     <message>
         <source>Default</source>
         <translation>Standaard</translation>
+    </message>
+    <message>
+        <source>Bell</source>
+        <translation>Bel</translation>
     </message>
 </context>
 </TS>
