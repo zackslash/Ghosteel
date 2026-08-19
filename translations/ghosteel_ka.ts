@@ -565,5 +565,24 @@ Powered by libghostty terminal engine</source>
         <source>Bell</source>
         <translation>ზარი</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell-ის გაშვება ვერ მოხერხდა</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“-ის გაშვება ვერ მოხერხდა (%2). გამოყენებული იქნება „%3“.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“-ის გაშვება ვერ მოხერხდა, გამოიყენება „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>შეიქმნა ~/.zshrc Sailfish-ის პრომპტის გასწორებით</translation>
+    </message>
 </context>
 </TS>

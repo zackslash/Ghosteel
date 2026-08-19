@@ -564,5 +564,24 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <source>Bell</source>
         <translation>Zil</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell başlatılamadı</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>&apos;%1&apos; başlatılamadı (%2). &apos;%3&apos; kullanılacak.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>&apos;%1&apos; başlatılamadı, &apos;%2&apos; kullanılıyor.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>~/.zshrc oluşturuldu, Sailfish istem düzeltmesiyle</translation>
+    </message>
 </context>
 </TS>

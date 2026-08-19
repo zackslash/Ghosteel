@@ -35,6 +35,7 @@ TerminalView::TerminalView(QQuickItem *parent)
 
     connect(m_pty, &PtyManager::dataReady, this, &TerminalView::onPtyData);
     connect(m_pty, &PtyManager::shellExited, this, &TerminalView::onShellExited);
+    connect(m_pty, &PtyManager::shellFallbackNotice, this, &TerminalView::shellFallbackNotice);
     connect(m_vt, &GhosttyVt::titleChanged, this, [this](const QString &t) {
         m_title = t;
         Q_EMIT titleChanged();

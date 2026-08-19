@@ -2,6 +2,8 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QTimer>
 
 #include <cstdlib>
@@ -168,17 +170,60 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
     // (including setenv) here can deadlock. Build all child inputs on this stack.
 
-    // Determine shell — prefer configured command, then $SHELL, then /bin/sh
-    const char *shell = nullptr;
-    QByteArray shellBytes;
+    // Build the hop chain: user-configured shell, then $SHELL, then sh. Each
+    // failed hop is reported via execPipe so the parent can notify, and an
+    // in-terminal notice is written to the pty before the fallback exec.
+    // $SHELL is copied into a QByteArray because forkPtyProcess() calls
+    // setenv(), which can realloc environ and invalidate the getenv() pointer.
+    QVector<QString> hopNames;
+    QByteArray shellCmdBytes;
+    QByteArray shellEnvBytes;
+    const char *hops[3];
+    int hopCount = 0;
+
     if (!m_shellCommand.isEmpty()) {
-        shellBytes = m_shellCommand.toUtf8();
-        shell = shellBytes.constData();
+        shellCmdBytes = m_shellCommand.toUtf8();
+        hops[hopCount++] = shellCmdBytes.constData();
+        hopNames.append(m_shellCommand);
     }
-    if (!shell || !shell[0]) {
-        shell = getenv("SHELL");
-        if (!shell || !shell[0])
-            shell = "/bin/sh";
+    const char *shellEnv = getenv("SHELL");
+    if (shellEnv && shellEnv[0]) {
+        bool duplicate = false;
+        for (int i = 0; i < hopCount; ++i) {
+            if (strcmp(hops[i], shellEnv) == 0) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) {
+            shellEnvBytes = QByteArray(shellEnv);
+            hops[hopCount++] = shellEnvBytes.constData();
+            hopNames.append(QString::fromUtf8(shellEnv));
+        }
+    }
+    bool shPresent = false;
+    for (int i = 0; i < hopCount; ++i) {
+        if (strcmp(hops[i], "sh") == 0) {
+            shPresent = true;
+            break;
+        }
+    }
+    if (!shPresent) {
+        hops[hopCount++] = "sh";
+        hopNames.append(QStringLiteral("sh"));
+    }
+
+    // One notice line per adjacent hop pair, written to the pty (fd 2) before
+    // the fallback exec. Translated in the parent; the child only writes the
+    // pre-built UTF-8 bytes. No strerror text here: the child cannot call
+    // it (not async-signal-safe), and the system notification carries the
+    // reason anyway.
+    const QString fallbackTpl = tr("%1 could not be started, using %2");
+    QByteArray noticeLines[2];
+    for (int i = 0; i + 1 < hopCount; ++i) {
+        noticeLines[i] = (QStringLiteral("\r\nghosteel: ")
+            + fallbackTpl.arg(hopNames.at(i)).arg(hopNames.at(i + 1))
+            + QStringLiteral("\r\n")).toUtf8();
     }
 
     const char *homeDir = getenv("HOME");
@@ -189,21 +234,62 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         workingDir = workingDirBytes.constData();
     }
 
+    // SailfishOS's /etc/profile.d/set_ps1.sh exports a bash-only PS1 that
+    // zsh prints literally. Bootstrap ~/.zshrc (only when absent) so a
+    // first-run zsh user gets a readable prompt; never touch an existing
+    // config. The creation notice is written by the child just before the
+    // zsh exec so it only appears when the chain reaches the zsh hop.
+    int zshHop = -1;
+    QByteArray zshBootNotice;
+    if (homeDir && homeDir[0]) {
+        for (int i = 0; i < hopNames.size(); ++i) {
+            if (QFileInfo(hopNames.at(i)).fileName() == QLatin1String("zsh")) {
+                zshHop = i;
+                QString rcPath = QString::fromLocal8Bit(homeDir)
+                    + QStringLiteral("/.zshrc");
+                if (!QFile::exists(rcPath)) {
+                    QFile rc(rcPath);
+                    if (rc.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                        rc.write("# Created by Ghosteel: SailfishOS sets a"
+                                 " bash-only PS1 that zsh prints literally.\n");
+                        rc.write("PROMPT='[%n@%m %1~]%# '\n");
+                        rc.close();
+                        zshBootNotice = (QStringLiteral("\r\nghosteel: ")
+                            + tr("created ~/.zshrc with a Sailfish prompt fix")
+                            + QStringLiteral("\r\n")).toUtf8();
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     int execPipe[2];
     pid_t pid;
     if (!forkPtyProcess(cols, rows, execPipe, pid, workingDir, homeDir))
         return false;
 
     if (pid == 0) {
-        execlp(shell, shell, nullptr);
-        execlp("sh", "sh", nullptr);  // fallback
-        int execErr = errno;
-        ssize_t written = ::write(execPipe[1], &execErr, sizeof(execErr));
-        (void)written;
+        for (int i = 0; i < hopCount; i++) {
+            if (i == zshHop && !zshBootNotice.isEmpty()) {
+                ssize_t bootWritten = ::write(2, zshBootNotice.constData(),
+                                              zshBootNotice.size());
+                (void)bootWritten;
+            }
+            execlp(hops[i], hops[i], nullptr);
+            int execErr = errno;
+            if (i + 1 < hopCount) {
+                ssize_t noticeWritten = ::write(2, noticeLines[i].constData(), noticeLines[i].size());
+                (void)noticeWritten;
+            }
+            int32_t rec[3] = { i, execErr, (i + 1 < hopCount) ? i + 1 : -1 };
+            ssize_t written = ::write(execPipe[1], rec, sizeof rec);
+            (void)written;
+        }
         _exit(127);
     }
 
-    return startParentProcess(pid, execPipe);
+    return startParentProcess(pid, execPipe, hopNames);
 }
 
 // Runs in CHILD between fork and exec — async-signal-safe calls only.
@@ -252,7 +338,8 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
         execvp(cmdBytes.constData(), const_cast<char *const *>(argv.data()));
 
         int execErr = errno;
-        ssize_t written = ::write(execPipe[1], &execErr, sizeof(execErr));
+        int32_t rec[3] = { -1, execErr, -1 };
+        ssize_t written = ::write(execPipe[1], rec, sizeof rec);
         (void)written;
         _exit(127);
     }
@@ -260,7 +347,8 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
     return startParentProcess(pid, execPipe);
 }
 
-bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
+bool PtyManager::startParentProcess(pid_t pid, int execPipe[2],
+                                    const QVector<QString> &hopNames)
 {
     // Defensive cleanup mirroring stop(): a double-start would otherwise leave
     // a stale exec notifier busy-polling a leaked fd (the notifier-capture
@@ -275,6 +363,7 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
         ::close(m_execPipeReadFd);
         m_execPipeReadFd = -1;
     }
+    m_execMsgLen = 0;
 
     ::close(execPipe[1]);
     m_execPipeReadFd = execPipe[0];
@@ -378,7 +467,8 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
 
     // Monitor exec pipe for failure detection.
     // If exec succeeds, FD_CLOEXEC closes the write end and we get EOF.
-    // If exec fails, the child writes errno before _exit(127).
+    // If exec fails, the child writes one 12-byte failure record per failed
+    // hop before _exit(127).
     fcntl(m_execPipeReadFd, F_SETFL, O_NONBLOCK);
     m_execNotifier = new QSocketNotifier(m_execPipeReadFd, QSocketNotifier::Read, this);
     // Capture the generation at creation, mirroring the reap timers' guard:
@@ -386,39 +476,91 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2])
     // the exit reporting belongs to the newer session's timers.
     const uint32_t gen = m_sessionGeneration;
     QSocketNotifier *notifier = m_execNotifier;
-    connect(notifier, &QSocketNotifier::activated, this, [this, notifier, gen]() {
+    connect(notifier, &QSocketNotifier::activated, this, [this, notifier, gen, hopNames]() {
         // Stale activation: a newer session's startCommand() replaced
         // m_execNotifier while this delivery was pending — this activation
         // belongs to the old pipe and must not touch the member.
         if (m_execNotifier != notifier)
             return;
+
+        // Drain the exec pipe. The child writes one 12-byte record per failed
+        // hop; on success CLOEXEC closes the write end and read() returns 0.
+        // EAGAIN means the child is mid-hop: keep the notifier armed and wait
+        // for the next activation (EOF or more records).
+        while (true) {
+            ssize_t n = ::read(m_execPipeReadFd, m_execMsgBuf + m_execMsgLen,
+                               sizeof(m_execMsgBuf) - m_execMsgLen);
+            if (n > 0) {
+                m_execMsgLen += static_cast<int>(n);
+                if (m_execMsgLen >= static_cast<int>(sizeof(m_execMsgBuf)))
+                    break; // buffer full: finalize with what we have
+            } else if (n == 0) {
+                break; // EOF: exec succeeded or child done writing
+            } else if (errno == EINTR) {
+                continue;
+            } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                return; // child mid-hop; next activation delivers EOF or more records
+            } else {
+                break; // read error: finalize
+            }
+        }
+
+        ::close(m_execPipeReadFd);
+        m_execPipeReadFd = -1;
         m_execNotifier->setEnabled(false);
         m_execNotifier->deleteLater();
         m_execNotifier = nullptr;
 
-        int execErr = 0;
-        ssize_t n = ::read(m_execPipeReadFd, &execErr, sizeof(execErr));
-        ::close(m_execPipeReadFd);
-        m_execPipeReadFd = -1;
+        // Bail if this notifier belongs to a previous session, or the
+        // child was already reaped (e.g. readFinished's reap timer beat a
+        // delayed delivery of this notifier): the exit was reported
+        // elsewhere, so emitting again would duplicate shellExited and
+        // overwrite the final exit code (shellFallbackNotice is likewise
+        // dropped).
+        if (gen != m_sessionGeneration || m_childPid <= 0)
+            return;
 
-        if (n > 0) {
-            // Bail if this notifier belongs to a previous session, or the
-            // child was already reaped (e.g. readFinished's reap timer beat a
-            // delayed delivery of this notifier) — the exit was reported
-            // elsewhere, so emitting again would duplicate shellExited and
-            // overwrite the final exit code.
-            if (gen != m_sessionGeneration || m_childPid <= 0)
-                return;
+        // Parse 12-byte records {failed, errsv, target}. A record with
+        // failed == -1 (raw command) or target == -1 (last hop failed) marks
+        // total failure.
+        constexpr int kRecordSize = 3 * static_cast<int>(sizeof(int32_t));
+        int firstFailed = -1;
+        int firstErrsv = 0;
+        int lastTarget = -1;
+        int recordCount = 0;
+        bool totalFailure = false;
+        for (int off = 0; off + kRecordSize <= m_execMsgLen; off += kRecordSize) {
+            int32_t rec[3];
+            memcpy(rec, m_execMsgBuf + off, kRecordSize);
+            if (recordCount == 0) {
+                firstFailed = rec[0];
+                firstErrsv = rec[1];
+            }
+            lastTarget = rec[2];
+            recordCount++;
+            if (rec[0] == -1 || rec[2] == -1)
+                totalFailure = true;
+        }
+
+        if (totalFailure) {
             // exec failed — we received the errno from the child
-            qWarning() << "Process exec failed:" << strerror(execErr);
-            // Bounded reap: the child may not have _exit'd yet (it writes errno
-            // then calls _exit(127); the parent may read the pipe before the
-            // _exit lands). reapPidBounded retries to avoid leaving a zombie.
+            qWarning() << "Process exec failed:" << strerror(firstErrsv);
+            // Bounded reap: the child may not have _exit'd yet (it writes the
+            // failure records then calls _exit(127); the parent may read the
+            // pipe before the _exit lands). reapPidBounded retries to avoid
+            // leaving a zombie.
             reapPidBounded(m_childPid);
             m_childPid = -1;
             Q_EMIT shellExited(kExecFailedExitCode);
+        } else if (recordCount > 0) {
+            // Out-of-range hop indices (corrupt record) silently skip the emit.
+            if (firstFailed >= 0 && firstFailed < hopNames.size()
+                && lastTarget >= 0 && lastTarget < hopNames.size()) {
+                Q_EMIT shellFallbackNotice(hopNames.at(firstFailed),
+                                           hopNames.at(lastTarget),
+                                           QString::fromLocal8Bit(strerror(firstErrsv)));
+            }
         }
-        // else: n == 0 means EOF -> exec succeeded (pipe closed by CLOEXEC)
     });
 
     return true;

@@ -565,5 +565,24 @@ Drevet af libghostty terminalmotor</translation>
         <source>Bell</source>
         <translation>Signal</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell kunne ikke startes</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>&apos;%1&apos; kunne ikke startes (%2). Der bruges &apos;%3&apos;.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>&apos;%1&apos; kunne ikke startes, der bruges &apos;%2&apos;.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>oprettet ~/.zshrc med rettelse af Sailfish-prompten</translation>
+    </message>
 </context>
 </TS>

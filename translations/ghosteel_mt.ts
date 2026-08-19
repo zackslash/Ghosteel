@@ -567,5 +567,24 @@ Mħaddem minn magna terminali libghostty</translation>
         <source>Bell</source>
         <translation>Qanpiena</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Il-Shell ma bedax</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>&apos;%1&apos; ma setax jibda (%2). Se jintuża &apos;%3&apos;.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>&apos;%1&apos; ma setax jibda, jintuża &apos;%2&apos;.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>inħoloq ~/.zshrc b&apos;tiswija tal-prompt tas-Sailfish</translation>
+    </message>
 </context>
 </TS>

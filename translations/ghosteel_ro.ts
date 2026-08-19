@@ -566,5 +566,24 @@ Propulsat de motorul de terminal libghostty</translation>
         <source>Bell</source>
         <translation>Sunet de alertă</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Nu s-a putut porni Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1” nu a putut fi pornit (%2). Se folosește „%3”.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1” nu a putut fi pornit, se folosește „%2”.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>s-a creat ~/.zshrc cu o corecție a promptului Sailfish</translation>
+    </message>
 </context>
 </TS>

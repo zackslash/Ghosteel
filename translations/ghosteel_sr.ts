@@ -566,5 +566,24 @@ Pokreće libghostty terminalski motor</translation>
         <source>Bell</source>
         <translation>Zvono</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shell nije mogao da se pokrene</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ nije mogao da se pokrene (%2). Koristiće se „%3“.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“ nije mogao da se pokrene, koristi se „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>направљен је ~/.zshrc са исправком Sailfish промпта</translation>
+    </message>
 </context>
 </TS>

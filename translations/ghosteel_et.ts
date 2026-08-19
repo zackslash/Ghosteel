@@ -565,5 +565,24 @@ Toetab libghostty terminalimootorit</translation>
         <source>Bell</source>
         <translation>Häire</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Shelli käivitamine ebaõnnestus</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>„%1“ käivitamine ebaõnnestus (%2). Kasutatakse shelli „%3“.</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“ käivitamine ebaõnnestus, kasutatakse „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>loodi ~/.zshrc koos Sailfishi käsuviiba parandusega</translation>
+    </message>
 </context>
 </TS>

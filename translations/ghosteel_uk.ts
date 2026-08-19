@@ -566,5 +566,24 @@ Powered by libghostty terminal engine</source>
         <source>Bell</source>
         <translation>Дзвінок</translation>
     </message>
+    <message>
+        <source>Shell failed to start</source>
+        <translation>Не вдалося запустити Shell</translation>
+    </message>
+    <message>
+        <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
+        <translation>Не вдалося запустити «%1» (%2). Буде використано «%3».</translation>
+    </message>
+</context>
+<context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Не вдалося запустити «%1», використовується «%2».</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>створено ~/.zshrc із виправленням запрошення Sailfish</translation>
+    </message>
 </context>
 </TS>

@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <QByteArray>
+#include <QVector>
 #include <QAtomicInt>
 
 class QTimer;
@@ -55,6 +56,7 @@ public:
 Q_SIGNALS:
     void dataReady(const QByteArray &data);
     void shellExited(int exitCode);
+    void shellFallbackNotice(const QString &failedShell, const QString &usedShell, const QString &reason);
 
 private:
     void ensureWriteNotifier();
@@ -62,7 +64,8 @@ private:
     void resetWriteBuffer();
     void setupChildProcess(const char *workingDir, const char *homeDir);
     bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid, const char *workingDir, const char *homeDir);
-    bool startParentProcess(pid_t pid, int execPipe[2]);
+    bool startParentProcess(pid_t pid, int execPipe[2],
+                            const QVector<QString> &hopNames = QVector<QString>());
 
     void reapPidBounded(pid_t pid);
 
@@ -78,6 +81,8 @@ private:
     uint32_t m_sessionGeneration = 0;
     int m_execPipeReadFd = -1;
     QSocketNotifier *m_execNotifier = nullptr;
+    char m_execMsgBuf[64];
+    int m_execMsgLen = 0;
 
     // Non-blocking write buffer
     QByteArray m_writeBuffer;
