@@ -422,15 +422,38 @@ void TerminalView::setupTerminal()
 void TerminalView::onPtyData(const QByteArray &data)
 {
     Q_EMIT ptyDataReceived();
+
+    // The selection is anchored to viewport pixels, so only output that
+    // moves the viewport invalidates it; in-place rewrites keep it
+    // (v1.0.0 behavior; copying from live output in less or tmux still
+    // works). If the scrollbar read fails, fall back to clearing.
+    GhosttyTerminalScrollbar scrollbarBefore = {};
+    bool scrollbarOk = false;
+    if (m_selecting && m_vt->terminal()) {
+        scrollbarOk = ghostty_terminal_get(m_vt->terminal(),
+                                           GHOSTTY_TERMINAL_DATA_SCROLLBAR,
+                                           &scrollbarBefore) == GHOSTTY_SUCCESS;
+    }
+
     m_vt->vtWrite(reinterpret_cast<const uint8_t *>(data.constData()),
                    data.size());
     m_linkScanDirty = true;
 
-    // PTY output can scroll content under the selection, which is anchored to
-    // viewport pixels (copySelection re-derives cells from the stored pixels).
-    // Clear it so the selection doesn't silently cover different text — for
-    // the same reason the two-finger-scroll and key-input paths clear it.
-    if (m_selecting)
+    bool viewportMoved = false;
+    if (m_selecting && scrollbarOk) {
+        GhosttyTerminalScrollbar scrollbarAfter = {};
+        if (ghostty_terminal_get(m_vt->terminal(),
+                                 GHOSTTY_TERMINAL_DATA_SCROLLBAR,
+                                 &scrollbarAfter) == GHOSTTY_SUCCESS) {
+            viewportMoved = scrollbarAfter.offset != scrollbarBefore.offset
+                || scrollbarAfter.total != scrollbarBefore.total
+                || scrollbarAfter.len != scrollbarBefore.len;
+        } else {
+            viewportMoved = true;
+        }
+    }
+
+    if (m_selecting && (!scrollbarOk || viewportMoved))
         clearSelection();
 
     // Live output shifts rows while the search panel is open; refresh the

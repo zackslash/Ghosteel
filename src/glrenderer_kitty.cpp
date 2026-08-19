@@ -143,6 +143,13 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
                     snap.needsUpload = true;
                     // A new generation may upload fine — drop any stale failure entry.
                     forgetKittyFailedUpload(snap.imageId);
+                } else {
+                    // The draw path normally refreshes lastSeenFrame, but
+                    // canSkipPipeline skips drawKittyImageLayer on idle frames
+                    // while a custom shader keeps the anim timer alive. Refresh
+                    // here so an on-screen texture is not evicted and then
+                    // re-deep-copied every frame.
+                    m_kittyTextures[snap.imageId].lastSeenFrame = m_kittyFrameCounter;
                 }
             } else {
                 snap.needsUpload = true;
@@ -151,8 +158,9 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             // Negative cache: if this (image, generation) already failed to
             // upload, don't deep-copy the pixels or re-attempt glTexImage2D
             // every frame. The entry is dropped when the generation changes
-            // (handled above in the generation-mismatch branch) or the image
-            // is evicted/replaced.
+            // (handled above in the generation-mismatch branch), when the image
+            // is evicted/replaced, or after KITTY_FAILED_RETRY_FRAMES so a
+            // transient GL_OUT_OF_MEMORY is retried instead of hiding the image.
             if (snap.needsUpload && kittyUploadFailed(snap.imageId, gen)) {
                 snap.needsUpload = false;
             }
@@ -187,11 +195,17 @@ void GLRenderer::Renderer::drainPendingKittyDeletions()
     m_kittyTexturesToDelete.clear();
 }
 
-bool GLRenderer::Renderer::kittyUploadFailed(uint32_t imageId, uint64_t generation) const
+bool GLRenderer::Renderer::kittyUploadFailed(uint32_t imageId, uint64_t generation)
 {
-    for (const auto &f : m_kittyFailedUploads) {
-        if (f.imageId == imageId && f.generation == generation)
+    for (int i = m_kittyFailedUploads.size() - 1; i >= 0; --i) {
+        const auto &f = m_kittyFailedUploads[i];
+        if (f.imageId == imageId && f.generation == generation) {
+            if (m_kittyFrameCounter - f.lastAttemptFrame > KITTY_FAILED_RETRY_FRAMES) {
+                m_kittyFailedUploads.removeAt(i);
+                return false;
+            }
             return true;
+        }
     }
     return false;
 }
@@ -224,13 +238,18 @@ void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
 
     bool hasAnyPlacement = false;
 
-    // Dedup negative-cache entries: an image with multiple placements would
+    // Negative-cache bookkeeping: an image with multiple placements would
     // otherwise append one entry per placement on its first failing frame,
-    // crowding out other images' FIFO slots. Membership test is a linear scan
-    // over <=64 entries — trivially cheap.
+    // crowding out other images' FIFO slots. Linear scan over <=64 entries,
+    // trivially cheap.
     auto appendKittyFailedUpload = [this](uint32_t imageId, uint64_t generation) {
-        if (!kittyUploadFailed(imageId, generation))
-            m_kittyFailedUploads.append({imageId, generation});
+        for (auto &f : m_kittyFailedUploads) {
+            if (f.imageId == imageId && f.generation == generation) {
+                f.lastAttemptFrame = m_kittyFrameCounter;
+                return;
+            }
+        }
+        m_kittyFailedUploads.append({imageId, generation, m_kittyFrameCounter});
     };
 
     for (const auto &snap : m_kittyPlacements) {
@@ -471,7 +490,7 @@ void GLRenderer::Renderer::cleanupKittyCache()
 {
     // Cap the negative-cache vector: failed uploads never enter m_kittyTextures,
     // so the eviction-based forget path cannot reclaim them. FIFO-drop the
-    // oldest entries — a dropped entry costs one retry-and-re-fail cycle,
+    // oldest entries; a dropped entry costs one retry-and-re-fail cycle,
     // which re-adds it.
     const int kMaxKittyFailedUploads = 64;
     while (m_kittyFailedUploads.size() > kMaxKittyFailedUploads)
