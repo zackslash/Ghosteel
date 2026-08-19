@@ -48,7 +48,9 @@ Dimensions calculateDimensions(int width, int height, int cellWidth, int cellHei
 // This is intentionally broad so that CJK and other scripts are treated as words.
 bool isWordChar(uint32_t codepoint);
 
-// URL detection — matches scheme URLs, file paths, and bare relative paths.
+// URL detection — matches scheme-prefixed URLs (http(s)/ftp with host,
+// file/git/ipfs/ipns/gemini/gopher, and ssh/mailto/tel/magnet/news).
+// No bare or relative paths: every alternative requires a scheme.
 // Ported from Ghostty's config/url.zig (Oniguruma regex).
 struct LinkSpan {
     int startCol;

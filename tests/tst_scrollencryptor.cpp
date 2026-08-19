@@ -178,10 +178,8 @@ private slots:
 
     void testEncryptAsyncUnavailableDoesNotInvokeCallback()
     {
-        // Stub contract for the async path: encryption is never available in
-        // the non-SAILFISH_SECRETS build, so encryptAsync() must return false
-        // immediately and must NOT invoke the callback. Callers leave the
-        // session dirty and retry once encryption becomes available.
+        // Stub contract: encryption is never available here, so encryptAsync()
+        // must return false and never invoke the callback.
         ScrollEncryptor encryptor;
         bool invoked = false;
         const bool ok = encryptor.encryptAsync(QByteArray("secret scrollback"),

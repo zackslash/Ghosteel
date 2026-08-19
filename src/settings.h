@@ -53,7 +53,9 @@ public:
     // Exposed for SessionManager's group-based persistence
     QSettings &raw() { return m_settings; }
 
-    // Public: called by SessionManager after writing via raw()
+    // Internal save plumbing: scheduleSave() arms the debounce timer used by
+    // this class's own setters; save() flushes immediately (sole caller:
+    // SessionStore, after writing via raw()).
     void save();
     void scheduleSave();
 

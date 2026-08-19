@@ -61,8 +61,9 @@ int setup_uinput() {
     ioctl(fd, UI_SET_ABSBIT, ABS_Y);
 
     // Enable key events
-    ioctl(fd, UI_SET_KEYBIT, BTN_TOUCH);
-    ioctl(fd, UI_SET_KEYBIT, BTN_TOOL_DOUBLETAP);
+ioctl(fd, UI_SET_KEYBIT, BTN_TOUCH);
+ioctl(fd, UI_SET_KEYBIT, BTN_TOOL_FINGER);
+ioctl(fd, UI_SET_KEYBIT, BTN_TOOL_DOUBLETAP);
 
     // Use legacy uinput_user_dev struct
     struct uinput_user_dev uidev;

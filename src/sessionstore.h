@@ -47,7 +47,12 @@ struct SessionInfo {
     QStringList execArgs;             // Full command args including binary (for reuse matching)
     qint64 createdAt = 0;             // Epoch ms when session was created
     qint64 lastUsedAt = 0;            // Epoch ms when session was last switched to
-    TerminalView *view;
+    // QPointer: the QML scene owns the view after reparenting (TerminalPage.qml
+    // attachTerminal), so scene teardown at app exit deletes it before
+    // ~SessionManager runs. QPointer self-nulls on deletion, letting the
+    // destructor and save paths skip already-destroyed views instead of
+    // dereferencing a dangling pointer.
+    QPointer<TerminalView> view;
 
     bool isAnonymous() const { return !execArgs.isEmpty() && name.isEmpty(); }
     bool isCommandSession() const { return !execArgs.isEmpty(); }
@@ -89,8 +94,12 @@ public:
     QString scrollbackFilePath(int sessionId) const;
 
     // Called by SessionManager on session removal to discard any
-    // in-flight async callback for that session.
-    void invalidateSaveGeneration(int sessionId) { m_saveGenerations[sessionId]++; }
+    // in-flight async callback for that session. Removes the entry rather
+    // than incrementing: exec-session churn would otherwise grow one QHash
+    // node per distinct id forever. A later .value(sessionId) returns 0, and
+    // captured generations are always >= 1, so in-flight callbacks still
+    // compare unequal and are discarded as stale.
+    void invalidateSaveGeneration(int sessionId) { m_saveGenerations.remove(sessionId); }
 
 Q_SIGNALS:
     // Async scrollback encryption + write completed (data now on disk).

@@ -5,7 +5,6 @@
 #include "ptymanager.h"
 
 #include <cmath>
-#include <cstdlib>
 #include <cstring>
 #include <QDebug>
 #include <QMatrix4x4>
@@ -13,8 +12,6 @@
 #include <QOpenGLContext>
 #include <QOpenGLPaintDevice>
 #include <QPainter>
-#include <QDateTime>
-#include <QFile>
 #include <QFont>
 #include <QMetaObject>
 
@@ -36,28 +33,34 @@ GLRenderer::GLRenderer(QQuickItem *parent)
     m_cachedMetrics.fontSize = s->fontSize();
     m_cachedMetrics.backgroundOpacity = s->backgroundOpacity();
 
-    // Cursor trails animation timer
     m_wantsCursorTrails = s->cursorTrails();
-    if (m_wantsCursorTrails)
+    m_customShaderPath = s->customShaderPath();
+    // Start the anim timer whenever trails are wanted OR a custom shader is set —
+    // both consume iTime and need animation from startup; otherwise iTime stays
+    // frozen until the first settings toggle.
+    if (m_wantsCursorTrails || !m_customShaderPath.isEmpty())
         m_shaderAnimTimer.start(33, this); // ~30fps
     connect(s, &Settings::cursorTrailsChanged, this, [this]() {
         m_wantsCursorTrails = Settings::instance()->cursorTrails();
-        if (m_wantsCursorTrails)
+        if (!m_customShaderPath.isEmpty() || m_wantsCursorTrails)
             m_shaderAnimTimer.start(33, this);
         else
             m_shaderAnimTimer.stop();
+        m_animCfgGeneration.fetchAndAddOrdered(1);
         update();
     });
 
-    // Custom shader path
-    m_customShaderPath = s->customShaderPath();
     connect(s, &Settings::customShaderPathChanged, this, [this]() {
         m_customShaderPath = Settings::instance()->customShaderPath();
         m_customShaderDirty = true;
         if (!m_customShaderPath.isEmpty() || m_wantsCursorTrails)
             m_shaderAnimTimer.start(33, this);
+        m_animCfgGeneration.fetchAndAddOrdered(1);
         update();
     });
+
+    // Seed the generation so the first synchronize() sees the initial state.
+    m_animCfgGeneration.fetchAndAddOrdered(1);
 }
 
 void GLRenderer::setSource(QObject *source)
@@ -65,14 +68,12 @@ void GLRenderer::setSource(QObject *source)
     if (m_source == source)
         return;
 
-    // Disconnect previous source
     if (m_source) {
         disconnect(m_source, nullptr, this, nullptr);
     }
 
     m_source = source;
 
-    // Connect TerminalView signals to trigger GL repaint and metric invalidation
     TerminalView *tv = qobject_cast<TerminalView *>(m_source);
     if (tv) {
         connect(tv, &TerminalView::repaintRequested, this, &QQuickItem::update);
@@ -109,6 +110,20 @@ void GLRenderer::timerEvent(QTimerEvent *event)
     }
 }
 
+void GLRenderer::startShaderAnimTimer()
+{
+    // QBasicTimer is thread-affine; control is marshalled here (see m_shaderAnimTimer doc).
+    if (!m_shaderAnimTimer.isActive())
+        m_shaderAnimTimer.start(33, this); // ~30fps
+}
+
+void GLRenderer::stopShaderAnimTimer()
+{
+    // See startShaderAnimTimer() — must run on the GUI thread.
+    if (m_shaderAnimTimer.isActive())
+        m_shaderAnimTimer.stop();
+}
+
 QQuickFramebufferObject::Renderer *GLRenderer::createRenderer() const
 {
     return new Renderer;
@@ -118,7 +133,6 @@ QQuickFramebufferObject::Renderer *GLRenderer::createRenderer() const
 
 GLRenderer::Renderer::Renderer()
 {
-    // Initialize palette data to zeros to avoid uninitialized memory
     memset(m_postPaletteData, 0, sizeof(m_postPaletteData));
 }
 
@@ -134,9 +148,6 @@ GLRenderer::Renderer::~Renderer()
     m_kittyProgram = nullptr;
     delete m_postShader.program;
     m_postShader.program = nullptr;
-    for (auto &shader : m_postShaders)
-        delete shader.program;
-    m_postShaders.clear();
 
     if (QOpenGLContext::currentContext()) {
         // Delete all kitty textures directly. Eviction logic (cleanupKittyCache)
@@ -155,7 +166,6 @@ GLRenderer::Renderer::~Renderer()
         if (m_flatVbo.isCreated())
             m_flatVbo.destroy();
         destroyPipelineFbo();
-        destroyPingPongFbo();
     }
 }
 
@@ -215,10 +225,11 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 {
     GLRenderer *q = static_cast<GLRenderer *>(item);
 
-    // Skip sync work when GL overlay is not visible
     if (!q->isVisible())
         return;
 
+    // m_source is a QPointer — it auto-nulls if the item was destroyed, so this
+    // cast (and the null-check below) is safe without a destroyed-hook.
     m_terminalView = qobject_cast<TerminalView *>(q->m_source);
     if (!m_terminalView || !m_terminalView->vt())
         return;
@@ -235,6 +246,11 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     if (gen != m_lastMetricsGeneration) {
         m_lastMetricsGeneration = gen;
         m_cellWidth = 0; // force re-init below
+        // m_atlas.setFont() below wipes the atlas texture and both glyph caches,
+        // so the UVs baked in m_cellVertices now sample an empty atlas. Ghostty
+        // never marks the grid dirty for a settings change, so force a vertex
+        // rebuild this frame regardless of its dirty flag.
+        m_forceVertexRebuild = true;
     }
 
     uint16_t cols = 0, rows = 0;
@@ -251,7 +267,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     float fgG = colors.foreground.g / 255.0f;
     float fgB = colors.foreground.b / 255.0f;
 
-    // Phase 5B: cache colors for post shader uniforms
+    // Cache colors for post shader uniforms
     m_postBgR = bgR; m_postBgG = bgG; m_postBgB = bgB;
     m_postFgR = fgR; m_postFgG = fgG; m_postFgB = fgB;
     m_postCursorColorHasValue = colors.cursor_has_value;
@@ -362,6 +378,10 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW: m_cursorStyle = 4; break;
         default: m_cursorStyle = 1; break;
     }
+    // A style flip that changes no cells (block<->hollow, vi modes) still needs a scene redraw.
+    if (m_cursorStyle != m_prevCursorStyleForSkip)
+        m_sceneExternalChanged = true;
+    m_prevCursorStyleForSkip = m_cursorStyle;
 
     // --- Overlay state snapshot (always, even when grid is clean) ---
     // This is cheap (just copying values) and must run every frame so that
@@ -399,7 +419,6 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_draggingHandle = m_terminalView->draggingHandle();
         m_magnifierBorderColor = m_terminalView->magnifierBorderColor();
 
-        // Compute finger position: if dragging handle 1, use selStart; else use selEnd
         if (m_draggingHandle == 1)
             m_magnifierFingerPos = m_selStart;
         else
@@ -410,6 +429,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
             m_terminalView->refreshLinks();
         m_linkSpans.clear();
         const auto &links = m_terminalView->currentLinks();
+        quint64 linkSig = 0xcbf29ce484222325ULL;
         for (const auto &link : links) {
             LinkSpan span;
             span.startRow = link.startRow;
@@ -417,8 +437,30 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
             span.startCol = link.startCol;
             span.endCol = link.endCol;
             m_linkSpans.append(span);
+            // Links scroll into view without a grid change; fold span geometry into the signature.
+            linkSig = (linkSig ^ (quint64)link.startRow) * 0x100000001b3ULL;
+            linkSig = (linkSig ^ (quint64)link.endRow) * 0x100000001b3ULL;
+            linkSig = (linkSig ^ (quint64)link.startCol) * 0x100000001b3ULL;
+            linkSig = (linkSig ^ (quint64)link.endCol) * 0x100000001b3ULL;
         }
+        if (linkSig != m_prevLinkSig)
+            m_sceneExternalChanged = true;
+        m_prevLinkSig = linkSig;
     }
+
+    // QBasicTimer is thread-affine; control is marshalled to the GUI thread (see m_shaderAnimTimer doc).
+    //
+    // A settings change may have already started/stopped the timer on the GUI
+    // thread, so treat a generation bump as a clean slate for the queue flags.
+    int animCfgGen = q->m_animCfgGeneration.loadAcquire();
+    if (animCfgGen != m_lastAnimCfgGen) {
+        m_lastAnimCfgGen = animCfgGen;
+        m_animStartQueued = false;
+        m_animStopQueuedForImpossible = false;
+    }
+
+    const bool trailsRenderable = m_es300 && q->m_wantsCursorTrails && !m_cursorTrailsFailed;
+    const bool animPossible = trailsRenderable || !q->m_customShaderPath.isEmpty();
 
     // Consume the "settled" flag — it's only a hint. Re-validate against current
     // GUI-thread state; custom-shader path or overlay may have changed since
@@ -429,19 +471,34 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         if (q->m_wantsCursorTrails
                 && q->m_customShaderPath.isEmpty()
                 && !m_selecting && !m_searchActive
-                && !m_magnifierVisible && !m_shellExited
-                && q->m_shaderAnimTimer.isActive()) {
-            q->m_shaderAnimTimer.stop();
+                && !m_magnifierVisible && !m_shellExited) {
+            m_animStartQueued = false;
+            QMetaObject::invokeMethod(q, "stopShaderAnimTimer", Qt::QueuedConnection);
         }
     }
 
-    // Start here (not from render()) so the first trail frame lands in this
-    // same sync->render cycle.
+    // Impossible-stop: trails can never render (ES2-only GPU or trail shader load
+    // failure) and no custom shader is active — the constructor-started 33ms timer
+    // would otherwise run at 30fps forever, draining battery on exactly the weakest
+    // devices. Fires once per config generation, not per sync.
+    if (!animPossible) {
+        m_animStartQueued = false;
+        if (!m_animStopQueuedForImpossible) {
+            m_animStopQueuedForImpossible = true;
+            QMetaObject::invokeMethod(q, "stopShaderAnimTimer", Qt::QueuedConnection);
+        }
+    } else {
+        m_animStopQueuedForImpossible = false;
+    }
+
+    // Marshalled to the GUI thread (see m_shaderAnimTimer doc); the queued invocation
+    // lands right after this frame's render, so the first trail frame arrives one frame later — imperceptible.
     if (m_cursorMoved
-            && q->m_wantsCursorTrails
+            && trailsRenderable
             && q->m_customShaderPath.isEmpty()
-            && !q->m_shaderAnimTimer.isActive()) {
-        q->m_shaderAnimTimer.start(33, q);
+            && !m_animStartQueued) {
+        m_animStartQueued = true;
+        QMetaObject::invokeMethod(q, "startShaderAnimTimer", Qt::QueuedConnection);
     }
 
     // Cache scrollbar offset for use in render() — avoids calling
@@ -458,8 +515,27 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     m_kittyGraphicsEnabled = Settings::instance()->kittyGraphics();
 
     // Snapshot kitty placement data and sync texture cache (GUI thread — safe)
-    if (m_terminalView && m_terminalView->vt())
-        snapshotKittyGraphics(m_terminalView->vt()->terminal(), m_terminalView->vt());
+    if (m_terminalView && m_terminalView->vt()) {
+        GhosttyTerminal kittyTerm = m_terminalView->vt()->terminal();
+        snapshotKittyGraphics(kittyTerm, m_terminalView->vt());
+
+        // Change detection via ghostty's storage-wide generation stamp
+        // (see m_prevKittySceneSig doc); it also catches placement-only
+        // mutations (re-crop, re-offset) that per-image generations miss,
+        // and disabled graphics read as 0 so the enabled->disabled flip
+        // redraws.
+        quint64 kittySig = 0;
+        if (m_kittyGraphicsEnabled && kittyTerm) {
+            GhosttyKittyGraphics graphics = nullptr;
+            ghostty_terminal_get(kittyTerm, GHOSTTY_TERMINAL_DATA_KITTY_GRAPHICS, &graphics);
+            if (graphics)
+                ghostty_kitty_graphics_get(graphics,
+                    GHOSTTY_KITTY_GRAPHICS_DATA_GENERATION, &kittySig);
+        }
+        if (kittySig != m_prevKittySceneSig)
+            m_sceneExternalChanged = true;
+        m_prevKittySceneSig = kittySig;
+    }
 
     // Load/unload cursor trail shader based on setting
     // Custom shader path takes priority over cursor trails
@@ -495,27 +571,22 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         delete m_postShader.program;
         m_postShader.program = nullptr;
         m_postShaderActive = false;
-        // Keep pipeline FBO alive if the magnifier needs it
-        if (!m_magnifierVisible) {
-            destroyPipelineFbo();
-            destroyPingPongFbo();
-        }
+        // Pipeline FBO teardown handled below (magnifier may still need it).
     }
 
     // Tear down pipeline FBO when magnifier was the only reason it existed
     // (no post-processing active, magnifier now hidden)
-    if (!m_postShaderActive && !m_magnifierVisible && m_pipelineFbo) {
+    if (!m_postShaderActive && !m_magnifierVisible && m_pipelineFbo)
         destroyPipelineFbo();
-        destroyPingPongFbo();
-    }
 
     GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
-    if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE)
+    if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !m_forceVertexRebuild)
         return;
 
     m_gridDirty = true;
     buildCellVertices(state);
+    m_forceVertexRebuild = false;
     m_dirty = true;
 }
 
@@ -598,7 +669,6 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
 
 bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *fbo)
 {
-    // Update timing uniforms
     if (!m_timerStarted) {
         m_elapsedTimer.start();
         m_lastFrameNs = 0;
@@ -629,19 +699,21 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
     }
 
     bool overlayActive = m_selecting || m_searchActive || m_magnifierVisible || m_shellExited;
-    bool canSkipPipeline = m_animationSettled && !m_gridDirty && !overlayActive;
+    // m_sceneExternalChanged covers changes ghostty's dirty flag misses
+    // (kitty image updates, cursor style flips, link span changes) — see
+    // the members' doc in glrenderer.h.
+    bool canSkipPipeline = m_animationSettled && !m_gridDirty && !overlayActive
+                           && !m_sceneExternalChanged;
     m_gridDirty = false;
+    m_sceneExternalChanged = false;
 
     // Safe to set unconditionally — synchronize() re-validates, and the next
     // render() overwrites this if conditions change.
     if (canSkipPipeline)
         m_shouldStopAnimTimer = true;
 
-    // Create/resize pipeline FBO
     int oldPipeW = m_pipelineTexW, oldPipeH = m_pipelineTexH;
     createPipelineFbo(fbo->width(), fbo->height());
-    if (m_postShaders.size() > 1)
-        createPingPongFbo(fbo->width(), fbo->height());
     if (m_pipelineTexW != oldPipeW || m_pipelineTexH != oldPipeH)
         canSkipPipeline = false;
 
@@ -649,7 +721,6 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         return false;
 
     if (!canSkipPipeline) {
-        // Render terminal to pipeline FBO
         glBindFramebuffer(GL_FRAMEBUFFER, m_pipelineFbo);
         glViewport(0, 0, fbo->width(), fbo->height());
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -662,24 +733,7 @@ bool GLRenderer::Renderer::renderPostProcessPipeline(QOpenGLFramebufferObject *f
         glDisable(GL_BLEND);
     }
 
-    // Post-process to Qt's default FBO
-    if (m_postShaders.size() > 1 && m_pingPongFbo) {
-        GLuint textures[2] = { m_pipelineTex, m_pingPongTex };
-        GLuint fbos[2] = { m_pipelineFbo, m_pingPongFbo };
-        int readIdx = 0;
-
-        for (int i = 0; i < m_postShaders.size(); i++) {
-            bool lastPass = (i == m_postShaders.size() - 1);
-            int writeIdx = 1 - readIdx;
-            GLuint inTex = textures[readIdx];
-            GLuint outFbo = lastPass ? fbo->handle() : fbos[writeIdx];
-
-            runPostProcessPass(m_postShaders[i], inTex, outFbo, fbo->width(), fbo->height());
-            readIdx = writeIdx;
-        }
-    } else {
-        runPostProcessPass(m_postShader, m_pipelineTex, fbo->handle(), fbo->width(), fbo->height());
-    }
+    runPostProcessPass(m_postShader, m_pipelineTex, fbo->handle(), fbo->width(), fbo->height());
 
     return true;
 }
@@ -689,7 +743,6 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     QMatrix4x4 proj;
     proj.ortho(0, width, 0, height, -1, 1);
 
-    // Cell grid
     glActiveTexture(GL_TEXTURE0);
     m_atlas.bind();
 
@@ -705,33 +758,31 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     m_program->setUniformValue(m_cursorStyleUniform, static_cast<float>(m_cursorStyle));
     m_program->setUniformValue(m_topPaddingUniform, static_cast<float>(m_topPadding));
 
-    m_vbo.bind();
-    const int stride = 13 * sizeof(float);
-    if (m_positionAttr >= 0) {
-        glEnableVertexAttribArray(m_positionAttr);
-        glVertexAttribPointer(m_positionAttr, 2, GL_FLOAT, GL_FALSE, stride, nullptr);
-    }
-    if (m_texcoordAttr >= 0) {
-        glEnableVertexAttribArray(m_texcoordAttr);
-        glVertexAttribPointer(m_texcoordAttr, 2, GL_FLOAT, GL_FALSE, stride,
-                              reinterpret_cast<void*>(2 * sizeof(float)));
-    }
-    if (m_fgColorAttr >= 0) {
-        glEnableVertexAttribArray(m_fgColorAttr);
-        glVertexAttribPointer(m_fgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                              reinterpret_cast<void*>(4 * sizeof(float)));
-    }
-    if (m_bgColorAttr >= 0) {
-        glEnableVertexAttribArray(m_bgColorAttr);
-        glVertexAttribPointer(m_bgColorAttr, 4, GL_FLOAT, GL_FALSE, stride,
-                              reinterpret_cast<void*>(8 * sizeof(float)));
-    }
-    if (m_decoAttr >= 0) {
-        glEnableVertexAttribArray(m_decoAttr);
-        glVertexAttribPointer(m_decoAttr, 1, GL_FLOAT, GL_FALSE, stride,
-                              reinterpret_cast<void*>(12 * sizeof(float)));
-    }
+    // The cell pass is split so below-text kitty images composite between the
+    // cell backgrounds and the glyphs (Kitty semantics: z<0 = above the
+    // background, under the text only). u_pass: 0 = background only, 1 = text.
+    // BELOW_BG placements are never snapshotted and are not rendered here.
+    const bool splitCellPass = m_passUniform >= 0;
+    if (splitCellPass)
+        m_program->setUniformValue(m_passUniform, 0.0f);
+    bindCellVertexFormat();
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+
+    // Kitty below-text layer: over the backgrounds, under the glyphs.
+    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
+                        width, height);
+
+    if (splitCellPass) {
+        // The kitty pass bound its own program, textures, and (in ES2, global)
+        // vertex attrib state — re-bind ours and re-assert the cell vertex
+        // format before drawing the text pass. Uniform values persist in the
+        // program object; re-binding restores them.
+        m_program->bind();
+        m_atlas.bind();
+        m_program->setUniformValue(m_passUniform, 1.0f);
+        bindCellVertexFormat();
+        glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    }
 
     if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
     if (m_texcoordAttr >= 0) glDisableVertexAttribArray(m_texcoordAttr);
@@ -741,14 +792,6 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     m_vbo.release();
     m_program->release();
 
-    // Kitty images: below-text layer (between cell grid and overlays)
-    // Note: BELOW_BG layer (z < INT32_MIN/2) is not rendered.
-    // These placements require drawing behind cell backgrounds,
-    // which would need a separate bg-only render pass.
-    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
-                        width, height);
-
-    // Flat overlay
     buildOverlayVertices(width, height);
     if (m_flatVertexCount > 0 && m_flatProgram && m_flatProgram->isLinked()) {
         m_flatProgram->bind();
@@ -771,13 +814,16 @@ void GLRenderer::Renderer::drawScene(int width, int height)
         m_flatProgram->release();
     }
 
-    // Kitty images: above-text layer (above overlays)
     drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
                         width, height);
 }
 
 void GLRenderer::Renderer::renderDirectToFbo(QOpenGLFramebufferObject *fbo)
 {
+    // createPipelineFbo() unconditionally ends with glBindFramebuffer(0), so a
+    // failed pipeline-FBO creation leaves GL bound to framebuffer 0 — re-bind
+    // Qt's FBO before clearing/drawing the scene.
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo->handle());
     glViewport(0, 0, fbo->width(), fbo->height());
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);

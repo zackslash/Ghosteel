@@ -15,6 +15,7 @@
 #include <QAtomicInt>
 #include <QElapsedTimer>
 #include <QBasicTimer>
+#include <QPointer>
 #include "glyphatlas.h"
 #include "terminalview.h"
 #include "textutil.h"
@@ -84,12 +85,21 @@ public:
 Q_SIGNALS:
     void sourceChanged();
 
+private slots:
+    // Timer control marshalled from the render thread — QBasicTimer is
+    // thread-affine, so start()/stop() must run on this (GUI) thread.
+    void startShaderAnimTimer();
+    void stopShaderAnimTimer();
+
 private:
     void invalidateMetrics();
     void timerEvent(QTimerEvent *event) override;
 
-    QObject *m_source = nullptr;
+    // QPointer: auto-nulls if the source is destroyed, so synchronize()'s
+    // qobject_cast null-check is safe without a destroyed-hook.
+    QPointer<QObject> m_source;
     QAtomicInt m_metricsGeneration; // Incremented on font/opacity change, checked in synchronize()
+    QAtomicInt m_animCfgGeneration; // Incremented on animation-setting change (trails/custom shader)
     QBasicTimer m_shaderAnimTimer;
     bool m_wantsCursorTrails = false;
     bool m_customShaderDirty = false;
@@ -122,6 +132,7 @@ private:
         void createShaders();
         void createVBO();
         void rebuildVBO();
+        void bindCellVertexFormat();
         void createFlatShaders();
         void createFlatVBO();
         void buildOverlayVertices(int fboW, int fboH);
@@ -131,18 +142,15 @@ private:
         void blitPipelineToFbo(QOpenGLFramebufferObject *fbo);
         void buildMagnifierVertices(int fboW, int fboH);
 
-        // Refactored render sub-methods
         bool renderPostProcessPipeline(QOpenGLFramebufferObject *fbo);
         void renderDirectToFbo(QOpenGLFramebufferObject *fbo);
         void renderShellExitText(QOpenGLFramebufferObject *fbo);
+        void appendCellVertices(GhosttyRenderState state);
         void buildCellVertices(GhosttyRenderState state);
 
-        // Phase 5B: post-processing pipeline
         void detectES300();
         void createPipelineFbo(int w, int h);
         void destroyPipelineFbo();
-        void createPingPongFbo(int w, int h);
-        void destroyPingPongFbo();
         void createPostShaders();
         void loadPostShader(const QString &path);
         void uploadPostShaderUniforms(PostShader &shader, int fboW, int fboH);
@@ -157,6 +165,8 @@ private:
         void snapshotKittyGraphics(GhosttyTerminal terminal, GhosttyVt *vt);
         void cleanupKittyCache();
         void drainPendingKittyDeletions();
+        bool kittyUploadFailed(uint32_t imageId, uint64_t generation) const;
+        void forgetKittyFailedUpload(uint32_t imageId);
 
         QOpenGLShaderProgram *m_program = nullptr;
         QOpenGLBuffer m_vbo;
@@ -169,6 +179,7 @@ private:
         int m_cursorBlinkUniform = -1;
         int m_cursorStyleUniform = -1;
         int m_topPaddingUniform = -1;
+        int m_passUniform = -1; // cell shader pass switch: 0=bg only, 1=text only
         int m_positionAttr = -1;
         int m_texcoordAttr = -1;
         int m_fgColorAttr = -1;
@@ -210,12 +221,29 @@ private:
         bool m_animationSettled = false;
         bool m_gridDirty = true;
 
-        // Cross-thread flag: render thread requests GUI thread to stop the shader
-        // animation timer once the trail has fully settled and the frame is static.
-        // Consumed in synchronize() where QBasicTimer can be safely touched (owned
-        // by GUI-thread GLRenderer) and GUI-thread-only state is re-checked. Plain
-        // bool is safe — synchronize() blocks render thread (memory barrier).
+        // Set when the metrics generation changed — a font family or
+        // background-opacity settings change, a per-session font size change
+        // (pinch zoom), setSource(), or the first-ever frame (m_lastMetricsGeneration
+        // starts at -1). m_atlas.setFont() wiped the glyph caches, so stale cell
+        // vertices would sample an empty atlas. Forces buildCellVertices() this
+        // frame even when ghostty reports the grid not dirty.
+        bool m_forceVertexRebuild = false;
+
+        // Cross-thread flag: render thread requests the GUI thread to stop the
+        // shader animation timer once the trail has settled and the frame is
+        // static. The render thread has no event dispatcher and QBasicTimer is
+        // thread-affine — direct start()/stop() from synchronize() would be
+        // silent no-ops (Qt 5.4+), so it marshals them via queued slot
+        // invocations on the GUI thread. Plain bool is safe — synchronize()
+        // blocks the render thread (memory barrier).
         bool m_shouldStopAnimTimer = false;
+
+        // Queue state for the marshalled timer control above. Reset whenever the
+        // animation-settings generation changes (a settings change may have
+        // started/stopped the timer on the GUI thread directly).
+        int m_lastAnimCfgGen = -1;
+        bool m_animStopQueuedForImpossible = false;
+        bool m_animStartQueued = false;
 
         TerminalView *m_terminalView = nullptr;
 
@@ -228,7 +256,7 @@ private:
         QColor m_selectionHandleBorderColor;
 
         bool m_searchActive = false;
-        QVector<TerminalView::SearchMatch> m_searchMatches;
+        QVector<SearchMatchSegment> m_searchMatches;
         int m_currentMatchIndex = -1;
         QColor m_searchHighlightColor;
         QColor m_searchCurrentColor;
@@ -278,7 +306,7 @@ private:
         int m_blitPositionAttr = -1;
         int m_blitTexcoordAttr = -1;
 
-        // Phase 5B: ES 3.0 post-processing pipeline
+        // ES 3.0 post-processing pipeline
         bool m_es300 = false;
         bool m_postShaderActive = false;
 
@@ -287,17 +315,7 @@ private:
         int m_pipelineTexW = 0;
         int m_pipelineTexH = 0;
 
-        // Ping-pong FBO for multi-pass shaders
-        GLuint m_pingPongTex = 0;
-        GLuint m_pingPongFbo = 0;
-        int m_pingPongTexW = 0;
-        int m_pingPongTexH = 0;
-
         PostShader m_postShader;
-
-        // Multi-pass shader list — infrastructure for future bloom/blur effects.
-        // Currently unused; ping-pong FBO is only created when this list has >1 entry.
-        QList<PostShader> m_postShaders;
 
         QElapsedTimer m_elapsedTimer;
         bool m_timerStarted = false;
@@ -317,7 +335,6 @@ private:
         // Kitty Graphics Protocol — image rendering
         struct KittyCachedTexture {
             GLuint texture;
-            uint32_t width, height;
             uint32_t lastSeenFrame;
             uint64_t generation;  // per-image stamp from ghostty; changed gen ⇒ re-upload
         };
@@ -348,6 +365,28 @@ private:
         QVector<KittyPlacementSnapshot> m_kittyPlacements;
         bool m_kittyGraphicsEnabled = false;
         QVector<GLuint> m_kittyTexturesToDelete;  // deferred GL deletions (GUI->render)
+
+        // Negative cache of failed kitty texture uploads ((imageId, generation)
+        // pairs). Prevents re-copying and re-attempting a failing glTexImage2D
+        // every frame; entries are dropped when the image's generation changes
+        // or the image is evicted/replaced.
+        struct KittyFailedUpload { uint32_t imageId; uint64_t generation; };
+        QVector<KittyFailedUpload> m_kittyFailedUploads;
+
+        // Scene-external deltas that require a pipeline redraw even when the
+        // grid is clean: ghostty's render-state dirty flag does not cover
+        // kitty image updates (ghostty tracks those separately), cursor
+        // style flips that change no cells, or link spans scrolling into
+        // view. Without these the idle pipeline skip (canSkipPipeline)
+        // freezes stale images/underlines/cursor shapes into the post
+        // texture until unrelated text changes. Set in synchronize(),
+        // consumed by the skip predicate alongside m_gridDirty.
+        // m_prevKittySceneSig holds ghostty's storage-wide kitty generation
+        // stamp (covers transmit/replace/placement add/move/crop/delete).
+        bool m_sceneExternalChanged = false;
+        quint64 m_prevKittySceneSig = 0;
+        quint64 m_prevLinkSig = 0;
+        int m_prevCursorStyleForSkip = -1;
 
         // Kitty image shader (textured quad, premultiplied alpha)
         QOpenGLShaderProgram *m_kittyProgram = nullptr;

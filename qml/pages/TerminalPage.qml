@@ -9,9 +9,7 @@ import "KeyCatalog.js" as KeyCatalog
 Page {
     id: page
     allowedOrientations: Orientation.All
-    // Free the horizontal axis for session-swiping by disarming the PageStack's
-    // horizontal back-gesture filter (same idiom as Jolla Gallery's full-screen
-    // photo page). The system edge-peek is compositor-owned and unaffected.
+    // Free the horizontal axis for session-swiping (same idiom as Jolla Gallery's photo page).
     navigationStyle: PageNavigation.Vertical
 
     // GhosttyMods bitmask constants
@@ -30,18 +28,14 @@ Page {
     property bool altActive: false
     property bool keyboardVisible: Qt.inputMethod && Qt.inputMethod.visible
 
-    // Distinguish app-initiated Qt.inputMethod.hide() from compositor-initiated
-    // drag-dismiss. On Sailfish/Wayland, drag-dismiss deactivates the
-    // wl_text_input context (stops hardware key delivery), while app-initiated
-    // hide() only hides the VKB panel (context stays active). Set this flag
-    // before every programmatic hide() so the handler below knows to keep the
-    // VKB hidden rather than re-showing it.
+    // Distinguish app-initiated hide() from compositor drag-dismiss: drag-dismiss
+    // deactivates the wl_text_input context (stops hardware keys), hide() only
+    // hides the panel. Set before every programmatic hide() so the handler keeps it hidden.
     property bool _programmaticKeyboardHide: false
 
     onKeyboardVisibleChanged: {
         if (keyboardVisible) {
-            // Keyboard is being shown — clear any stale programmatic-hide flag
-            // from a previous no-op hide() (keyboard was already hidden).
+            // Keyboard shown — clear any stale programmatic-hide flag.
             _programmaticKeyboardHide = false
             return
         }
@@ -53,10 +47,8 @@ Page {
             _programmaticKeyboardHide = false
             terminal.forceActiveFocus()
         } else {
-            // Compositor drag-dismiss — context was deactivated. Re-show
-            // the VKB after a short delay to avoid racing with the
-            // compositor's dismiss processing. Drag-dismiss becomes a
-            // no-op (VKB re-appears). Use the toggle button to hide.
+            // Compositor drag-dismiss — context deactivated; re-show after a
+            // short delay to avoid racing the compositor's dismiss processing.
             dragDismissReShowTimer.start()
         }
     }
@@ -85,20 +77,23 @@ Page {
                 // Re-focus and restore keyboard state. The compositor
                 // deactivates the text input context when the app is
                 // backgrounded, same as drag-dismiss.
-                if (SessionManager.sessionKeyboardVisible(idx)) {
-                    dragDismissReShowTimer.start()
-                } else {
-                    terminal.suppressNextKeyboardAutoShow()
-                    terminal.forceActiveFocus()
+                // Guard on page status: this signal fires regardless of stack
+                // position, so with a dialog (rename, clipboard, link) above
+                // this page focus must stay with the dialog, not the terminal.
+                if (page.status === PageStatus.Active) {
+                    if (SessionManager.sessionKeyboardVisible(idx)) {
+                        dragDismissReShowTimer.start()
+                    } else {
+                        terminal.suppressNextKeyboardAutoShow()
+                        terminal.forceActiveFocus()
+                    }
                 }
             }
         }
     }
 
-    // Re-suppress keyboard when returning to this page (e.g. from Sessions page).
-    // onSessionSwitched may have consumed the suppress flag during the pop
-    // animation (page still Inactive). Re-apply before forceActiveFocus() to
-    // prevent im->show() when the session's keyboard is hidden.
+    // Re-suppress keyboard on return to this page — onSessionSwitched may have
+    // consumed the flag during the pop animation.
     onStatusChanged: {
         if (status === PageStatus.Active && terminal) {
             var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
@@ -123,6 +118,9 @@ Page {
 
     property int currentSessionIndex: -1  // Tracked imperatively to avoid binding race
     property int currentSessionId: -1     // Stable key for sessionUIState lookups
+    // Launch-only init (single-session indicator + startup keyboard restore)
+    // runs exactly once, on whichever code path first attaches a session.
+    property bool _launchInitDone: false
     property TerminalView terminal: null
 
     // Pending clipboard read dialog parameters (used by keyboard dismiss timer)
@@ -260,13 +258,17 @@ Page {
             }
 
             onAccepted: {
-                clipboardDialogActive = false
                 var t = SessionManager.sessionById(requestSessionId)
                 if (t) {
                     t.sendClipboardText(previewText, requestKind)
                 }
             }
-            onRejected: clipboardDialogActive = false
+            // Single reset path: fires on every dismissal incl. programmatic pop.
+            onStatusChanged: {
+                if (status === DialogStatus.Inactive) {
+                    clipboardDialogActive = false
+                }
+            }
         }
     }
 
@@ -336,9 +338,7 @@ Page {
             terminal.stickyModifiers = activeModifiers
     }
 
-    // Returns text/indicator color for the current terminal color scheme.
-    // Uses contrast-paired colors so text is always readable on the keybar
-    // regardless of whether the ambience matches the terminal scheme.
+    // Contrast-paired keybar text color, readable regardless of ambience vs terminal scheme.
     function schemeTextColor() {
         return Settings.colorScheme === "light" ? Theme.darkPrimaryColor : Theme.lightPrimaryColor
     }
@@ -401,6 +401,8 @@ Page {
         t.linkActivated.connect(showLinkDialog)
         t.zoomRequested.disconnect(onZoomRequested)
         t.zoomRequested.connect(onZoomRequested)
+        t.searchToggled.disconnect(onSearchToggled)
+        t.searchToggled.connect(onSearchToggled)
         t.pinchingChanged.disconnect(onPinchingChanged)
         t.pinchingChanged.connect(onPinchingChanged)
         t.requestParentInteractive.disconnect(onRequestParentInteractive)
@@ -413,19 +415,27 @@ Page {
         t.sessionSwipeCommitted.connect(onSessionSwipeCommitted)
         t.sessionSwipeCancelled.disconnect(onSessionSwipeCancelled)
         t.sessionSwipeCancelled.connect(onSessionSwipeCancelled)
-        // Gate the C++ classifier: only arm it when more than one session
-        // exists, so a horizontal drag with a single session can't kill the
-        // long-press (text-selection) timer before QML rejects the gesture.
+        // Arm the C++ classifier only with >1 session, so a single-session drag
+        // can't kill the long-press timer before QML rejects the gesture.
         t.sessionSwipeEnabled = SessionManager.sessionCount > 1
         terminal = t
         updateWindowTitle()
 
-        // Sync keybar modifier display to the incoming terminal's actual state.
-        // Without this, switching back to a session where Ctrl was toggled shows
-        // the keybar as inactive while the C++ side still applies the modifier.
+        // Sync keybar modifiers to the incoming terminal's actual state —
+        // otherwise a toggled Ctrl shows inactive after switching back.
         var mods = t.stickyModifiers
         ctrlActive = (mods & modsCtrl) !== 0
         altActive = (mods & modsAlt) !== 0
+    }
+
+    // C++ flipped its search state; mirror it on the panel (menu-item flow).
+    function onSearchToggled() {
+        if (searchPanel.open) {
+            searchPanel.open = false   // onOpenChanged calls closeSearch() (idempotent)
+        } else {
+            searchPanel.open = true
+            searchField.forceActiveFocus()
+        }
     }
 
     function detachTerminal(t) {
@@ -437,6 +447,7 @@ Page {
         t.toggleKeybar.disconnect(onToggleKeybar)
         t.linkActivated.disconnect(showLinkDialog)
         t.zoomRequested.disconnect(onZoomRequested)
+        t.searchToggled.disconnect(onSearchToggled)
         t.pinchingChanged.disconnect(onPinchingChanged)
         t.requestParentInteractive.disconnect(onRequestParentInteractive)
         t.sessionSwipeStarted.disconnect(onSessionSwipeStarted)
@@ -450,20 +461,19 @@ Page {
     function switchSession(direction) {
         var count = SessionManager.sessionCount
         if (count <= 1) return
-        // Navigate by ACTUAL (vector) index, not display index. Under
-        // SortLastUsed (the default), setActiveSessionIndex bumps lastUsedAt
-        // and rebuilds the sorted indices on every switch, so the just-
-        // activated session always lands at display index 0. Stepping the
-        // display index by +1 then forever selects display index 1 (2nd-most-
-        // recent), making "next" bounce between two sessions. Actual-index
-        // order only changes on add/remove, so both directions cycle through
-        // every session.
+        // Navigate by ACTUAL (vector) index, not display index: under
+        // SortLastUsed the display order shifts on every switch, so display
+        // stepping would bounce between two sessions. Actual order only
+        // changes on add/remove.
         var actualIdx = SessionManager.activeSessionIndex
         var nextActual = ((actualIdx + direction) % count + count) % count
         SessionManager.activeSessionIndex = nextActual
     }
 
     Component.onCompleted: {
+        // QML completion-ordering pitfall: children complete before parents,
+        // and this initial page completes before ApplicationWindow runs
+        // restoreSessions(), so activeSession() is null here.
         var t = SessionManager.activeSession()
         if (t) {
             var idx = SessionManager.activeSessionIndex
@@ -488,12 +498,12 @@ Page {
                 scrollIndicator.flash()
             // Show session indicator on launch so the user knows which session they're in
             sessionIndicator.show(SessionManager.sessionDisplayName(idx))
+            _launchInitDone = true
         }
     }
 
-    // Keep the swipe gate fresh when sessions are added/removed without a
-    // switch (the active terminal stays attached, so attachTerminal /
-    // onSessionSwitched won't re-apply it).
+    // Keep the swipe gate fresh on add/remove — the active terminal stays
+    // attached, so attachTerminal won't re-apply it.
     Connections {
         target: SessionManager
         onSessionCountChanged: {
@@ -522,10 +532,8 @@ Page {
     Connections {
         target: SessionManager
         onSessionSwitched: {
-            // Abort an in-flight swipe if the switch came from a non-swipe path
-            // (keybar/keyboard) mid-gesture. swipePhase "transit" marks the swipe's
-            // own synchronous switchSession call and is exempt — without it the
-            // swipe would cancel its own commit.
+            // Abort an in-flight swipe on non-swipe switches; phase "transit"
+            // exempts the swipe's own commit.
             if (swipeActive && swipePhase !== "transit") {
                 swipePhase = "idle"
                 swipeActive = false
@@ -536,10 +544,10 @@ Page {
 
             // Save outgoing session's UI state using session ID (stable across removals)
             if (terminal && currentSessionId >= 0) {
-                // Keybar: read directly from the panel property (reliable, sync, local)
+                // Keybar: read the panel property directly.
                 var keybarState = keybar.open
-                // Keyboard: use persisted preference (not Qt.inputMethod.visible which
-                // is global/async and affected by focus changes, not just user intent)
+                // Keyboard: use the persisted preference, not Qt.inputMethod.visible
+                // (global/async, affected by focus changes).
                 var kbState = sessionUIState[currentSessionId]
                     ? sessionUIState[currentSessionId].kb
                     : SessionManager.sessionKeyboardVisible(currentSessionIndex)
@@ -585,13 +593,11 @@ Page {
             } else {
                 setKeybarOpen(Settings.keybarVisible && SessionManager.sessionKeybarOpen(index))
             }
-            // Skip the scroll-indicator flash when this switch was the swipe's
-            // own commit (swipePhase "transit"); show it for keybar/keyboard/
-            // SessionPage switches as before.
+            // Skip the flash on the swipe's own commit (phase "transit").
             if (keybar.open && keybarFlickable.contentWidth > keybarFlickable.width && swipePhase !== "transit")
                 scrollIndicator.flash()
-            // Ensure keyboard hidden if needed — suppress prevents focus-triggered show,
-            // but we also need explicit hide for the case where keyboard was already visible
+            // Explicit hide needed when the keyboard was already visible (suppress only
+            // blocks focus-triggered show).
             var incomingKbRestore = state ? state.kb : SessionManager.sessionKeyboardVisible(index)
             if (!incomingKbRestore) {
                 programmaticHide()
@@ -601,13 +607,32 @@ Page {
             if (SessionManager.sessionCount > 1) {
                 sessionIndicator.show(SessionManager.sessionDisplayName(index))
             }
+            // Launch-only extras, run exactly once on the first successful
+            // session attach (see Component.onCompleted above).
+            if (!_launchInitDone) {
+                // Single-session launch: show which session we're in
+                if (SessionManager.sessionCount <= 1)
+                    sessionIndicator.show(SessionManager.sessionDisplayName(index))
+                // im->show() from focusInEvent may not work on startup if the
+                // Wayland surface isn't mapped yet. Delay and show explicitly.
+                if (SessionManager.sessionKeyboardVisible(index))
+                    dragDismissReShowTimer.start()
+                _launchInitDone = true
+            }
         }
         onSessionRemoved: {
             // Clean up runtime UI state for removed session (ID never reused)
             delete sessionUIState[sessionId]
-            // Adjust for vector shift when removal was before current index
-            if (index < currentSessionIndex)
-                currentSessionIndex--
+            // Recompute from the stable session id: when the removed session
+            // was active, sessionSwitched (emitted before sessionRemoved)
+            // already set the correct new index, so a naive decrement for the
+            // vector shift would double-adjust and point at the wrong session.
+            // For background removals no switch fires at all and this
+            // recompute lands on the (possibly shifted) active session
+            // directly — no fallback decrement is reachable either way.
+            var idx = SessionManager.sessionIndexById(currentSessionId)
+            if (idx >= 0)
+                currentSessionIndex = idx
         }
         onDesktopNotification: {
             terminalNotification.summary = summary
@@ -696,9 +721,8 @@ Page {
         switchSession(direction)
     }
 
-    // Hide the VKB as an app-initiated action (not compositor drag-dismiss).
-    // Bundles the flag + timer stop + hide so the invariant can't be broken
-    // by a future call site forgetting one of the three.
+    // App-initiated VKB hide (not drag-dismiss). Bundles flag + timer stop +
+    // hide so call sites can't break the invariant.
     function programmaticHide() {
         dragDismissReShowTimer.stop()
         _programmaticKeyboardHide = true
@@ -740,18 +764,15 @@ Page {
         }
     }
 
-    // Disable the wrapping SilicaFlickable during multi-touch gestures so it
-    // cannot steal the sequence and open the PullDownMenu. Re-enabled on end.
+    // Disable the wrapping Flickable during multi-touch so it can't steal the
+    // gesture for PullDownMenu.
     function onRequestParentInteractive(interactive) {
         terminalFlickable.interactive = interactive
     }
 
-    // --- Session-swipe handlers (connected to the active terminal in
-    //     attachTerminal / detached in detachTerminal) ---
-    // UX: the live drag still shows the current session following the finger;
-    // on commit, a grabbed frame of the OLD session slides out while the NEW
-    // (synchronously swapped) content slides in from the opposite side — both
-    // visible, tiling edge-to-edge, so the transition looks connected.
+    // --- Session-swipe handlers (connected in attachTerminal, detached in detachTerminal) ---
+    // UX: live drag follows the finger; on commit the grabbed OLD frame slides
+    // out while NEW content slides in from the opposite side, tiling edge-to-edge.
     function onSessionSwipeStarted() {
         if (SessionManager.sessionCount <= 1) {
             swipePanX = 0
@@ -760,11 +781,8 @@ Page {
         swipePhase = "idle"
         snapshotOutAnim.stop(); swipeInAnim.stop(); swipeReturnAnim.stop()
         swipeActive = true
-        // Freeze a frame for the commit slide. ShaderEffectSource samples
-        // glOverlay's texture (FBO content, ignoring the live transform);
-        // live:false holds the frame, scheduleUpdate() refreshes it per swipe.
-        // (grabToImage is broken on Qt 5.6/Sailfish — itemgrabber:// URL
-        // isn't resolvable by Image.)
+        // Freeze a frame for the commit slide: live:false holds the texture,
+        // scheduleUpdate() refreshes it per swipe. (grabToImage is broken on Sailfish.)
         snapshotSource.scheduleUpdate()
     }
     function onSessionSwipeProgress(deltaX) {
@@ -785,11 +803,9 @@ Page {
         swipePhase = "transit"
         switchSession(dir)
 
-        // Position B on the opposite side of A so they tile edge-to-edge:
-        //   dir>0 (leftward/next): A exits left, B enters from the right
-        //   dir<0 (rightward/prev): A exits right, B enters from the left
-        // All of the above ran in one JS tick — Qt Quick paints no intermediate
-        // frame, so B never flashes mid-screen.
+        // Position B on the opposite side so they tile edge-to-edge (dir>0: A
+        // exits left, B enters right; dir<0 mirrored). One JS tick — no
+        // intermediate frame, so B never flashes.
         swipePanX = startPan + (dir > 0 ? width : -width)
         swipePhase = "sliding"
 
@@ -814,12 +830,9 @@ Page {
         swipeReturnAnim.start()
     }
 
-    // Parallel commit slide. snapshotOutAnim drives the grabbed old frame
-    // (snapshotPanX) out one side; swipeInAnim drives the new live content
-    // (swipePanX) in from the other. Both start in the same JS tick and share
-    // duration/easing, so they finish together and tile edge-to-edge throughout.
-    // onRunningChanged fires on both natural completion and stop(); cleanup is
-    // centralized in swipeInAnim and gated by swipePhase to disambiguate.
+    // Parallel commit slide: old frame out one side, new content in from the
+    // other, same tick + easing so they tile throughout. Cleanup is centralized
+    // in swipeInAnim, gated by swipePhase (onRunningChanged fires on stop() too).
     NumberAnimation {
         id: snapshotOutAnim
         target: page; property: "snapshotPanX"
@@ -854,10 +867,9 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        // Decouple from keybar's animated y to avoid per-frame terminal resize
-        // (C++ geometryChanged -> PTY SIGWINCH) during the 200ms slide. The margin
-        // snaps to the keybar's resting height immediately; the keybar's own
-        // Behavior-on-y provides the visual slide on top (higher z).
+        // Static bottomMargin decouples from the keybar's animated y — avoids
+        // per-frame resize (SIGWINCH) during the slide; the keybar's Behavior-on-y
+        // provides the visual slide.
         anchors.bottomMargin: keybar.open ? keybar.height : 0
         contentHeight: height
 
@@ -902,10 +914,8 @@ Page {
             anchors.fill: parent
         }
 
-        // Frozen frame of the previous session, shown only during the parallel
-        // commit slide. live:false + scheduleUpdate() at swipe-start captures a
-        // single frame; clip prevents overpainting the keybar while sliding.
-        // z:0.5 — below glOverlay(z:1) so fresh content wins sub-pixel seams.
+        // Frozen frame of the previous session during the commit slide.
+        // z:0.5 — below glOverlay so fresh content wins sub-pixel seams.
         ShaderEffectSource {
             id: snapshotSource
             sourceItem: glOverlay
@@ -918,10 +928,9 @@ Page {
             clip: true
         }
 
-        // GL Renderer overlay. Wrapped in a plain Item whose transform follows
-        // swipePanX — never animate the FBO-backed GLRenderer directly (Qt 5
-        // transform-node sensitivity), and never move terminalContainer/terminal
-        // (cellFromPixel maps event->pos() against the stationary terminal).
+        // GL overlay wrapped in a plain Item whose transform follows swipePanX —
+        // never animate the FBO-backed GLRenderer directly, and never move the
+        // terminal (cellFromPixel maps against it).
         Item {
             id: glOverlayWrapper
             anchors.fill: terminalContainer
@@ -934,13 +943,9 @@ Page {
                 source: terminal
             }
 
-            // Fills the void the translated GLRenderer vacates. Nested INSIDE the
-            // wrapper so it shares the SAME transform as the GLRenderer — they tile
-            // pixel-perfectly by construction (a sibling-filler seamed: textured
-            // quads and filled rects rasterize through different paths). The FBO is
-            // genuinely semi-transparent (bg premultiplied as scheme_bg·bgOpacity),
-            // so a filler of the same scheme color at Settings.backgroundOpacity
-            // composites identically over the page — no solidify, no double-tint.
+            // Fills the void the translated GLRenderer vacates. Nested inside the
+            // wrapper to share its transform (pixel-perfect tiling); same scheme
+            // color at backgroundOpacity composites identically over the page.
             Rectangle {
                 id: voidFiller
                 anchors.top: parent.top
@@ -956,12 +961,8 @@ Page {
             }
         }
 
-        // Drag hint: shows which session a release will switch to, sitting in
-        // the void the live content vacated. Fades in with drag progress toward
-        // the commit threshold and clears the instant the swipe commits or
-        // cancels (gated on swipePhase "idle"). The arrow conveys next vs prev.
-        // Sits above glOverlayWrapper (z:1) + the voidFiller nested inside it,
-        // so the hint text stays visible in the void the content vacated.
+        // Drag hint in the void the content vacated: fades in with drag progress,
+        // clears on commit/cancel (gated on phase "idle"). Sits above glOverlayWrapper.
         Label {
             id: swipeDragHint
             visible: swipeActive && swipePhase === "idle"
@@ -978,9 +979,8 @@ Page {
             text: {
                 var dir = swipePanX < 0 ? 1 : -1   // leftward -> next
                 var count = SessionManager.sessionCount
-                // Mirror switchSession(): navigate by ACTUAL (vector) index, not
-                // display index. Under SortLastUsed the display order shifts on
-                // every switch, so display-index math would name the wrong session.
+                // Mirror switchSession(): ACTUAL index — display order shifts under
+                // SortLastUsed, so display math would name the wrong session.
                 var actualIdx = SessionManager.activeSessionIndex
                 var targetActual = ((actualIdx + dir) % count + count) % count
                 var name = SessionManager.sessionDisplayName(targetActual)
@@ -996,8 +996,7 @@ Page {
             }
         }
 
-        // Transparent overlay that captures taps to dismiss search panel.
-        // Only enabled when search is open; consumes the tap to dismiss (does not pass through).
+        // Captures taps to dismiss the search panel (does not pass through).
         MouseArea {
             anchors.fill: parent
             enabled: searchPanel.open
@@ -1191,10 +1190,9 @@ Page {
         }
     }
 
-    // Extra terminal keys panel — plain Item (not DockedPanel, whose C++
-    // drag-to-close cannot be reliably overridden from QML). We animate y
-    // manually; the terminal flickable uses a static bottomMargin instead of
-    // anchoring to keybar.top, to avoid per-frame resize during the slide.
+    // Extra keys panel — plain Item (DockedPanel's drag-to-close can't be
+    // overridden from QML). Animated y manually; the flickable uses a static
+    // bottomMargin to avoid per-frame resize during the slide.
     Item {
         id: keybar
         anchors.left: parent.left
@@ -1227,8 +1225,7 @@ Page {
             NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
         }
 
-        // Match DockedPanel's default translucent gradient background.
-        // Kept visible in both schemes — the overlay tints it for light mode.
+        // DockedPanel-style translucent gradient; the overlay tints it for light mode.
         PanelBackground {
             anchors.fill: parent
             position: Dock.Bottom
@@ -1310,9 +1307,7 @@ Page {
                             }
                         }
 
-                        // Icon for keys with iconSource (arrows).
-                        // ColorOverlay tints icons dark for the light scheme
-                        // where Silica theme icons would be invisible on white.
+                        // Icon for keys with iconSource; ColorOverlay tints dark for the light scheme.
                         Image {
                             id: keyIcon
                             anchors.centerIn: parent

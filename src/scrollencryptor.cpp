@@ -53,6 +53,7 @@ bool ScrollEncryptor::isEncryptedFormat(const QByteArray &data)
 
 #include <QDebug>
 #include <QTimer>
+#include <memory>
 #include <random>
 
 using Sailfish::Secrets::SecretManager;
@@ -65,6 +66,43 @@ using Sailfish::Crypto::DecryptRequest;
 
 static const QString COLLECTION_NAME = QStringLiteral("ghosteel");
 static const QString KEY_NAME = QStringLiteral("ScrollbackKey");
+
+// Minimal encrypt/decrypt round-trip probe validating a key reference before
+// adopting it after a failed GenerateStoredKey. The daemon's "already exists"
+// error text is plugin-specific and unstable across plugin releases; probing
+// is text-independent.
+static bool probeKeyReference(CryptoManager *manager, const Key &key)
+{
+    const QByteArray iv(16, '\0');
+    const QByteArray plaintext("ghosteel-key-probe");
+
+    EncryptRequest enc;
+    enc.setManager(manager);
+    enc.setData(ScrollEncryptor::pkcs7Pad(plaintext));
+    enc.setInitializationVector(iv);
+    enc.setKey(key);
+    enc.setBlockMode(CryptoManager::BlockModeCbc);
+    enc.setPadding(CryptoManager::EncryptionPaddingNone);
+    enc.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
+    enc.startRequest();
+    enc.waitForFinished();
+    if (enc.result().code() != Sailfish::Crypto::Result::Succeeded)
+        return false;
+
+    DecryptRequest dec;
+    dec.setManager(manager);
+    dec.setData(enc.ciphertext());
+    dec.setInitializationVector(iv);
+    dec.setKey(key);
+    dec.setBlockMode(CryptoManager::BlockModeCbc);
+    dec.setPadding(CryptoManager::EncryptionPaddingNone);
+    dec.setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
+    dec.startRequest();
+    dec.waitForFinished();
+
+    return dec.result().code() == Sailfish::Crypto::Result::Succeeded
+           && ScrollEncryptor::pkcs7Unpad(dec.plaintext()) == plaintext;
+}
 
 ScrollEncryptor::ScrollEncryptor(QObject *parent)
     : QObject(parent)
@@ -172,12 +210,12 @@ bool ScrollEncryptor::ensureKey()
     genKey.waitForFinished();
 
     if (genKey.result().code() != Sailfish::Crypto::Result::Succeeded) {
-        // KeyAlreadyExists — the key was created on a previous launch.
-        // Build a reference from the identifier to use it.
-        if (genKey.result().errorCode() == Sailfish::Crypto::Result::StorageError
-                && genKey.result().errorMessage().contains(QStringLiteral("already exists"))) {
-            m_keyReference = std::make_unique<Key>(KEY_NAME, COLLECTION_NAME,
-                    CryptoManager::DefaultCryptoStoragePluginName);
+        // Don't match on the daemon's error text (unstable across plugin
+        // releases); probe the key reference instead.
+        Key keyRef(KEY_NAME, COLLECTION_NAME,
+                   CryptoManager::DefaultCryptoStoragePluginName);
+        if (probeKeyReference(m_cryptoManager.get(), keyRef)) {
+            m_keyReference = std::make_unique<Key>(keyRef);
             return true;
         }
         qWarning() << "Ghosteel: GenerateStoredKey failed:"
@@ -274,7 +312,11 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
 
     // Parented to this for lifetime (auto-delete if destroyed mid-request).
     // The callback runs on the GUI thread because enc is the connect
-    // context object and was created here.
+    // context object and was created here. A one-shot timeout guards against
+    // a dead crypto daemon: if statusChanged never fires, the timeout invokes
+    // the callback with empty output (SessionStore treats empty as failure and
+    // emits saveFailed) and deletes the request. The shared `done` guard
+    // ensures the timeout and statusChanged can never both run the callback.
     auto *enc = new EncryptRequest(this);
     enc->setManager(m_cryptoManager.get());
     enc->setData(padded);
@@ -284,10 +326,15 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
     enc->setPadding(CryptoManager::EncryptionPaddingNone);
     enc->setCryptoPluginName(CryptoManager::DefaultCryptoStoragePluginName);
 
+    auto done = std::make_shared<bool>(false);
+
     QObject::connect(enc, &EncryptRequest::statusChanged,
-                     enc, [enc, callback, iv]() {
+                     enc, [enc, callback, iv, done]() {
         if (enc->status() != Sailfish::Crypto::Request::Finished)
             return;
+        if (*done)
+            return;
+        *done = true;
         QByteArray output;
         if (enc->result().code() == Sailfish::Crypto::Result::Succeeded) {
             output.reserve(HEADER_SIZE + enc->ciphertext().size());
@@ -303,6 +350,25 @@ bool ScrollEncryptor::encryptAsync(const QByteArray &plaintext, EncryptCallback 
         callback(output);
         enc->deleteLater();
     });
+
+    // One-shot timeout: if the crypto daemon dies mid-request, statusChanged
+    // never fires and the callback would never run, leaving SessionStore's
+    // scrollbackSaveInFlight stuck true while the save timer re-arms forever.
+    // Empty output on timeout routes through the same failure path as a
+    // failed request (saveFailed -> re-dirty for retry).
+    auto *timeoutTimer = new QTimer(enc);
+    timeoutTimer->setSingleShot(true);
+    timeoutTimer->setInterval(15000);
+    QObject::connect(timeoutTimer, &QTimer::timeout, enc, [enc, callback, done]() {
+        if (*done)
+            return;
+        *done = true;
+        qWarning() << "Ghosteel: Async encryption timed out after 15s, "
+                      "treating as failure";
+        callback(QByteArray());
+        enc->deleteLater();
+    });
+    timeoutTimer->start();
 
     enc->startRequest();
     return true;

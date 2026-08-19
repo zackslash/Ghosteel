@@ -44,7 +44,9 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("c"));
     }
 
-    // Test 4: Buffer overflow — payload > 1MB capped at MaxOsc52DataLen
+    // Test 4: Buffer overflow — payload > 1MB is ignored entirely (no
+    // truncated emit; xterm/ghostty semantics: over-cap writes never
+    // reach the clipboard, so pasted data is never silently partial)
     void testBufferOverflow()
     {
         GhosttyVt vt;
@@ -52,8 +54,14 @@ private slots:
         QByteArray payload(1024 * 1024 + 100, 'A');
         QByteArray data = "\x1b]52;c;" + payload + "\x07";
         vt.vtWrite(reinterpret_cast<const uint8_t*>(data.constData()), data.size());
+        QCOMPARE(spy.count(), 0);
+
+        // The scanner must fully recover: the next well-formed sequence
+        // (under the cap) emits normally.
+        QByteArray ok = "\x1b]52;c;aGVsbG8=\x07";
+        vt.vtWrite(reinterpret_cast<const uint8_t*>(ok.constData()), ok.size());
         QCOMPARE(spy.count(), 1);
-        QCOMPARE(spy.at(0).at(0).toByteArray().size(), 1024 * 1024);
+        QCOMPARE(spy.at(0).at(0).toByteArray(), QByteArray("aGVsbG8="));
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("c"));
     }
 

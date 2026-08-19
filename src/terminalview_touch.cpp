@@ -189,18 +189,26 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
     }
 
     // Session-swipe classifier — runs only after every grabbing branch above
-    // has returned (NORMAL single-finger, pre-selection window).
+    // has returned (normal single-finger, pre-selection window). The timer-
+    // alive gate enforces that window: the long-press timer lives only from
+    // press to the 300ms fire (which sets m_selecting). Without it, a mid-
+    // drag clearSelection() (PTY output clearing the selection under a finger
+    // still down) would drop this classifier in with a delta anchored at the
+    // original press point and hijack the drag into a session swipe.
     if (!m_pendingLinkTap && !m_multiTouchActive && m_sessionSwipeEnabled
-        && m_gestureMode == GestureMode::Undecided && !m_sessionSwiping) {
+        && m_gestureMode == GestureMode::Undecided && !m_sessionSwiping
+        && m_longPressTimerId) {
         QPointF delta = event->pos() - m_lastTapPos;   // m_lastTapPos set in press
         if (qAbs(delta.x()) > SwipeMinHorizontalPx
             && qAbs(delta.x()) > qAbs(delta.y()) * SwipeDominanceRatio) {
-            if (m_longPressTimerId) { killTimer(m_longPressTimerId); m_longPressTimerId = 0; }
+            // The outer gate guarantees the timer is alive here.
+            killTimer(m_longPressTimerId);
+            m_longPressTimerId = 0;
             m_sessionSwiping = true;
             m_swipeStartX = event->pos().x();
-            // Mirror the multitouch pattern — lock BOTH mouse and touch grab so
+            // Mirror the multitouch pattern — lock both mouse and touch grab so
             // terminalFlickable can't steal the sequence mid-swipe (on Qt 5.6 /
-            // Sailfish, mouse grab alone does NOT stop touch stealing).
+            // Sailfish, mouse grab alone does not stop touch stealing).
             setKeepMouseGrab(true);
             setKeepTouchGrab(true);
             Q_EMIT sessionSwipeStarted();
@@ -308,6 +316,21 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     QQuickItem::mouseReleaseEvent(event);
 }
 
+void TerminalView::mouseUngrabEvent()
+{
+    // Silica's Flickable can steal the mouse grab (flick scroll, pull-down)
+    // without delivering a release, leaving the long-press timer to fire a
+    // phantom selection mid-scroll. Kill the timer and reset any nascent
+    // selection; the !m_handlesVisible guard keeps finalized selections intact.
+    if (m_longPressTimerId) {
+        killTimer(m_longPressTimerId);
+        m_longPressTimerId = 0;
+    }
+    if (m_selecting && !m_handlesVisible)
+        clearSelection();
+    QQuickItem::mouseUngrabEvent();
+}
+
 void TerminalView::wheelEvent(QWheelEvent *event)
 {
     if (!m_vt || !m_vt->terminal()) {
@@ -318,6 +341,13 @@ void TerminalView::wheelEvent(QWheelEvent *event)
     // When mouse tracking is active, forward scroll as mouse buttons 4/5
     if (m_vt->isMouseTracking()) {
         int delta = event->angleDelta().y();
+        if (delta == 0) {
+            // Pure-horizontal wheel event — no vertical scroll to report.
+            // Without this, (delta > 0) ? FOUR : FIVE would emit a spurious
+            // BUTTON_FIVE.
+            event->accept();
+            return;
+        }
         GhosttyMods mods = KeyMapping::mapQtModifiers(event->modifiers());
         GhosttyMouseButton button = (delta > 0) ? GHOSTTY_MOUSE_BUTTON_FOUR
                                                  : GHOSTTY_MOUSE_BUTTON_FIVE;
@@ -336,10 +366,13 @@ void TerminalView::wheelEvent(QWheelEvent *event)
     int lines = scrollResult.lines;
 
     if (lines != 0) {
-        // Ghostty scroll: negative delta = scroll up (toward scrollback)
+        // Ghostty scroll: negative delta = scroll up (toward scrollback).
+        // Wheel-up yields positive angleDelta, so newDelta is negative and
+        // `lines` is negative — pass it through directly, matching the
+        // two-finger reference path (delta = lines).
         GhosttyTerminalScrollViewport scroll = {};
         scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-        scroll.value.delta = -lines;
+        scroll.value.delta = lines;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
         m_linkScanDirty = true;
         update();
@@ -359,14 +392,14 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     if (points.size() >= 2) {
         setKeepMouseGrab(true);
-        // Qt 5.6: the touch grab is a SEPARATE mechanism from the mouse grab.
+        // Qt 5.6: the touch grab is a separate mechanism from the mouse grab.
         // SilicaFlickable (a filtering parent) steals the touch grab via its
-        // childMouseEventFilter — setKeepMouseGrab alone does NOT stop this.
+        // childMouseEventFilter — setKeepMouseGrab alone does not stop this.
         // setKeepTouchGrab(true) denies the steal so two-finger scroll/pinch
         // stays with the terminal instead of triggering the PullDownMenu.
         setKeepTouchGrab(true);
 
-        // ACTIVE grab — passive flags above only prevent future steals.
+        // Active grab — passive flags above only prevent future steals.
         // SilicaFlickable ignores them once its drag recogniser has armed.
         // grabTouchPoints()/grabMouse() wrest the grab back immediately.
         {
@@ -381,10 +414,10 @@ void TerminalView::touchEvent(QTouchEvent *event)
         switch (event->type()) {
         case QEvent::TouchEnd:
         case QEvent::TouchCancel:
-            handleMultiTouchEnd();
+            handleMultiTouchEnd(points);
             break;
         default:
-            // Start the gesture on the FIRST ≥2-point event of any type.
+            // Start the gesture on the first ≥2-point event of any type.
             // When the second finger lands after the first, Qt delivers a
             // TouchUpdate (not TouchBegin), so keying off the event type alone
             // would skip handleMultiTouchBegin — and the Flickable would never
@@ -392,7 +425,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
             if (!m_multiTouchActive)
                 handleMultiTouchBegin(points);
             else
-                handleMultiTouchUpdate(points);
+                handleMultiTouchUpdate(points, event->modifiers());
             break;
         }
         event->accept();
@@ -402,7 +435,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
     // Check m_multiTouchActive too: a brief two-finger tap may never
     // leave Undecided, but must still end (or the Flickable stays disabled).
     if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided) {
-        handleMultiTouchEnd();
+        handleMultiTouchEnd(points);
     }
 
     // TUI mode (mouse tracking): accept + grab + forward as synthetic
@@ -459,8 +492,17 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
 {
     event->accept();
 
-    qreal deltaY = pt.pos().y() - m_tuiDragLastY;
-    m_tuiDragLastY = pt.pos().y();
+    qreal deltaY;
+    if (m_tuiDragLastY < 0) {
+        // Re-baseline after a two-finger interlude (handleMultiTouchEnd sets
+        // m_tuiDragLastY to -1) so the first motion after the interlude
+        // doesn't emit a wheel jump from a stale origin.
+        m_tuiDragLastY = pt.pos().y();
+        deltaY = 0;
+    } else {
+        deltaY = pt.pos().y() - m_tuiDragLastY;
+        m_tuiDragLastY = pt.pos().y();
+    }
     qreal newDelta = deltaY / m_cellHeight; // positive: down-drag = scroll up (natural scrolling)
     auto scrollResult = TextUtil::accumulateScroll(
         m_tuiScrollAccumulator, newDelta);
@@ -514,7 +556,7 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // by another item) and a new gesture starts while the overlay is still
     // visible. Without this, pinchingChanged(false) is never emitted.
     if (m_multiTouchActive || m_gestureMode != GestureMode::Undecided) {
-        handleMultiTouchEnd();
+        handleMultiTouchEnd(points);
     }
 
     // Disable the parent Flickable immediately — passive grabs aren't
@@ -553,7 +595,8 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     m_pinchCandidateFrames = 0;
 }
 
-void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points)
+void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &points,
+                                          Qt::KeyboardModifiers modifiers)
 {
     // If any touch point was released, end the gesture immediately. Qt may
     // deliver a TouchUpdate with a released point before TouchEnd arrives.
@@ -561,7 +604,7 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
     // and the overlay may not hide if the final TouchEnd is also missed.
     for (const auto &p : points) {
         if (p.state() & Qt::TouchPointReleased) {
-            handleMultiTouchEnd();
+            handleMultiTouchEnd(points);
             return;
         }
     }
@@ -650,19 +693,37 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
         int lines = touchScrollResult.lines;
 
         if (lines != 0) {
-            GhosttyTerminalScrollViewport scroll = {};
-            scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-            scroll.value.delta = lines;
-            ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-            m_linkScanDirty = true;
-            update();
+            if (m_vt->isMouseTracking()) {
+                // Mouse-tracking apps get synthetic wheel buttons (like the
+                // single-finger TUI path); scrolling ghostty's viewport would
+                // make vim/htop receive nothing and tmux browse the wrong
+                // scrollback. The button follows the finger direction
+                // (down-drag = wheel-up/older content, matching the
+                // viewport-scroll sign convention below), while the count
+                // reuses the accumulated lines magnitude.
+                GhosttyMods mods = KeyMapping::mapQtModifiers(modifiers);
+                GhosttyMouseButton btn = (deltaY > 0)
+                    ? GHOSTTY_MOUSE_BUTTON_FOUR : GHOSTTY_MOUSE_BUTTON_FIVE;
+                const QPointF centroid = (p0 + p1) / 2.0;
+                for (int i = 0; i < qAbs(lines); ++i) {
+                    sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, btn, centroid, mods);
+                    sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, btn, centroid, mods);
+                }
+            } else {
+                GhosttyTerminalScrollViewport scroll = {};
+                scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+                scroll.value.delta = lines;
+                ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+                m_linkScanDirty = true;
+                update();
+            }
         }
         return;
     }
     }
 }
 
-void TerminalView::handleMultiTouchEnd()
+void TerminalView::handleMultiTouchEnd(const QList<QTouchEvent::TouchPoint> &points)
 {
     if (m_gestureMode == GestureMode::Pinching) {
         Q_EMIT pinchingChanged(false);
@@ -682,6 +743,28 @@ void TerminalView::handleMultiTouchEnd()
     m_touchScrollAccumulator = 0;
     setKeepMouseGrab(false);
     setKeepTouchGrab(false);
+
+    if (m_vt && m_vt->isMouseTracking()) {
+        if (m_mouseButtonPressed) {
+            // A PRESS was sent but never released (drag abandoned by the
+            // two-finger interlude, or both fingers lifted in one TouchEnd) —
+            // SGR apps stick in select-mode. Send the LEFT RELEASE through the
+            // encoder directly: full mouseReleaseEvent would clear tracking
+            // state and the grabs the remaining finger needs. Must fire before
+            // the pressed flags clear below.
+            const QPointF lastPos = points.isEmpty()
+                ? QPointF() : points.last().pos();
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
+                           lastPos, KeyMapping::mapQtModifiers(Qt::NoModifier));
+            m_mouseButtonPressed = false;
+            m_vt->setMouseButtonPressed(false);
+        }
+        // A remaining finger resumes the single-finger TUI path after a
+        // two-finger interlude: re-baseline its drag Y (sentinel -1) so the
+        // first motion after the interlude doesn't emit a jump from a stale
+        // origin.
+        m_tuiDragLastY = -1;
+    }
 }
 
 void TerminalView::timerEvent(QTimerEvent *event)
@@ -715,6 +798,15 @@ void TerminalView::timerEvent(QTimerEvent *event)
         }
         if (cursorBlinking) {
             m_cursorBlinkVisible = !m_cursorBlinkVisible;
+            update();
+        } else if (!m_cursorBlinkVisible) {
+            // Steady cursor (DECSCUSR 2/4/6): ghostty reports CURSOR_BLINKING
+            // false, so the toggle above never runs and m_cursorBlinkVisible
+            // keeps whatever phase the blink left it in — a 50% chance of being
+            // stuck invisible (rendering gates on it in glrenderer.cpp). Force
+            // it visible once; no repaint spam since the flag is already true
+            // on subsequent ticks.
+            m_cursorBlinkVisible = true;
             update();
         }
         return;
