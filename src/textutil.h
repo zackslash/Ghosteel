@@ -79,6 +79,23 @@ QVector<LinkSpan> findUrls(const QString &flatText,
 // exact-width input line followed by Enter.
 bool isSoftWrapped(bool wrapFlag, bool lastCellHadContent);
 
+// Phase-derived cursor blink helpers: visibility follows elapsed time on a
+// fixed interval grid rather than accumulated timer ticks, so delayed or
+// coalesced wakeups cannot desync the blink.
+
+// True during even-numbered blink windows (the ON phase).
+inline bool blinkPhaseVisible(qint64 elapsedMs, int intervalMs)
+{
+    return (elapsedMs / intervalMs) % 2 == 0;
+}
+
+// Delay until the next repaint tick: the upcoming interval boundary plus a
+// guard offset, so tick jitter cannot flip which window a frame samples.
+inline int nextBlinkTickDelay(qint64 elapsedMs, int intervalMs, int guardMs)
+{
+    return static_cast<int>(intervalMs - (elapsedMs % intervalMs) + guardMs);
+}
+
 } // namespace TextUtil
 
 #endif // TEXTUTIL_H

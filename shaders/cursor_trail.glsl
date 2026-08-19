@@ -323,8 +323,11 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
                     newColor = mix(newColor, vec4(smearColor.rgb, newColor.a), smearColor.a);
                 }
                 
-                // Keep cursor opaque during animation (no blink hole)
-                if (animationActive) {
+                // While blink hides the in-scene cursor, keep an opaque block
+                // so the trail has no hole. When the cursor is visible the
+                // scene already holds the rendered cursor (inverted block, or
+                // bar/underline/hollow), so pass those pixels through.
+                if (animationActive && iCursorVisible == 0) {
                     float cursorAlpha = step(sdfCurrentCursor, 0.0);
                     newColor = mix(newColor, vec4(TRAIL_COLOR.rgb, 1.0), cursorAlpha);
                 } else {
@@ -333,7 +336,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord){
             }
         }
 
-        if (animationActive) {
+        if (animationActive && iCursorVisible == 0) {
             float cursorAlpha = step(sdfCurrentCursor, 0.0);
             newColor = mix(newColor, vec4(TRAIL_COLOR.rgb, 1.0), cursorAlpha);
         } else {

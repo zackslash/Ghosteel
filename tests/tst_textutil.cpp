@@ -208,6 +208,47 @@ private slots:
         // WRAP flag false, last cell empty: hard newline
         QVERIFY(!TextUtil::isSoftWrapped(false, false));
     }
+
+    // --- blink phase math ---
+
+    void testBlinkPhaseVisibleWindows()
+    {
+        const int interval = 500;
+        QVERIFY(TextUtil::blinkPhaseVisible(0, interval));      // window 0 ON
+        QVERIFY(TextUtil::blinkPhaseVisible(499, interval));
+        QVERIFY(!TextUtil::blinkPhaseVisible(500, interval));   // window 1 OFF
+        QVERIFY(!TextUtil::blinkPhaseVisible(999, interval));
+        QVERIFY(TextUtil::blinkPhaseVisible(1000, interval));   // window 2 ON
+        QVERIFY(TextUtil::blinkPhaseVisible(1050, interval));
+        QVERIFY(!TextUtil::blinkPhaseVisible(2500, interval));  // window 5 OFF
+    }
+
+    void testBlinkPhaseVisibleLongElapsed()
+    {
+        // An hour idle: no parity drift or overflow.
+        QVERIFY(TextUtil::blinkPhaseVisible(3600000LL, 500));   // window 7200
+        QVERIFY(!TextUtil::blinkPhaseVisible(3600500LL, 500)); // window 7201
+    }
+
+    void testNextBlinkTickDelayBoundaries()
+    {
+        const int interval = 500, guard = 50;
+        QCOMPARE(TextUtil::nextBlinkTickDelay(0, interval, guard), 550);
+        QCOMPARE(TextUtil::nextBlinkTickDelay(499, interval, guard), 51);
+        QCOMPARE(TextUtil::nextBlinkTickDelay(500, interval, guard), 550);
+        // Late tick 70ms into a window self-corrects to the next boundary.
+        QCOMPARE(TextUtil::nextBlinkTickDelay(570, interval, guard), 480);
+        // Tick just before a boundary lands just after it.
+        QCOMPARE(TextUtil::nextBlinkTickDelay(1499, interval, guard), 51);
+    }
+
+    void testNextBlinkTickDelayNeverSpins()
+    {
+        // For any elapsed >= 0 the delay exceeds the guard: no 1ms re-arm loop.
+        const int interval = 500, guard = 50;
+        for (qint64 elapsed = 0; elapsed < 5000; ++elapsed)
+            QVERIFY(TextUtil::nextBlinkTickDelay(elapsed, interval, guard) > guard);
+    }
 };
 
 QTEST_MAIN(TestTextUtil)
