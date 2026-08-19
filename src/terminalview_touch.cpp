@@ -786,9 +786,8 @@ void TerminalView::timerEvent(QTimerEvent *event)
         // for the next boundary regardless.
         if (!blinkPinnedSolid())
             update();
-        const qint64 elapsed = m_blinkEpoch.elapsed();
-        const int next = static_cast<int>(
-            BlinkInterval - (elapsed % BlinkInterval) + BlinkGuardMs);
+        const int next = TextUtil::nextBlinkTickDelay(
+            m_blinkEpoch.elapsed(), BlinkInterval, BlinkGuardMs);
         armBlinkTimer(qMax(next, 1));
         return;
     }

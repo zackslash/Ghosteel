@@ -131,7 +131,7 @@ public:
     {
         if (blinkPinnedSolid())
             return true;
-        return (m_blinkEpoch.elapsed() / BlinkInterval) % 2 == 0;
+        return TextUtil::blinkPhaseVisible(m_blinkEpoch.elapsed(), BlinkInterval);
     }
 
     // Shared constants for selection handles and magnifier
@@ -250,8 +250,8 @@ private:
     }
 
     // Arm the blink timer to fire ms from now, precisely. Ticks are aimed
-    // just past phase boundaries (BlinkGuardMs) so coarse-timer jitter can
-    // never flip which phase window a frame samples.
+    // just past phase boundaries (BlinkGuardMs) so timer jitter can never
+    // flip which phase window a frame samples.
     void armBlinkTimer(int ms)
     {
         if (m_blinkTimerId)
@@ -400,8 +400,12 @@ private:
     // the timer only triggers repaints, re-armed per phase boundary.
     int m_blinkTimerId = 0;
     static const int BlinkInterval = 500; // ms
-    static const int BlinkPauseMs = 1000; // ms — pause after input
-    static const int BlinkGuardMs = 50; // ms — tick offset past each boundary
+    static const int BlinkPauseMs = 1000; // ms, pause after input
+    static const int BlinkGuardMs = 50; // ms, tick offset past each boundary
+    // The hold must expire on an ON window boundary; otherwise the cursor
+    // would join the phase mid-window at hold end.
+    static_assert(BlinkPauseMs % BlinkInterval == 0,
+                  "BlinkPauseMs must be a multiple of BlinkInterval");
     QElapsedTimer m_lastInputTime;
     QElapsedTimer m_blinkEpoch;
 
