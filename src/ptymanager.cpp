@@ -2,6 +2,8 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QTimer>
 
 #include <cstdlib>
@@ -227,6 +229,35 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         workingDir = workingDirBytes.constData();
     }
 
+    // SailfishOS's /etc/profile.d/set_ps1.sh exports a bash-only PS1 that
+    // zsh prints literally. Bootstrap ~/.zshrc (only when absent) so a
+    // first-run zsh user gets a readable prompt; never touch an existing
+    // config. The creation notice is written by the child just before the
+    // zsh exec so it only appears when the chain reaches the zsh hop.
+    int zshHop = -1;
+    QByteArray zshBootNotice;
+    if (homeDir && homeDir[0]) {
+        for (int i = 0; i < hopNames.size(); ++i) {
+            if (QFileInfo(hopNames.at(i)).fileName() == QLatin1String("zsh")) {
+                zshHop = i;
+                QString rcPath = QString::fromLocal8Bit(homeDir)
+                    + QStringLiteral("/.zshrc");
+                if (!QFile::exists(rcPath)) {
+                    QFile rc(rcPath);
+                    if (rc.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                        rc.write("# Created by Ghosteel: SailfishOS sets a"
+                                 " bash-only PS1 that zsh prints literally.\n");
+                        rc.write("PROMPT='[%n@%m %1~]%# '\n");
+                        rc.close();
+                        zshBootNotice = QByteArray("\r\nghosteel: created")
+                            + " ~/.zshrc with a Sailfish prompt fix\r\n";
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     int execPipe[2];
     pid_t pid;
     if (!forkPtyProcess(cols, rows, execPipe, pid, workingDir, homeDir))
@@ -234,6 +265,11 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 
     if (pid == 0) {
         for (int i = 0; i < hopCount; i++) {
+            if (i == zshHop && !zshBootNotice.isEmpty()) {
+                ssize_t bootWritten = ::write(2, zshBootNotice.constData(),
+                                              zshBootNotice.size());
+                (void)bootWritten;
+            }
             execlp(hops[i], hops[i], nullptr);
             int execErr = errno;
             if (i + 1 < hopCount) {

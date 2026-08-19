@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QSignalSpy>
 #include <QFile>
+#include <QTemporaryDir>
 
 #include <unistd.h>
 #include <cstring>
@@ -348,6 +349,102 @@ private slots:
             const int first = all.indexOf("ghosteel:");
             return first != -1 && all.lastIndexOf("ghosteel:") == first;
         }(), 5000);
+
+        pty.stop();
+    }
+
+    void testZshFirstRunBootstrapsPromptFix()
+    {
+        // First run with zsh as the shell creates ~/.zshrc carrying a
+        // zsh-native PROMPT (SailfishOS profile.d exports a bash-only PS1)
+        // and announces the creation in the terminal.
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString zshPath = home.path() + QStringLiteral("/zsh");
+        QVERIFY(QFile::copy(QStringLiteral("/bin/sh"), zshPath));
+        QVERIFY(QFile::setPermissions(zshPath, QFileDevice::ReadOwner
+                                                   | QFileDevice::WriteOwner
+                                                   | QFileDevice::ExeOwner));
+
+        PtyManager pty;
+        pty.setShellCommand(zshPath);
+        QByteArray savedHome = qgetenv("HOME");
+        qputenv("HOME", home.path().toUtf8());
+
+        QSignalSpy exitSpy(&pty, &PtyManager::shellExited);
+        QSignalSpy dataSpy(&pty, &PtyManager::dataReady);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        if (!savedHome.isEmpty())
+            qputenv("HOME", savedHome.constData());
+        else
+            qunsetenv("HOME");
+
+        QFile rc(home.path() + QStringLiteral("/.zshrc"));
+        QVERIFY(rc.open(QIODevice::ReadOnly));
+        QVERIFY(rc.readAll().contains("PROMPT='[%n@%m %1~]%# '"));
+        rc.close();
+
+        QVERIFY(!exitSpy.wait(500)
+                || exitSpy.at(0).at(0).toInt() != PtyManager::kExecFailedExitCode);
+
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return all.contains("ghosteel: created ~/.zshrc");
+        }(), 5000);
+
+        pty.stop();
+    }
+
+    void testExistingZshrcLeftUntouched()
+    {
+        // An existing ~/.zshrc is never modified and draws no notice; the
+        // fake zsh runs normally.
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString zshPath = home.path() + QStringLiteral("/zsh");
+        QVERIFY(QFile::copy(QStringLiteral("/bin/sh"), zshPath));
+        QVERIFY(QFile::setPermissions(zshPath, QFileDevice::ReadOwner
+                                                   | QFileDevice::WriteOwner
+                                                   | QFileDevice::ExeOwner));
+        QFile sentinel(home.path() + QStringLiteral("/.zshrc"));
+        QVERIFY(sentinel.open(QIODevice::WriteOnly));
+        sentinel.write("# sentinel\n");
+        sentinel.close();
+
+        PtyManager pty;
+        pty.setShellCommand(zshPath);
+        QByteArray savedHome = qgetenv("HOME");
+        qputenv("HOME", home.path().toUtf8());
+
+        QSignalSpy dataSpy(&pty, &PtyManager::dataReady);
+
+        QVERIFY(pty.startShell(80, 24));
+
+        if (!savedHome.isEmpty())
+            qputenv("HOME", savedHome.constData());
+        else
+            qunsetenv("HOME");
+
+        QVERIFY(sentinel.open(QIODevice::ReadOnly));
+        QCOMPARE(sentinel.readAll(), QByteArray("# sentinel\n"));
+        sentinel.close();
+
+        // Wait for shell output: the notice (if any) would precede the
+        // exec, so once the shell speaks the absence check is final.
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return !all.isEmpty();
+        }(), 5000);
+        QByteArray all;
+        for (const auto &sig : dataSpy)
+            all += sig.at(0).toByteArray();
+        QVERIFY(!all.contains("ghosteel: created ~/.zshrc"));
 
         pty.stop();
     }
