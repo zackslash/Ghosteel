@@ -471,7 +471,7 @@ A libghostty terminálmotor hajtja</translation>
     </message>
     <message>
         <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
-        <translation>A képernyő-billentyűzet elrejtése fekvő tájolásra forgatáskor, és visszaállítása álló tájolásra való visszaforgatáskor</translation>
+        <translation>A képernyőbillentyűzet elrejtése fekvő tájolásra forgatáskor, és visszaállítása álló tájolásra való visszaforgatáskor</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>

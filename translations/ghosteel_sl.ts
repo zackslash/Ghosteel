@@ -474,7 +474,7 @@ Poganja terminalski pogon libghostty</translation>
     </message>
     <message>
         <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
-        <translation>Skrij zaslonsko tipkovnico, ko zavrtite v ležeči način, in jo obnovite, ko zavrtite nazaj v pokončni način</translation>
+        <translation>Skrijte zaslonsko tipkovnico, ko zavrtite v ležeči način, in jo obnovite, ko zavrtite nazaj v pokončni način</translation>
     </message>
     <message>
         <source>Auto follows your ambience</source>
