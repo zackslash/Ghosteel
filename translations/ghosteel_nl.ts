@@ -467,6 +467,14 @@ Aangedreven door de libghostty terminal-engine</translation>
         <translation>Wijzig de lettergrootte van de sessie met een tweevinger-knijpgebaar</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Verberg het toetsenbord automatisch in liggende stand</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Verberg het schermtoetsenbord bij het draaien naar liggende stand en herstel het bij het terugdraaien naar staande stand</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automatisch volgt je omgeving</translation>
     </message>

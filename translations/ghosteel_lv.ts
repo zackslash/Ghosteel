@@ -468,6 +468,14 @@ Darbina libghostty termināla dzinējs</translation>
         <translation>Mainiet sesijas fonta izmēru ar divu pirkstu kniebšanas žestu</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Automātiski paslēpt tastatūru horizontālā orientācijā</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Paslēpiet ekrāna tastatūru, pagriežot horizontālā orientācijā, un atjaunojiet to, pagriežot atpakaļ vertikālā orientācijā</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto seko jūsu noskaņojumam</translation>
     </message>

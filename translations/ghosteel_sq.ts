@@ -467,6 +467,14 @@ Mundësuar nga motori i terminalit libghostty</translation>
         <translation>Ndrysho madhësinë e shkronjave të sesionit me gjest pinçimi me dy gishta</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Fshih tastierën automatikisht në horizontal</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Fshih tastierën në ekran kur rrotullohet në horizontal dhe riktheje kur kthehet përsëri në vertikal</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto ndjek ambientin tuaj</translation>
     </message>

@@ -467,6 +467,14 @@ Powered by libghostty terminal engine</source>
         <translation>შეცვალეთ სესიის ფონტის ზომა ორი თითის დაჭერის ჟესტით</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>კლავიატურის ავტომატური დამალვა ჰორიზონტალურ ორიენტაციაში</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>დამალეთ ეკრანის კლავიატურა ჰორიზონტალურ ორიენტაციაზე გადაბრუნებისას და აღადგინეთ იგი ვერტიკალურზე დაბრუნებისას</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>ავტო მიჰყვება თქვენს ატმოსფეროს</translation>
     </message>

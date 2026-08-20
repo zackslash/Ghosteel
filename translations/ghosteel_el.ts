@@ -467,6 +467,14 @@ Powered by libghostty terminal engine</source>
         <translation>Αλλάξτε το μέγεθος γραμματοσειράς της συνεδρίας με χειρονομία τσιμπήματος δύο δαχτύλων</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Αυτόματη απόκρυψη πληκτρολογίου σε οριζόντιο προσανατολισμό</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Αποκρύψτε το πληκτρολόγιο οθόνης όταν περιστρέφεται σε οριζόντιο προσανατολισμό και επαναφέρετέ το όταν περιστρέφεται πίσω σε κατακόρυφο</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Αυτόματο ακολουθεί το περιβάλλον σας</translation>
     </message>

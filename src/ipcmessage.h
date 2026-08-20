@@ -49,7 +49,7 @@ struct IpcMessage {
             // `ghosteel -e grep '' foo`), so dropping it here would corrupt
             // the argv the primary receives. A trailing empty part only arises
             // when the last arg is genuinely empty (e.g. `ghosteel -e foo ''`
-            // → `exec::foo\0\n`), which the unconditional append preserves;
+            // -> `exec::foo\0\n`), which the unconditional append preserves;
             // the chopped '\n' never creates a spurious one.
             for (int i = 1; i < parts.size(); i++)
                 msg.args.append(QString::fromUtf8(parts[i]));

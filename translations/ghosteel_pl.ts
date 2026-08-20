@@ -468,6 +468,14 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <translation>Zmień rozmiar czcionki sesji za pomocą gestu uszczypnięcia dwoma palcami</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Automatycznie ukrywaj klawiaturę w trybie poziomym</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Ukryj klawiaturę ekranową po obróceniu do trybu poziomego i przywróć ją po obróceniu z powrotem do trybu pionowego</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automatycznie podąża za Twoim motywem</translation>
     </message>

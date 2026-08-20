@@ -46,8 +46,6 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
     }
 
     if (event->button() == Qt::LeftButton) {
-        holdBlinkSolid();
-
         m_mouseTrackingActive = m_vt->isMouseTracking();
 
         if (m_mouseTrackingActive) {
@@ -78,6 +76,7 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
             m_draggingHandle = handle;
             m_handlesVisible = false;
             m_magnifierVisible = true;
+            holdBlinkSolid();
             m_tapCount = 0; // Prevent phantom triple-tap after handle drag
             setKeepMouseGrab(true);
             event->accept();
@@ -773,6 +772,9 @@ void TerminalView::timerEvent(QTimerEvent *event)
         m_longPressTimerId = 0;
         m_selecting = true;
         m_magnifierVisible = true;
+        // Pin from selection start: blink repaints flicker the magnifier
+        // during a still-hold (the drag pin only fires once the finger moves).
+        holdBlinkSolid();
         // Prevent parent SilicaFlickable from stealing the drag
         setKeepMouseGrab(true);
         update();

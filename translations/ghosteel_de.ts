@@ -467,6 +467,14 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
         <translation>Schriftgröße der Sitzung mit einer Zweifinger-Pinch-Geste ändern</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Tastatur im Querformat automatisch ausblenden</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Bildschirmtastatur beim Drehen ins Querformat ausblenden und beim Zurückdrehen ins Hochformat wiederherstellen</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automatisch folgt deinem Ambiente</translation>
     </message>

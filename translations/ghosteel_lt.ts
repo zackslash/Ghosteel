@@ -468,6 +468,14 @@ Varomas libghostty terminalo variklio</translation>
         <translation>Pakeiskite sesijos šrifto dydį dviejų pirštų gnybtelėjimo gestu</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Automatiškai slėpti klaviatūrą gulsčioje padėtyje</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Paslėpkite ekrano klaviatūrą pasukus į gulsčią padėtį ir atkurkite ją pasukus atgal į stačią padėtį</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto seka jūsų atmosferą</translation>
     </message>

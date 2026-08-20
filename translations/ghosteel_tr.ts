@@ -466,6 +466,14 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <translation>Oturumun yazı tipi boyutunu iki parmak kıstırma hareketiyle değiştir</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Klavyeyi yatay modda otomatik gizle</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Yatay moda döndürüldüğünde ekran klavyesini gizle ve dikey moda geri döndürüldüğünde geri yükle</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Otomatik ortamınızı takip eder</translation>
     </message>

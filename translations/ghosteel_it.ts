@@ -467,6 +467,14 @@ Alimentato dal motore di terminale libghostty</translation>
         <translation>Cambia la dimensione del carattere della sessione con un gesto di pizzicotto a due dita</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Nascondi automaticamente la tastiera in orizzontale</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Nascondi la tastiera su schermo quando ruoti in orizzontale e ripristinala quando ruoti di nuovo in verticale</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto segue la tua atmosfera</translation>
     </message>

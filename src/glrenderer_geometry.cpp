@@ -106,7 +106,7 @@ void GLRenderer::Renderer::buildMagnifierVertices(int fboW, int fboH)
     int destX = static_cast<int>(fingerPos.x()) - TerminalView::MagnifierWidth / 2;
     int destY = static_cast<int>(fingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
 
-    // destY < 0 ⇒ magnifier would clip top -> flip below finger
+    // destY < 0: magnifier would clip top -> flip below finger
     if (destY < 0)
         destY = static_cast<int>(fingerPos.y()) + TerminalView::MagnifierOffset;
     destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);

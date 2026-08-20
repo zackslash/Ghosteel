@@ -469,6 +469,14 @@ Poganja terminalski pogon libghostty</translation>
         <translation>Spremeni velikost pisave seje z gesto ščipanja z dvema prstoma</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Samodejno skrij tipkovnico v ležečem načinu</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Skrijte zaslonsko tipkovnico, ko zavrtite v ležeči način, in jo obnovite, ko zavrtite nazaj v pokončni način</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto sledi vašemu ambientu</translation>
     </message>

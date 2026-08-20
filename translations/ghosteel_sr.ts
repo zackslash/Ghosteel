@@ -468,6 +468,14 @@ Pokreće libghostty terminalski motor</translation>
         <translation>Промени величину фонта сесије гестом штипања са два прста</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Аутоматски сакриј тастатуру у хоризонталном положају</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Сакриј тастатуру на екрану при ротацији у хоризонтални положај и врати је при ротацији назад у вертикални положај</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Ауто прати ваш амбијент</translation>
     </message>

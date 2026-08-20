@@ -468,6 +468,14 @@ Propulsat de motorul de terminal libghostty</translation>
         <translation>Modifică mărimea fontului sesiunii cu un gest de ciupire cu două degete</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Ascunde automat tastatura în orientare orizontală</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Ascunde tastatura de pe ecran la rotirea în orientare orizontală și o restabilește la rotirea înapoi în orientare verticală</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto urmează ambientul</translation>
     </message>

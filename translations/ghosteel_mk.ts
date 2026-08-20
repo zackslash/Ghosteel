@@ -468,6 +468,14 @@ Powered by libghostty terminal engine</source>
         <translation>Смени ја големината на фонтот на сесијата со гест на штипање со два прста</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Автоматски скриј ја тастатурата во хоризонтална ориентација</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Скриј ја екранската тастатура при ротирање во хоризонтална ориентација и врати ја при ротирање назад во вертикална ориентација</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Авто го следи вашиот амбиент</translation>
     </message>
