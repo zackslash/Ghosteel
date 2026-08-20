@@ -35,6 +35,7 @@ Page {
                     Settings.keybarKeys = KeyCatalog.defaults.slice()
                     Settings.keybarVisible = true
                     pinchToZoomToggle.checked = false
+                    autoHideKeyboardLandscapeToggle.checked = false
                     clipboardReadCombo.currentIndex = 0
                 }
             }
@@ -219,6 +220,15 @@ Page {
                 description: qsTr("Highlight URLs in terminal output for tap-to-open")
                 checked: Settings.urlAutoDetect
                 onCheckedChanged: Settings.urlAutoDetect = checked
+            }
+
+            TextSwitch {
+                id: autoHideKeyboardLandscapeToggle
+                width: parent.width
+                text: qsTr("Auto-hide keyboard in landscape")
+                description: qsTr("Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait")
+                checked: Settings.autoHideKeyboardLandscape
+                onCheckedChanged: Settings.autoHideKeyboardLandscape = checked
             }
 
             // Extra keys section

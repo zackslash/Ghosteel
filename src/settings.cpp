@@ -60,6 +60,7 @@ void Settings::load()
     m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), false).toBool();
+    m_autoHideKeyboardLandscape = m_settings.value(QStringLiteral("terminal/autoHideKeyboardLandscape"), false).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
     m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
     m_clipboardReadPolicy = qBound(0, m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(), 2);
@@ -330,6 +331,16 @@ void Settings::setPinchToZoom(bool enabled)
     m_settings.setValue(QStringLiteral("terminal/pinchToZoom"), enabled);
     scheduleSave();
     Q_EMIT pinchToZoomChanged();
+}
+
+void Settings::setAutoHideKeyboardLandscape(bool enabled)
+{
+    if (m_autoHideKeyboardLandscape == enabled)
+        return;
+    m_autoHideKeyboardLandscape = enabled;
+    m_settings.setValue(QStringLiteral("terminal/autoHideKeyboardLandscape"), enabled);
+    scheduleSave();
+    Q_EMIT autoHideKeyboardLandscapeChanged();
 }
 
 void Settings::setShaderPipelineAvailable(bool available)

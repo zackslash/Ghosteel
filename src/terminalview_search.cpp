@@ -111,7 +111,7 @@ void TerminalView::performSearch()
     // segments must be sorted by (row, cellCol). The walk above emits them in
     // match-start order, and an overlapping match can begin on an earlier row
     // than the previous match's last segment (rows "aaa"/"aaa", pattern
-    // "aaaa" → [0,0] [1,0] [0,1] ...). stable_sort restores the contract.
+    // "aaaa" -> [0,0] [1,0] [0,1] ...). stable_sort restores the contract.
     // Side effect on navigation: a logical match's segments can end up
     // interleaved with an overlapping neighbor's, so findNext/findPrevious
     // step per segment in visual (row) order — every segment is still visited

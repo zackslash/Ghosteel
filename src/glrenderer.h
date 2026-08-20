@@ -352,7 +352,7 @@ private:
         struct KittyCachedTexture {
             GLuint texture;
             uint32_t lastSeenFrame;
-            uint64_t generation;  // per-image stamp from ghostty; changed gen ⇒ re-upload
+            uint64_t generation;  // per-image stamp from ghostty; changed gen -> re-upload
         };
         QHash<uint32_t, KittyCachedTexture> m_kittyTextures;
         uint32_t m_kittyFrameCounter = 0;

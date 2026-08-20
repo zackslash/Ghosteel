@@ -27,6 +27,13 @@ Page {
     property bool ctrlActive: false
     property bool altActive: false
     property bool keyboardVisible: Qt.inputMethod && Qt.inputMethod.visible
+    // Landscape auto-hide state: _kbSuppressedByLandscape is true when the VKB
+    // was closed BY ROTATION and should reopen in portrait; _kbRestorePending
+    // tracks an issued restore show() until it lands (kills rapid-rotation races).
+    property bool _kbSuppressedByLandscape: false
+    property bool _kbRestorePending: false
+    // Previous orientation class for the landscape-policy gate (same-class rotations are inert)
+    property bool _wasLandscape: false
 
     // Distinguish app-initiated hide() from compositor drag-dismiss: drag-dismiss
     // deactivates the wl_text_input context (stops hardware keys), hide() only
@@ -35,8 +42,9 @@ Page {
 
     onKeyboardVisibleChanged: {
         if (keyboardVisible) {
-            // Keyboard shown — clear any stale programmatic-hide flag.
+            // Keyboard shown — clear stale flags (programmatic-hide, pending restore)
             _programmaticKeyboardHide = false
+            _kbRestorePending = false
             return
         }
         if (!terminal) return
@@ -62,6 +70,14 @@ Page {
             if (terminal && terminal.visible
                     && page.status === PageStatus.Active
                     && !keyboardVisible) {
+                if (landscapeHideArmed() && !searchPanel.open) {
+                    // No re-show; still refocus — skipping the refocus leaves
+                    // the drag-dismissed context deactivated (hw keys dead).
+                    // Suppress first: focusInEvent auto-shows.
+                    terminal.suppressNextKeyboardAutoShow()
+                    terminal.forceActiveFocus()
+                    return
+                }
                 terminal.forceActiveFocus()
                 Qt.inputMethod.show()
             }
@@ -97,11 +113,27 @@ Page {
     onStatusChanged: {
         if (status === PageStatus.Active && terminal) {
             var idx = currentSessionIndex >= 0 ? currentSessionIndex : SessionManager.activeSessionIndex
+            _wasLandscape = isLandscapeOrientation()
+            if (landscapePolicyActive()) {
+                // Landscape + setting on: activation (launch/resume/rotate-while-
+                // covered) resolves hide-or-restore here, never at toggle time.
+                // The persisted session flag is also evidence the user had the
+                // KB open (portrait steady-state; this feature never writes it).
+                hideKeyboardForLandscape(SessionManager.sessionKeyboardVisible(idx))
+                terminal.suppressNextKeyboardAutoShow()
+                terminal.forceActiveFocus()
+                return
+            }
             if (!SessionManager.sessionKeyboardVisible(idx)) {
                 terminal.suppressNextKeyboardAutoShow()
             }
             terminal.forceActiveFocus()
         }
+    }
+
+    onOrientationChanged: {
+        if (status === PageStatus.Active)
+            applyLandscapePolicy()
     }
 
     // Key definition lookup map (O(1) access by ID)
@@ -495,14 +527,16 @@ Page {
     }
 
     Component.onCompleted: {
+        _wasLandscape = isLandscapeOrientation()
         // QML completion-ordering pitfall: children complete before parents,
         // and this initial page completes before ApplicationWindow runs
         // restoreSessions(), so activeSession() is null here.
         var t = SessionManager.activeSession()
         if (t) {
             var idx = SessionManager.activeSessionIndex
-            // Suppress keyboard BEFORE attach if persisted state is hidden
-            if (!SessionManager.sessionKeyboardVisible(idx))
+            // Suppress before attach if state hidden or landscape armed (one-frame VKB flash guard)
+            if (!SessionManager.sessionKeyboardVisible(idx)
+                    || landscapeHideArmed())
                 t.suppressNextKeyboardAutoShow()
             attachTerminal(t)
             // Apply persisted UI state for the initial session
@@ -511,6 +545,10 @@ Page {
             // Ensure keyboard hidden if persisted state says so
             if (!SessionManager.sessionKeyboardVisible(idx)) {
                 programmaticHide()
+            } else if (landscapeHideArmed()) {
+                // Defense-in-depth: dead today (restoreSessions runs after page completion); keep live if that ordering changes.
+                programmaticHide()
+                _kbSuppressedByLandscape = true
             } else {
                 // im->show() from focusInEvent may not work on startup if the
                 // Wayland surface isn't mapped yet. Delay and show explicitly.
@@ -600,7 +638,8 @@ Page {
                 var incomingKb = incomingState
                     ? incomingState.kb
                     : SessionManager.sessionKeyboardVisible(index)
-                if (!incomingKb)
+                if (!incomingKb
+                        || landscapeHideArmed())
                     newTerminal.suppressNextKeyboardAutoShow()
 
                 detachTerminal(terminal)
@@ -623,6 +662,12 @@ Page {
             // Explicit hide needed when the keyboard was already visible (suppress only
             // blocks focus-triggered show).
             var incomingKbRestore = state ? state.kb : SessionManager.sessionKeyboardVisible(index)
+            if (landscapeHideArmed()) {
+                // Recompute restorable per incoming session: launch-in-landscape
+                // and KB-open->KB-closed switches must not keep a stale flag.
+                _kbSuppressedByLandscape = incomingKbRestore
+                _kbRestorePending = false
+            }
             if (!incomingKbRestore) {
                 programmaticHide()
             }
@@ -757,6 +802,53 @@ Page {
         dragDismissReShowTimer.stop()
         _programmaticKeyboardHide = true
         Qt.inputMethod.hide()
+    }
+
+    // Landscape auto-hide helpers. Show-suppression guards key on setting +
+    // orientation evaluated synchronously — never on the restorable flag or
+    // Qt.inputMethod.visible — so no path shows the VKB in landscape with the
+    // setting on except explicit user action (keybar toggle/tap).
+    function isLandscapeOrientation() {
+        // Explicit equality only — LandscapeInverted (8) does not contain the
+        // Landscape (2) bit, so a bitwise AND would miss it.
+        return orientation === Orientation.Landscape
+                || orientation === Orientation.LandscapeInverted
+    }
+    function landscapeHideArmed() {
+        return Settings.autoHideKeyboardLandscape && isLandscapeOrientation()
+    }
+    function landscapePolicyActive() {
+        return landscapeHideArmed()
+                && status === PageStatus.Active
+                && !searchPanel.open
+    }
+    // Landscape suppress: read restorable evidence BEFORE hide() (hide flips
+    // keyboardVisible asynchronously, destroying the evidence). Bundled so call
+    // sites can't break the ordering. extraRestorable = site-specific evidence.
+    function hideKeyboardForLandscape(extraRestorable) {
+        var restorable = extraRestorable || keyboardVisible
+                || _kbSuppressedByLandscape || _kbRestorePending
+        programmaticHide()
+        _kbSuppressedByLandscape = restorable
+    }
+    // Entering landscape hides the VKB (marking it restorable); returning to
+    // portrait restores it. Same-class rotations (L<->L-inverted, P<->P-inverted)
+    // are inert — gated on the previous orientation class.
+    function applyLandscapePolicy() {
+        var landscape = isLandscapeOrientation()
+        if (landscape === _wasLandscape) return
+        _wasLandscape = landscape
+        if (!Settings.autoHideKeyboardLandscape) return
+        if (searchPanel.open) return  // search field owns the keyboard — exempt
+        if (landscape) {
+            hideKeyboardForLandscape(false)
+        } else if (_kbSuppressedByLandscape && !keyboardVisible) {
+            // Skip if already re-shown (terminal tap): show() no-ops, _kbRestorePending never clears
+            _kbRestorePending = true
+            if (terminal) terminal.forceActiveFocus()
+            Qt.inputMethod.show()
+            _kbSuppressedByLandscape = false
+        }
     }
 
     function setKeybarOpen(value) {
@@ -1034,6 +1126,12 @@ Page {
             z: 1
             onPressed: {
                 searchPanel.open = false
+                if (landscapeHideArmed()) {
+                    hideKeyboardForLandscape(false)
+                    // Arm before the refocus below: focusInEvent's im->show()
+                    // would pop the VKB back up.
+                    if (terminal) terminal.suppressNextKeyboardAutoShow()
+                }
                 if (terminal) terminal.forceActiveFocus()
             }
         }
@@ -1314,6 +1412,9 @@ Page {
                                 page.altActive = !page.altActive
                             } else if (keyDef.id === "keyboard") {
                                 var newVisible = !page.keyboardVisible
+                                // Manual toggle = user intent; cancels any pending landscape restore
+                                _kbSuppressedByLandscape = false
+                                _kbRestorePending = false
                                 if (newVisible) {
                                     if (terminal) terminal.forceActiveFocus()
                                     Qt.inputMethod.show()

@@ -121,6 +121,31 @@ private slots:
         QCOMPARE(s.value("workingDirectory").toString(), QStringLiteral("/tmp"));
         s.endGroup();
     }
+
+    void testAutoHideKeyboardLandscapeRoundTrip()
+    {
+        Settings s(m_settingsPath);
+        QCOMPARE(s.autoHideKeyboardLandscape(), false);
+
+        QSignalSpy spy(&s, &Settings::autoHideKeyboardLandscapeChanged);
+        s.setAutoHideKeyboardLandscape(true);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.autoHideKeyboardLandscape(), true);
+
+        s.setAutoHideKeyboardLandscape(true); // no-op — no signal
+        QCOMPARE(spy.count(), 1);
+
+        // s stays alive so the 500ms debounced atomic save fires before reload
+        QTest::qWait(600);
+
+        // Persisted across Settings reload
+        Settings s2(m_settingsPath);
+        QCOMPARE(s2.autoHideKeyboardLandscape(), true);
+
+        s.setAutoHideKeyboardLandscape(false);
+        QCOMPARE(spy.count(), 2);
+        QCOMPARE(s.autoHideKeyboardLandscape(), false);
+    }
 };
 
 QTEST_MAIN(TestSettings)

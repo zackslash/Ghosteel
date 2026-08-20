@@ -344,14 +344,14 @@ private slots:
         st.logicalLineStartRow = {0};
         st.logicalLineRowCount = {1};
 
-        // Pattern "b中" (QChar offsets 1..3) → cells 1,2,3 (b, head, spacer).
+        // Pattern "b中" (QChar offsets 1..3) -> cells 1,2,3 (b, head, spacer).
         auto segs = GhosttyVt::splitSearchMatch(st, 0, 1, 2);
         QCOMPARE(segs.size(), 1);
         QCOMPARE(segs[0].row, 0);
         QCOMPARE(segs[0].cellCol, 1);
         QCOMPARE(segs[0].cellWidth, 3);
 
-        // Pattern at the wide char's head (offset 2) → cell 2, width 2 (the
+        // Pattern at the wide char's head (offset 2) -> cell 2, width 2 (the
         // spacer is counted so the highlight covers both cells).
         auto segs2 = GhosttyVt::splitSearchMatch(st, 0, 2, 1);
         QCOMPARE(segs2.size(), 1);
