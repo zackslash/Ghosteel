@@ -83,7 +83,8 @@ GHOSTTY_API GhosttyResult ghostty_terminal_get(
             break;
         }
     }
-    memset(out, 0, 8);
+    // Covers the largest struct any caller reads (scrollbar, 24B) with headroom.
+    memset(out, 0, 32);
     return GHOSTTY_SUCCESS;
 }
 
@@ -382,7 +383,8 @@ GHOSTTY_API GhosttyResult ghostty_render_state_row_cells_select(
 GHOSTTY_API GhosttyResult ghostty_render_state_row_cells_get(
     GhosttyRenderStateRowCells, GhosttyRenderStateRowCellsData, void* out)
 {
-    if (out) memset(out, 0, 8);
+    // Covers the largest struct any caller reads (scrollbar, 24B) with headroom.
+    if (out) memset(out, 0, 32);
     return GHOSTTY_SUCCESS;
 }
 

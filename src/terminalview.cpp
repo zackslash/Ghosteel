@@ -238,7 +238,7 @@ void TerminalView::focusOutEvent(QFocusEvent *event)
 
     // No release follows a key pressed before focus loss; drop the shortcut
     // match so a later release (e.g. after refocus) isn't wrongly swallowed.
-    m_lastConsumedShortcutKey = 0;
+    m_lastConsumedShortcutKey.clear();
 
     QInputMethod *im = QGuiApplication::inputMethod();
     if (im)
@@ -1104,10 +1104,10 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
             }
 
             // No PRESS is sent for consumed shortcuts; remember the key so the release is swallowed.
-            if (key == GHOSTTY_KEY_C) { copySelection(); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
-            if (key == GHOSTTY_KEY_V) { paste(); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
-            if (key == GHOSTTY_KEY_EQUAL) { Q_EMIT zoomRequested(1);  m_lastConsumedShortcutKey = event->key(); event->accept(); return; }  // Ctrl+Shift+=
-            if (key == GHOSTTY_KEY_MINUS) { Q_EMIT zoomRequested(-1); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }  // Ctrl+Shift+-
+            if (key == GHOSTTY_KEY_C) { copySelection(); m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }
+            if (key == GHOSTTY_KEY_V) { paste(); m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }
+            if (key == GHOSTTY_KEY_EQUAL) { Q_EMIT zoomRequested(1);  m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }  // Ctrl+Shift+=
+            if (key == GHOSTTY_KEY_MINUS) { Q_EMIT zoomRequested(-1); m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }  // Ctrl+Shift+-
             if (key == GHOSTTY_KEY_F) {
                 if (m_searchActive)
                     closeSearch();
@@ -1115,21 +1115,21 @@ void TerminalView::keyPressEvent(QKeyEvent *event)
                     openSearch();
                 // Emit AFTER the state flip but BEFORE recording the consumed
                 // key: the handler synchronously focuses the search field,
-                // whose focusOutEvent zeroes m_lastConsumedShortcutKey — the
-                // assignment below must run last to win.
+                // whose focusOutEvent clears m_lastConsumedShortcutKey — the
+                // insert below must run last to win.
                 Q_EMIT searchToggled();
-                m_lastConsumedShortcutKey = event->key();
+                m_lastConsumedShortcutKey.insert(event->key());
                 event->accept();
                 return;
             }
-            if (key == GHOSTTY_KEY_ARROW_LEFT)  { Q_EMIT navigateSession(-1); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
-            if (key == GHOSTTY_KEY_ARROW_RIGHT) { Q_EMIT navigateSession(1);  m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
-            if (key == GHOSTTY_KEY_K) { Q_EMIT toggleKeybar(); m_lastConsumedShortcutKey = event->key(); event->accept(); return; }
+            if (key == GHOSTTY_KEY_ARROW_LEFT)  { Q_EMIT navigateSession(-1); m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }
+            if (key == GHOSTTY_KEY_ARROW_RIGHT) { Q_EMIT navigateSession(1);  m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }
+            if (key == GHOSTTY_KEY_K) { Q_EMIT toggleKeybar(); m_lastConsumedShortcutKey.insert(event->key()); event->accept(); return; }
         }
     }
 
     // Any other key press invalidates the shortcut-release match.
-    m_lastConsumedShortcutKey = 0;
+    m_lastConsumedShortcutKey.clear();
 
     // Auto-repeat maps to REPEAT action (enables Kitty protocol repeat)
     GhosttyKeyAction action = event->isAutoRepeat()
@@ -1153,8 +1153,8 @@ void TerminalView::keyReleaseEvent(QKeyEvent *event)
     }
 
     // Swallow the release of a shortcut-consumed press (see m_lastConsumedShortcutKey doc).
-    if (event->key() == m_lastConsumedShortcutKey) {
-        m_lastConsumedShortcutKey = 0;
+    if (m_lastConsumedShortcutKey.contains(event->key())) {
+        m_lastConsumedShortcutKey.remove(event->key());
         event->accept();
         return;
     }

@@ -452,6 +452,12 @@ bool PtyManager::startParentProcess(pid_t pid, int execPipe[2],
                     m_waitPidTimer = nullptr;
                 int exitCode = (result > 0 && WIFEXITED(status))
                     ? WEXITSTATUS(status) : -1;
+                // Raw 127 while the exec pipe is still open is the child's
+                // _exit(127) from a failed exec — map it so the exec-failed
+                // overlay wins whichever path reports first. The late notifier
+                // activation no-ops via its m_childPid guard.
+                if (exitCode == 127 && m_execPipeReadFd >= 0)
+                    exitCode = kExecFailedExitCode;
                 // The pid is reaped (or already gone); clear it before emitting
                 // so a later stop() can't SIGHUP a stale (possibly recycled)
                 // pid and workingDirectory() can't parse a foreign /proc/<pid>/cwd.
