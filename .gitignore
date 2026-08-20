@@ -76,6 +76,13 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Local regenerable build/dev output
+build-tests/
+dbus-1/
+rpm/zig-*.tar.xz
+.slim/
+.cortexkit/
+
 # CTest
 Testing/
 tests/CMakeCache.txt

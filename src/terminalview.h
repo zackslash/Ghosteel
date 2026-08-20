@@ -7,6 +7,7 @@
 #include <QFont>
 #include <QElapsedTimer>
 #include <QVector>
+#include <QSet>
 #include <QPointF>
 #include <QTouchEvent>
 
@@ -346,11 +347,13 @@ private:
     qreal m_tuiScrollAccumulator = 0;
     qreal m_tuiDragLastY = 0;
 
-    // Last Qt key consumed as an app shortcut (Ctrl+Shift+C/V/F/...).
-    // keyReleaseEvent swallows the matching non-autorepeat release because no
-    // PRESS was ever sent for it (a stray RELEASE under the Kitty keyboard
-    // protocol). Cleared on any other key press and on focus out.
-    int m_lastConsumedShortcutKey = 0;
+    // Qt keys consumed as app shortcuts (Ctrl+Shift+C/V/F/...). A set, not a
+    // single key, so two shortcuts held together (e.g. C then V) each keep
+    // their own release-match. keyReleaseEvent swallows the matching
+    // non-autorepeat release because no PRESS was ever sent for it (a stray
+    // RELEASE under the Kitty keyboard protocol). Cleared on any other key
+    // press and on focus out.
+    QSet<int> m_lastConsumedShortcutKey;
 
     // --- Scroll state (two-finger touch + mouse wheel) ---
     qreal m_twoFingerLastY = 0;
