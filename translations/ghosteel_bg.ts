@@ -467,6 +467,14 @@ Powered by libghostty terminal engine</source>
         <translation>Променя размера на шрифта на сесията с жест на прищипване с два пръста</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Автоматично скриване на клавиатурата в хоризонтална ориентация</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Скрива екранната клавиатура при завъртане в хоризонтална ориентация и я възстановява при завъртане обратно във вертикална</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Авто следва вашата атмосфера</translation>
     </message>

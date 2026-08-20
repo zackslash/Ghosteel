@@ -469,6 +469,14 @@ Mħaddem minn magna terminali libghostty</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Aħbi t-tastiera awtomatikament f&apos;modalità orizzontali</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Aħbi t-tastiera fuq l-iskrin meta ddawwar għall-orizzontali u rrestawraha meta terġa&apos; ddawwar għall-vertikali</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto isegwi l-ambjent tiegħek</translation>
     </message>

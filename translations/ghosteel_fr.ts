@@ -467,6 +467,14 @@ Propulsé par le moteur de terminal libghostty</translation>
         <translation>Modifier la taille de police de la session avec un geste de pincement à deux doigts</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Masquer automatiquement le clavier en mode paysage</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Masquer le clavier à l&apos;écran lors de la rotation en mode paysage et le restaurer lors de la rotation en mode portrait</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto suit votre ambiance</translation>
     </message>

@@ -467,6 +467,14 @@ Drivs av libghostty terminalmotor</translation>
         <translation>Ändra teckenstorlek i sessionen med en tvåfingernyp-gest</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Dölj tangentbordet automatiskt i liggande läge</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Dölj skärmtangentbordet när du roterar till liggande läge och återställ det när du roterar tillbaka till stående läge</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automatisk följer din miljö</translation>
     </message>

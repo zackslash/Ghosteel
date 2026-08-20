@@ -467,6 +467,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <translation>Muuta istunnon fontin kokoa kahden sormen nipistys-eleellä</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Piilota näppäimistö automaattisesti vaakatilassa</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Piilota näytön näppäimistö, kun laite käännetään vaakasuuntaan, ja palauta se, kun se käännetään takaisin pystysuuntaan</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automaattinen seuraa ympäristöäsi</translation>
     </message>

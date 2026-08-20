@@ -468,6 +468,14 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
         <translation>Athraigh méid cló an tseisiúin le gotha pincín dhá mhéar</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Folaigh an méarchlár go huathoibríoch i mód cothrománach</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Folaigh an méarchlár ar scáileán nuair a rothlaíonn tú go cothrománach agus cuir ar ais é nuair a rothlaíonn tú ar ais go hingearach</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Leanann Auto d'atmaisféar</translation>
     </message>

@@ -467,6 +467,14 @@ Toetab libghostty terminalimootorit</translation>
         <translation>Muuda seansi fondi suurust kahe sõrme näpistamisežestiga</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Peida klaviatuur automaatselt rõhtasendis</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Peida ekraaniklaviatuur, kui seade pööratakse rõhtasendisse, ja taasta see, kui pööratakse tagasi püstasendisse</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto järgib teie õhustikku</translation>
     </message>

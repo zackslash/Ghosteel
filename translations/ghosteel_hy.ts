@@ -467,6 +467,14 @@ Powered by libghostty terminal engine</source>
         <translation>Փոխեք սեսիայի տառատեսակի չափը երկու մատով սեղմելու ժեստով</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Ավտոմատ թաքցնել ստեղնաշարը հորիզոնական կողմնորոշման դեպքում</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Թաքցրեք էկրանի ստեղնաշարը հորիզոնական կողմնորոշման անցնելիս և վերականգնեք այն ուղղահայաց կողմնորոշման վերադառնալիս</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Ավտոն հետևում է ձեր մթնոլորտին</translation>
     </message>

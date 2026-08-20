@@ -467,6 +467,14 @@ Drevet av libghostty terminalmotor</translation>
         <translation>Endre skriftstørrelsen i økten med en tofingerklype-bevegelse</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Skjul tastaturet automatisk i liggende modus</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Skjul skjermtastaturet når du roterer til liggende modus, og gjenopprett det når du roterer tilbake til stående modus</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto følger ditt miljø</translation>
     </message>

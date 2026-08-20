@@ -470,6 +470,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <translation>Newid maint ffont y sesiwn gyda ystum gwasgu dau bys</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Cuddio&apos;r bysellfwrdd yn awtomatig mewn modd llorweddol</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Cuddio&apos;r bysellfwrdd ar y sgrin wrth droi i&apos;r modd llorweddol a&apos;i adfer wrth droi&apos;n ôl i&apos;r modd fertigol</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto yn dilyn eich amgylchedd</translation>
     </message>

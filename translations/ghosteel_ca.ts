@@ -467,6 +467,14 @@ Impulsat pel motor de terminal libghostty</translation>
         <translation>Canvia la mida de lletra de la sessió amb un gest de pessic de dos dits</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Amaga el teclat automàticament en horitzontal</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Amaga el teclat en pantalla en girar a horitzontal i restaura&apos;l en tornar a vertical</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automàtic segueix el teu ambient</translation>
     </message>

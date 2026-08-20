@@ -468,6 +468,14 @@ Poháněno terminálovým enginem libghostty</translation>
         <translation>Změňte velikost písma relace gestem štípnutí dvěma prsty</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Automaticky skrýt klávesnici v režimu na šířku</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Skryjte klávesnici na obrazovce při otočení na šířku a obnovte ji při otočení zpět na výšku</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automaticky následuje vaše prostředí</translation>
     </message>

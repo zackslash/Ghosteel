@@ -467,6 +467,14 @@ Keyrt af libghostty skjáhermisvél</translation>
         <translation>Breyttu leturstærð setunnar með tveggja-fingra klemmuhreyfingu</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Fela lyklaborðið sjálfkrafa í láréttri stefnu</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Feldu skjályklaborðið þegar snúið er í lárétta stefnu og endurstilltu það þegar snúið er aftur í lóðrétta stefnu</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Sjálfvirkt fylgir umhverfi þínu</translation>
     </message>

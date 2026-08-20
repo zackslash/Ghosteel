@@ -467,6 +467,14 @@ libghostty terminal motorrak bultzatuta</translation>
         <translation>Aldatu saioaren letra-tamaina hatz batekiko pintzean bi hatzekin</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Ezkutatu teklatua automatikoki horizontalean</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Ezkutatu pantailako teklatua horizontalean biratzean eta berreskuratu bertikalera itzultzean</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto-k jarraitzen du zure giroari</translation>
     </message>

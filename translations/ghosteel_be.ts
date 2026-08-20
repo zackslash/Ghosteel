@@ -468,6 +468,14 @@ Powered by libghostty terminal engine</source>
         <translation>Змяняйце памер шрыфту сеансу жэстам шчыпка двума пальцамі</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Аўтаматычна хаваць клавіятуру ў альбомнай арыентацыі</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Хавайце экранную клавіятуру пры павароце ў альбомную арыентацыю і аднаўляйце яе пры павароце назад у кніжную</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Аўта наследуе вашу атмасферу</translation>
     </message>

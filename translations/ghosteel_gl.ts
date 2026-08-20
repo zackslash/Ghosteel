@@ -467,6 +467,14 @@ Impulsado polo motor de terminal libghostty</translation>
         <translation>Cambia o tamaño de fonte da sesión cun xesto de belisco de dous dedos</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Agochar o teclado automaticamente en horizontal</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Agocha o teclado en pantalla ao xirar a horizontal e restáurao ao volver a vertical</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Auto segue o teu ambiente</translation>
     </message>

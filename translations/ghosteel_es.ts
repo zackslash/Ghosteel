@@ -467,6 +467,14 @@ Impulsado por el motor de terminal libghostty</translation>
         <translation>Cambia el tamaño de fuente de la sesión con un gesto de pellizco de dos dedos</translation>
     </message>
     <message>
+        <source>Auto-hide keyboard in landscape</source>
+        <translation>Ocultar el teclado automáticamente en horizontal</translation>
+    </message>
+    <message>
+        <source>Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait</source>
+        <translation>Oculta el teclado en pantalla al girar a horizontal y restáuralo al volver a vertical</translation>
+    </message>
+    <message>
         <source>Auto follows your ambience</source>
         <translation>Automático sigue tu ambiente</translation>
     </message>
