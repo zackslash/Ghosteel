@@ -17,6 +17,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Cló</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (Réamhshocrú)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -458,6 +469,14 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Súmáil le pinc</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Cló</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (Réamhshocrú)</translation>
     </message>
     <message>
         <source>Default font size</source>

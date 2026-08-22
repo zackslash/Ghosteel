@@ -19,6 +19,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Ffont</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (rhagosodedig)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -460,6 +471,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Chwyddo trwy bincio</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Ffont</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (rhagosodedig)</translation>
     </message>
     <message>
         <source>Default font size</source>

@@ -16,6 +16,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Lettertype</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (standaard)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -457,6 +468,14 @@ Aangedreven door de libghostty terminal-engine</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Zoomen met knijpen</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Lettertype</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (standaard)</translation>
     </message>
     <message>
         <source>Default font size</source>

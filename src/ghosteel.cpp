@@ -2,6 +2,7 @@
 // are parsed before Qt defines the `emit` macro (which conflicts with
 // Ghostty's use of 'emit' as a struct field name).
 #include "terminalview.h"
+#include "fontcatalog.h"
 #include "glrenderer.h"
 #include "sessionmanager.h"
 #include "settings.h"
@@ -132,6 +133,9 @@ int main(int argc, char *argv[])
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 
     view->rootContext()->setContextProperty(QStringLiteral("Settings"), Settings::instance());
+
+    FontCatalog *fontCatalog = new FontCatalog(app.data());
+    view->rootContext()->setContextProperty(QStringLiteral("FontCatalog"), fontCatalog);
 
     SessionManager *sessionManager = new SessionManager(app.data());
     view->rootContext()->setContextProperty(QStringLiteral("SessionManager"), sessionManager);

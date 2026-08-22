@@ -18,6 +18,7 @@ Page {
                 text: qsTr("Reset to defaults")
                 onClicked: {
                     Settings.fontSize = 18           // Reset global default for new sessions
+                    Settings.fontFamily = "monospace"
                     fontSlider.value = 18            // Re-sync the handle: the value binding breaks while dragging
                     SessionManager.resetAllSessionFontSizes()  // All sessions track default
                     shellField.text = ""
@@ -131,6 +132,12 @@ Page {
                     }
                     updatingScheme = false
                 }
+            }
+
+            ValueButton {
+                label: qsTr("Font")
+                value: Settings.fontFamily === "monospace" ? qsTr("Monospace (default)") : Settings.fontFamily
+                onClicked: pageStack.push(Qt.resolvedUrl("FontPickerPage.qml"))
             }
 
             Slider {

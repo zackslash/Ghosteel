@@ -62,6 +62,48 @@ private slots:
         QCOMPARE(s.fontSize(), 20);
     }
 
+    // --- QML property wiring ---
+
+    void testSettingsExposedAsProperties()
+    {
+        // Direct setter tests bypass the property system; QML does not. A
+        // setting missing its Q_PROPERTY (or with NOTIFY miswired) silently
+        // breaks QML while every C++ test stays green.
+        const char *names[] = {
+            "fontSize", "fontFamily", "shellCommand", "colorScheme",
+            "followAmbience", "backgroundOpacity", "bellMode",
+            "scrollbackPersistence", "scrollbackRetentionDays", "keybarKeys",
+            "keybarVisible", "keybarRowBreaks", "cursorTrails", "pinchToZoom",
+            "autoHideKeyboardLandscape", "urlAutoDetect", "kittyGraphics",
+            "clipboardReadPolicy", "customShaderPath", "shaderPipelineAvailable",
+        };
+        const QMetaObject *mo = &Settings::staticMetaObject;
+        for (const char *name : names) {
+            int idx = mo->indexOfProperty(name);
+            QVERIFY2(idx >= 0, name);
+            QMetaProperty p = mo->property(idx);
+            QVERIFY2(p.isReadable() && p.hasNotifySignal(), name);
+            // shaderPipelineAvailable is intentionally read-only
+            if (qstrcmp(name, "shaderPipelineAvailable") != 0)
+                QVERIFY2(p.isWritable(), name);
+            QVERIFY2(p.notifySignal().name() == QByteArray(name) + "Changed", name);
+        }
+    }
+
+    void testFontFamilyPropertySystemRoundTrip()
+    {
+        // setProperty returns false for an undeclared property — the exact
+        // failure mode of the once-missing fontFamily Q_PROPERTY.
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::fontFamilyChanged);
+        QVERIFY(s.setProperty("fontFamily", QStringLiteral("Fira Code")));
+        QCOMPARE(s.property("fontFamily").toString(), QStringLiteral("Fira Code"));
+        QCOMPARE(spy.count(), 1);
+        QVERIFY(s.setProperty("fontFamily", QStringLiteral("Fira Code")));
+        QCOMPARE(spy.count(), 1); // same-value no-op holds through the property path
+    }
+
     // --- Background opacity ---
 
     void testOpacityClampLow()

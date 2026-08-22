@@ -16,6 +16,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>შრიფტი</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (ნაგულისხმევი)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -457,6 +468,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Pinch to zoom</source>
         <translation>მასშტაბი ჩაჭერით</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>შრიფტი</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (ნაგულისხმევი)</translation>
     </message>
     <message>
         <source>Default font size</source>

@@ -16,6 +16,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Fontti</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (oletus)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -457,6 +468,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Zoomaa nipistämällä</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Fontti</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (oletus)</translation>
     </message>
     <message>
         <source>Default font size</source>

@@ -16,6 +16,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Leturgerð</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (sjálfgefið)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -457,6 +468,14 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Aðdráttur með klemmu</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Leturgerð</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (sjálfgefið)</translation>
     </message>
     <message>
         <source>Default font size</source>

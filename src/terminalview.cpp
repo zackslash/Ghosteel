@@ -823,6 +823,7 @@ void TerminalView::updateFontMetrics()
     QString family = Settings::instance()->fontFamily();
     if (family.isEmpty())
         family = QStringLiteral("monospace");
+    // Must stay identical to the QFont built in glrenderer.cpp; metrics and rasterization share the font.
     m_font = QFont(family, static_cast<int>(m_fontSize));
     m_font.setStyleHint(QFont::Monospace);
     m_font.setFixedPitch(true);
