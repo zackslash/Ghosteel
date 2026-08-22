@@ -18,6 +18,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Pisava</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (privzeto)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -459,6 +470,14 @@ Poganja terminalski pogon libghostty</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Povečaj s ščipanjem</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Pisava</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (privzeto)</translation>
     </message>
     <message>
         <source>Default font size</source>

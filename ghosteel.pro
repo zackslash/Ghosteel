@@ -61,6 +61,7 @@ RESOURCES += shaders/shaders.qrc
 
 HEADERS += \
     src/bellfeedback.h \
+    src/fontcatalog.h \
     src/ghosteeladapter.h \
     src/ghosttyvt.h \
     src/glrenderer.h \
@@ -78,6 +79,7 @@ HEADERS += \
 
 SOURCES += \
     src/bellfeedback.cpp \
+    src/fontcatalog.cpp \
     src/ghosteel.cpp \
     src/ghosteeladapter.cpp \
     src/ghosttyvt.cpp \
@@ -107,6 +109,7 @@ DISTFILES += qml/ghosteel.qml \
     qml/pages/TerminalPage.qml \
     qml/pages/SessionPage.qml \
     qml/pages/SettingsPage.qml \
+    qml/pages/FontPickerPage.qml \
     qml/pages/KeybarSettings.qml \
     qml/pages/KeyCatalog.js \
     qml/pages/LicensesPage.qml \
@@ -121,6 +124,7 @@ lupdate_only {
         qml/pages/TerminalPage.qml \
         qml/pages/SessionPage.qml \
         qml/pages/SettingsPage.qml \
+        qml/pages/FontPickerPage.qml \
         qml/pages/KeybarSettings.qml \
         qml/pages/LicensesPage.qml
 }

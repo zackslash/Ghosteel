@@ -17,6 +17,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Šriftas</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (numatytasis)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -458,6 +469,14 @@ Varomas libghostty terminalo variklio</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Mastelis suėmus</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Šriftas</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (numatytasis)</translation>
     </message>
     <message>
         <source>Default font size</source>

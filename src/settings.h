@@ -14,6 +14,7 @@ class Settings : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int fontSize READ fontSize WRITE setFontSize NOTIFY fontSizeChanged)
+    Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY fontFamilyChanged)
     Q_PROPERTY(QString shellCommand READ shellCommand WRITE setShellCommand NOTIFY shellCommandChanged)
     Q_PROPERTY(QString colorScheme READ colorScheme WRITE setColorScheme NOTIFY colorSchemeChanged)
     Q_PROPERTY(bool followAmbience READ followAmbience WRITE setFollowAmbience NOTIFY followAmbienceChanged)

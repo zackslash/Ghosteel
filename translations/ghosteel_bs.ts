@@ -17,6 +17,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (zadano)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -458,6 +469,14 @@ Pokreće libghostty terminalski motor</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Zumiranje štipanjem</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (zadano)</translation>
     </message>
     <message>
         <source>Default font size</source>

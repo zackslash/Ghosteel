@@ -314,6 +314,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         QString family = q->m_cachedMetrics.fontFamily;
         if (family.isEmpty())
             family = QStringLiteral("monospace");
+        // Must stay identical to the QFont built in terminalview.cpp; metrics and rasterization share the font.
         QFont font(family, q->m_cachedMetrics.fontSize);
         font.setStyleHint(QFont::Monospace);
         font.setFixedPitch(true);

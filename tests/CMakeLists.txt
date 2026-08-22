@@ -55,6 +55,14 @@ add_executable(tst_settings_behavior
 target_link_libraries(tst_settings_behavior PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME SettingsBehavior COMMAND tst_settings_behavior)
 
+# --- Font catalog (assembleFamilyList) tests ---
+add_executable(tst_fontcatalog
+    tst_fontcatalog.cpp
+    ${CMAKE_SOURCE_DIR}/../src/fontcatalog.cpp
+)
+target_link_libraries(tst_fontcatalog PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
+add_test(NAME FontCatalog COMMAND tst_fontcatalog)
+
 # --- PtyReaderThread tests ---
 add_executable(tst_pty_reader
     tst_pty_reader.cpp
@@ -203,6 +211,7 @@ if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
         ${CMAKE_SOURCE_DIR}/../src/singleinstance.cpp
         ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
         ${CMAKE_SOURCE_DIR}/../src/settings.cpp
+        ${CMAKE_SOURCE_DIR}/../src/fontcatalog.cpp
         ${CMAKE_SOURCE_DIR}/../src/ghosteeladapter.cpp
     )
     target_compile_definitions(compile_smoke PRIVATE

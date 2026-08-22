@@ -16,6 +16,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (vaikimisi)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -457,6 +468,14 @@ Toetab libghostty terminalimootorit</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Suumi näpistamisega</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (vaikimisi)</translation>
     </message>
     <message>
         <source>Default font size</source>

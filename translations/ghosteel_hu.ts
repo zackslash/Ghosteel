@@ -15,6 +15,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Betűtípus</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (alapértelmezett)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -456,6 +467,14 @@ A libghostty terminálmotor hajtja</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Nagyítás csippentéssel</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Betűtípus</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (alapértelmezett)</translation>
     </message>
     <message>
         <source>Default font size</source>

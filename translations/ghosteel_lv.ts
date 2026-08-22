@@ -17,6 +17,17 @@
     </message>
 </context>
 <context>
+    <name>FontPickerPage</name>
+    <message>
+        <source>Font</source>
+        <translation>Fonts</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (noklusējums)</translation>
+    </message>
+</context>
+<context>
     <name>GLRenderer</name>
     <message>
         <source>Shell exited with code %1</source>
@@ -458,6 +469,14 @@ Darbina libghostty termināla dzinējs</translation>
     <message>
         <source>Pinch to zoom</source>
         <translation>Tālummaiņa ar kniebšanu</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Fonts</translation>
+    </message>
+    <message>
+        <source>Monospace (default)</source>
+        <translation>Monospace (noklusējums)</translation>
     </message>
     <message>
         <source>Default font size</source>
