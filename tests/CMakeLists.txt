@@ -84,7 +84,7 @@ add_executable(tst_textutil
     tst_textutil.cpp
     ${CMAKE_SOURCE_DIR}/../src/textutil.cpp
 )
-target_link_libraries(tst_textutil PRIVATE Qt5::Core Qt5::Test)
+target_link_libraries(tst_textutil PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
 add_test(NAME TextUtil COMMAND tst_textutil)
 
 # --- OSC 777 notification scanner tests ---
@@ -118,7 +118,7 @@ add_executable(tst_word_boundary
     tst_word_boundary.cpp
     ${CMAKE_SOURCE_DIR}/../src/textutil.cpp
 )
-target_link_libraries(tst_word_boundary PRIVATE Qt5::Core Qt5::Test)
+target_link_libraries(tst_word_boundary PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
 add_test(NAME WordBoundary COMMAND tst_word_boundary)
 
 # --- Scrollback format parsing tests ---
@@ -146,7 +146,7 @@ add_executable(tst_url_detection
     tst_url_detection.cpp
     ${CMAKE_SOURCE_DIR}/../src/textutil.cpp
 )
-target_link_libraries(tst_url_detection PRIVATE Qt5::Core Qt5::Test)
+target_link_libraries(tst_url_detection PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
 add_test(NAME UrlDetection COMMAND tst_url_detection)
 
 # --- Default terminal modes (grapheme cluster, cursor blinking) tests ---
