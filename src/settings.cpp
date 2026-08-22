@@ -40,30 +40,51 @@ Settings *Settings::instance()
 
 void Settings::load()
 {
-    m_fontSize = qBound(kMinFontSize, m_settings.value(QStringLiteral("font/size"), 18).toInt(), kMaxFontSize);
+    // Non-numeric values (corrupt/legacy entries) must fall back to the
+    // default before clamping — toInt() on garbage yields 0, which would
+    // clamp to the range sentinel instead.
+    bool ok = false;
+    int v = m_settings.value(QStringLiteral("font/size"), 18).toInt(&ok);
+    if (!ok) v = 18;
+    m_fontSize = qBound(kMinFontSize, v, kMaxFontSize);
     m_fontFamily = m_settings.value(QStringLiteral("font/family"),
                                     QStringLiteral("monospace")).toString();
     m_shellCommand = m_settings.value(QStringLiteral("terminal/shell"), QString()).toString();
     m_colorScheme = m_settings.value(QStringLiteral("terminal/colorScheme"),
                                      QStringLiteral("dark")).toString();
     m_followAmbience = m_settings.value(QStringLiteral("terminal/followAmbience"), true).toBool();
-    m_backgroundOpacity = qBound(0.0f, m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat(), 1.0f);
-    m_bellMode = qBound(0, m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(), 3);
+    ok = false;
+    float f = m_settings.value(QStringLiteral("terminal/backgroundOpacity"), 0.6f).toFloat(&ok);
+    if (!ok) f = 0.6f;
+    m_backgroundOpacity = qBound(0.0f, f, 1.0f);
+    ok = false;
+    v = m_settings.value(QStringLiteral("terminal/bellMode"), 1).toInt(&ok);
+    if (!ok) v = 1;
+    m_bellMode = qBound(0, v, 3);
     m_scrollbackPersistence = m_settings.value(QStringLiteral("scrollback/enabled"), false).toBool();
-    m_scrollbackRetentionDays = qBound(7, m_settings.value(QStringLiteral("scrollback/retentionDays"), 30).toInt(), 365);
+    ok = false;
+    v = m_settings.value(QStringLiteral("scrollback/retentionDays"), 30).toInt(&ok);
+    if (!ok) v = 30;
+    m_scrollbackRetentionDays = qBound(7, v, 365);
     QStringList defaultKeys = {QStringLiteral("left"), QStringLiteral("down"), QStringLiteral("up"),
                                QStringLiteral("right"), QStringLiteral("tab"), QStringLiteral("ctrl"),
                                QStringLiteral("alt"), QStringLiteral("esc"), QStringLiteral("keyboard")};
     m_keybarKeys = m_settings.value(QStringLiteral("keybar/keys"), QVariant::fromValue(defaultKeys)).toStringList();
     m_keybarVisible = m_settings.value(QStringLiteral("keybar/visible"), true).toBool();
     m_keybarRowBreaks = sanitizeRowBreaks(m_settings.value(QStringLiteral("keybar/rowBreaks")).toList());
-    m_sessionSortMode = qBound(0, m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(), 3);
+    ok = false;
+    v = m_settings.value(QStringLiteral("sessions/sortMode"), SortLastUsed).toInt(&ok);
+    if (!ok) v = SortLastUsed;
+    m_sessionSortMode = qBound(0, v, 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), false).toBool();
     m_autoHideKeyboardLandscape = m_settings.value(QStringLiteral("terminal/autoHideKeyboardLandscape"), false).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
     m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
-    m_clipboardReadPolicy = qBound(0, m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(), 2);
+    ok = false;
+    v = m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(&ok);
+    if (!ok) v = 0;
+    m_clipboardReadPolicy = qBound(0, v, 2);
     m_customShaderPath = m_settings.value(QStringLiteral("terminal/customShaderPath")).toString();
 }
 

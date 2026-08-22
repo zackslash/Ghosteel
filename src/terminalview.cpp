@@ -171,6 +171,8 @@ void TerminalView::recalculateDimensions(bool cellPixelsChanged)
                                         m_cellWidth, m_cellHeight);
 
                 m_vt->markSearchTextDirty(); // reflow moves search offsets
+                if (m_searchActive && !m_searchPattern.isEmpty())
+                    refreshSearchCachePreservingMatch();
 
                 m_vt->updateMouseEncoderSize(
                     static_cast<uint32_t>(width()),
@@ -260,6 +262,7 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
             GhosttyKey key = KeyMapping::mapCharToKey(ch);
 
             if (key != GHOSTTY_KEY_UNIDENTIFIED) {
+                scrollViewportToBottom();
                 sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS,
                              static_cast<GhosttyMods>(m_stickyModifiers),
                              event->commitString());

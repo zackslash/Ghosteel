@@ -246,10 +246,10 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     if (gen != m_lastMetricsGeneration) {
         m_lastMetricsGeneration = gen;
         m_cellWidth = 0; // force re-init below
-        // m_atlas.setFont() below wipes the atlas texture and both glyph caches,
-        // so the UVs baked in m_cellVertices now sample an empty atlas. Ghostty
-        // never marks the grid dirty for a settings change, so force a vertex
-        // rebuild this frame regardless of its dirty flag.
+        // A font family/size change wipes the atlas (setFont below), so the UVs
+        // baked in m_cellVertices would sample an empty atlas. Ghostty never
+        // marks the grid dirty for a settings change, so force a vertex rebuild
+        // this frame regardless of its dirty flag.
         m_forceVertexRebuild = true;
     }
 
@@ -323,7 +323,14 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
             m_atlas.initialize();
             m_atlasInitialized = true;
         }
-        m_atlas.setFont(font, m_cellWidth, m_cellHeight);
+        // setFont() clears both glyph caches and re-uploads the whole atlas
+        // texture, so only call it when the family/size actually changed.
+        // Opacity-only changes (backgroundOpacity slider) must not rebuild it.
+        if (m_atlasFamily != family || m_atlasFontSize != q->m_cachedMetrics.fontSize) {
+            m_atlas.setFont(font, m_cellWidth, m_cellHeight);
+            m_atlasFamily = family;
+            m_atlasFontSize = q->m_cachedMetrics.fontSize;
+        }
     }
 
     // Read topPadding every frame (can change without font change)

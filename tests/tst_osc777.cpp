@@ -45,17 +45,29 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QString());
     }
 
-    // Test 4: Empty title is skipped (no signal)
-    void testEmptyTitleSkipped()
+    // Test 4: Empty title with real body — notification emitted with empty title
+    void testEmptyTitleWithBody()
     {
         GhosttyVt vt;
         QSignalSpy spy(&vt, &GhosttyVt::desktopNotification);
         QByteArray data("\x1b]777;notify;;Body\x07");
         vt.vtWrite(reinterpret_cast<const uint8_t*>(data.constData()), data.size());
-        QCOMPARE(spy.count(), 0); // title.isEmpty() guard
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.at(0).at(0).toString(), QString());
+        QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("Body"));
     }
 
-    // Test 5: Partial sequence split across two vtWrite calls
+    // Test 5: Both title and body empty — no emission
+    void testBothEmpty()
+    {
+        GhosttyVt vt;
+        QSignalSpy spy(&vt, &GhosttyVt::desktopNotification);
+        QByteArray data("\x1b]777;notify;;\x07");
+        vt.vtWrite(reinterpret_cast<const uint8_t*>(data.constData()), data.size());
+        QCOMPARE(spy.count(), 0);
+    }
+
+    // Test 6: Partial sequence split across two vtWrite calls
     void testPartialAcrossBuffers()
     {
         GhosttyVt vt;
@@ -70,7 +82,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("Body"));
     }
 
-    // Test 6: Near-miss — prefix 776 (not 777)
+    // Test 7: Near-miss — prefix 776 (not 777)
     void testNearMiss776()
     {
         GhosttyVt vt;
@@ -80,7 +92,7 @@ private slots:
         QCOMPARE(spy.count(), 0);
     }
 
-    // Test 7: Near-miss — prefix 778
+    // Test 8: Near-miss — prefix 778
     void testNearMiss778()
     {
         GhosttyVt vt;
@@ -90,7 +102,7 @@ private slots:
         QCOMPARE(spy.count(), 0);
     }
 
-    // Test 8: Wrong keyword (not "notify")
+    // Test 9: Wrong keyword (not "notify")
     void testWrongKeyword()
     {
         GhosttyVt vt;
@@ -100,7 +112,7 @@ private slots:
         QCOMPARE(spy.count(), 0);
     }
 
-    // Test 9: Title size cap (512 bytes)
+    // Test 10: Title size cap (512 bytes)
     void testTitleSizeCap()
     {
         GhosttyVt vt;
@@ -114,7 +126,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("Body"));
     }
 
-    // Test 10: Body size cap (2048 bytes)
+    // Test 11: Body size cap (2048 bytes)
     void testBodySizeCap()
     {
         GhosttyVt vt;
@@ -127,7 +139,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString().size(), 2048);
     }
 
-    // Test 11: Multiple notifications in a single vtWrite
+    // Test 12: Multiple notifications in a single vtWrite
     void testMultipleInOneBuffer()
     {
         GhosttyVt vt;
@@ -139,7 +151,7 @@ private slots:
         QCOMPARE(spy.at(1).at(0).toString(), QStringLiteral("C"));
     }
 
-    // Test 12: State reset after destroy()
+    // Test 13: State reset after destroy()
     void testStateResetOnDestroy()
     {
         GhosttyVt vt;
@@ -156,7 +168,7 @@ private slots:
         QCOMPARE(spy.count(), 0);
     }
 
-    // Test 13: Interleaved normal data doesn't affect scanner
+    // Test 14: Interleaved normal data doesn't affect scanner
     void testInterleavedNormalData()
     {
         GhosttyVt vt;
@@ -168,7 +180,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("B"));
     }
 
-    // Test 14: BEL in body terminates early (but BEL itself ends the sequence)
+    // Test 15: BEL in body terminates early (but BEL itself ends the sequence)
     void testBelInBody()
     {
         GhosttyVt vt;
@@ -180,7 +192,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("Body"));
     }
 
-    // Test 15: BEL during title terminates as title-only
+    // Test 16: BEL during title terminates as title-only
     void testBelDuringTitle()
     {
         GhosttyVt vt;
@@ -192,7 +204,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QString());
     }
 
-    // Test 16: bell() signal is NOT emitted by OSC 777 (it only emits desktopNotification)
+    // Test 17: bell() signal is NOT emitted by OSC 777 (it only emits desktopNotification)
     void testNoBellFromOsc777()
     {
         GhosttyVt vt;
@@ -204,7 +216,7 @@ private slots:
         QCOMPARE(notifSpy.count(), 1);
     }
 
-    // Test 17: Unicode characters in title and body
+    // Test 18: Unicode characters in title and body
     void testUnicodeNotification()
     {
         GhosttyVt vt;
@@ -217,7 +229,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c"));
     }
 
-    // Test 18: ESC inside body resets to ESC state (title-only from body perspective)
+    // Test 19: ESC inside body resets to ESC state (title-only from body perspective)
     void testEscInBody()
     {
         GhosttyVt vt;
@@ -230,7 +242,7 @@ private slots:
         QCOMPARE(spy.at(0).at(1).toString(), QStringLiteral("Partial"));
     }
 
-    // Test 19: Proper ST terminator (ESC backslash)
+    // Test 20: Proper ST terminator (ESC backslash)
     void testEscBackslashTerminator()
     {
         GhosttyVt vt;

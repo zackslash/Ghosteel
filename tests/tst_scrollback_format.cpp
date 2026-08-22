@@ -268,6 +268,37 @@ private slots:
         vt.destroy();
     }
 
+    void testExportScrollbackDropsLastLineWhenCursorOnBottomRow()
+    {
+        // cols=6, 3 rows: "abcdef" / "gh" / "ij", no continuations. Cursor on
+        // the bottom row (y=2) past the end of the short last line "ij" — the
+        // last line is dropped (existing behavior preserved).
+        QStringList text = {"abcdef", "gh", "ij"};
+        QList<bool> cont = {false, false, false};
+        GridFixture fixture(6, 3, text, cont);
+        ghostty_stubs_set_cursor(5, 2);
+
+        GhosttyVt vt;
+        vt.create(6, 3, [](const char *, size_t) {});
+        QCOMPARE(exportPayload(vt), QByteArray("abcdef\r\ngh"));
+        vt.destroy();
+    }
+
+    void testExportScrollbackKeepsLastLineWhenCursorMidScreen()
+    {
+        // Same grid, but the cursor sits mid-screen (y=1) — the bottom line
+        // "ij" is real content and must survive.
+        QStringList text = {"abcdef", "gh", "ij"};
+        QList<bool> cont = {false, false, false};
+        GridFixture fixture(6, 3, text, cont);
+        ghostty_stubs_set_cursor(5, 1);
+
+        GhosttyVt vt;
+        vt.create(6, 3, [](const char *, size_t) {});
+        QCOMPARE(exportPayload(vt), QByteArray("abcdef\r\ngh\r\nij"));
+        vt.destroy();
+    }
+
     void testSplitSearchMatchSingleRow()
     {
         // No continuation: one logical line == one physical row.

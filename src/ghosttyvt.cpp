@@ -222,7 +222,7 @@ void GhosttyVt::vtWrite(const uint8_t *data, size_t len)
             break;
         case OSC777_BODY:
             if (c == 0x07 || c == 0x1b) {
-                if (!m_osc777Title.isEmpty())
+                if (!m_osc777Title.isEmpty() || !m_osc777Body.isEmpty())
                     Q_EMIT desktopNotification(QString::fromUtf8(m_osc777Title),
                                                 QString::fromUtf8(m_osc777Body));
                 m_osc777State = (c == 0x1b) ? OSC777_ESC : OSC777_IDLE;
@@ -842,7 +842,11 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
 
     if (!result.isEmpty()) {
         uint16_t cursorX = 0;
+        uint16_t cursorY = 0;
+        uint16_t rows = 0;
         ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_CURSOR_X, &cursorX);
+        ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_CURSOR_Y, &cursorY);
+        ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_ROWS, &rows);
 
         int lastNl = result.lastIndexOf('\n');
         QByteArray lastLine = (lastNl >= 0) ? result.mid(lastNl + 1) : result;
@@ -850,7 +854,11 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
         while (trimmed.endsWith('\r'))
             trimmed.chop(1);
 
-        if (cursorX > 0 && cursorX >= terminalStringWidth(QString::fromUtf8(trimmed))) {
+        // Drop the last line only when the cursor is on the bottom row past
+        // its end (a fresh prompt line). A cursor left mid-screen means the
+        // bottom line is real content.
+        if (cursorY == rows - 1 && cursorX > 0
+                && cursorX >= terminalStringWidth(QString::fromUtf8(trimmed))) {
             if (lastNl >= 0)
                 result.resize(lastNl);
             else
