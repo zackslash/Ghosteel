@@ -135,12 +135,16 @@ case "${1:-}" in
                 exit 1
             fi
         else
-            loc="$(sshroot "cat $LOCALE_CONF 2>/dev/null" | sed -n 's/^LANG=//p')"
+            # set -e + pipefail would kill the script silently if the file
+            # is missing (remote cat exits 1); || true feeds sed an empty
+            # stream and the default below applies.
+            loc="$( (sshroot "cat $LOCALE_CONF 2>/dev/null" || true) | sed -n 's/^LANG=//p')"
             loc="${loc:-en_US.utf8}"
         fi
         echo "Launching ghosteel under $loc (system language unchanged)..."
+        user_uid="$(sshroot "id -u $SSH_USER")"
         sshroot "pkill -f '^/usr/bin/ghosteel' 2>/dev/null || true; sleep 1; \
-su - $SSH_USER -c \"env XDG_RUNTIME_DIR=/run/user/100000 \
+su - $SSH_USER -c \"env XDG_RUNTIME_DIR=/run/user/$user_uid \
 WAYLAND_DISPLAY=/run/display/wayland-0 LANG=$loc LC_ALL=$loc \
 nohup /usr/bin/ghosteel >/tmp/ghosteel-lang.log 2>&1 &\"" >/dev/null 2>&1
         sleep 3
