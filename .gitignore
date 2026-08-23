@@ -71,6 +71,9 @@ Thumbs.db
 # Compiled translations
 *.qm
 
+# lupdate source-language template (regenerated at build)
+/translations/ghosteel.ts
+
 # Temp files
 /tmp/
 *.tmp

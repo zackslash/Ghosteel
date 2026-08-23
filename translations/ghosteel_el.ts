@@ -184,6 +184,17 @@
     </message>
 </context>
 <context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Αδυναμία εκκίνησης του «%1», χρησιμοποιείται το «%2».</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>δημιουργήθηκε ~/.zshrc με διόρθωση της προτροπής Sailfish</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -599,17 +610,6 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
         <translation>Αδυναμία εκκίνησης του «%1» (%2). Θα χρησιμοποιηθεί το «%3».</translation>
-    </message>
-</context>
-<context>
-    <name>PtyManager</name>
-    <message>
-        <source>%1 could not be started, using %2</source>
-        <translation>Αδυναμία εκκίνησης του «%1», χρησιμοποιείται το «%2».</translation>
-    </message>
-    <message>
-        <source>created ~/.zshrc with a Sailfish prompt fix</source>
-        <translation>δημιουργήθηκε ~/.zshrc με διόρθωση της προτροπής Sailfish</translation>
     </message>
 </context>
 </TS>

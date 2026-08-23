@@ -184,6 +184,17 @@
     </message>
 </context>
 <context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>&apos;%1&apos; nuk mund të nisej, përdoret &apos;%2&apos;.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>u krijua ~/.zshrc me një rregullim të prompt-it të Sailfish</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -599,17 +610,6 @@ Mundësuar nga motori i terminalit libghostty</translation>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
         <translation>&apos;%1&apos; nuk mund të nisej (%2). Do të përdoret &apos;%3&apos;.</translation>
-    </message>
-</context>
-<context>
-    <name>PtyManager</name>
-    <message>
-        <source>%1 could not be started, using %2</source>
-        <translation>&apos;%1&apos; nuk mund të nisej, përdoret &apos;%2&apos;.</translation>
-    </message>
-    <message>
-        <source>created ~/.zshrc with a Sailfish prompt fix</source>
-        <translation>u krijua ~/.zshrc me një rregullim të prompt-it të Sailfish</translation>
     </message>
 </context>
 </TS>

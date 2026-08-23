@@ -185,6 +185,17 @@
     </message>
 </context>
 <context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“ nije moguće pokrenuti, koristi se „%2“.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>stvoren je ~/.zshrc s ispravkom Sailfish prompta</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -600,17 +611,6 @@ Pokreće libghostty terminalni pogon</translation>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
         <translation>„%1“ nije moguće pokrenuti (%2). Koristit će se „%3“.</translation>
-    </message>
-</context>
-<context>
-    <name>PtyManager</name>
-    <message>
-        <source>%1 could not be started, using %2</source>
-        <translation>„%1“ nije moguće pokrenuti, koristi se „%2“.</translation>
-    </message>
-    <message>
-        <source>created ~/.zshrc with a Sailfish prompt fix</source>
-        <translation>stvoren je ~/.zshrc s ispravkom Sailfish prompta</translation>
     </message>
 </context>
 </TS>

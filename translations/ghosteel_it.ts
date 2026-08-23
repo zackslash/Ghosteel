@@ -184,6 +184,17 @@
     </message>
 </context>
 <context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Impossibile avviare «%1», viene usata «%2».</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>creato ~/.zshrc con una correzione del prompt Sailfish</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -599,17 +610,6 @@ Alimentato dal motore di terminale libghostty</translation>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
         <translation>Impossibile avviare «%1» (%2). Verrà usata «%3».</translation>
-    </message>
-</context>
-<context>
-    <name>PtyManager</name>
-    <message>
-        <source>%1 could not be started, using %2</source>
-        <translation>Impossibile avviare «%1», viene usata «%2».</translation>
-    </message>
-    <message>
-        <source>created ~/.zshrc with a Sailfish prompt fix</source>
-        <translation>creato ~/.zshrc con una correzione del prompt Sailfish</translation>
     </message>
 </context>
 </TS>

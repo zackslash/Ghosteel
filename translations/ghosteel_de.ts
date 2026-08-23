@@ -184,6 +184,17 @@
     </message>
 </context>
 <context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>„%1“ konnte nicht gestartet werden, „%2“ wird verwendet.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>~/.zshrc mit einer Korrektur des Sailfish-Prompts erstellt</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -599,17 +610,6 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
         <translation>„%1“ konnte nicht gestartet werden (%2). „%3“ wird verwendet.</translation>
-    </message>
-</context>
-<context>
-    <name>PtyManager</name>
-    <message>
-        <source>%1 could not be started, using %2</source>
-        <translation>„%1“ konnte nicht gestartet werden, „%2“ wird verwendet.</translation>
-    </message>
-    <message>
-        <source>created ~/.zshrc with a Sailfish prompt fix</source>
-        <translation>~/.zshrc mit einer Korrektur des Sailfish-Prompts erstellt</translation>
     </message>
 </context>
 </TS>
