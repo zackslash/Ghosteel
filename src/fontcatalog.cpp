@@ -4,8 +4,7 @@
 
 QStringList FontCatalog::monospaceFamilies(const QString &current)
 {
-    // Called through an instance: compiles on both Qt 5.6 (statics, reachable
-    // via instance) and Qt 6 (statics removed).
+    // Qt 5.6: families()/isFixedPitch() are non-static members, called on an instance.
     QFontDatabase db;
     QStringList fixedPitch;
     const QStringList families = db.families();

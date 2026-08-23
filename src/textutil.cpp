@@ -7,6 +7,15 @@
 
 namespace TextUtil {
 
+QFont makeTerminalFont(const QString &family, int pointSize)
+{
+    const QString resolved = family.isEmpty() ? QStringLiteral("monospace") : family;
+    QFont font(resolved, pointSize);
+    font.setStyleHint(QFont::Monospace);
+    font.setFixedPitch(true);
+    return font;
+}
+
 QString trimSelectionText(const QString &text)
 {
     if (text.isEmpty())

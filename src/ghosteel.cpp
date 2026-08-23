@@ -35,16 +35,12 @@ static void loadTranslations(QCoreApplication *app)
     QLocale locale = QLocale::system();
     auto *translator = new QTranslator(app);
     QString transDir = SailfishApp::pathTo("translations").toLocalFile();
-    if (translator->load(locale.name(), "ghosteel", "_", transDir)) {
+    // QLocale overload: builds ghosteel_<locale>.qm and falls back through
+    // shorter locale names (de_DE -> de) on its own.
+    if (translator->load(locale, "ghosteel", "_", transDir)) {
         app->installTranslator(translator);
     } else {
-        // Try language-only (e.g. "de" from "de_DE")
-        QString lang = locale.name().left(locale.name().indexOf('_'));
-        if (!lang.isEmpty() && translator->load(lang, "ghosteel", "_", transDir)) {
-            app->installTranslator(translator);
-        } else {
-            delete translator;
-        }
+        delete translator;
     }
 }
 

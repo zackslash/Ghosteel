@@ -49,6 +49,26 @@ private slots:
                  QStringLiteral("hello"));
     }
 
+    // --- makeTerminalFont ---
+
+    void testMakeTerminalFontDefaults()
+    {
+        QFont font = TextUtil::makeTerminalFont(QStringLiteral("DejaVu Sans Mono"), 12);
+        QCOMPARE(font.family(), QStringLiteral("DejaVu Sans Mono"));
+        QCOMPARE(font.pointSize(), 12);
+        QCOMPARE(font.styleHint(), QFont::Monospace);
+        QVERIFY(font.fixedPitch());
+    }
+
+    void testMakeTerminalFontEmptyFamilyFallsBack()
+    {
+        QFont font = TextUtil::makeTerminalFont(QString(), 18);
+        QCOMPARE(font.family(), QStringLiteral("monospace"));
+        QCOMPARE(font.pointSize(), 18);
+        QCOMPARE(font.styleHint(), QFont::Monospace);
+        QVERIFY(font.fixedPitch());
+    }
+
     // --- cellFromPixel ---
 
     void testNormalPixel()

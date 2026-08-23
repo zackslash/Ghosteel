@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QPointF>
+#include <QFont>
 #include <QRegularExpression>
 #include <QVector>
 
@@ -78,6 +79,11 @@ QVector<LinkSpan> findUrls(const QString &flatText,
 // manually instead of triggering autowrap. May false-positive on an
 // exact-width input line followed by Enter.
 bool isSoftWrapped(bool wrapFlag, bool lastCellHadContent);
+
+// Single construction point for the terminal font: TerminalView derives
+// cell metrics from it and GlyphAtlas rasterizes with it, so the two must
+// never diverge. Empty family falls back to the "monospace" fontconfig alias.
+QFont makeTerminalFont(const QString &family, int pointSize);
 
 // Phase-derived cursor blink helpers: visibility follows elapsed time on a
 // fixed interval grid rather than accumulated timer ticks, so delayed or

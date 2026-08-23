@@ -12,6 +12,7 @@
 TARGET = ghosteel
 
 CONFIG += sailfishapp
+CONFIG += sailfishapp_i18n
 
 QT += gui quick qml dbus opengl
 

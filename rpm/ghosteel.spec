@@ -19,6 +19,9 @@ Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default
 Requires:   libngf-qt5
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
+# sailfishapp_i18n chains lupdate/lrelease with || :, so a missing tool
+# would silently ship an RPM with no .qm files; require the provider.
+BuildRequires:  qt5-qttools
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Qml)

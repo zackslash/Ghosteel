@@ -3,6 +3,7 @@
 #include "ghosttyvt.h"
 #include "settings.h"
 #include "ptymanager.h"
+#include "textutil.h"
 
 #include <cmath>
 #include <cstring>
@@ -311,13 +312,8 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_bgOpacity = q->m_cachedMetrics.backgroundOpacity;
         m_cachedFontSize = q->m_cachedMetrics.fontSize;
 
-        QString family = q->m_cachedMetrics.fontFamily;
-        if (family.isEmpty())
-            family = QStringLiteral("monospace");
-        // Must stay identical to the QFont built in terminalview.cpp; metrics and rasterization share the font.
-        QFont font(family, q->m_cachedMetrics.fontSize);
-        font.setStyleHint(QFont::Monospace);
-        font.setFixedPitch(true);
+        QFont font = TextUtil::makeTerminalFont(q->m_cachedMetrics.fontFamily,
+                                                q->m_cachedMetrics.fontSize);
 
         if (!m_atlasInitialized) {
             m_atlas.initialize();
