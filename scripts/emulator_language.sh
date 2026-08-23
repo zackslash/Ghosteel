@@ -59,17 +59,24 @@ if ! sshroot "true" 2>/dev/null; then
     exit 1
 fi
 
-# Map a short language code to the generated locale name. sailfish-locale
-# generates xx_XX.utf8 locales (de_DE.utf8, nl_NL.utf8, ...). A full code
-# with a region is passed through.
-locale_code() {
-    local lang="$1"
+# Resolve a language code to a locale generated on the guest. A full code
+# with a region is used as-is; a bare language tries xx_XX.utf8 first and
+# then any generated xx_*.utf8 variant (e.g. "en" -> en_GB.utf8, since
+# en_EN.utf8 does not exist).
+resolve_locale() {
+    local lang="$1" candidate list
     if [[ "$lang" == *_* ]]; then
-        echo "${lang}.utf8"
+        candidate="${lang}.utf8"
     else
         local region
         region="$(echo "$lang" | tr '[:lower:]' '[:upper:]')"
-        echo "${lang}_${region}.utf8"
+        candidate="${lang}_${region}.utf8"
+    fi
+    list="$(sshroot "locale -a 2>/dev/null")"
+    if grep -qix "$candidate" <<<"$list"; then
+        echo "$candidate"
+    else
+        grep -ix "${lang}_[A-Z]*\.utf8" <<<"$list" | head -1 || true
     fi
 }
 
@@ -96,9 +103,9 @@ case "${1:-}" in
             echo "ERROR: usage: $0 set <lang>  (e.g. set de, set nl, set en_GB)" >&2
             exit 1
         fi
-        loc="$(locale_code "$lang")"
-        if ! sshroot "locale -a 2>/dev/null | grep -q '^${loc//./\\.}$'"; then
-            echo "ERROR: locale $loc is not generated on the guest." >&2
+        loc="$(resolve_locale "$lang")"
+        if [[ -z "$loc" ]]; then
+            echo "ERROR: no generated locale found for '$lang'." >&2
             echo "Run '$0 status' to list available locales." >&2
             exit 1
         fi
@@ -121,7 +128,12 @@ case "${1:-}" in
     launch)
         lang="${2:-}"
         if [[ -n "$lang" ]]; then
-            loc="$(locale_code "$lang")"
+            loc="$(resolve_locale "$lang")"
+            if [[ -z "$loc" ]]; then
+                echo "ERROR: no generated locale found for '$lang'." >&2
+                echo "Run '$0 status' to list available locales." >&2
+                exit 1
+            fi
         else
             loc="$(sshroot "cat $LOCALE_CONF 2>/dev/null" | sed -n 's/^LANG=//p')"
             loc="${loc:-en_US.utf8}"
