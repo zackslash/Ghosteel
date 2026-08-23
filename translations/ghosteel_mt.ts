@@ -496,7 +496,7 @@ Mħaddem minn magna terminali libghostty</translation>
     </message>
     <message>
         <source>Change font size of the session with a two-finger pinch gesture</source>
-        <translation type="unfinished"></translation>
+        <translation>Bedel id-daqs tal-font tas-sessjoni bi ġest ta' żewġ subgħajn</translation>
     </message>
     <message>
         <source>Auto-hide keyboard in landscape</source>

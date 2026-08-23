@@ -1014,6 +1014,10 @@ bool SessionManager::restoreSessions()
     }
     s.endGroup();
 
+    // Adopt the persisted counter even when no sessions were saved (all were
+    // anonymous) so session IDs are never recycled across restarts.
+    m_nextSessionId = qMax(nextId, 1);
+
     if (count <= 0) {
         m_sessionsLoaded = true;
         return false;
@@ -1022,8 +1026,6 @@ bool SessionManager::restoreSessions()
     // Sanity cap to protect against corrupted settings
     if (count > kMaxSessionCount)
         count = kMaxSessionCount;
-
-    m_nextSessionId = nextId;
 
     m_store->cleanupScrollbackFiles();
 

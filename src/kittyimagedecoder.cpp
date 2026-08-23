@@ -82,8 +82,6 @@ static bool decodePngCallback(void* /*userdata*/,
         }
     }
 
-    img = img.convertToFormat(QImage::Format_RGBA8888);
-
     const int w = img.width();
     const int h = img.height();
     const size_t pixelBytes = static_cast<size_t>(w) * static_cast<size_t>(h) * 4;
@@ -95,17 +93,29 @@ static bool decodePngCallback(void* /*userdata*/,
         return false;
     }
 
-    // QImage may have bytesPerLine > width*4 (stride padding).
-    // Copy row by row if needed.
-    const int srcStride = img.bytesPerLine();
+    // Convert to RGBA8888 row by row instead of a whole-image
+    // convertToFormat, which would double peak memory (up to 64 MiB at the
+    // 4096 cap) alongside the ghostty buffer.
     const int dstStride = w * 4;
-    if (srcStride == dstStride) {
+    if (img.format() == QImage::Format_RGBA8888 && img.bytesPerLine() == dstStride) {
         memcpy(buf, img.constBits(), pixelBytes);
     } else {
+        const bool indexed = (img.format() == QImage::Format_Indexed8);
         for (int y = 0; y < h; ++y) {
-            memcpy(buf + y * dstStride,
-                   img.constBits() + y * srcStride,
-                   dstStride);
+            // Shallow 1-row view over the source row; convertToFormat
+            // allocates only w*4 for the RGBA8888 result. The raw-buffer
+            // constructor does not carry the color table, so palette images
+            // must copy it over or indices resolve against an empty table.
+            QImage row(img.constScanLine(y), w, 1, img.bytesPerLine(), img.format());
+            if (indexed)
+                row.setColorTable(img.colorTable());
+            QImage rgba = row.convertToFormat(QImage::Format_RGBA8888);
+            if (rgba.isNull()) {
+                qWarning("Kitty image decoder: row %d/%d conversion to RGBA8888 failed", y, h);
+                ghostty_free(allocator, buf, pixelBytes);
+                return false;
+            }
+            memcpy(buf + y * dstStride, rgba.constBits(), dstStride);
         }
     }
 

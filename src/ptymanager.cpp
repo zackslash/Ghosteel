@@ -19,6 +19,11 @@
 
 #include <QSocketNotifier>
 
+// Soft cap on the pending-write buffer. A program that never reads stdin
+// (e.g. htop) would otherwise accumulate an unbounded paste buffer on a
+// 32-bit phone process.
+static const int kMaxWriteBufferBytes = 2 * 1024 * 1024;
+
 // PtyReaderThread
 PtyReaderThread::PtyReaderThread(int fd, QObject *parent)
     : QThread(parent)
@@ -803,6 +808,10 @@ bool PtyManager::writeData(const char *data, size_t len)
         return false;
 
     if (!m_writeBuffer.isEmpty()) {
+        if (m_writeBuffer.size() + int(len) > kMaxWriteBufferBytes) {
+            qWarning() << "PTY write buffer full, dropping" << len << "bytes";
+            return true;
+        }
         m_writeBuffer.append(data, len);
         return true;
     }
@@ -820,6 +829,10 @@ bool PtyManager::writeData(const char *data, size_t len)
                 continue;
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 // PTY buffer full — save remainder for async drain
+                if (m_writeBuffer.size() + int(remaining) > kMaxWriteBufferBytes) {
+                    qWarning() << "PTY write buffer full, dropping" << remaining << "bytes";
+                    return true;
+                }
                 m_writeBuffer.append(ptr, remaining);
                 ensureWriteNotifier();
                 return true;

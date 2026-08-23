@@ -190,6 +190,11 @@ private:
 
         GlyphAtlas m_atlas;
         bool m_atlasInitialized = false;
+        // Family/size the atlas was last built with. setFont() wipes both glyph
+        // caches and re-uploads the whole texture, so it is skipped when both
+        // match — opacity-only changes must not rebuild the atlas.
+        QString m_atlasFamily;
+        int m_atlasFontSize = -1;
 
         // Terminal state snapshot (populated in synchronize, consumed in render)
         QVector<CellVertex> m_cellVertices;
@@ -240,9 +245,10 @@ private:
         // Set when the metrics generation changed — a font family or
         // background-opacity settings change, a per-session font size change
         // (pinch zoom), setSource(), or the first-ever frame (m_lastMetricsGeneration
-        // starts at -1). m_atlas.setFont() wiped the glyph caches, so stale cell
-        // vertices would sample an empty atlas. Forces buildCellVertices() this
-        // frame even when ghostty reports the grid not dirty.
+        // starts at -1). Font changes wipe the atlas (stale UVs would sample
+        // empty glyph caches); opacity changes leave the atlas intact but bake
+        // new alpha into vertex colors. Either way, forces buildCellVertices()
+        // this frame even when ghostty reports the grid not dirty.
         bool m_forceVertexRebuild = false;
 
         // Cross-thread flag: render thread requests the GUI thread to stop the

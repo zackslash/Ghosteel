@@ -61,6 +61,28 @@ private slots:
         QCOMPARE(ghostty_stubs_outstanding_terminals(), 0);
         QCOMPARE(ghostty_stubs_outstanding_render_states(), 0);
     }
+
+    // Bracketed paste (DEC 2004) is a foreground-program mode: paste() must
+    // wrap only when the program enabled it. The helper reports the terminal's
+    // current state (stub-controlled) and defaults to false.
+    void testBracketedPasteModeQuery()
+    {
+        ghostty_stubs_set_bracketed_paste(false);
+        GhosttyVt vt;
+        // No terminal: safe default is non-bracketed encoding.
+        QVERIFY(!vt.isBracketedPasteEnabled());
+
+        QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+        // Stub default: mode off.
+        QVERIFY(!vt.isBracketedPasteEnabled());
+
+        ghostty_stubs_set_bracketed_paste(true);
+        QVERIFY(vt.isBracketedPasteEnabled());
+
+        ghostty_stubs_set_bracketed_paste(false);
+        QVERIFY(!vt.isBracketedPasteEnabled());
+        vt.destroy();
+    }
 };
 
 QTEST_MAIN(TestDefaultModes)

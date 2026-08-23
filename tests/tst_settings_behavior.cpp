@@ -170,6 +170,126 @@ private slots:
         QCOMPARE(spy.count(), 0);
     }
 
+    // --- Corrupt/legacy non-numeric values ---
+
+    void testFontSizeGarbageFallsBackToDefault()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("font/size", QStringLiteral("garbage"));
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.fontSize(), 18);
+    }
+
+    void testBellModeGarbageFallsBackToDefault()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("terminal/bellMode", QStringLiteral("garbage"));
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.bellMode(), 1);
+    }
+
+    void testBackgroundOpacityGarbageFallsBackToDefault()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("terminal/backgroundOpacity", QStringLiteral("garbage"));
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.backgroundOpacity(), 0.6f);
+    }
+
+    void testScrollbackRetentionDaysGarbageFallsBackToDefault()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("scrollback/retentionDays", QStringLiteral("garbage"));
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.scrollbackRetentionDays(), 30);
+    }
+
+    void testSessionSortModeGarbageFallsBackToDefault()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("sessions/sortMode", QStringLiteral("garbage"));
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.sessionSortMode(), 1); // SortLastUsed
+    }
+
+    void testClipboardReadPolicyGarbageFallsBackToDefault()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("terminal/clipboardReadPolicy", QStringLiteral("garbage"));
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.clipboardReadPolicy(), 0);
+    }
+
+    void testFontSizeBoundaryClampOnLoad()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("font/size", 5);
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.fontSize(), 6); // clamped to min
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("font/size", 100);
+            qs.sync();
+        }
+        Settings s2(path);
+        QCOMPARE(s2.fontSize(), 32); // clamped to max
+    }
+
+    void testBellModeBoundaryClampOnLoad()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("terminal/bellMode", -1);
+            qs.sync();
+        }
+        Settings s(path);
+        QCOMPARE(s.bellMode(), 0); // clamped to min
+        {
+            QSettings qs(path, QSettings::IniFormat);
+            qs.setValue("terminal/bellMode", 99);
+            qs.sync();
+        }
+        Settings s2(path);
+        QCOMPARE(s2.bellMode(), 3); // clamped to max
+    }
+
     // --- Font family ---
 
     void testFontFamilyNoOp()

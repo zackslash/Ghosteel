@@ -28,6 +28,9 @@ static uint16_t g_stubs_gridCols = 0;
 static uint16_t g_stubs_gridRows = 0;
 static std::vector<std::string> g_stubs_gridText; // per-row ASCII text
 static std::vector<bool> g_stubs_gridCont;        // per-row WRAP_CONTINUATION
+static uint16_t g_stubs_cursorX = 0;              // served as CURSOR_X
+static uint16_t g_stubs_cursorY = 0;              // served as CURSOR_Y
+static bool g_stubs_bracketedPaste = false;       // served for GHOSTTY_MODE_BRACKETED_PASTE
 
 // ---- Terminal ----
 
@@ -64,6 +67,11 @@ GHOSTTY_API GhosttyResult ghostty_terminal_get(
 {
     if (!out)
         return GHOSTTY_SUCCESS;
+    if (data == GHOSTTY_TERMINAL_DATA_MODE) {
+        auto* cfg = static_cast<GhosttyTerminalModeConfig*>(out);
+        cfg->value = (cfg->mode == GHOSTTY_MODE_BRACKETED_PASTE) && g_stubs_bracketedPaste;
+        return GHOSTTY_SUCCESS;
+    }
     if (g_stubs_gridArmed) {
         switch (data) {
         case GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN:
@@ -72,12 +80,17 @@ GHOSTTY_API GhosttyResult ghostty_terminal_get(
         case GHOSTTY_TERMINAL_DATA_COLS:
             *static_cast<uint16_t*>(out) = g_stubs_gridCols;
             return GHOSTTY_SUCCESS;
+        case GHOSTTY_TERMINAL_DATA_ROWS:
+            *static_cast<uint16_t*>(out) = g_stubs_gridRows;
+            return GHOSTTY_SUCCESS;
         case GHOSTTY_TERMINAL_DATA_TOTAL_ROWS:
             *static_cast<size_t*>(out) = g_stubs_gridRows;
             return GHOSTTY_SUCCESS;
         case GHOSTTY_TERMINAL_DATA_CURSOR_X:
-            // Serve 0 so the last-line elision heuristic never fires.
-            *static_cast<uint16_t*>(out) = 0;
+            *static_cast<uint16_t*>(out) = g_stubs_cursorX;
+            return GHOSTTY_SUCCESS;
+        case GHOSTTY_TERMINAL_DATA_CURSOR_Y:
+            *static_cast<uint16_t*>(out) = g_stubs_cursorY;
             return GHOSTTY_SUCCESS;
         default:
             break;
@@ -166,6 +179,23 @@ extern "C" void ghostty_stubs_clear_grid(void)
     g_stubs_gridRows = 0;
     g_stubs_gridText.clear();
     g_stubs_gridCont.clear();
+    g_stubs_cursorX = 0;
+    g_stubs_cursorY = 0;
+    g_stubs_bracketedPaste = false;
+}
+
+// Set the cursor position served as CURSOR_X/CURSOR_Y while the grid fixture
+// is armed.
+extern "C" void ghostty_stubs_set_cursor(uint16_t x, uint16_t y)
+{
+    g_stubs_cursorX = x;
+    g_stubs_cursorY = y;
+}
+
+// Set the bracketed-paste state served for GHOSTTY_MODE_BRACKETED_PASTE.
+extern "C" void ghostty_stubs_set_bracketed_paste(bool enabled)
+{
+    g_stubs_bracketedPaste = enabled;
 }
 
 GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref(

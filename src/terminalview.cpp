@@ -16,6 +16,12 @@
 #include <QLineF>
 #include <sys/ioctl.h>
 
+namespace {
+// Encoded pastes above this are dropped whole (see encodeAndWritePaste):
+// the pty write-buffer cap could split a bracket pair mid-paste.
+constexpr size_t kMaxEncodedPasteBytes = 1024 * 1024;
+}   // namespace
+
 TerminalView::TerminalView(QQuickItem *parent)
     : QQuickItem(parent)
 {
@@ -167,6 +173,8 @@ void TerminalView::recalculateDimensions(bool cellPixelsChanged)
                                         m_cellWidth, m_cellHeight);
 
                 m_vt->markSearchTextDirty(); // reflow moves search offsets
+                if (m_searchActive && !m_searchPattern.isEmpty())
+                    refreshSearchCachePreservingMatch();
 
                 m_vt->updateMouseEncoderSize(
                     static_cast<uint32_t>(width()),
@@ -249,23 +257,54 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
     if (!event->commitString().isEmpty()) {
         QByteArray utf8 = event->commitString().toUtf8();
 
-        // If sticky modifiers are active (Ctrl/Alt from keybar toggle),
-        // send as a key event with modifiers, then clear them.
+        // Sticky modifiers (Ctrl/Alt from keybar toggle) apply only to
+        // single-character commits: a multi-line commit is a VKB paste and
+        // must reach the paste path below intact, not have all but its
+        // first character silently dropped by the key mapping.
         if (m_stickyModifiers != 0) {
-            QChar ch = event->commitString().at(0).toLower();
-            GhosttyKey key = KeyMapping::mapCharToKey(ch);
+            if (event->commitString().size() == 1) {
+                QChar ch = event->commitString().at(0).toLower();
+                GhosttyKey key = KeyMapping::mapCharToKey(ch);
 
-            if (key != GHOSTTY_KEY_UNIDENTIFIED) {
-                sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS,
-                             static_cast<GhosttyMods>(m_stickyModifiers),
-                             event->commitString());
-                setStickyModifiers(0);
-                update();
-                event->accept();
-                return;
+                if (key != GHOSTTY_KEY_UNIDENTIFIED) {
+                    scrollViewportToBottom();
+                    sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS,
+                                 static_cast<GhosttyMods>(m_stickyModifiers),
+                                 event->commitString());
+                    setStickyModifiers(0);
+                    update();
+                    event->accept();
+                    return;
+                }
             }
-            // If we can't map the character, fall through to raw text
+            // Any commit that cannot carry the modifier (unmappable char,
+            // paste, multi-unit emoji) disarms it so the next typed char
+            // does not silently go out as Ctrl+char.
             setStickyModifiers(0);
+        }
+
+        // A bare newline commit is an Enter from a keyboard that delivers it
+        // as input-method text: send a real key event so the program's line
+        // editor executes instead of receiving bracketed literal input.
+        if (event->commitString() == QStringLiteral("\n")
+            || event->commitString() == QStringLiteral("\r")) {
+            sendKeyEvent(GHOSTTY_KEY_ENTER, GHOSTTY_KEY_ACTION_PRESS, 0, {});
+            scrollViewportToBottom();
+            update();
+            event->accept();
+            return;
+        }
+
+        // Multi-line commits (the VKB clipboard button delivers pasted text
+        // as a commit) go through paste encoding: newlines become \r and
+        // bracketed wrapping applies when mode 2004 is on. Single-line
+        // commits keep the raw path so normal typing pays no encode cost.
+        if (utf8.contains('\n') || utf8.contains('\r')) {
+            encodeAndWritePaste(utf8);
+            scrollViewportToBottom();
+            update();
+            event->accept();
+            return;
         }
 
         m_pty->writeData(utf8.constData(), utf8.size());
@@ -520,7 +559,15 @@ void TerminalView::paste()
     if (text.isEmpty())
         return;
 
-    QByteArray utf8 = text.toUtf8();
+    encodeAndWritePaste(text.toUtf8());
+}
+
+void TerminalView::encodeAndWritePaste(const QByteArray &utf8)
+{
+    // Wrap in bracketed paste only when the foreground program enabled mode
+    // 2004; otherwise the literal ESC[200~/ESC[201~ bytes would be injected
+    // into the program's input (mangling pastes into busybox vi, cat, REPLs).
+    bool bracketed = m_vt && m_vt->isBracketedPasteEnabled();
 
     // ghostty_paste_encode modifies data in place. Use a copy for the
     // sizing call, then a fresh copy for the actual encode to avoid
@@ -529,13 +576,18 @@ void TerminalView::paste()
 
     // First call: query required size (pass nullptr buffer)
     size_t written = 0;
-    GhosttyResult res = ghostty_paste_encode(sizingCopy.data(), sizingCopy.size(), true,
+    GhosttyResult res = ghostty_paste_encode(sizingCopy.data(), sizingCopy.size(), bracketed,
                                              nullptr, 0, &written);
-    if (res == GHOSTTY_OUT_OF_SPACE && written > 0) {
+    // An encoded paste larger than this could hit the pty write-buffer cap
+    // mid-write: the opening ESC[200~ would reach the program while the
+    // closing ESC[201~ is dropped, leaving a mode-2004 program buffering
+    // every later keystroke as pending paste. Fall through to the raw
+    // fallback instead, which writes no bracket pair at all.
+    if (res == GHOSTTY_OUT_OF_SPACE && written > 0 && written <= kMaxEncodedPasteBytes) {
         // Second call with correctly sized buffer — use fresh copy
         QByteArray encodeCopy = utf8;
         QByteArray buf(written, '\0');
-        res = ghostty_paste_encode(encodeCopy.data(), encodeCopy.size(), true,
+        res = ghostty_paste_encode(encodeCopy.data(), encodeCopy.size(), bracketed,
                                    buf.data(), buf.size(), &written);
         if (res == GHOSTTY_SUCCESS && written > 0) {
             m_pty->writeData(buf.constData(), written);
@@ -543,7 +595,8 @@ void TerminalView::paste()
         }
     }
 
-    // Fallback: send raw UTF-8 only if encoding completely fails
+    // Fallback: send raw UTF-8 when encoding fails or the encoded result is
+    // oversized (no bracket pair, so a cap split cannot corrupt input).
     m_pty->writeData(utf8.constData(), utf8.size());
 }
 

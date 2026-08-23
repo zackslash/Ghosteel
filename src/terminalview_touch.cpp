@@ -9,6 +9,9 @@
 namespace {
 // Qt wheel delta is in 1/8° units; 120 units = 15° = 3 lines -> 40 units/line.
 constexpr qreal kWheelUnitsPerLine = 40.0;
+// Fingers closer than this can't anchor a meaningful pinch ratio — jitter on
+// a sloppy two-finger tap would trivially exceed the 1.12 threshold.
+constexpr qreal kPinchMinBaselineDistance = 30.0;
 }   // namespace
 
 void TerminalView::resetSessionSwipe()
@@ -31,6 +34,10 @@ void TerminalView::resetTouchInteractionState()
         clearSelection();
     m_pendingLinkTap = false;
     m_draggingHandle = 0;
+    // No release follows a cancel — clear grabs held by the press (link tap,
+    // handle drag) so the Flickable can steal again.
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
 }
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
@@ -245,7 +252,9 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     if (m_mouseTrackingActive) {
         // Re-check live tracking state — the app may have disabled mouse
         // tracking between press and release (e.g. htop exiting to shell).
-        if (m_vt->isMouseTracking()) {
+        // m_mouseButtonPressed skips the duplicate RELEASE a two-finger
+        // interlude already sent via handleMultiTouchEnd.
+        if (m_vt->isMouseTracking() && m_mouseButtonPressed) {
             sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
                            event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
         }
@@ -389,6 +398,15 @@ void TerminalView::touchEvent(QTouchEvent *event)
     const auto points = event->touchPoints();
 
     if (points.size() >= 2) {
+        // Shell exited — the exit overlay owns the touch; grabbing here would
+        // leak keepTouchGrab (handleMultiTouchBegin early-returns without
+        // arming m_multiTouchActive, so no End ever releases it). A gesture
+        // already in flight must still reach handleMultiTouchEnd to tear down.
+        if (m_shellExited && !m_multiTouchActive
+                && m_gestureMode == GestureMode::Undecided) {
+            QQuickItem::touchEvent(event);
+            return;
+        }
         setKeepMouseGrab(true);
         // Qt 5.6: the touch grab is a separate mechanism from the mouse grab.
         // SilicaFlickable (a filtering parent) steals the touch grab via its
@@ -587,7 +605,9 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     // Undecided — defer classification to Update
     QPointF p0 = points[0].pos();
     QPointF p1 = points[1].pos();
-    m_pinchInitialDistance = QLineF(p0, p1).length();
+    // Anchor the baseline at the floor — a tiny initial distance would make
+    // the ratio trivially exceedable once the fingers spread.
+    m_pinchInitialDistance = qMax(QLineF(p0, p1).length(), kPinchMinBaselineDistance);
     m_gestureInitialCentroid = (p0 + p1) / 2.0;
     m_gestureMode = GestureMode::Undecided;
     m_pinchCandidateFrames = 0;
@@ -617,6 +637,17 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
 
     switch (m_gestureMode) {
     case GestureMode::Undecided: {
+        if (currentDistance < kPinchMinBaselineDistance) {
+            // Fingers too close for a meaningful ratio — hold the baseline
+            // at the floor (never below it: a sub-floor baseline would make
+            // the ratio trivially exceedable again) and wait for them to
+            // spread apart.
+            m_pinchInitialDistance = kPinchMinBaselineDistance;
+            m_gestureInitialCentroid = currentCentroid;
+            m_pinchCandidateFrames = 0;
+            return;
+        }
+
         bool ratioExceeded = (pinchScale > PinchRatioThreshold)
                           || (pinchScale < 1.0 / PinchRatioThreshold);
 

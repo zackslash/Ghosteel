@@ -46,6 +46,16 @@ void ghostty_stubs_set_grid(uint16_t cols, uint16_t rows,
                             const char* const* text, const char* cont);
 void ghostty_stubs_clear_grid(void);
 
+// Set the cursor position served by ghostty_terminal_get (CURSOR_X/CURSOR_Y)
+// while the grid fixture is armed. Defaults to (0, 0); reset by
+// ghostty_stubs_clear_grid.
+void ghostty_stubs_set_cursor(uint16_t x, uint16_t y);
+
+// Set the bracketed-paste state served by ghostty_terminal_get
+// (GHOSTTY_TERMINAL_DATA_MODE / GHOSTTY_MODE_BRACKETED_PASTE). Defaults to
+// false; reset by ghostty_stubs_clear_grid.
+void ghostty_stubs_set_bracketed_paste(bool enabled);
+
 #ifdef __cplusplus
 }
 #endif
