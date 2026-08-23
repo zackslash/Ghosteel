@@ -575,7 +575,8 @@ void TerminalView::encodeAndWritePaste(const QByteArray &utf8)
     // An encoded paste larger than this could hit the pty write-buffer cap
     // mid-write: the opening ESC[200~ would reach the program while the
     // closing ESC[201~ is dropped, leaving a mode-2004 program buffering
-    // every later keystroke as pending paste. Drop the whole paste instead.
+    // every later keystroke as pending paste. Fall through to the raw
+    // fallback instead, which writes no bracket pair at all.
     if (res == GHOSTTY_OUT_OF_SPACE && written > 0 && written <= kMaxEncodedPasteBytes) {
         // Second call with correctly sized buffer — use fresh copy
         QByteArray encodeCopy = utf8;
@@ -588,7 +589,8 @@ void TerminalView::encodeAndWritePaste(const QByteArray &utf8)
         }
     }
 
-    // Fallback: send raw UTF-8 only if encoding completely fails
+    // Fallback: send raw UTF-8 when encoding fails or the encoded result is
+    // oversized (no bracket pair, so a cap split cannot corrupt input).
     m_pty->writeData(utf8.constData(), utf8.size());
 }
 

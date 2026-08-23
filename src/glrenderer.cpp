@@ -322,6 +322,11 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         // setFont() clears both glyph caches and re-uploads the whole atlas
         // texture, so only call it when the family/size actually changed.
         // Opacity-only changes (backgroundOpacity slider) must not rebuild it.
+        // makeTerminalFont resolves an empty family to "monospace", so compare
+        // the resolved family to keep the skip decision consistent with the
+        // QFont the atlas is actually built from.
+        const QString family = q->m_cachedMetrics.fontFamily.isEmpty()
+            ? QStringLiteral("monospace") : q->m_cachedMetrics.fontFamily;
         if (m_atlasFamily != family || m_atlasFontSize != q->m_cachedMetrics.fontSize) {
             m_atlas.setFont(font, m_cellWidth, m_cellHeight);
             m_atlasFamily = family;
