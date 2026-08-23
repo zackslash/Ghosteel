@@ -257,23 +257,29 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
     if (!event->commitString().isEmpty()) {
         QByteArray utf8 = event->commitString().toUtf8();
 
-        // If sticky modifiers are active (Ctrl/Alt from keybar toggle),
-        // send as a key event with modifiers, then clear them.
+        // Sticky modifiers (Ctrl/Alt from keybar toggle) apply only to
+        // single-character commits: a multi-line commit is a VKB paste and
+        // must reach the paste path below intact, not have all but its
+        // first character silently dropped by the key mapping.
         if (m_stickyModifiers != 0) {
-            QChar ch = event->commitString().at(0).toLower();
-            GhosttyKey key = KeyMapping::mapCharToKey(ch);
+            if (event->commitString().size() == 1) {
+                QChar ch = event->commitString().at(0).toLower();
+                GhosttyKey key = KeyMapping::mapCharToKey(ch);
 
-            if (key != GHOSTTY_KEY_UNIDENTIFIED) {
-                scrollViewportToBottom();
-                sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS,
-                             static_cast<GhosttyMods>(m_stickyModifiers),
-                             event->commitString());
-                setStickyModifiers(0);
-                update();
-                event->accept();
-                return;
+                if (key != GHOSTTY_KEY_UNIDENTIFIED) {
+                    scrollViewportToBottom();
+                    sendKeyEvent(key, GHOSTTY_KEY_ACTION_PRESS,
+                                 static_cast<GhosttyMods>(m_stickyModifiers),
+                                 event->commitString());
+                    setStickyModifiers(0);
+                    update();
+                    event->accept();
+                    return;
+                }
             }
-            // If we can't map the character, fall through to raw text
+            // Any commit that cannot carry the modifier (unmappable char,
+            // paste, multi-unit emoji) disarms it so the next typed char
+            // does not silently go out as Ctrl+char.
             setStickyModifiers(0);
         }
 

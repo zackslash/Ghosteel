@@ -625,6 +625,17 @@ Page {
                 }
             }
 
+            // Search state is per-terminal, but the panel is shared: close it
+            // while `terminal` still references the outgoing session so its
+            // closeSearch() runs on the right view, and clear the field so
+            // the next open starts from an empty pattern. Clear even when
+            // the panel is already closed: dismissing via the dim area keeps
+            // stale text, and reopening would show it without firing
+            // onTextChanged on the incoming terminal.
+            searchField.text = ""
+            if (searchPanel.open)
+                searchPanel.open = false
+
             // Clear modifiers on switch-out; attachTerminal re-syncs from the
             // incoming terminal's stickyModifiers on switch-in.
             ctrlActive = false
