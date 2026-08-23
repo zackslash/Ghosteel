@@ -518,6 +518,18 @@ bool GhosttyVt::isMouseTracking() const
     return result;
 }
 
+bool GhosttyVt::isBracketedPasteEnabled() const
+{
+    if (!m_terminal)
+        return false;
+    GhosttyTerminalModeConfig cfg = {};
+    cfg.mode = GHOSTTY_MODE_BRACKETED_PASTE;
+    cfg.value = false;
+    if (ghostty_terminal_get(m_terminal, GHOSTTY_TERMINAL_DATA_MODE, &cfg) != GHOSTTY_SUCCESS)
+        return false;
+    return cfg.value;
+}
+
 QByteArray GhosttyVt::encodeMouseEvent(GhosttyMouseAction action,
                                         GhosttyMouseButton button,
                                         float x, float y, GhosttyMods mods)
@@ -755,6 +767,10 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
     result.reserve(static_cast<int>(totalRows * outCols * 4));
     uint32_t graphemeBuf[128];
     QByteArray lineBuf;
+    // True once a non-empty logical line has been flushed. Interior blank
+    // lines (content above and below) are real output and must survive;
+    // leading blanks are scrollback padding and are skipped.
+    bool emittedAny = false;
 
     for (size_t row = 0; row < totalRows; row++) {
         QByteArray line;
@@ -822,6 +838,11 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
                 flushed.chop(1);
             if (!flushed.isEmpty()) {
                 result.append(flushed);
+                result.append("\r\n");
+                emittedAny = true;
+            } else if (emittedAny) {
+                // Interior blank line: keep it as an empty line. Leading
+                // blanks (emittedAny still false) are scrollback padding.
                 result.append("\r\n");
             }
             lineBuf = line;

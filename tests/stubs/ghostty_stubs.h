@@ -51,6 +51,11 @@ void ghostty_stubs_clear_grid(void);
 // ghostty_stubs_clear_grid.
 void ghostty_stubs_set_cursor(uint16_t x, uint16_t y);
 
+// Set the bracketed-paste state served by ghostty_terminal_get
+// (GHOSTTY_TERMINAL_DATA_MODE / GHOSTTY_MODE_BRACKETED_PASTE). Defaults to
+// false; reset by ghostty_stubs_clear_grid.
+void ghostty_stubs_set_bracketed_paste(bool enabled);
+
 #ifdef __cplusplus
 }
 #endif

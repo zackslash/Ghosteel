@@ -236,6 +236,10 @@ private:
     void sendMouseEvent(GhosttyMouseAction action, GhosttyMouseButton button,
                         const QPointF &pos, GhosttyMods mods);
     void resetBlinkOnInput();
+    // Encode and write paste data to the pty (bracketed wrapping per mode
+    // 2004, newline conversion, unsafe-byte stripping). Shared by paste()
+    // and multi-line input-method commits (VKB clipboard button).
+    void encodeAndWritePaste(const QByteArray &utf8);
 
     // Start (or refresh) the post-input blink hold. The phase clock restarts
     // with the hold so the hold (an exact multiple of the blink interval)

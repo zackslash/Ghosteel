@@ -275,6 +275,30 @@ void TerminalView::inputMethodEvent(QInputMethodEvent *event)
             setStickyModifiers(0);
         }
 
+        // A bare newline commit is an Enter from a keyboard that delivers it
+        // as input-method text: send a real key event so the program's line
+        // editor executes instead of receiving bracketed literal input.
+        if (event->commitString() == QStringLiteral("\n")
+            || event->commitString() == QStringLiteral("\r")) {
+            sendKeyEvent(GHOSTTY_KEY_ENTER, GHOSTTY_KEY_ACTION_PRESS, 0, {});
+            scrollViewportToBottom();
+            update();
+            event->accept();
+            return;
+        }
+
+        // Multi-line commits (the VKB clipboard button delivers pasted text
+        // as a commit) go through paste encoding: newlines become \r and
+        // bracketed wrapping applies when mode 2004 is on. Single-line
+        // commits keep the raw path so normal typing pays no encode cost.
+        if (utf8.contains('\n') || utf8.contains('\r')) {
+            encodeAndWritePaste(utf8);
+            scrollViewportToBottom();
+            update();
+            event->accept();
+            return;
+        }
+
         m_pty->writeData(utf8.constData(), utf8.size());
 
         scrollViewportToBottom();
@@ -527,7 +551,15 @@ void TerminalView::paste()
     if (text.isEmpty())
         return;
 
-    QByteArray utf8 = text.toUtf8();
+    encodeAndWritePaste(text.toUtf8());
+}
+
+void TerminalView::encodeAndWritePaste(const QByteArray &utf8)
+{
+    // Wrap in bracketed paste only when the foreground program enabled mode
+    // 2004; otherwise the literal ESC[200~/ESC[201~ bytes would be injected
+    // into the program's input (mangling pastes into busybox vi, cat, REPLs).
+    bool bracketed = m_vt && m_vt->isBracketedPasteEnabled();
 
     // ghostty_paste_encode modifies data in place. Use a copy for the
     // sizing call, then a fresh copy for the actual encode to avoid
@@ -536,13 +568,13 @@ void TerminalView::paste()
 
     // First call: query required size (pass nullptr buffer)
     size_t written = 0;
-    GhosttyResult res = ghostty_paste_encode(sizingCopy.data(), sizingCopy.size(), true,
+    GhosttyResult res = ghostty_paste_encode(sizingCopy.data(), sizingCopy.size(), bracketed,
                                              nullptr, 0, &written);
     if (res == GHOSTTY_OUT_OF_SPACE && written > 0) {
         // Second call with correctly sized buffer — use fresh copy
         QByteArray encodeCopy = utf8;
         QByteArray buf(written, '\0');
-        res = ghostty_paste_encode(encodeCopy.data(), encodeCopy.size(), true,
+        res = ghostty_paste_encode(encodeCopy.data(), encodeCopy.size(), bracketed,
                                    buf.data(), buf.size(), &written);
         if (res == GHOSTTY_SUCCESS && written > 0) {
             m_pty->writeData(buf.constData(), written);

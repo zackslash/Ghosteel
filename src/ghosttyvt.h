@@ -111,6 +111,12 @@ public:
                               GhosttyMods mods, const char *utf8, size_t utf8Len);
 
     bool isMouseTracking() const;
+    // True when the foreground program enabled bracketed paste (DEC mode
+    // 2004). The paste path uses this to decide whether ghostty_paste_encode
+    // wraps data in ESC[200~..ESC[201~. Null terminal or query failure reports
+    // false: non-bracketed encoding is the safe default (it strips unsafe
+    // bytes and converts newlines to \r).
+    bool isBracketedPasteEnabled() const;
     QByteArray encodeMouseEvent(GhosttyMouseAction action,
                                 GhosttyMouseButton button,
                                 float x, float y, GhosttyMods mods);
