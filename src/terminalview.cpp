@@ -24,10 +24,6 @@ TerminalView::TerminalView(QQuickItem *parent)
     setAcceptedMouseButtons(Qt::AllButtons);
     setActiveFocusOnTab(true);
 
-    // Monospace font — "monospace" is a fontconfig alias resolved by Qt
-    m_font = QFont(QStringLiteral("monospace"), static_cast<int>(m_fontSize));
-    m_font.setStyleHint(QFont::Monospace);
-    m_font.setFixedPitch(true);
     updateFontMetrics();
 
     m_vt = new GhosttyVt(this);
@@ -820,13 +816,8 @@ void TerminalView::setPullDownZoneHeight(int height)
 
 void TerminalView::updateFontMetrics()
 {
-    QString family = Settings::instance()->fontFamily();
-    if (family.isEmpty())
-        family = QStringLiteral("monospace");
-    // Must stay identical to the QFont built in glrenderer.cpp; metrics and rasterization share the font.
-    m_font = QFont(family, static_cast<int>(m_fontSize));
-    m_font.setStyleHint(QFont::Monospace);
-    m_font.setFixedPitch(true);
+    m_font = TextUtil::makeTerminalFont(Settings::instance()->fontFamily(),
+                                         static_cast<int>(m_fontSize));
 
     QFontMetrics fm(m_font);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
