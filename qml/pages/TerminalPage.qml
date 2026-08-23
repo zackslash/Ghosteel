@@ -306,12 +306,16 @@ Page {
                     t.sendClipboardText(previewText, requestKind)
                 }
             }
-            // Single reset path: fires on every dismissal incl. programmatic pop.
+            // Reset on normal dismissal incl. programmatic pop (see
+            // onDestruction below).
             onStatusChanged: {
                 if (status === DialogStatus.Inactive) {
                     clipboardDialogActive = false
                 }
             }
+            // Buried dialogs can be destroyed without passing through
+            // DialogStatus.Inactive; don't let the guard latch.
+            Component.onDestruction: clipboardDialogActive = false
         }
     }
 
@@ -734,18 +738,20 @@ Page {
             terminalNotification.publish()
         }
         onClipboardReadRequest: {
-            if (clipboardReadCooldown.running) return
-            if (clipboardDialogActive) return  // A read dialog is already open
-
             var policy = Settings.clipboardReadPolicy  // 0=ask, 1=allow, 2=deny
-            var preview = SessionManager.clipboardText()
             if (policy === 2) return  // deny
             if (policy === 1) {       // allow
                 var t = SessionManager.sessionById(sessionId)
-                if (t) t.sendClipboardText(preview, kind)
+                if (t) t.sendClipboardText(SessionManager.clipboardText(), kind)
                 return
             }
+            // Ask path: the cooldown and open-dialog guards rate-limit only
+            // dialog pushing; they must not gate the policy branches above,
+            // or one stuck dialog silently kills every later read.
+            if (clipboardReadCooldown.running) return
+            if (clipboardDialogActive) return  // A read dialog is already open
 
+            var preview = SessionManager.clipboardText()
             clipboardReadCooldown.start()
             var idx = SessionManager.sessionIndexById(sessionId)
             var name = idx >= 0 ? SessionManager.sessionName(idx) : ""

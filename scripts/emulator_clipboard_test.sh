@@ -47,16 +47,16 @@ get_policy() {
         "grep -m1 '^clipboardReadPolicy=' ~/$CONF_PATH 2>/dev/null | cut -d= -f2 || true"
 }
 
-# Set clipboardReadPolicy=<value>. The key name is unique, so a global replace
-# is safe. Handles key-present (common) and key/group-absent fallbacks.
+# Set clipboardReadPolicy=<value> under [terminal]. Delete any existing
+# occurrences first (wherever they are), then insert right after the real
+# [terminal] header so QSettings parses it as terminal/clipboardReadPolicy.
 set_policy() {
     local want="$1"
     ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "
         conf=~/$CONF_PATH
         mkdir -p \"\$(dirname \"\$conf\")\"
-        if grep -q '^clipboardReadPolicy=' \"\$conf\"; then
-            sed -i 's/^clipboardReadPolicy=.*/clipboardReadPolicy=$want/' \"\$conf\"
-        elif grep -q '^\\[terminal\\]' \"\$conf\"; then
+        sed -i '/^clipboardReadPolicy=/d' \"\$conf\"
+        if grep -q '^\\[terminal\\]' \"\$conf\"; then
             sed -i '/^\\[terminal\\]/a clipboardReadPolicy=$want' \"\$conf\"
         else
             printf '[terminal]\\nclipboardReadPolicy=$want\\n' >> \"\$conf\"
@@ -96,14 +96,22 @@ rm -f "$RESULT"
 sleep 2   # let the session and QML signal chain initialize
 
 # Write the payload to the system clipboard via OSC 52.
-printf '\033]52;c;%s\007' "$(printf '%s' "$PAYLOAD" | base64)"
+# tr: busybox base64 wraps at 76 cols; newlines would corrupt the sequence.
+printf '\033]52;c;%s\007' "$(printf '%s' "$PAYLOAD" | base64 | tr -d '\n')"
 sleep 0.5  # let ghosteel set the clipboard
 
 # Read the clipboard back via OSC 52; ghosteel replies on stdin.
-printf '\033]52;c?\007'
+# The tty must be raw during the query: in canonical mode the kernel
+# withholds the BEL-terminated reply (no newline arrives). The reader
+# must be a FOREGROUND shell builtin: busybox timeout puts its child in
+# a new process group, so dd/cat under it get SIGTTIN and read nothing.
+saved=$(stty -g)
+stty raw -echo
+printf '\033]52;c;?\007'
 raw=""
 IFS= read -r -t 3 -d "$(printf '\007')" raw 2>/dev/null || true
-payload="${raw##*;}"          # strip the "ESC]52;c;" prefix, leave base64
+stty "$saved"
+payload="${raw##*;}"
 decoded="$(printf '%s' "$payload" | base64 -d 2>/dev/null || true)"
 
 if [[ "$decoded" == "$PAYLOAD" ]]; then
@@ -114,18 +122,25 @@ fi
 EOF
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "chmod +x $SELFTEST_PATH"
 
-# --- 2. Set clipboard read policy to Allow for an automated run ---
+# --- 2. Stop the app, then set clipboard read policy to Allow ---
 
+# A live instance never re-reads the conf, and its debounced save() rewrites
+# the file from its pre-edit cache, silently dropping the key added below.
+# Killing first guarantees the launched instance parses the Allow policy.
+# NOTE: busybox pgrep/pkill -x does NOT match the booster-spawned app (its
+# argv[0] is /usr/bin/ghosteel); a plain pattern does.
 PREV_POLICY="$(get_policy)"
-echo "[2/5] Setting clipboard read policy to Allow (was: ${PREV_POLICY:-absent})..."
+echo "[2/5] Stopping ghosteel and setting clipboard read policy to Allow (was: ${PREV_POLICY:-absent})..."
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "pkill ghosteel 2>/dev/null || true; sleep 1; if pgrep ghosteel >/dev/null 2>&1; then echo 'ERROR: ghosteel still running' >&2; exit 1; fi"
 set_policy 1
 
 # --- 3. Cold-start ghosteel running the self-test (so Allow is in effect) ---
 
 echo "[3/5] Launching ghosteel with the self-test..."
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f $RESULT_PATH"
+# setsid: survive the ssh command's exit (no SIGHUP)
 ssh "${SSH_OPTS[@]}" "$SSH_TARGET" \
-    "pkill -x ghosteel 2>/dev/null || true; sleep 1; ghosteel -e $SELFTEST_PATH > $GHOSTEEL_LOG 2>&1 &"
+    "setsid nohup ghosteel -e $SELFTEST_PATH > $GHOSTEEL_LOG 2>&1 < /dev/null &"
 
 # --- 4. Poll for the result ---
 
@@ -149,7 +164,8 @@ else
 fi
 
 # --- Restore the original policy ---
-
+# Same save()-clobber risk as step 2: stop the app before restoring.
+ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "pkill ghosteel 2>/dev/null || true; sleep 1; pkill -9 ghosteel 2>/dev/null || true"
 restore_policy "$PREV_POLICY"
 echo "(clipboard read policy restored to: ${PREV_POLICY:-absent})"
 
