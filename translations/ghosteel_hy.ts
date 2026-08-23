@@ -184,6 +184,17 @@
     </message>
 </context>
 <context>
+    <name>PtyManager</name>
+    <message>
+        <source>%1 could not be started, using %2</source>
+        <translation>Հնարավոր չէ գործարկել «%1»-ը, կօգտագործվի «%2»-ը.</translation>
+    </message>
+    <message>
+        <source>created ~/.zshrc with a Sailfish prompt fix</source>
+        <translation>ստեղծվել է ~/.zshrc՝ Sailfish հուշման ուղղմամբ</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -599,17 +610,6 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>&apos;%1&apos; could not be started (%2). Using &apos;%3&apos;.</source>
         <translation>Հնարավոր չէ գործարկել «%1»-ը (%2). Կօգտագործվի «%3»-ը.</translation>
-    </message>
-</context>
-<context>
-    <name>PtyManager</name>
-    <message>
-        <source>%1 could not be started, using %2</source>
-        <translation>Հնարավոր չէ գործարկել «%1»-ը, կօգտագործվի «%2»-ը.</translation>
-    </message>
-    <message>
-        <source>created ~/.zshrc with a Sailfish prompt fix</source>
-        <translation>ստեղծվել է ~/.zshrc՝ Sailfish հուշման ուղղմամբ</translation>
     </message>
 </context>
 </TS>
