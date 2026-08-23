@@ -926,6 +926,29 @@ private slots:
         QCOMPARE(mgr.sessionCount(), 0);
     }
 
+    void testZeroSessionsAdoptsNextId()
+    {
+        // count=0 with a high nextId (quit with only anonymous -e sessions)
+        {
+            QSettings s(m_settingsPath, QSettings::IniFormat);
+            s.beginGroup("sessions");
+            s.setValue("count", 0);
+            s.setValue("nextId", 42);
+            s.setValue("activeIndex", 0);
+            s.endGroup();
+            s.sync();
+        }
+
+        Settings settings(m_settingsPath);
+        SessionManager mgr(&settings);
+        mgr.restoreSessions();
+
+        QCOMPARE(mgr.sessionCount(), 0);
+        TerminalView *view = mgr.createSession();
+        QVERIFY(view != nullptr);
+        QCOMPARE(mgr.sessionId(0), 42);
+    }
+
     void testNextIdPreserved()
     {
         // Simulate sessions with non-contiguous IDs (e.g., some were deleted)

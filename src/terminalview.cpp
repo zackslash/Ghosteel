@@ -16,6 +16,12 @@
 #include <QLineF>
 #include <sys/ioctl.h>
 
+namespace {
+// Encoded pastes above this are dropped whole (see encodeAndWritePaste):
+// the pty write-buffer cap could split a bracket pair mid-paste.
+constexpr size_t kMaxEncodedPasteBytes = 1024 * 1024;
+}   // namespace
+
 TerminalView::TerminalView(QQuickItem *parent)
     : QQuickItem(parent)
 {
@@ -570,7 +576,11 @@ void TerminalView::encodeAndWritePaste(const QByteArray &utf8)
     size_t written = 0;
     GhosttyResult res = ghostty_paste_encode(sizingCopy.data(), sizingCopy.size(), bracketed,
                                              nullptr, 0, &written);
-    if (res == GHOSTTY_OUT_OF_SPACE && written > 0) {
+    // An encoded paste larger than this could hit the pty write-buffer cap
+    // mid-write: the opening ESC[200~ would reach the program while the
+    // closing ESC[201~ is dropped, leaving a mode-2004 program buffering
+    // every later keystroke as pending paste. Drop the whole paste instead.
+    if (res == GHOSTTY_OUT_OF_SPACE && written > 0 && written <= kMaxEncodedPasteBytes) {
         // Second call with correctly sized buffer — use fresh copy
         QByteArray encodeCopy = utf8;
         QByteArray buf(written, '\0');

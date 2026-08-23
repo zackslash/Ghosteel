@@ -638,9 +638,11 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
     switch (m_gestureMode) {
     case GestureMode::Undecided: {
         if (currentDistance < kPinchMinBaselineDistance) {
-            // Fingers too close for a meaningful ratio — re-baseline so the
-            // ratio starts fresh once they spread apart.
-            m_pinchInitialDistance = currentDistance;
+            // Fingers too close for a meaningful ratio — hold the baseline
+            // at the floor (never below it: a sub-floor baseline would make
+            // the ratio trivially exceedable again) and wait for them to
+            // spread apart.
+            m_pinchInitialDistance = kPinchMinBaselineDistance;
             m_gestureInitialCentroid = currentCentroid;
             m_pinchCandidateFrames = 0;
             return;
