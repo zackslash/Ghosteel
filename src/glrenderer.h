@@ -300,29 +300,30 @@ private:
         int m_scrollOffset = 0;
 
         // --- Notch-band overflow rows ---
-        // While the viewport is scrolled up, the top padding band renders the
-        // k scrollback rows immediately above the viewport. The grid_ref walk
-        // is signature-gated: it only runs when the band's inputs change,
-        // never per frame (grid_ref is not built for render-loop rates).
-        // Signature covers the gate result (viewportActive + primary screen +
-        // notchBandHeight + k), the scroll position, the total row count, the
-        // metrics generation (cellHeight changes move the band rows), the
-        // top padding (band row y positions are padding-relative), cols, and
-        // a hash of the palette (band colors are baked into vertices; OSC
-        // 10/11 while scrolled up would otherwise leave them stale).
+        // State for the band the renderer draws into the top padding area
+        // (gating semantics and fetch cost: see synchronize()). Signature
+        // covers the gate result (scroll offset > 0 + primary screen +
+        // notchBandHeight), the scroll position, the grid dirty flag (a
+        // capped scrollback renumbers rows with offset unchanged — dirty is
+        // the only signal that band content moved), the metrics generation
+        // (cellHeight changes move the band rows), the top padding (band
+        // row y positions are padding-relative), cols, and a hash of the
+        // palette (band colors are baked into vertices; OSC 10/11 would
+        // otherwise leave them stale).
         struct BandSignature {
             bool active = false;
             int offset = 0;
-            quint64 total = 0;
             int k = 0;
             int metricsGen = 0;
             int topPadding = 0;
             int cols = 0;
             quint64 paletteHash = 0;
+            bool gridDirty = false;
             bool operator==(const BandSignature &o) const {
-                return active == o.active && offset == o.offset && total == o.total
+                return active == o.active && offset == o.offset
                     && k == o.k && metricsGen == o.metricsGen && topPadding == o.topPadding
-                    && cols == o.cols && paletteHash == o.paletteHash;
+                    && cols == o.cols && paletteHash == o.paletteHash
+                    && gridDirty == o.gridDirty;
             }
             bool operator!=(const BandSignature &o) const { return !(*this == o); }
         };
@@ -332,7 +333,7 @@ private:
         // bandActive baked into the last full build; a flip forces a full
         // rebuild so the top strip re-sizes (see synchronize()).
         bool m_bandActiveAtBuild = false;
-        QVector<CellVertex> m_bandVertices;
+        QVector<CellVertex> m_bandVertices;  // built in synchronize(), uploaded in render() — valid only under the BASIC render loop's single-thread guarantee
         QOpenGLBuffer m_bandVbo;
         int m_bandVertexCount = 0;
         // Raw 256-color palette for resolving grid_ref style palette indexes

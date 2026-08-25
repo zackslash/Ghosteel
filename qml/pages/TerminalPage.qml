@@ -134,10 +134,7 @@ Page {
     onOrientationChanged: {
         if (status === PageStatus.Active)
             applyLandscapePolicy()
-        if (terminal) {
-            terminal.topPadding = Theme.paddingSmall + notchInset()
-            terminal.notchBandHeight = notchInset()
-        }
+        applyNotchInset(terminal)
     }
 
     // Key definition lookup map (O(1) access by ID)
@@ -398,15 +395,20 @@ Page {
         pageStack.push(linkDialogComponent, { "url": uri })
     }
 
-    // Top display cutout inset (e.g. JP2 punch-hole): shifts the grid below the
-    // notch via topPadding. Manual mode exists because JP2-era firmware ships no
-    // cutout dconf key, so auto-detect finds nothing. Portrait only — in landscape
+    // Manual mode exists because JP2-era firmware ships no cutout dconf
+    // key, so auto-detect finds nothing there. Portrait only — in landscape
     // the cutout sits at a side edge (not handled).
     function notchInset() {
         if (!isPortrait) return 0
         if (Settings.notchInsetMode === 2) return Settings.notchInsetPx
         if (Settings.notchInsetMode === 1) return 0
-        return Screen.hasCutouts ? Screen.topCutout.height : 0
+        return Screen.hasCutouts && Screen.topCutout ? Screen.topCutout.height : 0
+    }
+
+    function applyNotchInset(t) {
+        if (!t) return
+        t.topPadding = Theme.paddingSmall + notchInset()
+        t.notchBandHeight = notchInset()
     }
 
     // Apply Sailfish Theme colors to terminal UI overlays
@@ -420,8 +422,7 @@ Page {
         t.shellExitOverlayColor = Qt.rgba(0, 0, 0, 0.7)
         t.shellExitTextColor = Theme.highlightColor
         t.magnifierBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
-        t.topPadding = Theme.paddingSmall + notchInset()
-        t.notchBandHeight = notchInset()
+        applyNotchInset(t)
         t.pullDownZoneHeight = Theme.itemSizeLarge
     }
 
@@ -433,24 +434,14 @@ Page {
         }
     }
 
-    // Cutout inset responds to settings changes and system cutout updates live
     Connections {
         target: Settings
-        onNotchInsetModeChanged: if (terminal) {
-            terminal.topPadding = Theme.paddingSmall + notchInset()
-            terminal.notchBandHeight = notchInset()
-        }
-        onNotchInsetPxChanged: if (terminal) {
-            terminal.topPadding = Theme.paddingSmall + notchInset()
-            terminal.notchBandHeight = notchInset()
-        }
+        onNotchInsetModeChanged: applyNotchInset(terminal)
+        onNotchInsetPxChanged: applyNotchInset(terminal)
     }
     Connections {
         target: Screen
-        onCutoutsChanged: if (terminal) {
-            terminal.topPadding = Theme.paddingSmall + notchInset()
-            terminal.notchBandHeight = notchInset()
-        }
+        onCutoutsChanged: applyNotchInset(terminal)
     }
 
     function attachTerminal(t, focus) {

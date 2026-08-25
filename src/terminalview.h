@@ -62,8 +62,8 @@ public:
     int topPadding() const { return m_topPadding; }
     void setTopPadding(int padding);
     // Height of the notch inset band above the grid. Render-only: the renderer
-    // fills it with overflow scrollback rows while scrolled up; it never
-    // affects grid dimensions (unlike topPadding).
+    // fills it with overflow scrollback rows whenever history exists above
+    // the viewport; it never affects grid dimensions (unlike topPadding).
     int notchBandHeight() const { return m_notchBandHeight; }
     void setNotchBandHeight(int height);
     int cellWidth() const { return m_cellWidth; }

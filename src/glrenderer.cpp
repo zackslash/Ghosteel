@@ -531,9 +531,12 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     // The top padding band renders the k scrollback rows immediately above
     // the viewport — both while scrolled up AND at the bottom, where lines
     // scrolling off the top keep the band utilized. Offset > 0 is the gate:
-    // it is exactly "rows exist above the viewport". The grid_ref walk below
-    // is signature-gated: it only runs when the band's inputs change, never
-    // per frame (grid_ref is not built for render-loop rates).
+    // it is exactly "rows exist above the viewport". The grid_ref walk is
+    // signature-gated: it re-runs only when the band's inputs change — while
+    // output streams that is per frame, bounded to k rows (a few), and never
+    // when idle (grid_ref is not built for render-loop rates).
+    GhosttyRenderStateDirty gridDirtyNow = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
+    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &gridDirtyNow);
     GhosttyTerminalScreen activeScreen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
     ghostty_terminal_get(m_terminalView->vt()->terminal(),
                          GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN, &activeScreen);
@@ -545,9 +548,8 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
                             && activeScreen == GHOSTTY_TERMINAL_SCREEN_PRIMARY
                             && bandHeight > 0;
 
-    // Palette hash: band colors are baked into vertices, so an OSC 10/11
-    // change while scrolled up must re-fetch the rows. FNV-1a over the
-    // 256-entry palette the memcpy above just refreshed.
+    // Palette hash: band colors are baked into vertices, so a palette
+    // change (OSC 10/11) must re-fetch the rows.
     quint64 palHash = 0xcbf29ce484222325ULL;
     if (bandActive) {
         const auto *p = reinterpret_cast<const unsigned char *>(m_bandPalette);
@@ -558,14 +560,19 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     BandSignature sig;
     sig.active = bandActive;
     sig.offset = m_scrollOffset;
-    sig.total = scrollbar.total;
     sig.k = bandK;
     sig.metricsGen = m_lastMetricsGeneration;
     sig.topPadding = m_topPadding;
     sig.cols = m_cols;
     sig.paletteHash = palHash;
+    sig.gridDirty = (gridDirtyNow != GHOSTTY_RENDER_STATE_DIRTY_FALSE);
     if (sig != m_bandSignature) {
         const bool bandFlipped = bandActive != m_bandActive;
+        // A k/topPadding change without a flip re-sizes the shrunk top strip
+        // as well; the early return below would keep the old strip geometry
+        // until the next dirty frame.
+        const bool bandGeomChanged = (bandActive || m_bandActive)
+            && (bandK != m_bandSignature.k || m_topPadding != m_bandSignature.topPadding);
         m_bandSignature = sig;
         m_bandActive = bandActive;
         m_bandK = bandK;
@@ -578,12 +585,12 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         // A scroll/offset shift can leave ghostty's grid clean (prune-while-
         // pinned); without these the band would lag one position behind.
         // m_dirty uploads the new band VBO, m_gridDirty defeats the idle
-        // pipeline skip. A bandActive flip re-sizes the top strip, which only
-        // re-emits on a full rebuild — force one so the strip doesn't stay
-        // shrunk behind a now-empty band.
+        // pipeline skip. A bandActive flip or geometry change re-sizes the
+        // top strip, which only re-emits on a full rebuild — force one so
+        // the strip doesn't keep the old size behind the band.
         m_gridDirty = true;
         m_dirty = true;
-        if (bandFlipped)
+        if (bandFlipped || bandGeomChanged)
             m_forceVertexRebuild = true;
     }
 
@@ -655,9 +662,9 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     if (!m_postShaderActive && !m_magnifierVisible && m_pipelineFbo)
         destroyPipelineFbo();
 
-    GhosttyRenderStateDirty dirty = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
-    ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_DIRTY, &dirty);
-    if (dirty == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !m_forceVertexRebuild)
+    // gridDirtyNow was read before the band block; render_state_clean() only
+    // happens below, so it still holds the current value.
+    if (gridDirtyNow == GHOSTTY_RENDER_STATE_DIRTY_FALSE && !m_forceVertexRebuild)
         return;
 
     // Full rebuild when ghostty reports FULL, when a metrics change
@@ -667,7 +674,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     // dims are baked into the strip geometry, so a partial would splice
     // clean rows/strips at the old values). Otherwise splice only the dirty
     // rows.
-    bool full = (dirty == GHOSTTY_RENDER_STATE_DIRTY_FULL) || m_forceVertexRebuild
+    bool full = (gridDirtyNow == GHOSTTY_RENDER_STATE_DIRTY_FULL) || m_forceVertexRebuild
                 || gridSizeChanged || (m_topPadding != m_topPaddingAtBuild)
                 || (m_viewportWidth != m_viewportWidthAtBuild)
                 || (m_viewportHeight != m_viewportHeightAtBuild)

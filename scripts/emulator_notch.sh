@@ -19,7 +19,8 @@ set -euo pipefail
 #   ./emulator_notch.sh on [w] [h]   # centered punch-hole (default 60x60,
 #                                    #   centered for the 720-wide default
 #                                    #   profile; on wider profiles pass the
-#                                    #   full x y w h form)
+#                                    #   full x y w h form). Takes 0 or 2
+#                                    # args here, not 1.
 #   ./emulator_notch.sh on x y w h   # full geometry (y must be 0 for the
 #                                    #   key to count as a top cutout)
 #   ./emulator_notch.sh off          # empty the list (auto-detect dead)
@@ -87,6 +88,10 @@ case "${1:-}" in
             echo "ERROR: y must be 0 — Silica only treats y==0 rects as the top cutout." >&2
             exit 1
         fi
+        if [[ ! "$x$w$h" =~ ^[0-9]+$ ]]; then
+            echo "ERROR: x, w, h must be non-negative integers." >&2
+            exit 1
+        fi
         write_cutouts "[[$x, $y, $w, $h]]"
         echo "Cutout set: x=$x y=$y w=$w h=$h (Screen.topCutout now reports it)."
         echo "ghosteel Auto mode should shift the grid down on its next layout pass."
@@ -111,7 +116,7 @@ case "${1:-}" in
         if [[ -n "$val" ]]; then
             echo "cutouts: $val"
         else
-            echo "cutouts: (not set — no simulated notch, hasCutouts false)"
+            echo "cutouts: (no user value — vendor default, if any, applies)"
         fi
         ;;
 
