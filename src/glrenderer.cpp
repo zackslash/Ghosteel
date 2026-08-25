@@ -166,6 +166,8 @@ GLRenderer::Renderer::~Renderer()
             m_vbo.destroy();
         if (m_flatVbo.isCreated())
             m_flatVbo.destroy();
+        if (m_bandVbo.isCreated())
+            m_bandVbo.destroy();
         destroyPipelineFbo();
     }
 }
@@ -180,6 +182,7 @@ void GLRenderer::Renderer::initialize()
     createVBO();
     createFlatShaders();
     createFlatVBO();
+    createBandVBO();
     createMagShaders();
     createBlitShader();
     createKittyShaders();
@@ -283,6 +286,9 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         m_postPaletteData[i * 3 + 1] = colors.palette[i].g / 255.0f;
         m_postPaletteData[i * 3 + 2] = colors.palette[i].b / 255.0f;
     }
+    // Raw palette for the notch band's grid_ref style resolution (grid_ref
+    // returns palette indexes, not pre-resolved RGB like the render state).
+    memcpy(m_bandPalette, colors.palette, sizeof(m_bandPalette));
 
     GhosttyRenderStateCursor cursor = GHOSTTY_INIT_SIZED(GhosttyRenderStateCursor);
     ghostty_render_state_get(state, GHOSTTY_RENDER_STATE_DATA_CURSOR, &cursor);
@@ -513,12 +519,73 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
 
     // Cache scrollbar offset for use in render() — avoids calling
     // ghostty_terminal_get() from the render thread (data race with GUI thread).
+    GhosttyTerminalScrollbar scrollbar;
+    memset(&scrollbar, 0, sizeof(scrollbar));
     if (m_terminalView && m_terminalView->vt()) {
-        GhosttyTerminalScrollbar scrollbar;
-        memset(&scrollbar, 0, sizeof(scrollbar));
         ghostty_terminal_get(m_terminalView->vt()->terminal(),
                              GHOSTTY_TERMINAL_DATA_SCROLLBAR, &scrollbar);
         m_scrollOffset = scrollbar.offset;
+    }
+
+    // --- Notch-band overflow rows ---
+    // While the viewport is scrolled up, the top padding band renders the k
+    // scrollback rows immediately above the viewport. The grid_ref walk below
+    // is signature-gated: it only runs when the band's inputs change, never
+    // per frame (grid_ref is not built for render-loop rates).
+    bool viewportActive = true;
+    ghostty_terminal_get(m_terminalView->vt()->terminal(),
+                         GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
+    GhosttyTerminalScreen activeScreen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+    ghostty_terminal_get(m_terminalView->vt()->terminal(),
+                         GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN, &activeScreen);
+    const int bandHeight = m_terminalView->notchBandHeight();
+    int bandK = 0;
+    if (bandHeight > 0 && m_cellHeight > 0)
+        bandK = qMax(1, m_topPadding / m_cellHeight);
+    const bool bandActive = viewportActive
+                            && activeScreen == GHOSTTY_TERMINAL_SCREEN_PRIMARY
+                            && bandHeight > 0;
+
+    // Palette hash: band colors are baked into vertices, so an OSC 10/11
+    // change while scrolled up must re-fetch the rows. FNV-1a over the
+    // 256-entry palette the memcpy above just refreshed.
+    quint64 palHash = 0xcbf29ce484222325ULL;
+    if (bandActive) {
+        const auto *p = reinterpret_cast<const unsigned char *>(m_bandPalette);
+        for (size_t i = 0; i < sizeof(m_bandPalette); ++i)
+            palHash = (palHash ^ p[i]) * 0x100000001b3ULL;
+    }
+
+    BandSignature sig;
+    sig.active = bandActive;
+    sig.offset = m_scrollOffset;
+    sig.total = scrollbar.total;
+    sig.k = bandK;
+    sig.metricsGen = m_lastMetricsGeneration;
+    sig.topPadding = m_topPadding;
+    sig.cols = m_cols;
+    sig.paletteHash = palHash;
+    if (sig != m_bandSignature) {
+        const bool bandFlipped = bandActive != m_bandActive;
+        m_bandSignature = sig;
+        m_bandActive = bandActive;
+        m_bandK = bandK;
+        if (bandActive) {
+            fetchBandRows(m_terminalView->vt()->terminal());
+        } else {
+            m_bandVertices.clear();
+            m_bandVertexCount = 0;
+        }
+        // A scroll/offset shift can leave ghostty's grid clean (prune-while-
+        // pinned); without these the band would lag one position behind.
+        // m_dirty uploads the new band VBO, m_gridDirty defeats the idle
+        // pipeline skip. A bandActive flip re-sizes the top strip, which only
+        // re-emits on a full rebuild — force one so the strip doesn't stay
+        // shrunk behind a now-empty band.
+        m_gridDirty = true;
+        m_dirty = true;
+        if (bandFlipped)
+            m_forceVertexRebuild = true;
     }
 
     // Snapshot kitty graphics enabled flag (avoids render-thread Settings access)
@@ -604,7 +671,8 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     bool full = (dirty == GHOSTTY_RENDER_STATE_DIRTY_FULL) || m_forceVertexRebuild
                 || gridSizeChanged || (m_topPadding != m_topPaddingAtBuild)
                 || (m_viewportWidth != m_viewportWidthAtBuild)
-                || (m_viewportHeight != m_viewportHeightAtBuild);
+                || (m_viewportHeight != m_viewportHeightAtBuild)
+                || (m_bandActive != m_bandActiveAtBuild);
     if (full)
         buildCellVertices(state);
     else
@@ -796,7 +864,7 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     const bool splitCellPass = m_passUniform >= 0;
     if (splitCellPass)
         m_program->setUniformValue(m_passUniform, 0.0f);
-    bindCellVertexFormat();
+    bindCellVertexFormat(m_vbo);
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
 
     // Kitty below-text layer: over the backgrounds, under the glyphs.
@@ -811,8 +879,24 @@ void GLRenderer::Renderer::drawScene(int width, int height)
         m_program->bind();
         m_atlas.bind();
         m_program->setUniformValue(m_passUniform, 1.0f);
-        bindCellVertexFormat();
+        bindCellVertexFormat(m_vbo);
         glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    }
+
+    // Notch-band overflow rows: own VBO, drawn after the main cells so the
+    // band's scrollback content composites over the (shrunk) top strip. Same
+    // two-draw bg/glyph split as the main cells when the pass is split.
+    if (m_bandVertexCount > 0) {
+        if (splitCellPass)
+            m_program->setUniformValue(m_passUniform, 0.0f);
+        bindCellVertexFormat(m_bandVbo);
+        glDrawArrays(GL_TRIANGLES, 0, m_bandVertexCount);
+        if (splitCellPass) {
+            m_program->setUniformValue(m_passUniform, 1.0f);
+            bindCellVertexFormat(m_bandVbo);
+            glDrawArrays(GL_TRIANGLES, 0, m_bandVertexCount);
+        }
+        m_bandVbo.release();
     }
 
     if (m_positionAttr >= 0) glDisableVertexAttribArray(m_positionAttr);
@@ -908,6 +992,7 @@ void GLRenderer::Renderer::render()
 
     if (m_dirty) {
         rebuildVBO();
+        rebuildBandVBO();
         m_dirty = false;
     }
 

@@ -134,7 +134,10 @@ Page {
     onOrientationChanged: {
         if (status === PageStatus.Active)
             applyLandscapePolicy()
-        if (terminal) terminal.topPadding = Theme.paddingSmall + notchInset()
+        if (terminal) {
+            terminal.topPadding = Theme.paddingSmall + notchInset()
+            terminal.notchBandHeight = notchInset()
+        }
     }
 
     // Key definition lookup map (O(1) access by ID)
@@ -418,6 +421,7 @@ Page {
         t.shellExitTextColor = Theme.highlightColor
         t.magnifierBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
         t.topPadding = Theme.paddingSmall + notchInset()
+        t.notchBandHeight = notchInset()
         t.pullDownZoneHeight = Theme.itemSizeLarge
     }
 
@@ -432,12 +436,21 @@ Page {
     // Cutout inset responds to settings changes and system cutout updates live
     Connections {
         target: Settings
-        onNotchInsetModeChanged: if (terminal) terminal.topPadding = Theme.paddingSmall + notchInset()
-        onNotchInsetPxChanged: if (terminal) terminal.topPadding = Theme.paddingSmall + notchInset()
+        onNotchInsetModeChanged: if (terminal) {
+            terminal.topPadding = Theme.paddingSmall + notchInset()
+            terminal.notchBandHeight = notchInset()
+        }
+        onNotchInsetPxChanged: if (terminal) {
+            terminal.topPadding = Theme.paddingSmall + notchInset()
+            terminal.notchBandHeight = notchInset()
+        }
     }
     Connections {
         target: Screen
-        onCutoutsChanged: if (terminal) terminal.topPadding = Theme.paddingSmall + notchInset()
+        onCutoutsChanged: if (terminal) {
+            terminal.topPadding = Theme.paddingSmall + notchInset()
+            terminal.notchBandHeight = notchInset()
+        }
     }
 
     function attachTerminal(t, focus) {

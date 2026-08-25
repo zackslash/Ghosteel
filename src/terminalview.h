@@ -28,6 +28,7 @@ class TerminalView : public QQuickItem
     Q_PROPERTY(int currentMatchIndex READ currentMatchIndex NOTIFY currentMatchIndexChanged)
     Q_PROPERTY(int searchPanelHeight READ searchPanelHeight WRITE setSearchPanelHeight NOTIFY searchPanelHeightChanged)
     Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
+    Q_PROPERTY(int notchBandHeight READ notchBandHeight WRITE setNotchBandHeight NOTIFY notchBandHeightChanged)
     Q_PROPERTY(QColor selectionHighlightColor READ selectionHighlightColor WRITE setSelectionHighlightColor NOTIFY selectionHighlightColorChanged)
     Q_PROPERTY(QColor selectionHandleColor READ selectionHandleColor WRITE setSelectionHandleColor NOTIFY selectionHandleColorChanged)
     Q_PROPERTY(QColor selectionHandleBorderColor READ selectionHandleBorderColor WRITE setSelectionHandleBorderColor NOTIFY selectionHandleBorderColorChanged)
@@ -60,6 +61,11 @@ public:
     bool searchActive() const { return m_searchActive; }
     int topPadding() const { return m_topPadding; }
     void setTopPadding(int padding);
+    // Height of the notch inset band above the grid. Render-only: the renderer
+    // fills it with overflow scrollback rows while scrolled up; it never
+    // affects grid dimensions (unlike topPadding).
+    int notchBandHeight() const { return m_notchBandHeight; }
+    void setNotchBandHeight(int height);
     int cellWidth() const { return m_cellWidth; }
     int cellHeight() const { return m_cellHeight; }
 
@@ -183,6 +189,7 @@ Q_SIGNALS:
     void shellFallbackNotice(const QString &failedShell, const QString &usedShell, const QString &reason);
     void shellRestarted();
     void topPaddingChanged();
+    void notchBandHeightChanged();
     void contentChanged(); // Emitted on real content change (PTY data) for scrollback tracking
     void repaintRequested(); // Emitted on every repaint request for GL renderer
     void ptyDataReceived(); // Emitted when real PTY data arrives (before vtWrite)
@@ -461,6 +468,7 @@ private:
     QColor m_shellExitTextColor = Qt::white;
     QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
     int m_topPadding = 12; // default matches original static const
+    int m_notchBandHeight = 0; // px — notch inset band, render-only (see setNotchBandHeight)
     int m_pullDownZoneHeight = 100; // px — overridden from QML via Theme.itemSizeLarge
 };
 

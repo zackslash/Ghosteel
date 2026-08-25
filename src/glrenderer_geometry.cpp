@@ -20,14 +20,14 @@ void GLRenderer::Renderer::createVBO()
     m_vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 }
 
-void GLRenderer::Renderer::bindCellVertexFormat()
+void GLRenderer::Renderer::bindCellVertexFormat(QOpenGLBuffer &vbo)
 {
     // Bind the cell VBO and (re-)establish the interleaved CellVertex layout
     // for the cell program. ES2 has no VAOs, so attrib enable/pointer state is
     // global and other passes (kitty) may have repointed the same attribute
     // indices at their own buffers — re-assert everything before every draw of
     // the split cell pass.
-    m_vbo.bind();
+    vbo.bind();
     const int stride = 13 * sizeof(float);
     if (m_positionAttr >= 0) {
         glEnableVertexAttribArray(m_positionAttr);
@@ -60,6 +60,25 @@ void GLRenderer::Renderer::createFlatVBO()
     m_flatVbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     m_flatVbo.create();
     m_flatVbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+}
+
+void GLRenderer::Renderer::createBandVBO()
+{
+    m_bandVbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    m_bandVbo.create();
+    m_bandVbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+}
+
+void GLRenderer::Renderer::rebuildBandVBO()
+{
+    m_bandVertexCount = m_bandVertices.size();
+    if (m_bandVertexCount == 0)
+        return;
+
+    m_bandVbo.bind();
+    m_bandVbo.allocate(m_bandVertices.constData(),
+                       m_bandVertexCount * sizeof(CellVertex));
+    m_bandVbo.release();
 }
 
 void GLRenderer::Renderer::appendCircle(float cx, float cy, float radius,
@@ -437,6 +456,155 @@ void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRend
         *outVertexCount = out.size() - start;
 }
 
+void GLRenderer::Renderer::fetchBandRows(GhosttyTerminal terminal)
+{
+    // Rasterizing a glyph can wipe the atlas mid-walk (same hazard as
+    // buildCellVertices); retry once if the epoch moved so the band's UVs
+    // stay valid.
+    const int startEpoch = m_atlas.epoch();
+    buildBandVertices(terminal);
+    if (m_atlas.epoch() != startEpoch) {
+        m_bandVertices.clear();
+        buildBandVertices(terminal);
+    }
+}
+
+void GLRenderer::Renderer::buildBandVertices(GhosttyTerminal terminal)
+{
+    m_bandVertices.clear();
+    if (!m_bandActive || m_cellWidth <= 0 || m_cellHeight <= 0)
+        return;
+
+    // Rows [max(0, offset - k), offset) are the k scrollback rows immediately
+    // above the viewport. Band row i (i=1..k, counting upward from the grid
+    // top) renders at y = m_topPadding - i*cellHeight; y=0 is screen top in
+    // this codebase (mirrored FBO), so the band sits above the grid.
+    const int k = m_bandK;
+    const int firstRow = qMax(0, m_scrollOffset - k);
+    const int lastRow = m_scrollOffset;
+
+    for (int r = firstRow; r < lastRow; ++r) {
+        const float y = m_topPadding - (m_scrollOffset - r) * m_cellHeight;
+        int x = 0;
+        for (uint16_t col = 0; col < m_cols; ++col) {
+            GhosttyPoint point = {};
+            point.tag = GHOSTTY_POINT_TAG_SCREEN;
+            point.value.coordinate.x = col;
+            point.value.coordinate.y = static_cast<uint32_t>(r);
+
+            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS) {
+                // Defensive: out-of-bounds cell renders as an empty bg quad so
+                // the row stays aligned.
+                const float bgAlpha = m_bgOpacity;
+                const float pBgR = m_postBgR * bgAlpha, pBgG = m_postBgG * bgAlpha, pBgB = m_postBgB * bgAlpha, pBgA = bgAlpha;
+                const float pFgR = m_postFgR, pFgG = m_postFgG, pFgB = m_postFgB, pFgA = 1.0f;
+                const float x0 = static_cast<float>(x), x1 = static_cast<float>(x + m_cellWidth);
+                const float y0 = y, y1 = y + m_cellHeight;
+                m_bandVertices.append({x0, y0, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                m_bandVertices.append({x1, y0, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                m_bandVertices.append({x1, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                m_bandVertices.append({x0, y0, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                m_bandVertices.append({x1, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                m_bandVertices.append({x0, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                x += m_cellWidth;
+                continue;
+            }
+            emitBandRowVertices(m_bandVertices, ref, y, x);
+        }
+    }
+}
+
+void GLRenderer::Renderer::emitBandRowVertices(QVector<CellVertex> &out, GhosttyGridRef &ref, float y, int &x)
+{
+    const float bgAlpha = m_bgOpacity;
+    const float bgR = m_postBgR, bgG = m_postBgG, bgB = m_postBgB;
+    const float fgR = m_postFgR, fgG = m_postFgG, fgB = m_postFgB;
+
+    GhosttyCell rawCell = 0;
+    ghostty_grid_ref_cell(&ref, &rawCell);
+
+    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
+    if (rawCell != 0)
+        ghostty_cell_get(rawCell, GHOSTTY_CELL_DATA_WIDE, &wide);
+
+    // Spacer-tail skip: the preceding WIDE_WIDE head already emitted a 2-cell
+    // quad covering this spacer's screen position. Do NOT advance x.
+    if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL)
+        return;
+
+    GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+    ghostty_grid_ref_style(&ref, &style);
+
+    uint32_t graphemesBuf[kMaxGraphemeLen];
+    size_t graphemesLen = 0;
+    // Invisible: emit the bg quad only, no glyph.
+    if (!style.invisible)
+        ghostty_grid_ref_graphemes(&ref, graphemesBuf, kMaxGraphemeLen, &graphemesLen);
+
+    // grid_ref styles are raw tagged palette-index-or-RGB unions; resolve
+    // manually (the render-state path gets pre-resolved RGB). NONE -> default.
+    // Faint renders normally; the viewport's treatment (if any) differs —
+    // accepted for the band.
+    float cBgR = bgR, cBgG = bgG, cBgB = bgB;
+    if (style.bg_color.tag == GHOSTTY_STYLE_COLOR_PALETTE) {
+        cBgR = m_bandPalette[style.bg_color.value.palette].r / 255.0f;
+        cBgG = m_bandPalette[style.bg_color.value.palette].g / 255.0f;
+        cBgB = m_bandPalette[style.bg_color.value.palette].b / 255.0f;
+    } else if (style.bg_color.tag == GHOSTTY_STYLE_COLOR_RGB) {
+        cBgR = style.bg_color.value.rgb.r / 255.0f;
+        cBgG = style.bg_color.value.rgb.g / 255.0f;
+        cBgB = style.bg_color.value.rgb.b / 255.0f;
+    }
+
+    float cFgR = fgR, cFgG = fgG, cFgB = fgB;
+    if (style.fg_color.tag == GHOSTTY_STYLE_COLOR_PALETTE) {
+        cFgR = m_bandPalette[style.fg_color.value.palette].r / 255.0f;
+        cFgG = m_bandPalette[style.fg_color.value.palette].g / 255.0f;
+        cFgB = m_bandPalette[style.fg_color.value.palette].b / 255.0f;
+    } else if (style.fg_color.tag == GHOSTTY_STYLE_COLOR_RGB) {
+        cFgR = style.fg_color.value.rgb.r / 255.0f;
+        cFgG = style.fg_color.value.rgb.g / 255.0f;
+        cFgB = style.fg_color.value.rgb.b / 255.0f;
+    }
+
+    if (style.inverse) {
+        qSwap(cFgR, cBgR);
+        qSwap(cFgG, cBgG);
+        qSwap(cFgB, cBgB);
+    }
+
+    float deco = 0.0f;
+    if (style.underline > 0) deco = 1.0f;
+    else if (style.strikethrough) deco = 2.0f;
+
+    float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
+    float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
+
+    float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
+    if (graphemesLen > 0 && graphemesLen <= kMaxGraphemeLen) {
+        const GlyphInfo &gi = (graphemesLen == 1)
+            ? m_atlas.glyph(graphemesBuf[0], style.bold, style.italic)
+            : m_atlas.glyphCluster(graphemesBuf, graphemesLen, style.bold, style.italic);
+        u0 = gi.u0; v0 = gi.v0; u1 = gi.u1; v1 = gi.v1;
+    }
+
+    int cellSpan = (wide == GHOSTTY_CELL_WIDE_WIDE) ? 2 : 1;
+    float x0 = static_cast<float>(x);
+    float y0 = y;
+    float x1 = static_cast<float>(x + cellSpan * m_cellWidth);
+    float y1 = y + m_cellHeight;
+
+    out.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+    out.append({x1, y0, u1, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+    out.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+    out.append({x0, y0, u0, v0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+    out.append({x1, y1, u1, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+    out.append({x0, y1, u0, v1, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, deco});
+
+    x += cellSpan * m_cellWidth;
+}
+
 void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
 {
     m_cellVertices.reserve(m_cols * m_rows * 6);
@@ -451,6 +619,7 @@ void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
     m_rowVertexStart.clear();
     m_rowVertexCount.clear();
     m_topPaddingAtBuild = m_topPadding;
+    m_bandActiveAtBuild = m_bandActive;
     m_viewportWidthAtBuild = m_viewportWidth;
     m_viewportHeightAtBuild = m_viewportHeight;
 
@@ -500,9 +669,14 @@ void GLRenderer::Renderer::appendCellVertices(GhosttyRenderState state)
 
     // Top strip: padding band above the grid (y in [0, m_topPadding]), grid width
     // only — the right strip above already covers this band for x in [gridW, viewportWidth].
-    if (m_topPadding > 0 && m_cellWidth > 0) {
+    // When the notch band is active, its k rows occupy the top k*cellHeight of
+    // the padding, so the strip shrinks to the remainder above them.
+    float topStripBottom = static_cast<float>(m_topPadding);
+    if (m_bandActive && m_cellHeight > 0)
+        topStripBottom = static_cast<float>(m_topPadding - m_bandK * m_cellHeight);
+    if (topStripBottom > 0 && m_cellWidth > 0) {
         float x0 = 0.0f, x1 = static_cast<float>(gridW);
-        float y0 = 0.0f, y1 = static_cast<float>(m_topPadding);
+        float y0 = 0.0f, y1 = topStripBottom;
         m_cellVertices.append({x0, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x1, y0, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
         m_cellVertices.append({x1, y1, 0, 0, spFgR, spFgG, spFgB, spFgA, spBgR, spBgG, spBgB, spBgA, 0});
