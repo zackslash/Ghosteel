@@ -528,13 +528,12 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     }
 
     // --- Notch-band overflow rows ---
-    // While the viewport is scrolled up, the top padding band renders the k
-    // scrollback rows immediately above the viewport. The grid_ref walk below
+    // The top padding band renders the k scrollback rows immediately above
+    // the viewport — both while scrolled up AND at the bottom, where lines
+    // scrolling off the top keep the band utilized. Offset > 0 is the gate:
+    // it is exactly "rows exist above the viewport". The grid_ref walk below
     // is signature-gated: it only runs when the band's inputs change, never
     // per frame (grid_ref is not built for render-loop rates).
-    bool viewportActive = true;
-    ghostty_terminal_get(m_terminalView->vt()->terminal(),
-                         GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
     GhosttyTerminalScreen activeScreen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
     ghostty_terminal_get(m_terminalView->vt()->terminal(),
                          GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN, &activeScreen);
@@ -542,9 +541,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     int bandK = 0;
     if (bandHeight > 0 && m_cellHeight > 0)
         bandK = qMax(1, m_topPadding / m_cellHeight);
-    // VIEWPORT_ACTIVE is true at the bottom (scrollViewportToBottom scrolls
-    // only when it is false); the band shows history only while scrolled up.
-    const bool bandActive = !viewportActive
+    const bool bandActive = m_scrollOffset > 0
                             && activeScreen == GHOSTTY_TERMINAL_SCREEN_PRIMARY
                             && bandHeight > 0;
 
