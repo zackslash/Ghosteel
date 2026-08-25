@@ -542,7 +542,9 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     int bandK = 0;
     if (bandHeight > 0 && m_cellHeight > 0)
         bandK = qMax(1, m_topPadding / m_cellHeight);
-    const bool bandActive = viewportActive
+    // VIEWPORT_ACTIVE is true at the bottom (scrollViewportToBottom scrolls
+    // only when it is false); the band shows history only while scrolled up.
+    const bool bandActive = !viewportActive
                             && activeScreen == GHOSTTY_TERMINAL_SCREEN_PRIMARY
                             && bandHeight > 0;
 
