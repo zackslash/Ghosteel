@@ -103,49 +103,6 @@ Page {
                 onCurrentIndexChanged: Settings.clipboardReadPolicy = currentIndex
             }
 
-            // Notch inset section
-            SectionHeader {
-                text: qsTr("Notch inset")
-            }
-
-            ComboBox {
-                id: notchInsetCombo
-                width: parent.width
-                label: qsTr("Notch inset")
-                description: qsTr("Shifts terminal content below the display cutout. Manual is for devices whose system does not report the cutout.")
-                currentIndex: Settings.notchInsetMode
-
-                menu: ContextMenu {
-                    MenuItem { text: qsTr("Auto") }
-                    MenuItem { text: qsTr("Off") }
-                    MenuItem { text: qsTr("Manual") }
-                }
-
-                onCurrentIndexChanged: Settings.notchInsetMode = currentIndex
-            }
-
-            Slider {
-                id: notchInsetSlider
-                width: parent.width
-                label: qsTr("Inset size")
-                minimumValue: 0
-                maximumValue: 300
-                stepSize: 5
-                value: Settings.notchInsetPx
-                valueText: qsTr("%1 px").arg(value)
-                visible: Settings.notchInsetMode === 2
-
-                // Guard: QML evaluates the value binding (firing onValueChanged) before Component.onCompleted.
-                property bool initialized: false
-
-                onValueChanged: {
-                    if (!initialized) return
-                    Settings.notchInsetPx = value
-                }
-
-                Component.onCompleted: initialized = true
-            }
-
             // Appearance section
             SectionHeader {
                 text: qsTr("Appearance")
@@ -282,6 +239,44 @@ Page {
                 description: qsTr("Hides the on-screen keyboard when rotating to landscape and restores it when rotating back to portrait")
                 checked: Settings.autoHideKeyboardLandscape
                 onCheckedChanged: Settings.autoHideKeyboardLandscape = checked
+            }
+
+            ComboBox {
+                id: notchInsetCombo
+                width: parent.width
+                label: qsTr("Notch inset")
+                description: qsTr("Shifts terminal content below the display cutout. Manual is for devices whose system does not report the cutout.")
+                currentIndex: Settings.notchInsetMode
+
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("Auto") }
+                    MenuItem { text: qsTr("Off") }
+                    MenuItem { text: qsTr("Manual") }
+                }
+
+                onCurrentIndexChanged: Settings.notchInsetMode = currentIndex
+            }
+
+            Slider {
+                id: notchInsetSlider
+                width: parent.width
+                label: qsTr("Inset size")
+                minimumValue: 0
+                maximumValue: 300
+                stepSize: 5
+                value: Settings.notchInsetPx
+                valueText: qsTr("%1 px").arg(value)
+                visible: Settings.notchInsetMode === 2
+
+                // Guard: QML evaluates the value binding (firing onValueChanged) before Component.onCompleted.
+                property bool initialized: false
+
+                onValueChanged: {
+                    if (!initialized) return
+                    Settings.notchInsetPx = value
+                }
+
+                Component.onCompleted: initialized = true
             }
 
             // Extra keys section
