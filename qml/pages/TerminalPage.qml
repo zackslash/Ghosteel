@@ -134,6 +134,7 @@ Page {
     onOrientationChanged: {
         if (status === PageStatus.Active)
             applyLandscapePolicy()
+        applyNotchInset(terminal)
     }
 
     // Key definition lookup map (O(1) access by ID)
@@ -394,6 +395,20 @@ Page {
         pageStack.push(linkDialogComponent, { "url": uri })
     }
 
+    // Same formula as Silica's own StatusArea: inset only by the
+    // system-reported cutout, no manual override. Portrait only — in
+    // landscape the cutout sits at a side edge (not handled).
+    function notchInset() {
+        if (!isPortrait) return 0
+        return Screen.hasCutouts && Screen.topCutout ? Screen.topCutout.height : 0
+    }
+
+    function applyNotchInset(t) {
+        if (!t) return
+        t.topPadding = Theme.paddingSmall + notchInset()
+        t.notchBandHeight = notchInset()
+    }
+
     // Apply Sailfish Theme colors to terminal UI overlays
     function applyTerminalTheme(t) {
         if (!t) return
@@ -405,7 +420,7 @@ Page {
         t.shellExitOverlayColor = Qt.rgba(0, 0, 0, 0.7)
         t.shellExitTextColor = Theme.highlightColor
         t.magnifierBorderColor = Theme.rgba(Theme.highlightColor, 0.5)
-        t.topPadding = Theme.paddingSmall
+        applyNotchInset(t)
         t.pullDownZoneHeight = Theme.itemSizeLarge
     }
 
@@ -415,6 +430,11 @@ Page {
         onHighlightColorChanged: {
             if (terminal) applyTerminalTheme(terminal)
         }
+    }
+
+    Connections {
+        target: Screen
+        onCutoutsChanged: applyNotchInset(terminal)
     }
 
     function attachTerminal(t, focus) {

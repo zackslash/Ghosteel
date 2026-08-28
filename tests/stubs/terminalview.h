@@ -28,6 +28,7 @@ class TerminalView : public QObject
     Q_PROPERTY(QColor shellExitTextColor READ shellExitTextColor WRITE setShellExitTextColor NOTIFY shellExitTextColorChanged)
     Q_PROPERTY(QColor magnifierBorderColor READ magnifierBorderColor WRITE setMagnifierBorderColor NOTIFY magnifierBorderColorChanged)
     Q_PROPERTY(int topPadding READ topPadding WRITE setTopPadding NOTIFY topPaddingChanged)
+    Q_PROPERTY(int notchBandHeight READ notchBandHeight WRITE setNotchBandHeight NOTIFY notchBandHeightChanged)
     Q_PROPERTY(int pullDownZoneHeight READ pullDownZoneHeight WRITE setPullDownZoneHeight NOTIFY pullDownZoneHeightChanged)
     Q_PROPERTY(bool pinchAtDefault READ pinchAtDefault NOTIFY pinchAtDefaultChanged)
 
@@ -88,6 +89,10 @@ public:
     int topPadding() const { return m_topPadding; }
     void setTopPadding(int padding) {
         if (m_topPadding != padding) { m_topPadding = padding; Q_EMIT topPaddingChanged(); }
+    }
+    int notchBandHeight() const { return m_notchBandHeight; }
+    void setNotchBandHeight(int height) {
+        if (m_notchBandHeight != height) { m_notchBandHeight = height; Q_EMIT notchBandHeightChanged(); }
     }
     int pullDownZoneHeight() const { return m_pullDownZoneHeight; }
     void setPullDownZoneHeight(int height) {
@@ -162,6 +167,7 @@ Q_SIGNALS:
     void shellRestarted();
     void linkActivated(const QString &uri);
     void topPaddingChanged();
+    void notchBandHeightChanged();
     void pinchingChanged(bool pinching);
     void pinchAtDefaultChanged(bool atDefault);
     void zoomRequested(int delta);
@@ -196,6 +202,7 @@ private:
     QColor m_shellExitTextColor = Qt::white;
     QColor m_magnifierBorderColor = QColor(255, 255, 255, 120);
     int m_topPadding = 12;
+    int m_notchBandHeight = 0;
     int m_pullDownZoneHeight = 100;
     bool m_pinchAtDefault = false;
 };

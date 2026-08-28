@@ -859,6 +859,15 @@ void TerminalView::setTopPadding(int padding)
         recalculateDimensions();
 }
 
+void TerminalView::setNotchBandHeight(int height)
+{
+    if (m_notchBandHeight == height)
+        return;
+    m_notchBandHeight = height;
+    Q_EMIT notchBandHeightChanged();
+    update();
+}
+
 void TerminalView::setPullDownZoneHeight(int height)
 {
     if (m_pullDownZoneHeight == height)

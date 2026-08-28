@@ -132,9 +132,14 @@ private:
         void createShaders();
         void createVBO();
         void rebuildVBO();
-        void bindCellVertexFormat();
+        void bindCellVertexFormat(QOpenGLBuffer &vbo);
         void createFlatShaders();
         void createFlatVBO();
+        void createBandVBO();
+        void rebuildBandVBO();
+        void fetchBandRows(GhosttyTerminal terminal);
+        void buildBandVertices(GhosttyTerminal terminal);
+        void emitBandRowVertices(QVector<CellVertex> &out, GhosttyGridRef &ref, float y, int &x);
         void buildOverlayVertices(int fboW, int fboH);
         void appendCircle(float cx, float cy, float radius, float r, float g, float b, float a, int segments = 24);
         void createMagShaders();
@@ -293,6 +298,53 @@ private:
         QColor m_magnifierBorderColor;
         QPointF m_magnifierFingerPos;
         int m_scrollOffset = 0;
+
+        // --- Notch-band overflow rows ---
+        // State for the band the renderer draws into the top padding area
+        // (gating semantics and fetch cost: see synchronize()). Signature
+        // covers the gate result (scroll offset > 0 + primary screen +
+        // notchBandHeight), the scroll position, the grid dirty flag (a
+        // capped scrollback renumbers rows with offset unchanged — dirty is
+        // the only signal that band content moved), the metrics generation
+        // (cellHeight changes move the band rows), the top padding (band
+        // row y positions are padding-relative), cols, and a hash of the
+        // palette (band colors are baked into vertices; OSC 10/11 would
+        // otherwise leave them stale).
+        struct BandSignature {
+            bool active = false;
+            int offset = 0;
+            int k = 0;
+            int metricsGen = 0;
+            int topPadding = 0;
+            int cols = 0;
+            quint64 paletteHash = 0;
+            bool gridDirty = false;
+            bool operator==(const BandSignature &o) const {
+                return active == o.active && offset == o.offset
+                    && k == o.k && metricsGen == o.metricsGen && topPadding == o.topPadding
+                    && cols == o.cols && paletteHash == o.paletteHash
+                    && gridDirty == o.gridDirty;
+            }
+            bool operator!=(const BandSignature &o) const { return !(*this == o); }
+        };
+        BandSignature m_bandSignature;
+        bool m_bandActive = false;
+        int m_bandK = 0;
+        // bandActive baked into the last full build; a flip forces a full
+        // rebuild so the top strip re-sizes (see synchronize()).
+        bool m_bandActiveAtBuild = false;
+        QVector<CellVertex> m_bandVertices;  // built in synchronize(), uploaded in render() — valid only under the BASIC render loop's single-thread guarantee
+        QOpenGLBuffer m_bandVbo;
+        int m_bandVertexCount = 0;
+        // Raw 256-color palette for resolving grid_ref style palette indexes
+        // (the render-state path gets pre-resolved RGB; grid_ref does not).
+        GhosttyColorRgb m_bandPalette[256];
+        // Deliberate non-features: no selection/links/search in the band
+        // (cellFromPixelClamped clamps band taps to row 0, unchanged), no
+        // cursor in the band (band rows produce a negative cellCoord.y that
+        // never equals the non-negative u_cursorPos.y — safe by construction),
+        // and zero shader changes (the underline floor-mod handles negative y
+        // correctly).
 
         struct LinkSpan { int startRow; int endRow; int startCol; int endCol; };
         QVector<LinkSpan> m_linkSpans;

@@ -75,7 +75,8 @@ private slots:
             "scrollbackPersistence", "scrollbackRetentionDays", "keybarKeys",
             "keybarVisible", "keybarRowBreaks", "cursorTrails", "pinchToZoom",
             "autoHideKeyboardLandscape", "urlAutoDetect", "kittyGraphics",
-            "clipboardReadPolicy", "customShaderPath", "shaderPipelineAvailable",
+            "clipboardReadPolicy",
+            "customShaderPath", "shaderPipelineAvailable",
         };
         const QMetaObject *mo = &Settings::staticMetaObject;
         for (const char *name : names) {
