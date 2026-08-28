@@ -7,10 +7,9 @@ set -euo pipefail
 # writing the Silica cutout dconf key the device adaptation would ship:
 #   /desktop/sailfish/silica/cutouts = [[x, 0, w, h]]
 # With the key set, Screen.hasCutouts goes true and Screen.topCutout exposes
-# the rect, which is what ghosteel's notch-inset Auto mode (Settings >
-# Notch inset) reads. Emptying the list reproduces the JP2-today reality:
-# the adaptation ships no cutout key, auto-detect finds nothing, and only
-# the Manual inset mode works.
+# the rect, which is what ghosteel's automatic notch inset reads. Emptying
+# the list simulates an adaptation that reports no cutout: the inset falls
+# back to zero, same as Silica's own StatusArea behaves on such a device.
 #
 # The write must run on defaultuser's session bus (as root, dconf fails
 # with "Cannot autolaunch D-Bus without X11 $DISPLAY").

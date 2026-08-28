@@ -146,37 +146,6 @@ private slots:
         QCOMPARE(spy.count(), 2);
         QCOMPARE(s.autoHideKeyboardLandscape(), false);
     }
-
-    void testNotchInsetRoundTrip()
-    {
-        Settings s(m_settingsPath);
-        QCOMPARE(s.notchInsetMode(), 0); // auto
-        QCOMPARE(s.notchInsetPx(), 60);
-
-        QSignalSpy modeSpy(&s, &Settings::notchInsetModeChanged);
-        QSignalSpy pxSpy(&s, &Settings::notchInsetPxChanged);
-        s.setNotchInsetMode(2);
-        QCOMPARE(modeSpy.count(), 1);
-        QCOMPARE(s.notchInsetMode(), 2);
-
-        s.setNotchInsetMode(2); // no-op — no signal
-        QCOMPARE(modeSpy.count(), 1);
-
-        s.setNotchInsetPx(120);
-        QCOMPARE(pxSpy.count(), 1);
-        QCOMPARE(s.notchInsetPx(), 120);
-
-        s.setNotchInsetPx(120); // no-op — no signal
-        QCOMPARE(pxSpy.count(), 1);
-
-        // s stays alive so the 500ms debounced atomic save fires before reload
-        QTest::qWait(600);
-
-        // Persisted across Settings reload
-        Settings s2(m_settingsPath);
-        QCOMPARE(s2.notchInsetMode(), 2);
-        QCOMPARE(s2.notchInsetPx(), 120);
-    }
 };
 
 QTEST_MAIN(TestSettings)

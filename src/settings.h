@@ -31,8 +31,6 @@ class Settings : public QObject
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
     Q_PROPERTY(bool kittyGraphics READ kittyGraphics WRITE setKittyGraphics NOTIFY kittyGraphicsChanged)
     Q_PROPERTY(int clipboardReadPolicy READ clipboardReadPolicy WRITE setClipboardReadPolicy NOTIFY clipboardReadPolicyChanged)
-    Q_PROPERTY(int notchInsetMode READ notchInsetMode WRITE setNotchInsetMode NOTIFY notchInsetModeChanged)
-    Q_PROPERTY(int notchInsetPx READ notchInsetPx WRITE setNotchInsetPx NOTIFY notchInsetPxChanged)
     Q_PROPERTY(QString customShaderPath READ customShaderPath WRITE setCustomShaderPath NOTIFY customShaderPathChanged)
     Q_PROPERTY(bool shaderPipelineAvailable READ shaderPipelineAvailable NOTIFY shaderPipelineAvailableChanged)
     Q_PROPERTY(int minFontSize READ minFontSize CONSTANT)
@@ -122,12 +120,6 @@ public:
     int clipboardReadPolicy() const { return m_clipboardReadPolicy; }
     void setClipboardReadPolicy(int policy);
 
-    int notchInsetMode() const { return m_notchInsetMode; }
-    void setNotchInsetMode(int mode);
-
-    int notchInsetPx() const { return m_notchInsetPx; }
-    void setNotchInsetPx(int px);
-
     QString customShaderPath() const { return m_customShaderPath; }
     void setCustomShaderPath(const QString &path);
 
@@ -156,8 +148,6 @@ Q_SIGNALS:
     void urlAutoDetectChanged();
     void kittyGraphicsChanged();
     void clipboardReadPolicyChanged();
-    void notchInsetModeChanged();
-    void notchInsetPxChanged();
     void customShaderPathChanged();
     void shaderPipelineAvailableChanged();
 
@@ -187,8 +177,6 @@ private:
     bool m_urlAutoDetect = true; // default: ON — regex URL detection enabled
     bool m_kittyGraphics = true; // default: ON — Kitty Graphics Protocol
     int m_clipboardReadPolicy = 0; // 0=ask, 1=allow, 2=deny
-    int m_notchInsetMode = 0; // 0=auto (system cutout), 1=off, 2=manual pixels
-    int m_notchInsetPx = 60;
     QString m_customShaderPath;
     bool m_shaderPipelineAvailable = false; // set by GLRenderer after ES 3.0 probe
 };

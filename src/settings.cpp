@@ -85,14 +85,6 @@ void Settings::load()
     v = m_settings.value(QStringLiteral("terminal/clipboardReadPolicy"), 0).toInt(&ok);
     if (!ok) v = 0;
     m_clipboardReadPolicy = qBound(0, v, 2);
-    ok = false;
-    v = m_settings.value(QStringLiteral("terminal/notchInsetMode"), 0).toInt(&ok);
-    if (!ok) v = 0;
-    m_notchInsetMode = qBound(0, v, 2);
-    ok = false;
-    v = m_settings.value(QStringLiteral("terminal/notchInsetPx"), 60).toInt(&ok);
-    if (!ok) v = 60;
-    m_notchInsetPx = qBound(0, v, 300);
     m_customShaderPath = m_settings.value(QStringLiteral("terminal/customShaderPath")).toString();
 }
 
@@ -340,30 +332,6 @@ void Settings::setClipboardReadPolicy(int policy)
     m_settings.setValue(QStringLiteral("terminal/clipboardReadPolicy"), policy);
     scheduleSave();
     Q_EMIT clipboardReadPolicyChanged();
-}
-
-void Settings::setNotchInsetMode(int mode)
-{
-    if (mode < 0) mode = 0;
-    if (mode > 2) mode = 2;
-    if (m_notchInsetMode == mode)
-        return;
-    m_notchInsetMode = mode;
-    m_settings.setValue(QStringLiteral("terminal/notchInsetMode"), mode);
-    scheduleSave();
-    Q_EMIT notchInsetModeChanged();
-}
-
-void Settings::setNotchInsetPx(int px)
-{
-    if (px < 0) px = 0;
-    if (px > 300) px = 300;
-    if (m_notchInsetPx == px)
-        return;
-    m_notchInsetPx = px;
-    m_settings.setValue(QStringLiteral("terminal/notchInsetPx"), px);
-    scheduleSave();
-    Q_EMIT notchInsetPxChanged();
 }
 
 void Settings::setCustomShaderPath(const QString &path)

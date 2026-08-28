@@ -395,13 +395,11 @@ Page {
         pageStack.push(linkDialogComponent, { "url": uri })
     }
 
-    // Manual mode exists because JP2-era firmware ships no cutout dconf
-    // key, so auto-detect finds nothing there. Portrait only — in landscape
-    // the cutout sits at a side edge (not handled).
+    // Same formula as Silica's own StatusArea: inset only by the
+    // system-reported cutout, no manual override. Portrait only — in
+    // landscape the cutout sits at a side edge (not handled).
     function notchInset() {
         if (!isPortrait) return 0
-        if (Settings.notchInsetMode === 2) return Settings.notchInsetPx
-        if (Settings.notchInsetMode === 1) return 0
         return Screen.hasCutouts && Screen.topCutout ? Screen.topCutout.height : 0
     }
 
@@ -434,11 +432,6 @@ Page {
         }
     }
 
-    Connections {
-        target: Settings
-        onNotchInsetModeChanged: applyNotchInset(terminal)
-        onNotchInsetPxChanged: applyNotchInset(terminal)
-    }
     Connections {
         target: Screen
         onCutoutsChanged: applyNotchInset(terminal)
