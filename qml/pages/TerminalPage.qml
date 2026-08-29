@@ -1424,6 +1424,7 @@ Page {
                     delegate: BackgroundItem {
                         id: keyDelegate
                         property var keyDef: page.keyLookup[modelData]
+                        property bool repeatFired: false
 
                         width: Theme.itemSizeMedium
                         height: Theme.itemSizeMedium
@@ -1438,7 +1439,26 @@ Page {
                             return false
                         }
 
+                        // Hold-to-repeat: single-shot timer re-armed per tick (not repeat: —
+                        // changing interval on a running repeating Timer restarts unpredictably
+                        // on Qt 5.6). repeatFired skips the release click once ticks fired.
+                        onPressedChanged: {
+                            if (pressed) {
+                                repeatFired = false
+                                if (terminal && keyDef && keyDef.action === "key") {
+                                    repeatTimer.interval = 400
+                                    repeatTimer.start()
+                                }
+                            } else {
+                                repeatTimer.stop()
+                            }
+                        }
+
                         onClicked: {
+                            if (repeatFired) {
+                                repeatFired = false
+                                return
+                            }
                             if (!terminal || !keyDef) return
 
                             if (keyDef.action === "key") {
@@ -1472,6 +1492,18 @@ Page {
                                 SessionManager.setActiveSessionFontSize(Math.min(Settings.maxFontSize, terminal.fontSize + 1), false)
                             } else if (keyDef.id === "zoomOut") {
                                 SessionManager.setActiveSessionFontSize(Math.max(Settings.minFontSize, terminal.fontSize - 1), false)
+                            }
+                        }
+
+                        Timer {
+                            id: repeatTimer
+                            interval: 400
+                            onTriggered: {
+                                if (!keybar.open || !terminal) return
+                                repeatFired = true
+                                terminal.sendKey(keyDef.qtKey, page.activeModifiers)
+                                interval = interval === 400 ? 120 : Math.max(50, interval - 15)
+                                restart()
                             }
                         }
 
