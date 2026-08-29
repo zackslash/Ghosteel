@@ -548,13 +548,20 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
                             && activeScreen == GHOSTTY_TERMINAL_SCREEN_PRIMARY
                             && bandHeight > 0;
 
-    // Palette hash: band colors are baked into vertices, so a palette
-    // change (OSC 10/11) must re-fetch the rows.
+    // Palette hash: band colors are baked into vertices, so a change to the
+    // palette, the default fg/bg (OSC 10/11), or the bg opacity must
+    // re-fetch the rows.
     quint64 palHash = 0xcbf29ce484222325ULL;
     if (bandActive) {
         const auto *p = reinterpret_cast<const unsigned char *>(m_bandPalette);
         for (size_t i = 0; i < sizeof(m_bandPalette); ++i)
             palHash = (palHash ^ p[i]) * 0x100000001b3ULL;
+        const float bakedColors[7] = {m_postBgR, m_postBgG, m_postBgB,
+                                      m_postFgR, m_postFgG, m_postFgB,
+                                      static_cast<float>(m_bgOpacity)};
+        const auto *d = reinterpret_cast<const unsigned char *>(bakedColors);
+        for (size_t i = 0; i < sizeof(bakedColors); ++i)
+            palHash = (palHash ^ d[i]) * 0x100000001b3ULL;
     }
 
     BandSignature sig;

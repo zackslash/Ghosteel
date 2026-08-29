@@ -140,6 +140,7 @@ private:
         void fetchBandRows(GhosttyTerminal terminal);
         void buildBandVertices(GhosttyTerminal terminal);
         void emitBandRowVertices(QVector<CellVertex> &out, GhosttyGridRef &ref, float y, int &x);
+        void appendBandBgQuad(QVector<CellVertex> &out, float x, float y, float width);
         void buildOverlayVertices(int fboW, int fboH);
         void appendCircle(float cx, float cy, float radius, float r, float g, float b, float a, int segments = 24);
         void createMagShaders();

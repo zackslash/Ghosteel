@@ -475,16 +475,23 @@ void GLRenderer::Renderer::buildBandVertices(GhosttyTerminal terminal)
     if (!m_bandActive || m_cellWidth <= 0 || m_cellHeight <= 0)
         return;
 
-    // Rows [max(0, offset - k), offset) are the k scrollback rows immediately
-    // above the viewport. Band row i (i=1..k, counting upward from the grid
-    // top) renders at y = m_topPadding - i*cellHeight; y=0 is screen top in
-    // this codebase (mirrored FBO), so the band sits above the grid.
+    // The band covers exactly [topPadding - k*cellHeight, topPadding),
+    // matching the shrunk top strip unconditionally: slot i (i=1..k, counting
+    // upward from the grid top) renders at y = topPadding - i*cellHeight;
+    // y=0 is screen top in this codebase (mirrored FBO), so the band sits
+    // above the grid. Slots with r < 0 (fewer than k rows exist above the
+    // viewport) emit plain bg quads so no transparent gap opens between the
+    // strip and the first scrollback row.
     const int k = m_bandK;
-    const int firstRow = qMax(0, m_scrollOffset - k);
-    const int lastRow = m_scrollOffset;
 
-    for (int r = firstRow; r < lastRow; ++r) {
-        const float y = m_topPadding - (m_scrollOffset - r) * m_cellHeight;
+    for (int i = 1; i <= k; ++i) {
+        const int r = m_scrollOffset - i;
+        const float y = m_topPadding - i * m_cellHeight;
+        if (r < 0) {
+            appendBandBgQuad(m_bandVertices, 0.0f, y,
+                             static_cast<float>(m_cols) * m_cellWidth);
+            continue;
+        }
         int x = 0;
         for (uint16_t col = 0; col < m_cols; ++col) {
             GhosttyPoint point = {};
@@ -496,23 +503,32 @@ void GLRenderer::Renderer::buildBandVertices(GhosttyTerminal terminal)
             if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS) {
                 // Defensive: out-of-bounds cell renders as an empty bg quad so
                 // the row stays aligned.
-                const float bgAlpha = m_bgOpacity;
-                const float pBgR = m_postBgR * bgAlpha, pBgG = m_postBgG * bgAlpha, pBgB = m_postBgB * bgAlpha, pBgA = bgAlpha;
-                const float pFgR = m_postFgR, pFgG = m_postFgG, pFgB = m_postFgB, pFgA = 1.0f;
-                const float x0 = static_cast<float>(x), x1 = static_cast<float>(x + m_cellWidth);
-                const float y0 = y, y1 = y + m_cellHeight;
-                m_bandVertices.append({x0, y0, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
-                m_bandVertices.append({x1, y0, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
-                m_bandVertices.append({x1, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
-                m_bandVertices.append({x0, y0, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
-                m_bandVertices.append({x1, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
-                m_bandVertices.append({x0, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+                appendBandBgQuad(m_bandVertices, static_cast<float>(x), y,
+                                 static_cast<float>(m_cellWidth));
                 x += m_cellWidth;
-                continue;
+            } else {
+                emitBandRowVertices(m_bandVertices, ref, y, x);
             }
-            emitBandRowVertices(m_bandVertices, ref, y, x);
         }
     }
+}
+
+// Emits one bg-only quad covering [x, x+width) x [y, y+cellHeight). Texcoord
+// (0,0) hits the atlas' reserved transparent pixel, so no glyph is sampled
+// (same trick as the cell-grid strips).
+void GLRenderer::Renderer::appendBandBgQuad(QVector<CellVertex> &out, float x, float y, float width)
+{
+    const float bgAlpha = m_bgOpacity;
+    const float pBgR = m_postBgR * bgAlpha, pBgG = m_postBgG * bgAlpha, pBgB = m_postBgB * bgAlpha, pBgA = bgAlpha;
+    const float pFgR = m_postFgR, pFgG = m_postFgG, pFgB = m_postFgB, pFgA = 1.0f;
+    const float x1 = x + width;
+    const float y1 = y + m_cellHeight;
+    out.append({x, y, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+    out.append({x1, y, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+    out.append({x1, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+    out.append({x, y, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+    out.append({x1, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
+    out.append({x, y1, 0, 0, pFgR, pFgG, pFgB, pFgA, pBgR, pBgG, pBgB, pBgA, 0});
 }
 
 void GLRenderer::Renderer::emitBandRowVertices(QVector<CellVertex> &out, GhosttyGridRef &ref, float y, int &x)
