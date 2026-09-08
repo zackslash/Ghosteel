@@ -306,10 +306,15 @@ private:
                                 Qt::KeyboardModifiers modifiers);
     void handleMultiTouchEnd(const QList<QTouchEvent::TouchPoint> &points);
 
-    // TUI single-finger touch -> synthetic mouse/wheel events
+    // TUI single-finger touch classification (tap / scroll / press-hold drag)
     void handleTuiTouchBegin(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchUpdate(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchEnd(QTouchEvent *event, const QList<QTouchEvent::TouchPoint> &points);
+    // Dissolve a TUI gesture without click semantics; closes a promoted
+    // Drag's held button and releases the grabs/latch/interactive state.
+    // Call from abandon paths except multi-touch begin, which defers the
+    // Drag release to handleMultiTouchEnd's net and owns the grabs itself.
+    void abandonTuiGesture();
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -332,14 +337,14 @@ private:
     QPointF m_selStart;   // pixel coordinates
     QPointF m_selEnd;     // pixel coordinates
     int m_longPressTimerId = 0;
-    static const int LongPressTimeout = 300; // ms — faster activation for better UX
+    static const int LongPressTimeout = 300; // ms — faster activation for better UX; also TUI hold -> Drag promotion
 
     // Tap detection for double/triple tap word/line selection
     qint64 m_lastTapTime = 0;     // ms since epoch
     QPointF m_lastTapPos;
     int m_tapCount = 0;            // 1=single, 2=double, 3=triple
     static const int TapTimeoutMs = 300;   // ms between taps for double/triple
-    static const int TapDistancePx = 30;   // max pixel distance between taps
+    static const int TapDistancePx = 30;   // max pixel distance between taps; also TUI tap/scroll threshold
 
     // Selected text (exposed to QML for share action)
     QString m_selectedText;
@@ -355,6 +360,18 @@ private:
     bool m_mouseTrackingActive = false;
     bool m_mouseButtonPressed = false;  // tracks any-button state for encoder
 
+    // Single-finger TUI gesture classification. Nothing reaches the app at
+    // touch-down: a lift within TapDistancePx synthesizes a click pair,
+    // movement past it becomes wheel-only scroll, and a LongPressTimeout hold
+    // promotes to a button drag (app-side selection). Sending PRESS + motion
+    // + RELEASE during scroll made TUI apps fire click actions mid-scroll
+    // (opencode: message actions fired mid-scroll).
+    enum class TuiGesture { None, TapPending, Scroll, Drag };
+    TuiGesture m_tuiGesture = TuiGesture::None;
+    QPointF m_tuiAnchorPos;   // TapPending anchor; a promoted Drag PRESSes here
+    QPointF m_tuiLastPos;     // last seen touch position, for bare releases
+    Qt::KeyboardModifiers m_tuiMods = Qt::NoModifier;
+    int m_tuiHoldTimerId = 0; // TapPending -> Drag promotion timer
     qreal m_tuiScrollAccumulator = 0;
     qreal m_tuiDragLastY = 0;
 
@@ -380,7 +397,7 @@ private:
     // Touch state machine:
     //   Idle -> [≥2 fingers] -> MultiTouch (Undecided -> Scrolling | Pinching)
     //   MultiTouch -> [all fingers up or drop below 2] -> Idle
-    //   TUI mode: single-finger touches are grabbed and forwarded as synthetic mouse events
+    //   TUI mode: single-finger touches are classified (tap / scroll / press-hold drag)
     //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
     GestureMode m_gestureMode = GestureMode::Undecided;

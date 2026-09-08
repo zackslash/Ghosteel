@@ -530,6 +530,9 @@ void TerminalView::onShellExited(int exitCode)
     qInfo() << "Shell exited with code" << exitCode;
     m_shellExited = true;
     m_shellExitCode = exitCode;
+    // Close out any in-flight TUI gesture so its hold timer can't fire into
+    // the dead terminal or leak a stale release into the restarted shell.
+    abandonTuiGesture();
     if (!m_commandArgs.isEmpty()) {
         Q_EMIT commandExited(exitCode);
     }
