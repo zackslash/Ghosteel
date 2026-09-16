@@ -141,7 +141,16 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
         setenv("GHOSTTY_RESOURCES_DIR", resourceDir.constData(), 1);
     }
 
+    // SIGHUP is blocked across the fork so a stop() kill landing before
+    // the child's reset in setupChildProcess() stays pending.
+    sigset_t hupMask, savedMask;
+    sigemptyset(&hupMask);
+    sigaddset(&hupMask, SIGHUP);
+    pthread_sigmask(SIG_BLOCK, &hupMask, &savedMask);
+
     pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
+    if (pid != 0)
+        pthread_sigmask(SIG_SETMASK, &savedMask, nullptr);
     if (pid < 0) {
         qWarning() << "forkpty failed:" << strerror(errno);
         ::close(execPipe[0]);
@@ -300,6 +309,21 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 // Runs in CHILD between fork and exec — async-signal-safe calls only.
 void PtyManager::setupChildProcess(const char *workingDir, const char *homeDir)
 {
+    // Until exec the child is an image of this process, so a signal in
+    // the window runs a parent-installed handler with the parent's state
+    // and fds. Dispositions are reset before the unblock: a pended SIGHUP
+    // then delivers under SIG_DFL. EINVAL for SIGKILL/SIGSTOP is expected
+    // and ignored.
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_DFL;
+    sigemptyset(&sa.sa_mask);
+    for (int sig = 1; sig < NSIG; ++sig)
+        ::sigaction(sig, &sa, nullptr);
+    sigset_t empty;
+    sigemptyset(&empty);
+    ::sigprocmask(SIG_SETMASK, &empty, nullptr);
+
     setsid();
     if (workingDir && workingDir[0]) {
         // Fall back to HOME; if that fails too the child keeps the
