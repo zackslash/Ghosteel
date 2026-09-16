@@ -353,6 +353,148 @@ private slots:
         pty.stop();
     }
 
+    // --- Login-flag (-l) hop behavior ---
+
+    static bool writeArgvRecordingScript(const QString &path)
+    {
+        QFile script(path);
+        if (!script.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            return false;
+        script.write("#!/bin/sh\n"
+                     "printf 'argv:%s\\n' \"$*\" > \"$GHOSTEEL_ARGV_RECORD\"\n");
+        script.close();
+        return QFile::setPermissions(path, QFileDevice::ReadOwner
+                                               | QFileDevice::WriteOwner
+                                               | QFileDevice::ExeOwner);
+    }
+
+    // The script's basename is what login detection matches on;
+    // viaCommand routes through startCommand instead of startShell.
+    static void runHopAndRecordArgv(const QString &scriptName, bool viaCommand,
+                                    QByteArray *argvLine)
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString shellPath = home.path() + QLatin1Char('/') + scriptName;
+        QVERIFY(writeArgvRecordingScript(shellPath));
+
+        const QString recordPath = home.path() + QStringLiteral("/argv.txt");
+        const QByteArray savedRecord = qgetenv("GHOSTEEL_ARGV_RECORD");
+        qputenv("GHOSTEEL_ARGV_RECORD", recordPath.toUtf8());
+
+        PtyManager pty;
+        bool started;
+        if (viaCommand) {
+            started = pty.startCommand(shellPath, QStringList(), 80, 24);
+        } else {
+            pty.setShellCommand(shellPath);
+            started = pty.startShell(80, 24);
+        }
+
+        // Restore before QVERIFY can abort; the child took its env copy at fork.
+        if (!savedRecord.isEmpty())
+            qputenv("GHOSTEEL_ARGV_RECORD", savedRecord.constData());
+        else
+            qunsetenv("GHOSTEEL_ARGV_RECORD");
+        QVERIFY(started);
+
+        // Wait for content, not bare existence: the child's open() creates
+        // the record before its write lands.
+        auto recordReady = [recordPath]() {
+            QFile record(recordPath);
+            return record.open(QIODevice::ReadOnly) && record.size() > 0;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(recordReady(), 5000);
+        QFile record(recordPath);
+        QVERIFY(record.open(QIODevice::ReadOnly));
+        *argvLine = record.readAll();
+        record.close();
+
+        pty.stop();
+    }
+
+    void testKnownShellHopGetsLoginFlag()
+    {
+        // Basename match: the shell name matters, not its directory.
+        QByteArray argvLine;
+        runHopAndRecordArgv(QStringLiteral("bash"), /*viaCommand=*/false, &argvLine);
+        QVERIFY2(argvLine.contains("argv:-l"),
+                 qPrintable(QStringLiteral("expected -l in argv, got: %1")
+                                .arg(QString::fromUtf8(argvLine))));
+    }
+
+    void testUnknownShellHopGetsNoLoginFlag()
+    {
+        // Non-shell commands like tmux would reject -l.
+        QByteArray argvLine;
+        runHopAndRecordArgv(QStringLiteral("notashell"), /*viaCommand=*/false, &argvLine);
+        QVERIFY(argvLine.contains("argv:"));
+        QVERIFY2(!argvLine.contains("-l"),
+                 qPrintable(QStringLiteral("unexpected -l in argv: %1")
+                                .arg(QString::fromUtf8(argvLine))));
+    }
+
+    void testCommandExecPathNeverGetsLoginFlag()
+    {
+        // Deliberately named bash: the -e path must not basename-match.
+        QByteArray argvLine;
+        runHopAndRecordArgv(QStringLiteral("bash"), /*viaCommand=*/true, &argvLine);
+        QVERIFY(argvLine.contains("argv:"));
+        QVERIFY2(!argvLine.contains("-l"),
+                 qPrintable(QStringLiteral("unexpected -l in argv: %1")
+                                .arg(QString::fromUtf8(argvLine))));
+    }
+
+    void testEnvShellHopGetsLoginFlag()
+    {
+        // The default device path: empty shell setting, so $SHELL is the
+        // live hop. With the configured hop failing exec, $SHELL takes
+        // over with -l.
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString envShell = home.path() + QStringLiteral("/bash");
+        QVERIFY(writeArgvRecordingScript(envShell));
+
+        const QString recordPath = home.path() + QStringLiteral("/argv.txt");
+        const QByteArray savedShell = qgetenv("SHELL");
+        const QByteArray savedRecord = qgetenv("GHOSTEEL_ARGV_RECORD");
+        qputenv("SHELL", envShell.toUtf8());
+        qputenv("GHOSTEEL_ARGV_RECORD", recordPath.toUtf8());
+
+        PtyManager pty;
+        pty.setShellCommand(QStringLiteral("/nonexistent/first-hop"));
+        QSignalSpy noticeSpy(&pty, &PtyManager::shellFallbackNotice);
+        QVERIFY(pty.startShell(80, 24));
+
+        if (!savedShell.isEmpty())
+            qputenv("SHELL", savedShell.constData());
+        else
+            qunsetenv("SHELL");
+        if (!savedRecord.isEmpty())
+            qputenv("GHOSTEEL_ARGV_RECORD", savedRecord.constData());
+        else
+            qunsetenv("GHOSTEEL_ARGV_RECORD");
+
+        // The fallback notice proves the recording exec was the $SHELL hop.
+        QVERIFY(noticeSpy.wait(5000));
+
+        auto recordReady = [recordPath]() {
+            QFile record(recordPath);
+            return record.open(QIODevice::ReadOnly) && record.size() > 0;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(recordReady(), 5000);
+        QFile record(recordPath);
+        QVERIFY(record.open(QIODevice::ReadOnly));
+        const QByteArray argvLine = record.readAll();
+        record.close();
+
+        QVERIFY2(argvLine.contains("argv:-l"),
+                 qPrintable(QStringLiteral("expected -l in argv, got: %1")
+                                .arg(QString::fromUtf8(argvLine))));
+
+        pty.stop();
+    }
+
     void testZshFirstRunBootstrapsPromptFix()
     {
         // First run with zsh as the shell creates ~/.zshrc carrying a
