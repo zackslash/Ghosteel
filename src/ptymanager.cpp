@@ -218,6 +218,19 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         hopNames.append(QStringLiteral("sh"));
     }
 
+    // Shells exec with -l: SailfishOS's busybox sh reads /etc/profile and
+    // ~/.profile only for login shells (fingerterm uses --login likewise).
+    // The basename gate keeps -l away from non-shell commands like tmux,
+    // which reject it.
+    const QStringList loginShells = {QStringLiteral("sh"), QStringLiteral("ash"),
+                                     QStringLiteral("bash"), QStringLiteral("dash"),
+                                     QStringLiteral("zsh"), QStringLiteral("ksh"),
+                                     QStringLiteral("fish"), QStringLiteral("csh"),
+                                     QStringLiteral("tcsh"), QStringLiteral("mksh")};
+    bool hopIsLogin[3] = {};
+    for (int i = 0; i < hopCount; ++i)
+        hopIsLogin[i] = loginShells.contains(QFileInfo(hopNames.at(i)).fileName());
+
     // One notice line per adjacent hop pair, written to the pty (fd 2) before
     // the fallback exec. Translated in the parent; the child only writes the
     // pre-built UTF-8 bytes. No strerror text here: the child cannot call
@@ -281,7 +294,11 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
                                               zshBootNotice.size());
                 (void)bootWritten;
             }
-            execlp(hops[i], hops[i], nullptr);
+            // "-l" is a static literal: async-signal-safe in the child.
+            if (hopIsLogin[i])
+                execlp(hops[i], hops[i], "-l", nullptr);
+            else
+                execlp(hops[i], hops[i], nullptr);
             int execErr = errno;
             if (i + 1 < hopCount) {
                 ssize_t noticeWritten = ::write(2, noticeLines[i].constData(), noticeLines[i].size());
