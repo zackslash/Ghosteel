@@ -6,8 +6,15 @@
 
 #include <QtCore>
 
-// Ghostty types (defined in ghostty/vt/key/event.h)
+// Ghostty types (defined in ghostty/vt/key/event.h). The header carries no
+// extern "C" guards of its own, so include it inside one to keep C linkage.
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <ghostty/vt/key/event.h>
+#ifdef __cplusplus
+}
+#endif
 
 namespace KeyMapping {
 
@@ -23,6 +30,12 @@ GhosttyMods mapQtModifiers(Qt::KeyboardModifiers mods);
 // Maps a-z, 0-9, and common punctuation. Returns GHOSTTY_KEY_UNIDENTIFIED
 // for characters that can't be mapped.
 GhosttyKey mapCharToKey(QChar ch);
+
+// Reverse of mapCharToKey: the base-layout ASCII codepoint a text-producing
+// GhosttyKey encodes as, or 0 for functional/modifier keys. This is the
+// "unshifted codepoint" the ghostty key-event API wants for protocol-level
+// (kitty/CSI-u) encoding of modified keys.
+uint32_t keyToUnshiftedCodepoint(GhosttyKey key);
 
 } // namespace KeyMapping
 

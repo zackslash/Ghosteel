@@ -449,10 +449,14 @@ GHOSTTY_API void ghostty_key_encoder_setopt_from_terminal(
 GHOSTTY_API void ghostty_key_encoder_setopt(
     GhosttyKeyEncoder, GhosttyKeyEncoderOption, const void*) {}
 
+static GhosttyStubKeyEvent g_stubs_lastKeyEvent = {};
+static bool g_stubs_keyEventEncoded = false;
+
 GHOSTTY_API GhosttyResult ghostty_key_encoder_encode(
     GhosttyKeyEncoder, GhosttyKeyEvent,
     char* out, size_t cap, size_t* written)
 {
+    g_stubs_keyEventEncoded = true;
     if (written) *written = 0;
     (void)out; (void)cap;
     return GHOSTTY_SUCCESS;
@@ -460,9 +464,25 @@ GHOSTTY_API GhosttyResult ghostty_key_encoder_encode(
 
 // ---- Key event ----
 
+void ghostty_stubs_reset_key_event(void)
+{
+    g_stubs_lastKeyEvent = GhosttyStubKeyEvent{};
+    g_stubs_keyEventEncoded = false;
+}
+
+bool ghostty_stubs_last_key_event(GhosttyStubKeyEvent *out)
+{
+    if (!out || !g_stubs_keyEventEncoded)
+        return false;
+    *out = g_stubs_lastKeyEvent;
+    return true;
+}
+
 GHOSTTY_API GhosttyResult ghostty_key_event_new(
     const GhosttyAllocator*, GhosttyKeyEvent* out)
 {
+    // Fresh record per event: back-to-back encodes must not leak fields.
+    ghostty_stubs_reset_key_event();
     if (out) *out = (GhosttyKeyEvent)1;
     return GHOSTTY_SUCCESS;
 }
@@ -476,14 +496,20 @@ GHOSTTY_API GhosttyKeyAction ghostty_key_event_get_action(GhosttyKeyEvent)
     return GHOSTTY_KEY_ACTION_PRESS;
 }
 
-GHOSTTY_API void ghostty_key_event_set_key(GhosttyKeyEvent, GhosttyKey) {}
+GHOSTTY_API void ghostty_key_event_set_key(GhosttyKeyEvent, GhosttyKey key)
+{
+    g_stubs_lastKeyEvent.key = key;
+}
 
 GHOSTTY_API GhosttyKey ghostty_key_event_get_key(GhosttyKeyEvent)
 {
     return GHOSTTY_KEY_UNIDENTIFIED;
 }
 
-GHOSTTY_API void ghostty_key_event_set_mods(GhosttyKeyEvent, GhosttyMods) {}
+GHOSTTY_API void ghostty_key_event_set_mods(GhosttyKeyEvent, GhosttyMods mods)
+{
+    g_stubs_lastKeyEvent.mods = mods;
+}
 
 GHOSTTY_API GhosttyMods ghostty_key_event_get_mods(GhosttyKeyEvent) { return 0; }
 
@@ -495,7 +521,14 @@ GHOSTTY_API void ghostty_key_event_set_composing(GhosttyKeyEvent, bool) {}
 
 GHOSTTY_API bool ghostty_key_event_get_composing(GhosttyKeyEvent) { return false; }
 
-GHOSTTY_API void ghostty_key_event_set_utf8(GhosttyKeyEvent, const char*, size_t) {}
+GHOSTTY_API void ghostty_key_event_set_utf8(GhosttyKeyEvent, const char* utf8, size_t len)
+{
+    if (len >= sizeof(g_stubs_lastKeyEvent.utf8))
+        len = sizeof(g_stubs_lastKeyEvent.utf8) - 1;
+    if (utf8 && len) memcpy(g_stubs_lastKeyEvent.utf8, utf8, len);
+    g_stubs_lastKeyEvent.utf8_len = len;
+    g_stubs_lastKeyEvent.utf8[len] = '\0';
+}
 
 GHOSTTY_API const char* ghostty_key_event_get_utf8(GhosttyKeyEvent, size_t* len)
 {
@@ -503,7 +536,10 @@ GHOSTTY_API const char* ghostty_key_event_get_utf8(GhosttyKeyEvent, size_t* len)
     return nullptr;
 }
 
-GHOSTTY_API void ghostty_key_event_set_unshifted_codepoint(GhosttyKeyEvent, uint32_t) {}
+GHOSTTY_API void ghostty_key_event_set_unshifted_codepoint(GhosttyKeyEvent, uint32_t codepoint)
+{
+    g_stubs_lastKeyEvent.unshifted_codepoint = codepoint;
+}
 
 GHOSTTY_API uint32_t ghostty_key_event_get_unshifted_codepoint(GhosttyKeyEvent) { return 0; }
 

@@ -91,6 +91,7 @@ add_test(NAME TextUtil COMMAND tst_textutil)
 add_executable(tst_osc777
     tst_osc777.cpp
     ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/../src/keymapping.cpp
     ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
 )
 # No -include stub needed — GhosttyVt doesn't depend on TerminalView.
@@ -105,6 +106,7 @@ add_test(NAME Osc777 COMMAND tst_osc777)
 add_executable(tst_osc52
     tst_osc52.cpp
     ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/../src/keymapping.cpp
     ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
 )
 target_include_directories(tst_osc52 PRIVATE SYSTEM
@@ -125,6 +127,7 @@ add_test(NAME WordBoundary COMMAND tst_word_boundary)
 add_executable(tst_scrollback_format
     tst_scrollback_format.cpp
     ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/../src/keymapping.cpp
     ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
 )
 target_include_directories(tst_scrollback_format PRIVATE SYSTEM
@@ -153,6 +156,7 @@ add_test(NAME UrlDetection COMMAND tst_url_detection)
 add_executable(tst_default_modes
     tst_default_modes.cpp
     ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/../src/keymapping.cpp
     ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
 )
 target_include_directories(tst_default_modes PRIVATE SYSTEM
@@ -160,6 +164,19 @@ target_include_directories(tst_default_modes PRIVATE SYSTEM
 )
 target_link_libraries(tst_default_modes PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME DefaultModes COMMAND tst_default_modes)
+
+# --- Key encoding contract (kitty-protocol modifier preservation) tests ---
+add_executable(tst_key_encoding
+    tst_key_encoding.cpp
+    ${CMAKE_SOURCE_DIR}/../src/ghosttyvt.cpp
+    ${CMAKE_SOURCE_DIR}/../src/keymapping.cpp
+    ${CMAKE_SOURCE_DIR}/stubs/ghostty_stubs.cpp
+)
+target_include_directories(tst_key_encoding PRIVATE SYSTEM
+    ${CMAKE_SOURCE_DIR}/stubs
+)
+target_link_libraries(tst_key_encoding PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME KeyEncoding COMMAND tst_key_encoding)
 
 # --- Terminal character width (East Asian Width) tests ---
 add_executable(tst_terminal_width
