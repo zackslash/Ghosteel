@@ -92,16 +92,19 @@ if [ -f "%{_sourcedir}/zig-deps-cache.tar.gz" ]; then
     tar -xzf "%{_sourcedir}/zig-deps-cache.tar.gz" -C "${ZIG_CACHE}"
 fi
 
-# Apply carried patches to the ghostty submodule (upstream fixes not yet
-# on main). A patch that no longer applies is skipped: upstream fixed or
+# Apply carried patches to the ghostty submodule (local fixes not yet
+# upstream). A patch that no longer applies is skipped: upstream fixed or
 # reworked the code. Remove the file once its fix lands upstream.
 for p in patches/*.patch; do
     [ -f "$p" ] || continue
     if patch --forward --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
-        patch --forward -d ghostty -p1 < "$p"
+        patch --forward -d ghostty -p1 < "$p" || { echo "ERROR: failed to apply carried patch: $p" >&2; exit 1; }
         echo "Applied carried patch: $p"
+    elif patch --reverse --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
+        echo "Skipping carried patch (already applied): $p"
     else
-        echo "Skipping carried patch (already applied or upstream changed): $p"
+        echo "ERROR: carried patch neither applies nor is already applied: $p" >&2
+        exit 1
     fi
 done
 

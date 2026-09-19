@@ -45,23 +45,29 @@ build_arch() {
 }
 
 # Apply carried ghostty patches (patches/*.patch) to the submodule working
-# tree. A patch that no longer applies is skipped: upstream fixed or
-# reworked the code. Remove the file once its fix lands upstream.
+# tree. Local runs leave the submodule tree dirty (patch applied); run
+# `git -C ghostty checkout -- .` before the next submodule bump.
 apply_carried_patches() {
-    local p name
+    local p
     for p in "$PROJECT_ROOT"/patches/*.patch; do
         [ -f "$p" ] || continue
-        name="$(basename "$p")"
         if git -C "$GHOSTTY_DIR" apply --check "$p" 2>/dev/null; then
             git -C "$GHOSTTY_DIR" apply "$p"
-            echo "Applied carried patch: $name"
+            echo "Applied carried patch: $p"
+        elif git -C "$GHOSTTY_DIR" apply --check --reverse "$p" 2>/dev/null; then
+            echo "Skipping carried patch (already applied): $p"
         else
-            echo "Skipping carried patch (already applied or upstream changed): $name"
+            echo "ERROR: carried patch neither applies nor is already applied: $p" >&2
+            exit 1
         fi
     done
 }
 
 main() {
+    # Shared zig-out path is not covered by zig's cache locking.
+    exec 9>"$PROJECT_ROOT/.build-libs.lock"
+    flock 9
+
     local arch="${1:-all}"
 
     check_zig
