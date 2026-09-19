@@ -234,6 +234,82 @@ private slots:
         QCOMPARE(KeyMapping::mapCharToKey(QChar(0x4E16)), GHOSTTY_KEY_UNIDENTIFIED); // 世
         QCOMPARE(KeyMapping::mapCharToKey(QChar(0xD83D)), GHOSTTY_KEY_UNIDENTIFIED); // surrogate half
     }
+
+    // --- keyToUnshiftedCodepoint: Letters ---
+    void testCodepointLetters_data()
+    {
+        QTest::addColumn<int>("key");
+        QTest::addColumn<uint32_t>("expected");
+        for (char c = 'a'; c <= 'z'; c++) {
+            QTest::newRow(qPrintable(QString(c)))
+                << static_cast<int>(GHOSTTY_KEY_A + (c - 'a'))
+                << static_cast<uint32_t>(c);
+        }
+    }
+    void testCodepointLetters()
+    {
+        QFETCH(int, key);
+        QFETCH(uint32_t, expected);
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(static_cast<GhosttyKey>(key)), expected);
+    }
+
+    // --- keyToUnshiftedCodepoint: Digits ---
+    void testCodepointDigits_data()
+    {
+        QTest::addColumn<int>("key");
+        QTest::addColumn<uint32_t>("expected");
+        for (char c = '0'; c <= '9'; c++) {
+            QTest::newRow(qPrintable(QString(c)))
+                << static_cast<int>(GHOSTTY_KEY_DIGIT_0 + (c - '0'))
+                << static_cast<uint32_t>(c);
+        }
+    }
+    void testCodepointDigits()
+    {
+        QFETCH(int, key);
+        QFETCH(uint32_t, expected);
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(static_cast<GhosttyKey>(key)), expected);
+    }
+
+    // --- keyToUnshiftedCodepoint: Punctuation and space ---
+    void testCodepointPunctuation()
+    {
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_MINUS), uint32_t('-'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_EQUAL), uint32_t('='));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_BRACKET_LEFT), uint32_t('['));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_BRACKET_RIGHT), uint32_t(']'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_BACKSLASH), uint32_t('\\'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_SEMICOLON), uint32_t(';'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_QUOTE), uint32_t('\''));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_COMMA), uint32_t(','));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_PERIOD), uint32_t('.'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_SLASH), uint32_t('/'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_BACKQUOTE), uint32_t('`'));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_SPACE), uint32_t(' '));
+    }
+
+    // --- keyToUnshiftedCodepoint: Functional keys map to 0 ---
+    void testCodepointFunctionalKeys()
+    {
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_ENTER), uint32_t(0));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_TAB), uint32_t(0));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_BACKSPACE), uint32_t(0));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_ESCAPE), uint32_t(0));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_ARROW_UP), uint32_t(0));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_F5), uint32_t(0));
+        QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(GHOSTTY_KEY_UNIDENTIFIED), uint32_t(0));
+    }
+
+    // --- keyToUnshiftedCodepoint: Round trip with mapCharToKey ---
+    void testCharKeyRoundTrip()
+    {
+        const QString chars = QStringLiteral("abcdefghijklmnopqrstuvwxyz0123456789"
+                                              "-=[]\\;',./` ");
+        for (const QChar &ch : chars)
+            QCOMPARE(KeyMapping::keyToUnshiftedCodepoint(
+                         KeyMapping::mapCharToKey(ch)),
+                     static_cast<uint32_t>(ch.unicode()));
+    }
 };
 
 QTEST_MAIN(TestKeyMapping)

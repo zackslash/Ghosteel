@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include "keymapping.h"
 #include "terminalwidth.h"
 
 GhosttyVt::GhosttyVt(QObject *parent)
@@ -341,8 +342,35 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     ghostty_key_event_set_action(event, action);
     ghostty_key_event_set_key(event, key);
     ghostty_key_event_set_mods(event, mods);
-    if (utf8 && utf8Len > 0)
-        ghostty_key_event_set_utf8(event, utf8, utf8Len);
+
+    uint32_t codepoint = KeyMapping::keyToUnshiftedCodepoint(key);
+
+    // Kitty-protocol apps (fish 4, neovim) encode modified text keys from the
+    // unshifted codepoint; the kitty table has no letter entries, so without
+    // it the encoder writes the utf8 text verbatim and drops Ctrl/Alt/Super.
+    // Plain and shift-only typing must keep the raw-text path, so set it only
+    // when a non-shift modifier is held.
+    if (mods & (GHOSTTY_MODS_CTRL | GHOSTTY_MODS_ALT | GHOSTTY_MODS_SUPER)) {
+        if (codepoint > 0)
+            ghostty_key_event_set_unshifted_codepoint(event, codepoint);
+    }
+
+    // The C API forbids C0/DEL bytes in utf8. Hardware Ctrl+letter arrives
+    // from Qt as exactly such a byte; map it back to the key's base
+    // character when the two agree (needed once shift or super joins ctrl;
+    // kitty uses the codepoint either way). Other control bytes are simply
+    // dropped; functional keys keep their table-driven encodings via
+    // codepoint == 0.
+    if (utf8 && utf8Len > 0) {
+        unsigned char first = static_cast<unsigned char>(utf8[0]);
+        if (first >= 0x20 && first != 0x7F) {
+            ghostty_key_event_set_utf8(event, utf8, utf8Len);
+        } else if ((mods & GHOSTTY_MODS_CTRL) && codepoint > 0
+                   && (codepoint & 0x1F) == first) {
+            char base = static_cast<char>(codepoint);
+            ghostty_key_event_set_utf8(event, &base, 1);
+        }
+    }
 
     size_t required = 0;
     ghostty_key_encoder_encode(m_keyEncoder, event, nullptr, 0, &required);

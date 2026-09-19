@@ -15,8 +15,27 @@
 extern "C" {
 #endif
 
+// key/event.h carries no extern "C" guards of its own; include it inside
+// one (as vt.h does) so its declarations keep C linkage in C++ TUs.
+#include <ghostty/vt/key/event.h>
+
 // Clear all recorded mode-set calls. Call at the start of each test.
 void ghostty_stubs_reset_modes(void);
+
+// Test-visible recorder for the key event passed to GhosttyVt::encodeKeyEvent.
+// The stubs record the last event's setters; last_key_event returns it only
+// after ghostty_key_encoder_encode ran, so tests assert what was actually
+// encoded (contract level, not engine behavior).
+typedef struct {
+    GhosttyKey key;
+    GhosttyMods mods;
+    uint32_t unshifted_codepoint; // 0 when never set
+    char utf8[64];                // "" when never set
+    size_t utf8_len;
+} GhosttyStubKeyEvent;
+
+void ghostty_stubs_reset_key_event(void);
+bool ghostty_stubs_last_key_event(GhosttyStubKeyEvent *out);
 
 // Returns true if a mode was set via ghostty_terminal_set with
 // GHOSTTY_TERMINAL_OPT_MODE or GHOSTTY_TERMINAL_OPT_MODE_DEFAULT since
