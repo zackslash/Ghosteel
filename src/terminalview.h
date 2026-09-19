@@ -306,15 +306,20 @@ private:
                                 Qt::KeyboardModifiers modifiers);
     void handleMultiTouchEnd(const QList<QTouchEvent::TouchPoint> &points);
 
-    // TUI single-finger touch classification (tap / scroll / press-hold drag)
+    // TUI single-finger touch classification (tap / scroll / press-hold select)
     void handleTuiTouchBegin(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchUpdate(QTouchEvent *event, const QTouchEvent::TouchPoint &pt);
     void handleTuiTouchEnd(QTouchEvent *event, const QList<QTouchEvent::TouchPoint> &points);
-    // Dissolve a TUI gesture without click semantics; closes a promoted
-    // Drag's held button and releases the grabs/latch/interactive state.
-    // Call from abandon paths except multi-touch begin, which defers the
-    // Drag release to handleMultiTouchEnd's net and owns the grabs itself.
+    // Dissolve a TUI gesture without click semantics; releases the
+    // grabs/latch/interactive state. Call from abandon paths except
+    // multi-touch begin, which owns the grabs itself and defers a held mouse
+    // button to handleMultiTouchEnd's net.
     void abandonTuiGesture();
+    // Shared by the native mouse drag and the TUI touch Select gesture.
+    void extendSelectionTo(const QPointF &pos);
+    void finishSelection(const QPointF &pos);
+    // Anchor a fresh long-press selection at the press point.
+    void beginDragSelection(const QPointF &anchor);
 
     // --- Core terminal state ---
     GhosttyVt *m_vt = nullptr;
@@ -337,7 +342,7 @@ private:
     QPointF m_selStart;   // pixel coordinates
     QPointF m_selEnd;     // pixel coordinates
     int m_longPressTimerId = 0;
-    static const int LongPressTimeout = 300; // ms — faster activation for better UX; also TUI hold -> Drag promotion
+    static const int LongPressTimeout = 300; // ms — faster activation for better UX; also TUI hold -> Select promotion
 
     // Tap detection for double/triple tap word/line selection
     qint64 m_lastTapTime = 0;     // ms since epoch
@@ -363,17 +368,16 @@ private:
     // Single-finger TUI gesture classification. Nothing reaches the app at
     // touch-down: a lift within TapDistancePx synthesizes a click pair,
     // movement past it becomes wheel-only scroll, and a LongPressTimeout hold
-    // promotes to a button drag (app-side selection). Sending PRESS + motion
-    // + RELEASE during scroll made TUI apps fire click actions mid-scroll
-    // (opencode: message actions fired mid-scroll).
-    enum class TuiGesture { None, TapPending, Scroll, Drag };
+    // promotes to native text selection (the only marking path when the app
+    // owns the mouse). Sending PRESS + motion + RELEASE to the app mid-scroll
+    // made TUI apps fire click actions (opencode: message actions mid-scroll).
+    enum class TuiGesture { None, TapPending, Scroll, Select };
     TuiGesture m_tuiGesture = TuiGesture::None;
-    QPointF m_tuiAnchorPos;   // TapPending anchor; a promoted Drag PRESSes here
-    QPointF m_tuiLastPos;     // last seen touch position, for bare releases
+    QPointF m_tuiAnchorPos;   // TapPending anchor; a promoted Select starts here
     Qt::KeyboardModifiers m_tuiMods = Qt::NoModifier;
-    int m_tuiHoldTimerId = 0; // TapPending -> Drag promotion timer
+    int m_tuiHoldTimerId = 0; // TapPending -> Select promotion timer
     qreal m_tuiScrollAccumulator = 0;
-    qreal m_tuiDragLastY = 0;
+    qreal m_tuiScrollLastY = 0;
 
     // Qt keys consumed as app shortcuts (Ctrl+Shift+C/V/F/...). A set, not a
     // single key, so two shortcuts held together (e.g. C then V) each keep
@@ -397,7 +401,7 @@ private:
     // Touch state machine:
     //   Idle -> [≥2 fingers] -> MultiTouch (Undecided -> Scrolling | Pinching)
     //   MultiTouch -> [all fingers up or drop below 2] -> Idle
-    //   TUI mode: single-finger touches are classified (tap / scroll / press-hold drag)
+    //   TUI mode: single-finger touches are classified (tap / scroll / press-hold select)
     //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
     GestureMode m_gestureMode = GestureMode::Undecided;

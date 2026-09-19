@@ -48,14 +48,6 @@ void TerminalView::abandonTuiGesture()
         m_tuiHoldTimerId = 0;
     }
     const bool wasActive = m_tuiGesture != TuiGesture::None;
-    if (m_tuiGesture == TuiGesture::Drag) {
-        // A promoted drag already sent PRESS; close the button or SGR apps
-        // stick in select-mode (no release will ever be delivered).
-        sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
-                       m_tuiLastPos, KeyMapping::mapQtModifiers(m_tuiMods));
-        m_mouseButtonPressed = false;
-        m_vt->setMouseButtonPressed(false);
-    }
     m_tuiGesture = TuiGesture::None;
     if (wasActive) {
         // Full exit: abandon paths get no End event that could rebalance
@@ -174,6 +166,53 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
     QQuickItem::mousePressEvent(event);
 }
 
+void TerminalView::extendSelectionTo(const QPointF &pos)
+{
+    if (!m_selecting)
+        return;
+    // Only track movement for long-press drags (handles not yet visible).
+    // Word/line selections have finalized endpoints — use handles to adjust.
+    if (!m_handlesVisible)
+        m_selEnd = pos;
+    // Magnifier stays visible for the whole drag (bracketed by the long-press
+    // fire and finish), and blink repaints flicker it — pin blink solid.
+    holdBlinkSolid();
+    update();
+}
+
+void TerminalView::finishSelection(const QPointF &pos)
+{
+    if (!m_selecting)
+        return;
+    if (!m_handlesVisible) {
+        m_selEnd = pos;
+        // Cancel if finger didn't move enough — long-press without drag
+        // would create a phantom single-character selection
+        if (QLineF(m_selStart, m_selEnd).length() < TapDistancePx) {
+            clearSelection();
+            return;
+        }
+        copySelection();
+    }
+    m_magnifierVisible = false;
+    m_handlesVisible = true;
+    update();
+}
+
+void TerminalView::beginDragSelection(const QPointF &anchor)
+{
+    m_selStart = anchor;
+    m_selEnd = anchor;
+    m_selecting = true;
+    m_magnifierVisible = true;
+    // Pin from selection start: blink repaints flicker the magnifier during a
+    // still-hold (the drag pin only fires once the finger moves).
+    holdBlinkSolid();
+    // Prevent parent SilicaFlickable from stealing the drag
+    setKeepMouseGrab(true);
+    update();
+}
+
 void TerminalView::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_draggingHandle != 0) {
@@ -193,23 +232,7 @@ void TerminalView::mouseMoveEvent(QMouseEvent *event)
     }
 
     if (m_selecting) {
-        // Only track movement for long-press drags (handles not yet visible).
-        // Word/line selections have finalized endpoints — use handles to adjust.
-        if (!m_handlesVisible) {
-            m_selEnd = event->pos();
-        }
-
-        // Magnifier stays visible for the whole drag — no velocity-based hiding.
-        // Visibility is bracketed by timerEvent (show on long-press fire) and
-        // mouseReleaseEvent (hide on release). Velocity gating caused flicker
-        // (hysteresis band sat inside typical drag velocity) and stuck-invisible
-        // when the finger stopped mid-drag (no move events to revive it).
-
-        // Keep cursor blink paused during active selection to prevent
-        // full redraws that cause magnifier flicker
-        holdBlinkSolid();
-
-        update();
+        extendSelectionTo(event->pos());
         event->accept();
         return;
     }
@@ -329,22 +352,7 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     }
 
     if (m_selecting) {
-        // Only update endpoint for long-press drags (handles not yet visible).
-        // Word/line selections already finalized their endpoints.
-        if (!m_handlesVisible) {
-            m_selEnd = event->pos();
-            // Cancel if finger didn't move enough — long-press without drag
-            // would create a phantom single-character selection
-            if (QLineF(m_selStart, m_selEnd).length() < TapDistancePx) {
-                clearSelection();
-                event->accept();
-                return;
-            }
-            copySelection();
-        }
-        m_magnifierVisible = false;
-        m_handlesVisible = true;
-        update();
+        finishSelection(event->pos());
         event->accept();
         return;
     }
@@ -365,8 +373,8 @@ void TerminalView::mouseUngrabEvent()
     }
     if (m_selecting && !m_handlesVisible)
         clearSelection();
-    // Same story for an in-flight TUI gesture: no end events will follow the
-    // steal, so dissolve it and close a promoted Drag's held button.
+    // Same for an in-flight TUI gesture: no end events follow the steal; the
+    // net above drops an in-flight Select.
     abandonTuiGesture();
     QQuickItem::mouseUngrabEvent();
 }
@@ -489,7 +497,7 @@ void TerminalView::touchEvent(QTouchEvent *event)
 
     // TUI mode (mouse tracking): classify single-finger touches before
     // anything reaches the app (tap -> click pair on lift, move -> wheel-only
-    // scroll, press-hold -> button drag). Begin gates on the LIVE tracking
+    // scroll, press-hold -> native selection). Begin gates on the LIVE tracking
     // mode — the latched flag is false at gesture start, so gating Begin on
     // it lets Qt synthesize a mouse press and the app receives an immediate
     // PRESS before classification. Updates/ends keep routing on the latch so
@@ -535,6 +543,8 @@ void TerminalView::handleTuiTouchBegin(QTouchEvent *event,
     }
     resetSessionSwipe();   // TUI path grabs everything; keep the swipe flag honest
     abandonTuiGesture();   // a missed End must not leak a held button into the next gesture
+    if (m_selecting)
+        clearSelection();   // a prior Select's finalized selection, like a native press
     event->accept();
     setKeepMouseGrab(true);
     setKeepTouchGrab(true);
@@ -543,7 +553,6 @@ void TerminalView::handleTuiTouchBegin(QTouchEvent *event,
     grabMouse();
     m_tuiGesture = TuiGesture::TapPending;
     m_tuiAnchorPos = pt.pos();
-    m_tuiLastPos = pt.pos();
     m_tuiMods = event->modifiers();
     m_tuiScrollAccumulator = 0;
     m_tuiHoldTimerId = startTimer(LongPressTimeout);
@@ -555,7 +564,6 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
                                         const QTouchEvent::TouchPoint &pt)
 {
     event->accept();
-    m_tuiLastPos = pt.pos();
 
     switch (m_tuiGesture) {
     case TuiGesture::TapPending:
@@ -567,21 +575,21 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
             m_tuiGesture = TuiGesture::Scroll;
             // Re-baseline so the classification travel itself scrolls
             // nothing on the first classified frame.
-            m_tuiDragLastY = pt.pos().y();
+            m_tuiScrollLastY = pt.pos().y();
             m_tuiScrollAccumulator = 0;
         }
         return;
     case TuiGesture::Scroll: {
         qreal deltaY;
-        if (m_tuiDragLastY < 0) {
+        if (m_tuiScrollLastY < 0) {
             // Re-baseline after a two-finger interlude (handleMultiTouchEnd
-            // sets m_tuiDragLastY to -1) so the first motion after the
+            // sets m_tuiScrollLastY to -1) so the first motion after the
             // interlude doesn't emit a wheel jump from a stale origin.
-            m_tuiDragLastY = pt.pos().y();
+            m_tuiScrollLastY = pt.pos().y();
             deltaY = 0;
         } else {
-            deltaY = pt.pos().y() - m_tuiDragLastY;
-            m_tuiDragLastY = pt.pos().y();
+            deltaY = pt.pos().y() - m_tuiScrollLastY;
+            m_tuiScrollLastY = pt.pos().y();
         }
         qreal newDelta = deltaY / m_cellHeight; // positive: down-drag = scroll up (natural scrolling)
         auto scrollResult = TextUtil::accumulateScroll(
@@ -600,15 +608,9 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
         // state from it, and a scrolling finger must not click or select.
         return;
     }
-    case TuiGesture::Drag: {
-        // Button drag only — one interaction type per gesture; no wheel.
-        QMouseEvent synthMove(QEvent::MouseMove,
-                              pt.pos(), pt.screenPos(),
-                              Qt::LeftButton, Qt::LeftButton,
-                              m_tuiMods);
-        mouseMoveEvent(&synthMove);
+    case TuiGesture::Select:
+        extendSelectionTo(pt.pos());
         return;
-    }
     case TuiGesture::None:
         return;
     }
@@ -649,20 +651,12 @@ void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
     }
     case TuiGesture::Scroll:
         break;
-    case TuiGesture::Drag:
-        if (points.size() == 1) {
-            // Route through mouseReleaseEvent: its live re-check handles
-            // apps that disabled tracking between press and release.
-            const auto &pt = points.first();
-            QMouseEvent synthRel(QEvent::MouseButtonRelease,
-                                 pt.pos(), pt.screenPos(),
-                                 Qt::LeftButton, Qt::NoButton,
-                                 m_tuiMods);
-            mouseReleaseEvent(&synthRel);
+    case TuiGesture::Select:
+        if (event->type() == QEvent::TouchEnd && points.size() == 1) {
+            finishSelection(points.first().pos());
         } else {
-            // No lift point (cancel): close the held button unconditionally
-            // via the abandon path.
-            abandonTuiGesture();
+            // No lift point (cancel): drop the selection visuals.
+            clearSelection();
         }
         break;
     case TuiGesture::None:
@@ -711,8 +705,9 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
         killTimer(m_tuiHoldTimerId);
         m_tuiHoldTimerId = 0;
     }
-    // Dissolve any single-finger TUI gesture; a Drag's held button is
-    // released by the m_mouseButtonPressed net in handleMultiTouchEnd.
+    // Dissolve any single-finger TUI gesture; a mouse press that preceded the
+    // second finger is released by the m_mouseButtonPressed net in
+    // handleMultiTouchEnd.
     m_tuiGesture = TuiGesture::None;
     if (m_draggingHandle != 0) {
         m_draggingHandle = 0;
@@ -905,9 +900,10 @@ void TerminalView::handleMultiTouchEnd(const QList<QTouchEvent::TouchPoint> &poi
 
     if (m_vt && m_vt->isMouseTracking()) {
         if (m_mouseButtonPressed) {
-            // A PRESS was sent but never released (drag abandoned by the
-            // two-finger interlude, or both fingers lifted in one TouchEnd) —
-            // SGR apps stick in select-mode. Send the LEFT RELEASE through the
+            // A PRESS was sent but never released (the two-finger interlude
+            // swallowed the mouse path's release, or both fingers lifted in
+            // one TouchEnd) — SGR apps stick in select-mode. Send the LEFT
+            // RELEASE through the
             // encoder directly: full mouseReleaseEvent would clear tracking
             // state and the grabs the remaining finger needs. Must fire before
             // the pressed flags clear below.
@@ -919,10 +915,10 @@ void TerminalView::handleMultiTouchEnd(const QList<QTouchEvent::TouchPoint> &poi
             m_vt->setMouseButtonPressed(false);
         }
         // A remaining finger resumes the single-finger TUI path after a
-        // two-finger interlude: re-baseline its drag Y (sentinel -1) so the
+        // two-finger interlude: re-baseline its scroll Y (sentinel -1) so the
         // first motion after the interlude doesn't emit a jump from a stale
         // origin.
-        m_tuiDragLastY = -1;
+        m_tuiScrollLastY = -1;
         // Resume in Scroll, never TapPending: a gesture that was ever
         // multi-touch must not synthesize a click on lift (two-finger tap ->
         // lift one finger -> lift the other would re-open the phantom click).
@@ -940,29 +936,18 @@ void TerminalView::timerEvent(QTimerEvent *event)
         killTimer(m_tuiHoldTimerId);
         m_tuiHoldTimerId = 0;
         if (m_tuiGesture == TuiGesture::TapPending && m_vt->isMouseTracking()) {
-            // Press-and-hold promotes to a button drag: the late PRESS
-            // starts an app-side drag gesture (vim visual select, list
-            // selection), mirroring the non-TUI long-press-select rule.
-            // Flags follow the send, matching the mouse-press order.
-            m_tuiGesture = TuiGesture::Drag;
-            sendMouseEvent(GHOSTTY_MOUSE_ACTION_PRESS, GHOSTTY_MOUSE_BUTTON_LEFT,
-                           m_tuiAnchorPos, KeyMapping::mapQtModifiers(m_tuiMods));
-            m_mouseButtonPressed = true;
-            m_vt->setMouseButtonPressed(true);
+            // Press-and-hold promotes to native text selection — the only
+            // marking path when the app owns the mouse (tracking stays latched
+            // even after a TUI app is killed). Nothing is sent to the app.
+            m_tuiGesture = TuiGesture::Select;
+            beginDragSelection(m_tuiAnchorPos);
         }
         return;
     }
     if (event->timerId() == m_longPressTimerId) {
         killTimer(m_longPressTimerId);
         m_longPressTimerId = 0;
-        m_selecting = true;
-        m_magnifierVisible = true;
-        // Pin from selection start: blink repaints flicker the magnifier
-        // during a still-hold (the drag pin only fires once the finger moves).
-        holdBlinkSolid();
-        // Prevent parent SilicaFlickable from stealing the drag
-        setKeepMouseGrab(true);
-        update();
+        beginDragSelection(m_selStart);
         return;
     }
     if (event->timerId() == m_blinkTimerId) {
