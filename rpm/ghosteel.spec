@@ -19,6 +19,7 @@ Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default
 Requires:   libngf-qt5
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
+BuildRequires:  patch
 # sailfishapp_i18n chains lupdate/lrelease with || :, so a missing tool
 # would silently ship an RPM with no .qm files; require the provider.
 BuildRequires:  qt5-qttools
@@ -90,6 +91,19 @@ if [ -f "%{_sourcedir}/zig-deps-cache.tar.gz" ]; then
     mkdir -p "${ZIG_CACHE}"
     tar -xzf "%{_sourcedir}/zig-deps-cache.tar.gz" -C "${ZIG_CACHE}"
 fi
+
+# Apply carried patches to the ghostty submodule (upstream fixes not yet
+# on main). A patch that no longer applies is skipped: upstream fixed or
+# reworked the code. Remove the file once its fix lands upstream.
+for p in patches/*.patch; do
+    [ -f "$p" ] || continue
+    if patch --forward --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
+        patch --forward -d ghostty -p1 < "$p"
+        echo "Applied carried patch: $p"
+    else
+        echo "Skipping carried patch (already applied or upstream changed): $p"
+    fi
+done
 
 %build
 
