@@ -133,4 +133,29 @@ GhosttyKey mapCharToKey(QChar ch)
     }
 }
 
+uint32_t keyToUnshiftedCodepoint(GhosttyKey key)
+{
+    if (key >= GHOSTTY_KEY_A && key <= GHOSTTY_KEY_Z)
+        return static_cast<uint32_t>('a' + (key - GHOSTTY_KEY_A));
+
+    if (key >= GHOSTTY_KEY_DIGIT_0 && key <= GHOSTTY_KEY_DIGIT_9)
+        return static_cast<uint32_t>('0' + (key - GHOSTTY_KEY_DIGIT_0));
+
+    switch (key) {
+    case GHOSTTY_KEY_MINUS:         return '-';
+    case GHOSTTY_KEY_EQUAL:         return '=';
+    case GHOSTTY_KEY_BRACKET_LEFT:  return '[';
+    case GHOSTTY_KEY_BRACKET_RIGHT: return ']';
+    case GHOSTTY_KEY_BACKSLASH:     return '\\';
+    case GHOSTTY_KEY_SEMICOLON:     return ';';
+    case GHOSTTY_KEY_QUOTE:         return '\'';
+    case GHOSTTY_KEY_COMMA:         return ',';
+    case GHOSTTY_KEY_PERIOD:        return '.';
+    case GHOSTTY_KEY_SLASH:         return '/';
+    case GHOSTTY_KEY_BACKQUOTE:     return '`';
+    case GHOSTTY_KEY_SPACE:         return ' ';
+    default: return 0;
+    }
+}
+
 } // namespace KeyMapping
