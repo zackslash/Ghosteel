@@ -44,10 +44,28 @@ build_arch() {
     echo "  -> $out_dir/libghostty-vt.a"
 }
 
+# Apply carried ghostty patches (patches/*.patch) to the submodule working
+# tree. A patch that no longer applies is skipped: upstream fixed or
+# reworked the code. Remove the file once its fix lands upstream.
+apply_carried_patches() {
+    local p name
+    for p in "$PROJECT_ROOT"/patches/*.patch; do
+        [ -f "$p" ] || continue
+        name="$(basename "$p")"
+        if git -C "$GHOSTTY_DIR" apply --check "$p" 2>/dev/null; then
+            git -C "$GHOSTTY_DIR" apply "$p"
+            echo "Applied carried patch: $name"
+        else
+            echo "Skipping carried patch (already applied or upstream changed): $name"
+        fi
+    done
+}
+
 main() {
     local arch="${1:-all}"
 
     check_zig
+    apply_carried_patches
 
     echo "=== Building libghostty-vt for Sailfish OS ==="
     echo "Zig: $("$ZIG" version)"
