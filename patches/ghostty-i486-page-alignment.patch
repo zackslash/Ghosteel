@@ -1,0 +1,17 @@
+# i486: the comptime assert in Capacity.availableBytesForGrid needs the
+# alignment coerced to usize or the 32-bit x86 build fails to compile.
+# Not fixed upstream as of pin b32f20f3e; remove once upstream takes it.
+
+diff --git a/src/terminal/page.zig b/src/terminal/page.zig
+index ad2b1a7e5..1ae2a3188 100644
+--- a/src/terminal/page.zig
++++ b/src/terminal/page.zig
+@@ -2003,7 +2003,7 @@ pub const Capacity = struct {
+     fn availableBytesForGrid(self: Capacity) usize {
+         comptime {
+             assert(cells_align % Page.MetaLayout.alignment == 0);
+-            assert(@sizeOf(Cell) % Page.MetaLayout.alignment == 0);
++            assert(@sizeOf(Cell) % @as(usize, Page.MetaLayout.alignment) == 0);
+         }
+ 
+         const l = Page.layout(self);
