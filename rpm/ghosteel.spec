@@ -93,8 +93,10 @@ if [ -f "%{_sourcedir}/zig-deps-cache.tar.gz" ]; then
 fi
 
 # Apply carried patches to the ghostty submodule (local fixes not yet
-# upstream). A patch that no longer applies is skipped: upstream fixed or
-# reworked the code. Remove the file once its fix lands upstream.
+# upstream). Strict validation: a patch must apply cleanly, or already be
+# applied (skipped); anything else fails the build so the patch gets
+# refreshed against the new pin. Remove the file once its fix lands
+# upstream.
 for p in patches/*.patch; do
     [ -f "$p" ] || continue
     if patch --forward --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
