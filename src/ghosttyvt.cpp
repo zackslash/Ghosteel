@@ -344,6 +344,11 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     ghostty_key_event_set_mods(event, mods);
 
     uint32_t codepoint = KeyMapping::keyToUnshiftedCodepoint(key);
+    // The C API borrows the utf8 pointer rather than copying it, and the
+    // encoder dereferences the borrow during the encode calls at the end
+    // of this function, so the synthesized byte must outlive the branch
+    // that produces it.
+    char base = 0;
 
     // Kitty-protocol apps (fish 4, neovim) encode modified text keys from the
     // unshifted codepoint; the kitty table has no letter entries, so without
@@ -367,7 +372,7 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
         if (first >= 0x20 && first != 0x7F) {
             ghostty_key_event_set_utf8(event, utf8, utf8Len);
         } else if ((mods & GHOSTTY_MODS_CTRL) && codepoint > 0) {
-            char base = static_cast<char>(codepoint);
+            base = static_cast<char>(codepoint);
             ghostty_key_event_set_utf8(event, &base, 1);
         }
     }

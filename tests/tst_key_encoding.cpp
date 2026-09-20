@@ -9,10 +9,9 @@
 //      or kitty-protocol apps (fish 4, neovim) receive the bare utf8 text
 //      with the modifier dropped;
 //   2. C0/DEL bytes must never be passed as utf8 (the C API forbids them);
-//      under Ctrl the key's base character is synthesized instead. Kernel
-//      ctrl tables encode the key's shifted glyph, so the byte cannot be
-//      trusted to identify the key; key identity wins, matching the
-//      encoder's own ctrlSeq fallback to the logical key.
+//      under Ctrl the key's base character is synthesized instead; key
+//      identity wins (see ghosttyvt.cpp for why the byte cannot be
+//      trusted).
 
 class TestKeyEncoding : public QObject
 {
@@ -196,6 +195,25 @@ private slots:
         QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("-"));
     }
 
+    // Kernel ctrl tables deliver NUL for Ctrl+2 (and Ctrl+Space); '2' &
+    // 0x1F = 0x12, so the old mask check dropped this class entirely.
+    // Synthesis yields "2", which the encoder's digit table maps back to
+    // NUL for legacy apps.
+    void testCtrlNulTextSynthesizesDigit()
+    {
+        ghostty_stubs_reset_key_event();
+        GhosttyVt vt;
+        QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+
+        vt.encodeKeyEvent(GHOSTTY_KEY_DIGIT_2, GHOSTTY_KEY_ACTION_PRESS,
+                          GHOSTTY_MODS_CTRL, "\x00", 1);
+
+        GhosttyStubKeyEvent ev;
+        QVERIFY(ghostty_stubs_last_key_event(&ev));
+        QCOMPARE(ev.unshifted_codepoint, static_cast<uint32_t>('2'));
+        QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("2"));
+    }
+
     // Two-byte ESC-prefixed control text (Ctrl+Alt+letter) also
     // synthesizes the base character; the encoder re-derives the Alt ESC
     // prefix from the mods, which evdev reports reliably.
@@ -214,6 +232,24 @@ private slots:
         QVERIFY(ghostty_stubs_last_key_event(&ev));
         QCOMPARE(ev.unshifted_codepoint, static_cast<uint32_t>('c'));
         QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("c"));
+    }
+
+    // The synthesis gate requires Ctrl: a control byte without it is
+    // dropped even on a text key (the enter test pins the functional-key
+    // side of this boundary).
+    void testControlTextWithoutCtrlDroppedOnTextKey()
+    {
+        ghostty_stubs_reset_key_event();
+        GhosttyVt vt;
+        QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+
+        vt.encodeKeyEvent(GHOSTTY_KEY_C, GHOSTTY_KEY_ACTION_PRESS,
+                          0, "\x03", 1);
+
+        GhosttyStubKeyEvent ev;
+        QVERIFY(ghostty_stubs_last_key_event(&ev));
+        QCOMPARE(ev.unshifted_codepoint, static_cast<uint32_t>(0));
+        QCOMPARE(ev.utf8_len, static_cast<size_t>(0));
     }
 
     // Multi-byte UTF-8 (first byte >= 0xC0) passes the filter unchanged;
@@ -302,8 +338,7 @@ private slots:
     }
 
     // A control byte inconsistent with the key's base character is still
-    // synthesized from the key: kernel ctrl tables encode the shifted
-    // glyph, so mismatches are mapping artifacts, not a different key.
+    // synthesized from the key (mapping artifact, not a different key).
     void testMismatchedControlByteSynthesizesBaseKey()
     {
         ghostty_stubs_reset_key_event();
@@ -318,8 +353,8 @@ private slots:
         QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("c"));
     }
 
-    // Ctrl+[ (text "\x1b", key BRACKET_LEFT): the mask check recovers the
-    // bracket, which the letters-only range could not.
+    // Ctrl+[ (text "\x1b", key BRACKET_LEFT): key-identity synthesis
+    // recovers the bracket, which the letters-only range could not.
     void testBracketControlTextSynthesizes()
     {
         ghostty_stubs_reset_key_event();
