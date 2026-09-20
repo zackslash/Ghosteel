@@ -60,6 +60,8 @@ private slots:
         QCOMPARE(KeyMapping::mapQtKey(Qt::Key_End), GHOSTTY_KEY_END);
         QCOMPARE(KeyMapping::mapQtKey(Qt::Key_PageUp), GHOSTTY_KEY_PAGE_UP);
         QCOMPARE(KeyMapping::mapQtKey(Qt::Key_PageDown), GHOSTTY_KEY_PAGE_DOWN);
+        QCOMPARE(KeyMapping::mapQtKey(Qt::Key_Help), GHOSTTY_KEY_HELP);
+        QCOMPARE(KeyMapping::mapQtKey(Qt::Key_Menu), GHOSTTY_KEY_CONTEXT_MENU);
     }
 
     // --- mapQtKey: Arrow keys ---
@@ -76,7 +78,7 @@ private slots:
     {
         QTest::addColumn<int>("qtKey");
         QTest::addColumn<int>("expected");
-        for (int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= 24; i++) {
             QTest::newRow(qPrintable(QString("F%1").arg(i)))
                 << (Qt::Key_F1 + i - 1) << (int)(GHOSTTY_KEY_F1 + i - 1);
         }

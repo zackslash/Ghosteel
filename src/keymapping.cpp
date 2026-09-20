@@ -58,6 +58,8 @@ GhosttyKey mapQtKey(int qtKey)
     case Qt::Key_End:      return GHOSTTY_KEY_END;
     case Qt::Key_PageUp:   return GHOSTTY_KEY_PAGE_UP;
     case Qt::Key_PageDown: return GHOSTTY_KEY_PAGE_DOWN;
+    case Qt::Key_Help:     return GHOSTTY_KEY_HELP;
+    case Qt::Key_Menu:     return GHOSTTY_KEY_CONTEXT_MENU;
 
     // Arrow keys
     case Qt::Key_Up:    return GHOSTTY_KEY_ARROW_UP;
@@ -78,6 +80,18 @@ GhosttyKey mapQtKey(int qtKey)
     case Qt::Key_F10: return GHOSTTY_KEY_F10;
     case Qt::Key_F11: return GHOSTTY_KEY_F11;
     case Qt::Key_F12: return GHOSTTY_KEY_F12;
+    case Qt::Key_F13: return GHOSTTY_KEY_F13;
+    case Qt::Key_F14: return GHOSTTY_KEY_F14;
+    case Qt::Key_F15: return GHOSTTY_KEY_F15;
+    case Qt::Key_F16: return GHOSTTY_KEY_F16;
+    case Qt::Key_F17: return GHOSTTY_KEY_F17;
+    case Qt::Key_F18: return GHOSTTY_KEY_F18;
+    case Qt::Key_F19: return GHOSTTY_KEY_F19;
+    case Qt::Key_F20: return GHOSTTY_KEY_F20;
+    case Qt::Key_F21: return GHOSTTY_KEY_F21;
+    case Qt::Key_F22: return GHOSTTY_KEY_F22;
+    case Qt::Key_F23: return GHOSTTY_KEY_F23;
+    case Qt::Key_F24: return GHOSTTY_KEY_F24;
 
     // Punctuation
     case Qt::Key_Minus:       return GHOSTTY_KEY_MINUS;

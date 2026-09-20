@@ -96,3 +96,4 @@ tests/tst_*
 !tests/tst_*.cpp
 tests/*_autogen/
 moc_predefs.h
+.build-libs.lock
