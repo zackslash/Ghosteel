@@ -253,7 +253,8 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
             + QStringLiteral("\r\n")).toUtf8();
     }
 
-    const char *homeDir = getenv("HOME");
+    QByteArray homeEnvBytes = qgetenv("HOME");
+    const char *homeDir = homeEnvBytes.isEmpty() ? nullptr : homeEnvBytes.constData();
     QByteArray workingDirBytes;
     const char *workingDir = nullptr;
     if (!m_workingDirectory.isEmpty()) {
@@ -342,11 +343,14 @@ void PtyManager::setupChildProcess(const char *workingDir, const char *homeDir)
     ::sigprocmask(SIG_SETMASK, &empty, nullptr);
 
     setsid();
+    // A fresh session has no requested directory; start it in HOME rather
+    // than inheriting the app's cwd (lipstick launches apps at /). A
+    // requested directory still falls back to HOME if it can't be entered.
     if (workingDir && workingDir[0]) {
-        // Fall back to HOME; if that fails too the child keeps the
-        // inherited cwd — exec proceeds either way.
-        if (chdir(workingDir) != 0 && homeDir && chdir(homeDir) != 0) {
-        }
+        if (chdir(workingDir) != 0 && homeDir)
+            chdir(homeDir);
+    } else if (homeDir) {
+        chdir(homeDir);
     }
 }
 
@@ -367,7 +371,8 @@ bool PtyManager::startCommand(const QString &command, const QStringList &args, u
         argv[i] = argBytes[i].constData();
     argv[argBytes.size()] = nullptr;
 
-    const char *homeDir = getenv("HOME");
+    QByteArray homeEnvBytes = qgetenv("HOME");
+    const char *homeDir = homeEnvBytes.isEmpty() ? nullptr : homeEnvBytes.constData();
     QByteArray workingDirBytes;
     const char *workingDir = nullptr;
     if (!m_workingDirectory.isEmpty()) {
