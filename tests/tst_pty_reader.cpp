@@ -3,6 +3,7 @@
 #include <QSignalSpy>
 #include <QFile>
 #include <QTemporaryDir>
+#include <QDir>
 
 #include <unistd.h>
 #include <cstring>
@@ -124,6 +125,113 @@ private slots:
         QTRY_COMPARE(exitedSpy.count(), 1);
         QCOMPARE(exitedSpy.at(0).at(0).toInt(), 0);
         QCOMPARE(pm.childPid(), -1);
+    }
+
+    void testNewCommandStartsInHome()
+    {
+        QTemporaryDir fakeHome;
+        QVERIFY(fakeHome.isValid());
+        const QByteArray origHome = qgetenv("HOME");
+
+        PtyManager pm;
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+        QSignalSpy dataSpy(&pm, &PtyManager::dataReady);
+
+        qputenv("HOME", fakeHome.path().toUtf8());
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "pwd", 80, 24));
+        // The child captured HOME at fork; restore before any assertion can
+        // abort the test.
+        if (!origHome.isEmpty())
+            qputenv("HOME", origHome.constData());
+        else
+            qunsetenv("HOME");
+
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return !all.isEmpty();
+        }(), 5000);
+        QByteArray all;
+        for (const auto &sig : dataSpy)
+            all += sig.at(0).toByteArray();
+        QCOMPARE(QString::fromUtf8(all).trimmed(), fakeHome.path());
+
+        QTRY_COMPARE(exitedSpy.count(), 1);
+        QCOMPARE(pm.childPid(), -1);
+
+        pm.stop();
+    }
+
+    void testRequestedWorkingDirectoryIsUsed()
+    {
+        QTemporaryDir workDir;
+        QVERIFY(workDir.isValid());
+
+        PtyManager pm;
+        pm.setWorkingDirectory(workDir.path());
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+        QSignalSpy dataSpy(&pm, &PtyManager::dataReady);
+
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "pwd", 80, 24));
+
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return !all.isEmpty();
+        }(), 5000);
+        QByteArray all;
+        for (const auto &sig : dataSpy)
+            all += sig.at(0).toByteArray();
+        QCOMPARE(QString::fromUtf8(all).trimmed(), workDir.path());
+
+        QTRY_COMPARE(exitedSpy.count(), 1);
+        QCOMPARE(pm.childPid(), -1);
+
+        pm.stop();
+    }
+
+    void testDeletedWorkingDirectoryFallsBackToHome()
+    {
+        QTemporaryDir fakeHome;
+        QVERIFY(fakeHome.isValid());
+        QTemporaryDir deadDir;
+        QVERIFY(deadDir.isValid());
+        const QString deadPath = deadDir.path();
+        QVERIFY(deadDir.remove());
+        const QByteArray origHome = qgetenv("HOME");
+
+        PtyManager pm;
+        pm.setWorkingDirectory(deadPath);
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+        QSignalSpy dataSpy(&pm, &PtyManager::dataReady);
+
+        qputenv("HOME", fakeHome.path().toUtf8());
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c" << "pwd", 80, 24));
+        if (!origHome.isEmpty())
+            qputenv("HOME", origHome.constData());
+        else
+            qunsetenv("HOME");
+
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return !all.isEmpty();
+        }(), 5000);
+        QByteArray all;
+        for (const auto &sig : dataSpy)
+            all += sig.at(0).toByteArray();
+        QCOMPARE(QString::fromUtf8(all).trimmed(), fakeHome.path());
+
+        QTRY_COMPARE(exitedSpy.count(), 1);
+        QCOMPARE(pm.childPid(), -1);
+
+        pm.stop();
     }
 
     void testAsyncStopReapsChildPid()
