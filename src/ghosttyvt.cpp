@@ -344,6 +344,11 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     ghostty_key_event_set_mods(event, mods);
 
     uint32_t codepoint = KeyMapping::keyToUnshiftedCodepoint(key);
+    // The C API borrows the utf8 pointer rather than copying it, and the
+    // encoder dereferences the borrow during the encode calls at the end
+    // of this function, so the synthesized byte must outlive the branch
+    // that produces it.
+    char base = 0;
 
     // Kitty-protocol apps (fish 4, neovim) encode modified text keys from the
     // unshifted codepoint; the kitty table has no letter entries, so without
@@ -355,19 +360,19 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
             ghostty_key_event_set_unshifted_codepoint(event, codepoint);
     }
 
-    // The C API forbids C0/DEL bytes in utf8. Hardware Ctrl+letter arrives
-    // from Qt as exactly such a byte; map it back to the key's base
-    // character when the two agree (needed once shift or super joins ctrl;
-    // kitty uses the codepoint either way). Other control bytes are simply
-    // dropped; functional keys keep their table-driven encodings via
-    // codepoint == 0.
+    // The C API forbids C0/DEL bytes in utf8. Hardware Ctrl combos arrive
+    // from Qt as exactly such a byte, and kernel ctrl tables encode the
+    // key's shifted glyph (Ctrl+Minus delivers 0x1F, underscore's code),
+    // so the byte cannot be trusted to match the unshifted character.
+    // The key's base character is authoritative, mirroring the encoder's
+    // own ctrlSeq fallback to the logical key. Functional keys
+    // (codepoint == 0) keep their table-driven encodings.
     if (utf8 && utf8Len > 0) {
         unsigned char first = static_cast<unsigned char>(utf8[0]);
         if (first >= 0x20 && first != 0x7F) {
             ghostty_key_event_set_utf8(event, utf8, utf8Len);
-        } else if ((mods & GHOSTTY_MODS_CTRL) && codepoint > 0
-                   && (codepoint & 0x1F) == first) {
-            char base = static_cast<char>(codepoint);
+        } else if ((mods & GHOSTTY_MODS_CTRL) && codepoint > 0) {
+            base = static_cast<char>(codepoint);
             ghostty_key_event_set_utf8(event, &base, 1);
         }
     }
