@@ -133,6 +133,9 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     // it must not run between fork and exec (QSG render thread / a still-live prior
     // PtyReaderThread can hold the allocator lock across the fork).
     setenv("TERM", "xterm-256color", 1);
+    // Exact literal required: fish and neovim enable 24-bit color only for
+    // "truecolor" (or "24bit"), and fish forces it off for any other value.
+    setenv("COLORTERM", "truecolor", 1);
     {
         // Point at the parent of shell-integration/ so shell-integration scripts
         // resolve via ${GHOSTTY_RESOURCES_DIR}/shell-integration/<shell>/...
