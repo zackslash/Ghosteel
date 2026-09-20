@@ -9,8 +9,10 @@
 //      or kitty-protocol apps (fish 4, neovim) receive the bare utf8 text
 //      with the modifier dropped;
 //   2. C0/DEL bytes must never be passed as utf8 (the C API forbids them);
-//      the ctrl-letter control byte is mapped back to the printable letter
-//      for legacy encoding, other control bytes are dropped.
+//      under Ctrl the key's base character is synthesized instead. Kernel
+//      ctrl tables encode the key's shifted glyph, so the byte cannot be
+//      trusted to identify the key; key identity wins, matching the
+//      encoder's own ctrlSeq fallback to the logical key.
 
 class TestKeyEncoding : public QObject
 {
@@ -157,8 +159,9 @@ private slots:
         QCOMPARE(ev.utf8_len, static_cast<size_t>(0));
     }
 
-    // DEL is excluded alongside C0 by the API contract.
-    void testDelTextDropsUtf8()
+    // DEL is excluded alongside C0 by the API contract; under Ctrl it
+    // synthesizes the key's base character like any control byte.
+    void testCtrlDelTextSynthesizesBaseKey()
     {
         ghostty_stubs_reset_key_event();
         GhosttyVt vt;
@@ -170,7 +173,47 @@ private slots:
         GhosttyStubKeyEvent ev;
         QVERIFY(ghostty_stubs_last_key_event(&ev));
         QCOMPARE(ev.unshifted_codepoint, static_cast<uint32_t>('c'));
-        QCOMPARE(ev.utf8_len, static_cast<size_t>(0));
+        QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("c"));
+    }
+
+    // The dead-key case this guards against: kernel ctrl tables map
+    // minus/underscore to 0x1F (the shifted glyph's code), and '-' has no
+    // C0 encoding, so without synthesis legacy apps receive nothing for
+    // Ctrl+Minus. The encoder emits the fixterms CSI 45;5u from the base
+    // character instead.
+    void testMinusControlTextSynthesizesBaseKey()
+    {
+        ghostty_stubs_reset_key_event();
+        GhosttyVt vt;
+        QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+
+        vt.encodeKeyEvent(GHOSTTY_KEY_MINUS, GHOSTTY_KEY_ACTION_PRESS,
+                          GHOSTTY_MODS_CTRL, "\x1f", 1);
+
+        GhosttyStubKeyEvent ev;
+        QVERIFY(ghostty_stubs_last_key_event(&ev));
+        QCOMPARE(ev.unshifted_codepoint, static_cast<uint32_t>('-'));
+        QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("-"));
+    }
+
+    // Two-byte ESC-prefixed control text (Ctrl+Alt+letter) also
+    // synthesizes the base character; the encoder re-derives the Alt ESC
+    // prefix from the mods, which evdev reports reliably.
+    void testCtrlAltTwoByteControlTextSynthesizesBaseKey()
+    {
+        ghostty_stubs_reset_key_event();
+        GhosttyVt vt;
+        QVERIFY(vt.create(80, 24, [](const char *, size_t) {}));
+
+        vt.encodeKeyEvent(GHOSTTY_KEY_C, GHOSTTY_KEY_ACTION_PRESS,
+                          static_cast<GhosttyMods>(GHOSTTY_MODS_CTRL
+                                                   | GHOSTTY_MODS_ALT),
+                          "\x1b\x03", 2);
+
+        GhosttyStubKeyEvent ev;
+        QVERIFY(ghostty_stubs_last_key_event(&ev));
+        QCOMPARE(ev.unshifted_codepoint, static_cast<uint32_t>('c'));
+        QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("c"));
     }
 
     // Multi-byte UTF-8 (first byte >= 0xC0) passes the filter unchanged;
@@ -258,9 +301,10 @@ private slots:
         QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("z"));
     }
 
-    // A control byte inconsistent with the key's base character must be
-    // dropped, never synthesized into a mismatched letter.
-    void testMismatchedControlByteDropped()
+    // A control byte inconsistent with the key's base character is still
+    // synthesized from the key: kernel ctrl tables encode the shifted
+    // glyph, so mismatches are mapping artifacts, not a different key.
+    void testMismatchedControlByteSynthesizesBaseKey()
     {
         ghostty_stubs_reset_key_event();
         GhosttyVt vt;
@@ -271,7 +315,7 @@ private slots:
 
         GhosttyStubKeyEvent ev;
         QVERIFY(ghostty_stubs_last_key_event(&ev));
-        QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray(""));
+        QCOMPARE(QByteArray(ev.utf8, ev.utf8_len), QByteArray("c"));
     }
 
     // Ctrl+[ (text "\x1b", key BRACKET_LEFT): the mask check recovers the
