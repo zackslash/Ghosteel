@@ -164,6 +164,57 @@ private slots:
         pm.stop();
     }
 
+    void testChildEnvAdvertisesTruecolor()
+    {
+        PtyManager pm;
+        QSignalSpy exitedSpy(&pm, &PtyManager::shellExited);
+        QSignalSpy dataSpy(&pm, &PtyManager::dataReady);
+
+        // Hostile pre-set proves overwrite=1 wins and shields the test from
+        // the ambient env: a parent terminal that already exports
+        // COLORTERM=truecolor would mask deletion of the setenv.
+        const QByteArray savedTerm = qgetenv("TERM");
+        const QByteArray savedColorTerm = qgetenv("COLORTERM");
+        qputenv("TERM", "dumb");
+        qputenv("COLORTERM", "nottruecolor");
+
+        QVERIFY(pm.startCommand(QStringLiteral("/bin/sh"),
+                                QStringList() << "-c"
+                << QStringLiteral("printf '%s|%s' \"$TERM\" \"$COLORTERM\""),
+                80, 24));
+
+        // The child captured env at fork; restore before any assertion can
+        // abort the test.
+        if (!savedTerm.isEmpty())
+            qputenv("TERM", savedTerm.constData());
+        else
+            qunsetenv("TERM");
+        if (!savedColorTerm.isEmpty())
+            qputenv("COLORTERM", savedColorTerm.constData());
+        else
+            qunsetenv("COLORTERM");
+
+        // The '|' delimiter follows TERM in the printf output, and
+        // "|truecolor" only matches once the tail is complete, so this
+        // cannot pass on partial output.
+        QTRY_VERIFY_WITH_TIMEOUT([&]() {
+            QByteArray all;
+            for (const auto &sig : dataSpy)
+                all += sig.at(0).toByteArray();
+            return all.contains("|truecolor");
+        }(), 5000);
+        QByteArray all;
+        for (const auto &sig : dataSpy)
+            all += sig.at(0).toByteArray();
+        QCOMPARE(QString::fromUtf8(all).trimmed(),
+                 QStringLiteral("xterm-256color|truecolor"));
+
+        QTRY_COMPARE(exitedSpy.count(), 1);
+        QCOMPARE(pm.childPid(), -1);
+
+        pm.stop();
+    }
+
     void testRequestedWorkingDirectoryIsUsed()
     {
         QTemporaryDir workDir;
