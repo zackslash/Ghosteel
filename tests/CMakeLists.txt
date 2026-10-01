@@ -115,6 +115,13 @@ target_include_directories(tst_osc52 PRIVATE SYSTEM
 target_link_libraries(tst_osc52 PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME Osc52 COMMAND tst_osc52)
 
+# --- IPC message encode/parse tests ---
+add_executable(tst_ipcmessage
+    tst_ipcmessage.cpp
+)
+target_link_libraries(tst_ipcmessage PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME IpcMessage COMMAND tst_ipcmessage)
+
 # --- Word boundary (isWordChar) tests ---
 add_executable(tst_word_boundary
     tst_word_boundary.cpp

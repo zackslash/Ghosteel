@@ -13,6 +13,7 @@ struct IpcMessage {
     QString sessionName;
     QString command;
     QStringList args;
+    bool restart = false;
 
     static constexpr int kMaxSessionNameLength = 128;
 
@@ -36,11 +37,13 @@ struct IpcMessage {
         } else if (header.startsWith("switch:")) {
             msg.type = Switch;
             msg.sessionName = sanitizeSessionName(QString::fromUtf8(header.mid(7)));
-        } else if (header.startsWith("exec:")) {
+        } else if (header.startsWith("exec!:") || header.startsWith("exec:")) {
+            const bool isRestart = header.startsWith("exec!:");
             msg.type = Exec;
-            QByteArray afterPrefix = header.mid(5);
+            QByteArray afterPrefix = header.mid(isRestart ? 6 : 5);
             int colonPos = afterPrefix.indexOf(':');
             if (colonPos < 0) { msg.type = Raise; return msg; }
+            msg.restart = isRestart;
             msg.sessionName = sanitizeSessionName(QString::fromUtf8(afterPrefix.left(colonPos)));
             if (colonPos + 1 < afterPrefix.size())
                 msg.command = QString::fromUtf8(afterPrefix.mid(colonPos + 1));
@@ -57,7 +60,7 @@ struct IpcMessage {
         return msg;
     }
 
-    static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName) {
+    static QByteArray encode(const QString &execCommand, const QStringList &execArgs, const QString &sessionName, bool restart = false) {
         const QString cleanName = sanitizeSessionName(sessionName);
         if (!execCommand.isEmpty()) {
             QByteArray cmdBytes = execCommand.toUtf8();
@@ -65,7 +68,8 @@ struct IpcMessage {
                 cmdBytes.append('\0');
                 cmdBytes.append(arg.toUtf8());
             }
-            return (QStringLiteral("exec:") + cleanName + QStringLiteral(":")).toUtf8() + cmdBytes + '\n';
+            const char *prefix = restart ? "exec!:" : "exec:";
+            return (QByteArray(prefix) + cleanName.toUtf8() + ":") + cmdBytes + '\n';
         } else if (!cleanName.isEmpty()) {
             return (QStringLiteral("switch:") + cleanName + QStringLiteral("\n")).toUtf8();
         }

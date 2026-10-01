@@ -52,12 +52,13 @@ int main(int argc, char *argv[])
     // Register PNG decoder for Kitty Graphics Protocol (process-global, once)
     kittyImageDecoderRegister();
 
-    // Parse CLI arguments for -e/--exec and -s/--session before the
+    // Parse CLI arguments for -e/--exec, -s/--session and -r/--restart before the
     // single-instance check.  QCommandLineParser requires QCoreApplication,
     // which doesn't exist yet, so scan argv manually.
     QString execCommand;
     QStringList execArgs;
     QString sessionName;
+    bool restart = false;
 
     // -e/--exec consumes all remaining args (must be the last ghosteel option).
     // -s/--session takes one value.  A bare '--' marks everything after it as
@@ -66,10 +67,13 @@ int main(int argc, char *argv[])
         QString arg = QString::fromLocal8Bit(argv[i]);
 
         if (arg == QStringLiteral("-h") || arg == QStringLiteral("--help")) {
-            printf("Usage: ghosteel [-s|--session <name>] [-e|--exec <command> [args...]]\n"
-                   "       ghosteel [-s|--session <name>] -- <command> [args...]\n"
+            printf("Usage: ghosteel [-s|--session <name>] [-r] [-e|--exec <command> [args...]]\n"
+                   "       ghosteel [-s|--session <name>] [-r] -- <command> [args...]\n"
                    "\n"
                    "  -s, --session <name>            Switch to or create named session\n"
+                   "  -r, --restart                   With -e or --: replace an already-running\n"
+                   "                                  matching session instead of switching to\n"
+                   "                                  it, so the command runs every time\n"
                    "  -e, --exec <command> [args...]  Run command instead of default shell\n"
                    "                                  (must be the last ghosteel option)\n"
                    "  --                              Treat the rest as the command verbatim,\n"
@@ -78,6 +82,7 @@ int main(int argc, char *argv[])
                    "\n"
                    "Examples:\n"
                    "  ghosteel -s sysmon -e top\n"
+                   "  ghosteel -r -s sysmon -e top\n"
                    "  ghosteel -s sysmon -- htop -s PERCENT_CPU\n");
             fflush(stdout);
             return 0;
@@ -109,19 +114,30 @@ int main(int argc, char *argv[])
             }
         } else if (arg == QStringLiteral("-s") || arg == QStringLiteral("--session")) {
             if (i + 1 < argc) {
-                sessionName = QString::fromLocal8Bit(argv[i + 1]);
+                const QString name = QString::fromLocal8Bit(argv[i + 1]);
+                if (name.startsWith(QLatin1Char('-'))) {
+                    fprintf(stderr,
+                            "ghosteel: -s requires a session name, but the next token is '%s'.\n"
+                            "ghosteel: Put ghosteel options before -e, or use '--' to give the\n"
+                            "ghosteel: command its own flags, e.g.  ghosteel -s <name> -- <cmd> [args...]\n",
+                            qPrintable(name));
+                    return 1;
+                }
+                sessionName = name;
                 i++;
             } else {
                 fprintf(stderr, "ghosteel: -s requires a session name\n");
                 return 1;
             }
+        } else if (arg == QStringLiteral("-r") || arg == QStringLiteral("--restart")) {
+            restart = true;
         }
     }
 
     // Single-instance guard: if another instance is running, send the
     // appropriate IPC message and exit.  This handles D-Bus activation
     // launching a duplicate when a sandboxed instance is already running.
-    if (SessionManager::checkSingleInstance(execCommand, execArgs, sessionName))
+    if (SessionManager::checkSingleInstance(execCommand, execArgs, sessionName, restart))
         return 0;
 
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
@@ -140,7 +156,7 @@ int main(int argc, char *argv[])
     view->rootContext()->setContextProperty(QStringLiteral("bellFeedback"), bellFeedback);
 
     if (!execCommand.isEmpty() || !sessionName.isEmpty())
-        sessionManager->setCliArgs(execCommand, execArgs, sessionName);
+        sessionManager->setCliArgs(execCommand, execArgs, sessionName, restart);
 
     // Register D-Bus adaptor for notification action callbacks.
     // Under Sailjail, D-Bus name ownership is restricted, so registration

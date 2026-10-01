@@ -854,17 +854,22 @@ void SessionManager::processCliArgs()
         if (!m_cliSessionName.isEmpty()) {
             int named = findSessionByName(m_cliSessionName);
             if (named >= 0) {
-                if (m_sessions[named].isCommandSession() && m_sessions[named].view
+                if (!m_cliRestart && m_sessions[named].isCommandSession() && m_sessions[named].view
                     && !m_sessions[named].view->shellExited()) {
                     // Command still running — switch to it
                     setActiveSessionIndex(named);
                 } else {
-                    // Command exited or session is plain shell — replace with new session.
+                    // Command exited, session is plain shell, or restart was
+                    // requested — replace with new session.
                     // Create first so removeSession never hits the empty-list fallback.
                     // Only remove the old one if the replacement was created: at the session
-                    // cap createSessionWithCommand returns null.
+                    // cap createSessionWithCommand returns null, and a restart tap then
+                    // falls back to switching (removing a live session stops its pty
+                    // synchronously, a bounded reap that typically takes under 100ms).
                     if (createSessionWithCommand(m_cliSessionName, fullArgs))
                         removeSession(named);
+                    else if (m_cliRestart)
+                        setActiveSessionIndex(named);
                 }
                 didSomething = true;
             }
@@ -873,7 +878,17 @@ void SessionManager::processCliArgs()
         if (!didSomething) {
             for (int i = 0; i < m_sessions.size(); i++) {
                 if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullArgs) {
-                    setActiveSessionIndex(i);
+                    if (m_cliRestart) {
+                        // Create first so the matched index stays valid for removeSession
+                        // (the new session appends at the end); at the session cap fall
+                        // back to switching like a non-restart tap.
+                        if (createSessionWithCommand(m_cliSessionName, fullArgs))
+                            removeSession(i);
+                        else
+                            setActiveSessionIndex(i);
+                    } else {
+                        setActiveSessionIndex(i);
+                    }
                     didSomething = true;
                     break;
                 }

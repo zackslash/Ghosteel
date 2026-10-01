@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Sailfish OS Emulator Desktop Shortcut Test
-# Installs desktop launcher files for -e/--exec and -s/--session CLI flags,
+# Installs desktop launcher files for the -e/--exec, -s/--session and
+# -r/--restart CLI flags,
 # restarts lipstick so the launcher picks them up, and ensures ghosteel is running.
 #
 # Usage: ./emulator_desktop_test.sh [--clean]
@@ -36,7 +37,7 @@ fi
 
 if [[ "${1:-}" == "--clean" ]]; then
     echo "[1/2] Removing test desktop files..."
-    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f ~/$DESKTOP_DIR/ghosteel-top.desktop ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop ~/$DESKTOP_DIR/ghosteel-top-slow.desktop ~/$DESKTOP_DIR/ghosteel-lazygit.desktop ~/$DESKTOP_DIR/ghosteel-htop.desktop ~/$DESKTOP_DIR/ghosteel-sysmon.desktop ~/$DESKTOP_DIR/ghosteel-fail.desktop /tmp/fail-after-3.sh"
+    ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "rm -f ~/$DESKTOP_DIR/ghosteel-top.desktop ~/$DESKTOP_DIR/ghosteel-top-cpu.desktop ~/$DESKTOP_DIR/ghosteel-top-slow.desktop ~/$DESKTOP_DIR/ghosteel-lazygit.desktop ~/$DESKTOP_DIR/ghosteel-htop.desktop ~/$DESKTOP_DIR/ghosteel-sysmon.desktop ~/$DESKTOP_DIR/ghosteel-fail.desktop ~/$DESKTOP_DIR/ghosteel-restart-sysmon.desktop ~/$DESKTOP_DIR/ghosteel-restart-top.desktop /tmp/fail-after-3.sh"
 
     echo "[2/2] Restarting lipstick..."
     ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "systemctl --user restart lipstick.service"
@@ -80,6 +81,8 @@ create_desktop "ghosteel-top-slow.desktop" "ghosteel -e top -d 5"        "Top Sl
 create_desktop "ghosteel-lazygit.desktop"  "ghosteel -e lazygit"         "Lazygit (Ghosteel)"  "Run lazygit in Ghosteel terminal"
 create_desktop "ghosteel-htop.desktop"     "ghosteel -s htop -e htop"    "Htop (Ghosteel)"     "Named htop session in Ghosteel"
 create_desktop "ghosteel-sysmon.desktop"   "ghosteel -s sysmon -e top"   "Sysmon (Ghosteel)"   "Named sysmon session in Ghosteel"
+create_desktop "ghosteel-restart-sysmon.desktop" "ghosteel -s sysmon-r -r -e top" "Sysmon Restart (Ghosteel)" "Named session with -r: fresh run every tap"
+create_desktop "ghosteel-restart-top.desktop"    "ghosteel -r -e top"             "Top Restart (Ghosteel)"    "Anonymous exec with -r: fresh run every tap"
 create_desktop "ghosteel-fail.desktop"     "ghosteel -e /tmp/fail-after-3.sh" "Fail Test (Ghosteel)" "Runs 3s then exits with error"
 
 echo "[2/4] Verifying desktop files..."
@@ -99,7 +102,7 @@ ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "systemctl --user restart lipstick.service"
 sleep 1
 
 echo ""
-echo "Done. Seven desktop shortcuts installed:"
+echo "Done. Nine desktop shortcuts installed:"
 echo "  Top (Ghosteel)        — anonymous exec: ghosteel -e top"
 echo "  Top Batch (Ghosteel)  — anonymous exec: ghosteel -e top -b -n 5"
 echo "  Top Slow (Ghosteel)   — anonymous exec: ghosteel -e top -d 5"
@@ -107,6 +110,8 @@ echo "  Lazygit (Ghosteel)    — anonymous exec: ghosteel -e lazygit"
 echo "  Htop (Ghosteel)       — named session:  ghosteel -s htop -e htop"
 echo "  Sysmon (Ghosteel)     — named session:  ghosteel -s sysmon -e top"
 echo "  Fail Test (Ghosteel)  — anonymous exec: /tmp/fail-after-3.sh (3s then exit 1)"
+echo "  Sysmon Restart (Ghosteel) - named restart:    ghosteel -s sysmon-r -r -e top"
+echo "  Top Restart (Ghosteel)    - anonymous restart: ghosteel -r -e top"
 echo ""
 echo "Test scenarios:"
 echo "  1. Cold start: kill ghosteel, tap any icon — should launch and run command"
@@ -118,5 +123,14 @@ echo "  6. Same binary, different args: tap 'Top Batch' then 'Top Slow' — two 
 echo "  7. Args reuse: tap 'Top Batch' twice — second tap reuses existing Top Batch session"
 echo "  8. Independence: tap 'Top' then 'Sysmon' — two separate sessions with same command"
 echo "  9. Auto-remove + session list: tap 'Fail Test' — runs 3s, shows error, then session list"
+echo " 10. Named restart: tap 'Sysmon Restart' twice — second tap closes the running"
+echo "     top session and starts it fresh (one session for that name, not a switch)"
+echo "     note: with a live anonymous top session left from earlier scenarios, the"
+echo "     first tap replaces that session (naming it sysmon-r); close other top"
+echo "     sessions first to test the clean path"
+echo " 11. Anonymous restart: with 'Top' still running, tap 'Top Restart' — the live"
+echo "     anonymous top session is replaced, not stacked"
+echo " 12. No -r leak: tap 'Sysmon' twice (no -r) — still only switches to the"
+echo "     existing session, no restart"
 echo ""
 echo "Clean up with: $0 --clean"
