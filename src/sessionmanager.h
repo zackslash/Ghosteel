@@ -89,13 +89,14 @@ public:
     Q_INVOKABLE void setSortMode(int mode);
 
     // Single-instance guard: returns true if another instance is already running.
-    // The pending CLI request (exec:/switch: payload built from the -e/-s
+    // The pending CLI request (exec:/exec!:/switch: payload built from the -e/-s/-r
     // arguments) is encoded and sent to the running instance — with no CLI
     // args a plain raise is sent — then the caller should exit. Call before
     // creating SessionManager.
     static bool checkSingleInstance(const QString &execCommand = QString(),
                                     const QStringList &execArgs = QStringList(),
-                                    const QString &sessionName = QString());
+                                    const QString &sessionName = QString(),
+                                    bool restart = false);
 
     // Start the single-instance socket server. Call after D-Bus registration
     // so that future instances can detect this one.
@@ -105,7 +106,7 @@ public:
 
     // Store CLI arguments for deferred processing after QML initialization.
     void setCliArgs(const QString &execCommand, const QStringList &execArgs,
-                    const QString &sessionName);
+                    const QString &sessionName, bool restart = false);
 
     // Called from QML after restoreSessions() to process deferred CLI args.
     Q_INVOKABLE void processCliArgs();
@@ -194,6 +195,7 @@ private:
     QString m_cliExecCommand;
     QStringList m_cliExecArgs;
     QString m_cliSessionName;
+    bool m_cliRestart = false;
 };
 
 #endif // SESSIONMANAGER_H

@@ -20,12 +20,13 @@ QString SessionManager::socketPath()
 
 bool SessionManager::checkSingleInstance(const QString &execCommand,
                                          const QStringList &execArgs,
-                                         const QString &sessionName)
+                                         const QString &sessionName,
+                                         bool restart)
 {
     QLocalSocket socket;
     socket.connectToServer(socketPath());
     if (socket.waitForConnected(500)) {
-        QByteArray msg = IpcMessage::encode(execCommand, execArgs, sessionName);
+        QByteArray msg = IpcMessage::encode(execCommand, execArgs, sessionName, restart);
         socket.write(msg);
         socket.waitForBytesWritten(1000);
         socket.disconnectFromServer();
@@ -61,8 +62,9 @@ bool SessionManager::startSingleInstanceServer()
                     probe.write(IpcMessage::encode(QString(), QStringList(), QString()));
                 } else {
                     // Forward the CLI request (Exec path — the primary will
-                    // run it / switch to the requested session).
-                    probe.write(IpcMessage::encode(m_cliExecCommand, m_cliExecArgs, m_cliSessionName));
+                    // run it, switch to the requested session, or replace a
+                    // matching session (-r)).
+                    probe.write(IpcMessage::encode(m_cliExecCommand, m_cliExecArgs, m_cliSessionName, m_cliRestart));
                 }
                 probe.waitForBytesWritten(1000);
                 probe.disconnectFromServer();
@@ -89,11 +91,13 @@ bool SessionManager::startSingleInstanceServer()
 
 void SessionManager::setCliArgs(const QString &execCommand,
                                 const QStringList &execArgs,
-                                const QString &sessionName)
+                                const QString &sessionName,
+                                bool restart)
 {
     m_cliExecCommand = execCommand;
     m_cliExecArgs = execArgs;
     m_cliSessionName = IpcMessage::sanitizeSessionName(sessionName);
+    m_cliRestart = restart;
 }
 
 void SessionManager::clearCliArgs()
@@ -101,6 +105,7 @@ void SessionManager::clearCliArgs()
     m_cliExecCommand.clear();
     m_cliExecArgs.clear();
     m_cliSessionName.clear();
+    m_cliRestart = false;
 }
 
 void SessionManager::raiseWindow()
@@ -153,7 +158,7 @@ void SessionManager::onNewInstanceConnection()
             raiseWindow();
         } else if (parsed.type == IpcMessage::Exec) {
             if (parsed.command.isEmpty()) return;
-            setCliArgs(parsed.command, parsed.args, parsed.sessionName);
+            setCliArgs(parsed.command, parsed.args, parsed.sessionName, parsed.restart);
             processCliArgs();
             // Delay raise to let QML process sessionCreated() signal
             QTimer::singleShot(100, this, raiseWindow);

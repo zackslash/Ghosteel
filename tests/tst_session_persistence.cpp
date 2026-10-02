@@ -1749,6 +1749,93 @@ private slots:
         QCOMPARE(mgr.activeSessionIndex(), activeAfterFirst); // same session
     }
 
+    void testRestartReplacesLiveNamedSession()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // First launch: named command session, command stays live
+        mgr.setCliArgs("top", QStringList(), "sysmon", false);
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        int firstId = mgr.sessionId(0);
+
+        // Restart launch: same name, live command session must be replaced
+        mgr.setCliArgs("top", QStringList(), "sysmon", true);
+        mgr.processCliArgs();
+
+        QCOMPARE(mgr.sessionCount(), 1);
+        int newId = mgr.sessionId(0);
+        QVERIFY(newId != firstId);
+        QCOMPARE(mgr.sessionName(0), QStringLiteral("sysmon"));
+        TerminalView *view = mgr.sessionById(newId);
+        QVERIFY(view);
+        QCOMPARE(view->commandArgs(), QStringList() << "top");
+    }
+
+    void testRestartReplacesAnonymousArgvMatch()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.setCliArgs("top", QStringList(), QString(), false);
+        mgr.processCliArgs();
+        QCOMPARE(mgr.sessionCount(), 1);
+        int firstId = mgr.sessionId(0);
+
+        mgr.setCliArgs("top", QStringList(), QString(), true);
+        mgr.processCliArgs();
+
+        // Replaced, not switched: same count, different session
+        QCOMPARE(mgr.sessionCount(), 1);
+        QVERIFY(mgr.sessionId(0) != firstId);
+        TerminalView *view = mgr.sessionById(mgr.sessionId(0));
+        QVERIFY(view);
+        QCOMPARE(view->commandArgs(), QStringList() << "top");
+    }
+
+    void testRestartFlagDoesNotLeak()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        mgr.setCliArgs("top", QStringList(), QString(), true);
+        mgr.processCliArgs();
+        int replacedId = mgr.sessionId(0);
+
+        // clearCliArgs() must have reset the restart flag: the next plain
+        // launch with the same argv switches instead of replacing again
+        mgr.setCliArgs("top", QStringList(), QString(), false);
+        mgr.processCliArgs();
+
+        QCOMPARE(mgr.sessionCount(), 1);
+        QCOMPARE(mgr.sessionId(0), replacedId);
+    }
+
+    void testRestartAtCapFallsBackToSwitch()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Anonymous command session the restart request will match
+        mgr.createSessionWithCommand(QString(), QStringList() << "htop");
+        int matchedId = mgr.sessionId(0);
+
+        // Fill to the cap (matches kMaxSessionCount in sessionmanager.cpp)
+        for (int i = mgr.sessionCount(); i < 100; i++)
+            mgr.createSessionWithCommand(QString(), QStringList() << "true");
+        QCOMPARE(mgr.sessionCount(), 100);
+
+        mgr.setCliArgs("htop", QStringList(), QString(), true);
+        mgr.processCliArgs();
+
+        // At the cap creation fails, so the matched session survives and
+        // the tap falls back to switching to it
+        QCOMPARE(mgr.sessionCount(), 100);
+        QCOMPARE(mgr.sessionIndexById(matchedId) >= 0, true);
+        QCOMPARE(mgr.activeSessionIndex(), mgr.sessionIndexById(matchedId));
+    }
+
     void testProcessCliArgsReuseSkipsNamedSessions()
     {
         SessionManager mgr(m_settingsPath);

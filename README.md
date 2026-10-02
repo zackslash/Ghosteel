@@ -89,6 +89,12 @@ Use `-s <name>` to give the session a persistent name (survives app restart):
 Exec=ghosteel -s sysmon -e top
 ```
 
+Add `-r` (or `--restart`) to make the launcher always start the command fresh: if a matching session from a previous launch is still running, it is closed and replaced instead of just switched to. Without `-r`, tapping the launcher only switches to the existing session while it is still running. This pairs with `-e` (or `--`) and is otherwise ignored:
+
+```ini
+Exec=ghosteel -s sysmon -r -e top
+```
+
 Note: set `X-Nemo-Single-Instance` to `no`, otherwise the SailfishOS invoker swallows CLI args for already-running apps. If you edit a desktop file that's already on the homescreen, restart lipstick for the launcher to pick up changes:
 
 ```bash
