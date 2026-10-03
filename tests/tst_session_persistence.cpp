@@ -1832,7 +1832,31 @@ private slots:
         // At the cap creation fails, so the matched session survives and
         // the tap falls back to switching to it
         QCOMPARE(mgr.sessionCount(), 100);
-        QCOMPARE(mgr.sessionIndexById(matchedId) >= 0, true);
+        QVERIFY(mgr.sessionIndexById(matchedId) >= 0);
+        QCOMPARE(mgr.activeSessionIndex(), mgr.sessionIndexById(matchedId));
+    }
+
+    void testRestartAtCapNamedFallsBackToSwitch()
+    {
+        SessionManager mgr(m_settingsPath);
+        mgr.restoreSessions();
+
+        // Named command session the restart request will match
+        mgr.createSessionWithCommand("sysmon", QStringList() << "htop");
+        int matchedId = mgr.sessionId(0);
+
+        // Fill to the cap (matches kMaxSessionCount in sessionmanager.cpp)
+        for (int i = mgr.sessionCount(); i < 100; i++)
+            mgr.createSessionWithCommand(QString(), QStringList() << "true");
+        QCOMPARE(mgr.sessionCount(), 100);
+
+        mgr.setCliArgs("htop", QStringList(), "sysmon", true);
+        mgr.processCliArgs();
+
+        // At the cap creation fails, so the named session survives and the
+        // tap falls back to switching to it
+        QCOMPARE(mgr.sessionCount(), 100);
+        QVERIFY(mgr.sessionIndexById(matchedId) >= 0);
         QCOMPARE(mgr.activeSessionIndex(), mgr.sessionIndexById(matchedId));
     }
 
