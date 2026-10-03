@@ -78,7 +78,6 @@ private slots:
 
     void malformedExecDegradesToRaise()
     {
-        // No second colon after the prefix
         IpcMessage msg = parseEncoded(QByteArray("exec:nocolon\n"));
         QCOMPARE(msg.type, IpcMessage::Raise);
         QCOMPARE(msg.restart, false);

@@ -851,6 +851,18 @@ void SessionManager::processCliArgs()
         QStringList fullArgs;
         fullArgs << m_cliExecCommand << m_cliExecArgs;
 
+        // Replace a matched session: create first, since at the session cap
+        // createSessionWithCommand returns null and the match must survive
+        // (a remove stops its pty, and removing the only session would spawn
+        // a junk shell). Creation appends at the end, so the matched index
+        // stays valid for removeSession.
+        auto replaceOrSwitch = [&](int index) {
+            if (createSessionWithCommand(m_cliSessionName, fullArgs))
+                removeSession(index);
+            else if (m_cliRestart)
+                setActiveSessionIndex(index);
+        };
+
         if (!m_cliSessionName.isEmpty()) {
             int named = findSessionByName(m_cliSessionName);
             if (named >= 0) {
@@ -861,15 +873,7 @@ void SessionManager::processCliArgs()
                 } else {
                     // Command exited, session is plain shell, or restart was
                     // requested — replace with new session.
-                    // Create first so removeSession never hits the empty-list fallback.
-                    // Only remove the old one if the replacement was created: at the session
-                    // cap createSessionWithCommand returns null, and a restart tap then
-                    // falls back to switching (removing a live session stops its pty
-                    // synchronously, a bounded reap that typically takes under 100ms).
-                    if (createSessionWithCommand(m_cliSessionName, fullArgs))
-                        removeSession(named);
-                    else if (m_cliRestart)
-                        setActiveSessionIndex(named);
+                    replaceOrSwitch(named);
                 }
                 didSomething = true;
             }
@@ -878,17 +882,10 @@ void SessionManager::processCliArgs()
         if (!didSomething) {
             for (int i = 0; i < m_sessions.size(); i++) {
                 if (m_sessions[i].name.isEmpty() && m_sessions[i].execArgs == fullArgs) {
-                    if (m_cliRestart) {
-                        // Create first so the matched index stays valid for removeSession
-                        // (the new session appends at the end); at the session cap fall
-                        // back to switching like a non-restart tap.
-                        if (createSessionWithCommand(m_cliSessionName, fullArgs))
-                            removeSession(i);
-                        else
-                            setActiveSessionIndex(i);
-                    } else {
+                    if (m_cliRestart)
+                        replaceOrSwitch(i);
+                    else
                         setActiveSessionIndex(i);
-                    }
                     didSomething = true;
                     break;
                 }
