@@ -163,10 +163,6 @@ Page {
     property string pendingClipboardSessionName: ""
     property bool clipboardDialogActive: false  // Guards against stacking read dialogs
 
-    // Bell vibration goes through ngfd's haptic-only "vibra" event; the old
-    // route (publishing a 1 ms critical notification and hoping the system
-    // buzzes) only showed a banner on SFOS 5.2.
-
     // Shell fallback notification: shown when a configured shell fails to
     // start and a fallback shell is used instead
     Notification {
@@ -176,12 +172,6 @@ Page {
         body: ""
         urgency: Notification.Normal
         expireTimeout: 5000
-    }
-
-    // Rate limit bell feedback to prevent haptic motor/audio spam
-    Timer {
-        id: bellCooldown
-        interval: 200
     }
 
     // Rate limit clipboard read requests to prevent dialog flooding
@@ -803,8 +793,6 @@ Page {
     function onTerminalBell() {
         var mode = Settings.bellMode
         if (mode === 0) return // None
-        if (bellCooldown.running) return
-        bellCooldown.start()
 
         // Vibrate: mode 1 or 3
         if (mode === 1 || mode === 3) {

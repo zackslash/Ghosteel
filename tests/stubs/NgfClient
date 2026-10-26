@@ -1,0 +1,3 @@
+// Stub for the Sailfish libngf-qt5 header; real one lives at
+// /usr/include/NgfClient on the SDK target.
+#include "ngfclient_stub.h"

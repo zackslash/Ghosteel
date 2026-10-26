@@ -206,14 +206,29 @@ add_executable(tst_glyph_cache_key
 target_link_libraries(tst_glyph_cache_key PRIVATE Qt5::Core Qt5::Gui Qt5::Test)
 add_test(NAME GlyphCacheKey COMMAND tst_glyph_cache_key)
 
+# --- Bell feedback tests (NgfClient stubbed) ---
+add_executable(tst_bellfeedback
+    tst_bellfeedback.cpp
+    stubs/ngfclient_stub.h
+    ${CMAKE_SOURCE_DIR}/../src/bellfeedback.cpp
+)
+target_include_directories(tst_bellfeedback PRIVATE SYSTEM
+    ${CMAKE_SOURCE_DIR}/stubs
+)
+target_link_libraries(tst_bellfeedback PRIVATE Qt5::Core Qt5::Test)
+target_compile_definitions(tst_bellfeedback PRIVATE
+    GHOSTEEL_SOURCE_DIR="${CMAKE_SOURCE_DIR}/.."
+)
+add_test(NAME BellFeedback COMMAND tst_bellfeedback)
+
 # --- Compile smoke: app GUI sources -----------------------------------------
 # The unit tests above deliberately compile most sources against stubs, so
 # type drift in the GUI-only translation units (renderer, view, atlas) is
 # otherwise caught only by the CI RPM build. This object library compiles
 # them for real; nothing links it, so no display or Sailfish-only runtime
-# deps are needed. bellfeedback.cpp (NgfClient) and ghosteel.cpp
-# (sailfishapp) stay out: their headers are Sailfish-only and their logic
-# is thin. Add new GUI sources here when they appear.
+# deps are needed. ghosteel.cpp (sailfishapp) stays out: its header is
+# Sailfish-only and its logic is thin. Add new GUI sources here when they
+# appear.
 find_package(Qt5 COMPONENTS Quick OpenGL DBus QUIET)
 if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
     add_library(compile_smoke OBJECT

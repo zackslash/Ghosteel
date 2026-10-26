@@ -247,9 +247,9 @@ desktop-file-install --delete-original \
 %{_datadir}/ngfd/events.d/60-ghosteel.ini
 
 %post
-# ngfd reads its events directory only at daemon start; restart the user
-# service so the bell events exist immediately instead of after a reboot.
-# Sailfish user is defaultuser (uid 100000); best-effort, never fatal.
+# ngfd reads events.d only at daemon start; restart it so the bell events
+# exist now. defaultuser (uid 100000) is the SFOS constant; best-effort.
 runuser -u defaultuser -- env XDG_RUNTIME_DIR=/run/user/100000 \
     DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/100000/dbus/user_bus_socket \
-    systemctl --user restart ngfd >/dev/null 2>&1 || :
+    systemctl --user restart ngfd >/dev/null 2>&1 || \
+    echo "ghosteel: ngfd restart failed; bell events activate at next boot" >&2
