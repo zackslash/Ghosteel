@@ -218,17 +218,26 @@ static const char *postVertexShaderSource =
 // Ghostty-compatible shadertoy prefix for ES 3.0 (individual uniforms, no UBO)
 static const char *shadertoyPrefixES300 =
     "#version 300 es\n"
+    // Real mobile GPUs (Mali et al.) run mediump math and round mediump
+    // uniforms to true fp16, unlike desktop GL where mediump is ignored.
+    // Highp qualifiers on the clock uniforms alone don't help: default
+    // precision governs shader locals too, so the trail-progress math
+    // re-truncates to fp16 and the smear collapsed to a one-frame flicker
+    // on Mali-G610. ES 3.0 mandates fragment highp; the guard only covers
+    // engines that support highp without defining the macro — a truly
+    // no-highp engine fails compilation here and the post pass disables
+    // itself (graceful, one-shot).
+    "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+    "precision highp float;\n"
+    "#else\n"
     "precision mediump float;\n"
+    "#endif\n"
     "\n"
     "uniform vec3  iResolution;\n"
-    // Time uniforms are highp: mediump is fp16 on the target GPU class
-    // (Mali/Adreno/PowerVR round uniform values to the declared precision
-    // at upload). From ~256 s of uptime the fp16 ulp (0.25 s) already
-    // exceeds the 0.2 s trail window, so leg progress quantizes to 0 or
-    // past window-end and the smear never renders; by ~512 s even the
-    // 0.49 s leg-validity window is exceeded. ES 3.0 mandates fragment
-    // highp, so this is always safe here. A blanket `precision highp float;`
-    // would force fp32 on all shader math; only the clock uniforms need the range.
+    // Clock uniforms stay explicitly highp for the mediump fallback path:
+    // fp16 ulp at a few hundred seconds of uptime (0.25 s at 256 s) exceeds
+    // the 0.2 s trail window, so leg progress would quantize to 0 or
+    // past window-end and the smear would never render.
     "uniform highp float iTime;\n"
     "uniform highp float iTimeDelta;\n"
     "uniform highp float iTimeCursorChange;\n"
@@ -495,7 +504,15 @@ void GLRenderer::Renderer::loadPostShader(const QString &path)
     m_postShader.loc.iChannel0 = m_postShader.program->uniformLocation("iChannel0");
 
     m_postShaderActive = true;
-    qDebug() << "GLRenderer: post shader loaded from" << path;
+    // Location evidence: -1 for a uniform the shader actually reads means the
+    // driver optimized it away — the upload is then silently skipped and the
+    // trail misrenders only on such devices.
+    qDebug() << "GLRenderer: post shader loaded from" << path
+             << "uniforms: iResolution" << m_postShader.loc.iResolution
+             << "iTime" << m_postShader.loc.iTime
+             << "iTimeCursorChange" << m_postShader.loc.iTimeCursorChange
+             << "iCurrentCursor" << m_postShader.loc.iCurrentCursor
+             << "iPreviousCursor" << m_postShader.loc.iPreviousCursor;
 }
 
 void GLRenderer::Renderer::uploadPostShaderUniforms(PostShader &shader, int fboW, int fboH)
