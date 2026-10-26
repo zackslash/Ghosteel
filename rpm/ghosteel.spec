@@ -230,6 +230,8 @@ fi
 %install
 %qmake5_install
 
+install -D -m 644 rpm/ghosteel-ngfd-events.ini \
+    %{buildroot}%{_datadir}/ngfd/events.d/60-ghosteel.ini
 
 desktop-file-install --delete-original \
     --dir %{buildroot}%{_datadir}/applications \
@@ -242,3 +244,12 @@ desktop-file-install --delete-original \
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 %{_datadir}/dbus-1/services/com.zackslash.ghosteel.service
+%{_datadir}/ngfd/events.d/60-ghosteel.ini
+
+%post
+# ngfd reads its events directory only at daemon start; restart the user
+# service so the bell events exist immediately instead of after a reboot.
+# Sailfish user is defaultuser (uid 100000); best-effort, never fatal.
+runuser -u defaultuser -- env XDG_RUNTIME_DIR=/run/user/100000 \
+    DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/100000/dbus/user_bus_socket \
+    systemctl --user restart ngfd >/dev/null 2>&1 || :

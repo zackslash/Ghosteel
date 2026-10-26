@@ -163,15 +163,9 @@ Page {
     property string pendingClipboardSessionName: ""
     property bool clipboardDialogActive: false  // Guards against stacking read dialogs
 
-    // Haptic feedback notification — publishing a notification triggers system vibration
-    Notification {
-        id: bellNotification
-        appName: "Ghosteel"
-        summary: qsTr("Bell")
-        body: ""
-        urgency: Notification.Critical
-        expireTimeout: 1
-    }
+    // Bell vibration goes through ngfd's haptic-only "vibra" event; the old
+    // route (publishing a 1 ms critical notification and hoping the system
+    // buzzes) only showed a banner on SFOS 5.2.
 
     // Shell fallback notification: shown when a configured shell fails to
     // start and a fallback shell is used instead
@@ -812,9 +806,9 @@ Page {
         if (bellCooldown.running) return
         bellCooldown.start()
 
-        // Vibrate: mode 1 or 3 — publish a notification to trigger system vibration
+        // Vibrate: mode 1 or 3
         if (mode === 1 || mode === 3) {
-            bellNotification.publish()
+            bellFeedback.playVibrate()
         }
 
         // Sound: mode 2 or 3
