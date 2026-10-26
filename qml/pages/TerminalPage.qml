@@ -1481,12 +1481,28 @@ Page {
                             id: repeatTimer
                             interval: 400
                             onTriggered: {
-                                if (!keybar.open || !terminal) return
+                                // Grab steals flip `pressed` false; re-checking
+                                // here ends those stuck repeats. A release lost
+                                // with no cancel leaves it true, so the app-active
+                                // stop below is the real backstop. mouseButtons()
+                                // is no cross-check: synthesized touch never
+                                // updates it.
+                                if (!keyDelegate.pressed || !keybar.open || !terminal) {
+                                    repeatFired = false
+                                    return
+                                }
                                 repeatFired = true
                                 terminal.sendKey(keyDef.qtKey, page.activeModifiers)
                                 interval = interval === 400 ? 120 : Math.max(50, interval - 15)
                                 restart()
                             }
+                        }
+
+                        // A release swallowed without a cancel leaves `pressed`
+                        // stuck true; app deactivation ends the hold.
+                        Connections {
+                            target: Qt.application
+                            onActiveChanged: if (!Qt.application.active) repeatTimer.stop()
                         }
 
                         // Icon for keys with iconSource; ColorOverlay tints dark for the light scheme.
