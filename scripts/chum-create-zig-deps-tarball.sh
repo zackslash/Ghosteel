@@ -3,9 +3,7 @@
 # offline OBS builds. Produces two files to upload to OBS as Source1/Source2.
 #
 # Uses zig build --fetch=all to resolve the full dependency tree, then
-# extracts and strips each package for smaller cache size. The extracted
-# dirs are shipped (not tarballs) and used with --system mode, which
-# trusts pre-extracted directories without hash verification.
+# extracts and strips each package for smaller cache size.
 #
 # Usage: ./scripts/chum-create-zig-deps-tarball.sh [output-dir]
 # Default: rpm/ (spec expects Source1/Source2 there)
@@ -16,10 +14,10 @@
 
 set -euo pipefail
 
-ZIG_VERSION="0.16.0"
+ZIG_VERSION="0.17.0"
 ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 GHOSTTY_DIR="${REPO_ROOT}/ghostty"
 OUTPUT_DIR="${1:-${REPO_ROOT}/rpm}"
 mkdir -p "$OUTPUT_DIR"
@@ -29,6 +27,10 @@ ZIG_OUTPUT="${OUTPUT_DIR}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
 DEPS_OUTPUT="${OUTPUT_DIR}/zig-deps-cache.tar.gz"
 
 trap 'rm -rf "$WORK_DIR"' EXIT
+# Untrapped fatal signals skip the EXIT trap; routing through exit() also
+# TERMs a backgrounded zig child before cleanup runs.
+ZIG_PID=""
+trap 'kill -TERM "$ZIG_PID" 2>/dev/null; exit 143' INT TERM
 
 if [ ! -f "${GHOSTTY_DIR}/build.zig.zon" ]; then
     echo "ERROR: ${GHOSTTY_DIR}/build.zig.zon not found" >&2
@@ -42,8 +44,8 @@ if [ -f "$ZIG_OUTPUT" ]; then
     echo "  Already exists: $ZIG_OUTPUT (skipping)"
 else
     echo "  Downloading: $ZIG_URL"
-    curl -fsSL -o "${ZIG_OUTPUT}.partial" "$ZIG_URL"
-    mv "${ZIG_OUTPUT}.partial" "$ZIG_OUTPUT"
+    curl -fsSL -o "${ZIG_OUTPUT}.partial.$$" "$ZIG_URL"
+    mv "${ZIG_OUTPUT}.partial.$$" "$ZIG_OUTPUT"
     echo "  Saved: $ZIG_OUTPUT ($(du -h "$ZIG_OUTPUT" | awk '{print $1}'))"
 fi
 
@@ -53,15 +55,24 @@ echo "=== Fetching Zig package dependencies ==="
 tar -xJf "$ZIG_OUTPUT" -C "$WORK_DIR"
 ZIG_BIN="${WORK_DIR}/zig-x86_64-linux-${ZIG_VERSION}/zig"
 
+# Serialize against build-libs.sh: both mutate ghostty/zig-pkg and the
+# project .zig-cache, which zig's cache locking does not cover.
+exec 9>"$REPO_ROOT/.build-libs.lock"
+echo "Waiting for .build-libs.lock..." >&2
+flock -w 3600 9 || { echo "ERROR: timed out waiting for .build-libs.lock" >&2; exit 1; }
+
 # Delete zig-pkg/ so all packages are fetched fresh into the isolated cache.
-# Zig 0.16.0 stores extracted deps in zig-pkg/ (project-local); if it already
+# Zig 0.17.0 stores extracted deps in zig-pkg/ (project-local); if it already
 # exists, no network fetch occurs and no tarballs are written to p/.
 rm -rf "${GHOSTTY_DIR}/zig-pkg"
 
 cd "$GHOSTTY_DIR"
 # --fetch=all resolves and downloads the full dep tree but exits non-zero
 # if downstream build steps fail; deps are cached regardless.
-"$ZIG_BIN" build --fetch=all --global-cache-dir "$WORK_DIR" 2>&1 || true
+# Zig 0.17 removed the --global-cache-dir flag; the location is env-only.
+ZIG_GLOBAL_CACHE_DIR="$WORK_DIR" "$ZIG_BIN" build --fetch=all 2>&1 &
+ZIG_PID=$!
+wait "$ZIG_PID" || true
 cd "$REPO_ROOT"
 
 if [ ! -d "${WORK_DIR}/p" ] || [ -z "$(ls -A "${WORK_DIR}/p" 2>/dev/null)" ]; then
@@ -95,12 +106,12 @@ mkdir -p "${WORK_DIR}/pkg"
 EXTRACTED=0
 for pkg_tarball in "${WORK_DIR}/p"/*.tar.gz; do
     [ -f "$pkg_tarball" ] || continue
-    hash=$(basename "$pkg_tarball" .tar.gz)
-    pkg_dir="${WORK_DIR}/pkg/${hash}"
+    stem=$(basename "$pkg_tarball" .tar.gz)
+    pkg_dir="${WORK_DIR}/pkg/${stem}"
     mkdir -p "$pkg_dir"
     tar -xzf "$pkg_tarball" --strip-components=1 -C "$pkg_dir"
     if [ ! -f "${pkg_dir}/build.zig.zon" ]; then
-        echo "WARN: ${hash} missing build.zig.zon after extract" >&2
+        echo "WARN: ${stem} missing build.zig.zon after extract" >&2
     fi
 
     # Strip bloat never needed for a release build.

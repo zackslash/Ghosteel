@@ -103,12 +103,12 @@ systemctl --user restart lipstick.service
 
 ## Build
 
-Requires Sailfish OS SDK and Zig 0.16.0.
+Requires Sailfish OS SDK and Zig 0.17.0.
 
 ```bash
-# Install Zig 0.16.0
-curl -L https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz | tar -xJ -C ~/.local/
-ln -sf ~/.local/zig-x86_64-linux-0.16.0/zig ~/.local/bin/zig
+# Install Zig 0.17.0
+curl -L https://ziglang.org/download/0.17.0/zig-x86_64-linux-0.17.0.tar.xz | tar -xJ -C ~/.local/
+ln -sf ~/.local/zig-x86_64-linux-0.17.0/zig ~/.local/bin/zig
 
 # Build libghostty-vt for your target architecture
 ./scripts/build-libs.sh          # all architectures
