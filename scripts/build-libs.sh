@@ -1,20 +1,19 @@
 #!/bin/bash
 # Build libghostty-vt static libraries for all Sailfish OS architectures.
-# Requires Zig 0.16.0 (see README for installation).
+# Requires Zig 0.17.0 (see README for installation).
 #
 # Usage: ./scripts/build-libs.sh [aarch64|armv7hl|i486|all]
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 GHOSTTY_DIR="$PROJECT_ROOT/ghostty"
 LIB_DIR="$PROJECT_ROOT/lib"
 
-ZIG_VERSION_REQUIRED="0.16.0"
+ZIG_VERSION_REQUIRED="0.17.0"
 ZIG="${ZIG:-zig}"
 
-# Check Zig version
 check_zig() {
     if ! command -v "$ZIG" &>/dev/null; then
         echo "Error: zig not found. Install Zig $ZIG_VERSION_REQUIRED from https://ziglang.org/"
@@ -44,8 +43,7 @@ build_arch() {
     echo "  -> $out_dir/libghostty-vt.a"
 }
 
-# Apply carried ghostty patches (patches/*.patch) to the submodule working
-# tree. Local runs leave the submodule tree dirty (patch applied); run
+# Local runs leave the submodule tree dirty (patch applied); run
 # `git -C ghostty checkout -- .` before the next submodule bump.
 apply_carried_patches() {
     local p

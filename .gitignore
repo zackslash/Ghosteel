@@ -19,9 +19,6 @@ BUILDROOT/
 zig-cache/
 zig-out/
 .zig-cache/
-ghostty/zig-cache/
-ghostty/zig-out/
-ghostty/.zig-cache/
 zig-deps-cache.tar.gz
 
 # C++ build artifacts
