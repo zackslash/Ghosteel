@@ -10,11 +10,16 @@ URL:        https://github.com/zackslash/Ghosteel
 Source0:    %{name}-%{version}.tar.bz2
 Source1:    zig-x86_64-linux-%{zig_version}.tar.xz
 Source2:    zig-deps-cache.tar.gz
+Source3:    ghosteel-ngfd-events.ini
 Requires:   sailfishsilica-qt5 >= 0.10.9
 Requires:   libGLESv2
 Requires:   libEGL
 Requires:   nemo-qml-plugin-notifications-qt5
+Requires:   sailfishshare-components
+Requires:   qt5-qtgraphicaleffects
 Requires:   sailfishsecretsdaemon
+Requires:   libsailfishsecrets
+Requires:   libsailfishcrypto
 Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default
 Requires:   libngf-qt5
@@ -230,8 +235,15 @@ fi
 %install
 %qmake5_install
 
-install -D -m 644 rpm/ghosteel-ngfd-events.ini \
-    %{buildroot}%{_datadir}/ngfd/events.d/60-ghosteel.ini
+# OBS tar_git ships rpm/ files as separate sources and excludes them from the
+# tarball; use the extracted source file there. SDK builds use the in-tree path.
+if [ -f rpm/ghosteel-ngfd-events.ini ]; then
+    install -D -m 644 rpm/ghosteel-ngfd-events.ini \
+        %{buildroot}%{_datadir}/ngfd/events.d/60-ghosteel.ini
+else
+    install -D -m 644 "%{SOURCE3}" \
+        %{buildroot}%{_datadir}/ngfd/events.d/60-ghosteel.ini
+fi
 
 desktop-file-install --delete-original \
     --dir %{buildroot}%{_datadir}/applications \
