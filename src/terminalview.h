@@ -344,7 +344,7 @@ private:
     QPointF m_lastTapPos;
     int m_tapCount = 0;            // 1=single, 2=double, 3=triple
     static const int TapTimeoutMs = 300;   // ms between taps for double/triple
-    static const int TapDistancePx = 30;   // max pixel distance between taps; also TUI tap/scroll threshold
+    static const int TapDistancePx = 30;   // max pixel distance between taps; also TUI classification threshold
 
     // Selected text (exposed to QML for share action)
     QString m_selectedText;
@@ -362,11 +362,12 @@ private:
 
     // Single-finger TUI gesture classification. Nothing reaches the app at
     // touch-down: a lift within TapDistancePx synthesizes a click pair,
-    // movement past it becomes wheel-only scroll, and a LongPressTimeout hold
-    // promotes to a button drag (app-side selection). Sending PRESS + motion
-    // + RELEASE during scroll made TUI apps fire click actions mid-scroll
-    // (opencode: message actions fired mid-scroll).
-    enum class TuiGesture { None, TapPending, Scroll, Drag };
+    // movement past it becomes wheel-only scroll or, when horizontal-
+    // dominant and swipes are enabled, a session swipe, and a
+    // LongPressTimeout hold promotes to a button drag (app-side selection).
+    // Sending PRESS + motion + RELEASE during scroll made TUI apps fire
+    // click actions mid-scroll (opencode: message actions fired mid-scroll).
+    enum class TuiGesture { None, TapPending, Scroll, Drag, Swipe };
     TuiGesture m_tuiGesture = TuiGesture::None;
     QPointF m_tuiAnchorPos;   // TapPending anchor; a promoted Drag PRESSes here
     QPointF m_tuiLastPos;     // last seen touch position, for bare releases
@@ -397,7 +398,7 @@ private:
     // Touch state machine:
     //   Idle -> [≥2 fingers] -> MultiTouch (Undecided -> Scrolling | Pinching)
     //   MultiTouch -> [all fingers up or drop below 2] -> Idle
-    //   TUI mode: single-finger touches are classified (tap / scroll / press-hold drag)
+    //   TUI mode: single-finger touches are classified (tap / scroll / swipe / press-hold drag)
     //   Normal mode: single-finger touches fall through to QQuickItem/Flickable
     enum class GestureMode { Undecided, Scrolling, Pinching };
     GestureMode m_gestureMode = GestureMode::Undecided;
@@ -414,6 +415,9 @@ private:
     static constexpr qreal PinchScaleExponent = 0.6; // <1 dampens; 0.5=sqrt, 1.0=linear
 
     // --- Session-swipe gesture (horizontal one-finger drag -> switch session) ---
+    // m_sessionSwiping/m_swipeStartX serve BOTH classifiers: the normal-mode
+    // one in mouseMoveEvent and the TUI one in handleTuiTouchUpdate (Swipe
+    // state).
     bool    m_sessionSwiping = false;
     bool    m_sessionSwipeEnabled = true; // QML-bound gate (false for single session)
     qreal   m_swipeStartX    = 0.0;   // captured at classify time, not at press

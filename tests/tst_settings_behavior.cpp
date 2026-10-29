@@ -74,6 +74,7 @@ private slots:
             "followAmbience", "backgroundOpacity", "bellMode",
             "scrollbackPersistence", "scrollbackRetentionDays", "keybarKeys",
             "keybarVisible", "keybarRowBreaks", "cursorTrails", "pinchToZoom",
+            "tuiSessionSwipe",
             "autoHideKeyboardLandscape", "urlAutoDetect", "kittyGraphics",
             "clipboardReadPolicy",
             "customShaderPath", "shaderPipelineAvailable",
@@ -416,6 +417,7 @@ private slots:
         QCOMPARE(s.keybarKeys(), QStringList({"left","down","up","right","tab","ctrl","alt","esc","keyboard"}));
         QCOMPARE(s.keybarVisible(), true);
         QCOMPARE(s.cursorTrails(), true);  // load() default is true
+        QCOMPARE(s.tuiSessionSwipe(), true);  // load() default is true
         QCOMPARE(s.customShaderPath(), QString());
         QCOMPARE(s.shaderPipelineAvailable(), false);
     }
@@ -767,6 +769,42 @@ private slots:
         s.setCursorTrails(false);
         QCOMPARE(spy.count(), 1);
         QCOMPARE(s.cursorTrails(), false);
+    }
+
+    // --- TUI session swipe ---
+
+    void testTuiSessionSwipeNoOp()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        s.setTuiSessionSwipe(true);  // load() default is true
+        QSignalSpy spy(&s, &Settings::tuiSessionSwipeChanged);
+        s.setTuiSessionSwipe(true);  // same value — no-op
+        QCOMPARE(spy.count(), 0);
+    }
+
+    void testTuiSessionSwipeChange()
+    {
+        QTemporaryDir dir;
+        Settings s(dir.path() + "/test.conf");
+        QSignalSpy spy(&s, &Settings::tuiSessionSwipeChanged);
+        s.setTuiSessionSwipe(false);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(s.tuiSessionSwipe(), false);
+    }
+
+    void testTuiSessionSwipePersistence()
+    {
+        QTemporaryDir dir;
+        QString path = dir.path() + "/test.conf";
+        {
+            Settings s(path);
+            s.setTuiSessionSwipe(false);
+        }
+        QTest::qWait(DEBOUNCE_WAIT_MS);
+
+        Settings s2(path);
+        QCOMPARE(s2.tuiSessionSwipe(), false);
     }
 
     // --- Custom shader path ---

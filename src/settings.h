@@ -27,6 +27,7 @@ class Settings : public QObject
     Q_PROPERTY(QVariantList keybarRowBreaks READ keybarRowBreaks WRITE setKeybarRowBreaks NOTIFY keybarRowBreaksChanged)
     Q_PROPERTY(bool cursorTrails READ cursorTrails WRITE setCursorTrails NOTIFY cursorTrailsChanged)
     Q_PROPERTY(bool pinchToZoom READ pinchToZoom WRITE setPinchToZoom NOTIFY pinchToZoomChanged)
+    Q_PROPERTY(bool tuiSessionSwipe READ tuiSessionSwipe WRITE setTuiSessionSwipe NOTIFY tuiSessionSwipeChanged)
     Q_PROPERTY(bool autoHideKeyboardLandscape READ autoHideKeyboardLandscape WRITE setAutoHideKeyboardLandscape NOTIFY autoHideKeyboardLandscapeChanged)
     Q_PROPERTY(bool urlAutoDetect READ urlAutoDetect WRITE setUrlAutoDetect NOTIFY urlAutoDetectChanged)
     Q_PROPERTY(bool kittyGraphics READ kittyGraphics WRITE setKittyGraphics NOTIFY kittyGraphicsChanged)
@@ -108,6 +109,9 @@ public:
     bool pinchToZoom() const { return m_pinchToZoom; }
     void setPinchToZoom(bool enabled);
 
+    bool tuiSessionSwipe() const { return m_tuiSessionSwipe; }
+    void setTuiSessionSwipe(bool enabled);
+
     bool autoHideKeyboardLandscape() const { return m_autoHideKeyboardLandscape; }
     void setAutoHideKeyboardLandscape(bool enabled);
 
@@ -144,6 +148,7 @@ Q_SIGNALS:
     void sessionSortModeChanged();
     void cursorTrailsChanged();
     void pinchToZoomChanged();
+    void tuiSessionSwipeChanged();
     void autoHideKeyboardLandscapeChanged();
     void urlAutoDetectChanged();
     void kittyGraphicsChanged();
@@ -173,6 +178,7 @@ private:
     int m_sessionSortMode = SortLastUsed; // default: sort by last used
     bool m_cursorTrails = true; // default: ON — matches load() default
     bool m_pinchToZoom = false; // default: OFF — pinch gesture changes font size
+    bool m_tuiSessionSwipe = true; // default: ON — horizontal swipe switches session in mouse-tracking apps
     bool m_autoHideKeyboardLandscape = false;
     bool m_urlAutoDetect = true; // default: ON — regex URL detection enabled
     bool m_kittyGraphics = true; // default: ON — Kitty Graphics Protocol
