@@ -56,6 +56,10 @@ void TerminalView::abandonTuiGesture()
         m_mouseButtonPressed = false;
         m_vt->setMouseButtonPressed(false);
     }
+    if (m_tuiGesture == TuiGesture::Swipe) {
+        // No end event will follow the steal; nothing was sent to the app.
+        resetSessionSwipe();
+    }
     m_tuiGesture = TuiGesture::None;
     if (wasActive) {
         // Full exit: abandon paths get no End event that could rebalance
@@ -289,10 +293,21 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
                            event->pos(), KeyMapping::mapQtModifiers(event->modifiers()));
         }
 
+        // A takeover press released before the finger lifts strands the
+        // hold timer (the finger's events fall out of TUI routing); the
+        // promote would send a PRESS nothing ever closes.
+        if (m_tuiHoldTimerId) {
+            killTimer(m_tuiHoldTimerId);
+            m_tuiHoldTimerId = 0;
+        }
+
         m_mouseButtonPressed = false;
         m_vt->setMouseButtonPressed(false);
         m_mouseTrackingActive = false;
+        // keepTouchGrab belongs to a touch gesture this press took over;
+        // the touch end deferred its clear to this release.
         setKeepMouseGrab(false);
+        setKeepTouchGrab(false);
 
         event->accept();
         return;
@@ -368,6 +383,22 @@ void TerminalView::mouseUngrabEvent()
     // Same story for an in-flight TUI gesture: no end events will follow the
     // steal, so dissolve it and close a promoted Drag's held button.
     abandonTuiGesture();
+    // A physical press whose release was lost with the grab (window
+    // deactivated mid-drag) gets its RELEASE here, or the app sticks in
+    // select-mode and the latch/grabs outlive the press. Only the send
+    // gates on live tracking; the position may be degenerate (cf.
+    // handleMultiTouchEnd's empty-list case).
+    if (m_vt && m_mouseButtonPressed) {
+        if (m_vt->isMouseTracking()) {
+            sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, GHOSTTY_MOUSE_BUTTON_LEFT,
+                           m_tuiLastPos, KeyMapping::mapQtModifiers(Qt::NoModifier));
+        }
+        m_mouseButtonPressed = false;
+        m_vt->setMouseButtonPressed(false);
+        m_mouseTrackingActive = false;
+        setKeepMouseGrab(false);
+        setKeepTouchGrab(false);
+    }
     QQuickItem::mouseUngrabEvent();
 }
 
@@ -488,15 +519,15 @@ void TerminalView::touchEvent(QTouchEvent *event)
     }
 
     // TUI mode (mouse tracking): classify single-finger touches before
-    // anything reaches the app (tap -> click pair on lift, move -> wheel-only
-    // scroll, press-hold -> button drag). Begin gates on the LIVE tracking
-    // mode — the latched flag is false at gesture start, so gating Begin on
-    // it lets Qt synthesize a mouse press and the app receives an immediate
-    // PRESS before classification. Updates/ends keep routing on the latch so
-    // an in-flight gesture stays with this path even if the app toggles
-    // tracking mid-gesture. Normal mode: fall through to QQuickItem —
-    // accepting would break the Flickable's press-delay disambiguation
-    // (instant drag -> pull-down, press-hold -> selection).
+    // anything reaches the app (tap -> click pair on lift, move -> scroll or
+    // session swipe, press-hold -> button drag). Begin gates on the LIVE
+    // tracking mode — the latched flag is false at gesture start, so gating
+    // Begin on it lets Qt synthesize a mouse press and the app receives an
+    // immediate PRESS before classification. Updates/ends keep routing on
+    // the latch so an in-flight gesture stays with this path even if the
+    // app toggles tracking mid-gesture. Normal mode: fall through to
+    // QQuickItem — accepting would break the Flickable's press-delay
+    // disambiguation (instant drag -> pull-down, press-hold -> selection).
 
     if (event->type() == QEvent::TouchBegin && points.size() == 1
             && m_vt->isMouseTracking()) {
@@ -564,6 +595,23 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
                 killTimer(m_tuiHoldTimerId);
                 m_tuiHoldTimerId = 0;
             }
+            // A horizontal-dominant drag (same thresholds as the
+            // normal-mode classifier) claims a session swipe: Scroll
+            // converts only deltaY, so quick horizontal drags reach no
+            // app otherwise; app-side horizontal input needs the
+            // hold->Drag promote. The button gate keeps an in-flight
+            // mouse drag the owner.
+            const QPointF delta = pt.pos() - m_tuiAnchorPos;
+            if (!m_mouseButtonPressed
+                && m_sessionSwipeEnabled && Settings::instance()->tuiSessionSwipe()
+                && qAbs(delta.x()) > SwipeMinHorizontalPx
+                && qAbs(delta.x()) > qAbs(delta.y()) * SwipeDominanceRatio) {
+                m_tuiGesture = TuiGesture::Swipe;
+                m_sessionSwiping = true;
+                m_swipeStartX = pt.pos().x();
+                Q_EMIT sessionSwipeStarted();
+                return;
+            }
             m_tuiGesture = TuiGesture::Scroll;
             // Re-baseline so the classification travel itself scrolls
             // nothing on the first classified frame.
@@ -609,6 +657,12 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
         mouseMoveEvent(&synthMove);
         return;
     }
+    case TuiGesture::Swipe:
+        // Live pan. A reset (mouse press mid-swipe) may have cancelled
+        // it; the end handler still unwinds what's left.
+        if (m_sessionSwiping)
+            Q_EMIT sessionSwipeProgress(pt.pos().x() - m_swipeStartX);
+        return;
     case TuiGesture::None:
         return;
     }
@@ -617,6 +671,11 @@ void TerminalView::handleTuiTouchUpdate(QTouchEvent *event,
 void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
                                      const QList<QTouchEvent::TouchPoint> &points)
 {
+    // Deferred session-swipe emission — set by the Swipe case, emitted after
+    // the common cleanup below.
+    int swipeDir = 0;
+    bool swipeCancelled = false;
+
     if (m_tuiGesture == TuiGesture::None) {
         // Not our gesture (e.g. touch end after a genuine mouse press);
         // the mouse path owns the grabs and the interactive state. A latch
@@ -649,6 +708,28 @@ void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
     }
     case TuiGesture::Scroll:
         break;
+    case TuiGesture::Swipe:
+        // Decide here, emit after the cleanup below: the commit handler
+        // switches sessions synchronously and detaches this view's
+        // connections, so a later emit (this tail's interactive restore
+        // included) would land on dead connections. The flag clear must
+        // precede the emit; focus-out during the switch re-enters
+        // resetSessionSwipe.
+        if (m_sessionSwiping) {
+            m_sessionSwiping = false;
+            if (event->type() == QEvent::TouchEnd && points.size() == 1) {
+                const qreal dx = points.first().pos().x() - m_swipeStartX;
+                if (qAbs(dx) > width() * SwipeCommitFraction)
+                    swipeDir = (dx < 0) ? 1 : -1;   // leftward -> next session
+                else
+                    swipeCancelled = true;
+            } else {
+                // Cancel or no-lift-point ends are not user actions — the
+                // same rule that keeps cancelled taps from clicking.
+                swipeCancelled = true;
+            }
+        }
+        break;
     case TuiGesture::Drag:
         if (points.size() == 1) {
             // Route through mouseReleaseEvent: its live re-check handles
@@ -674,12 +755,25 @@ void TerminalView::handleTuiTouchEnd(QTouchEvent *event,
         m_tuiHoldTimerId = 0;
     }
     m_tuiGesture = TuiGesture::None;
-    m_mouseTrackingActive = false;
+    // Mirrors the None case: a real-mouse press mid-gesture owns the
+    // latch and keep-grabs until its release; clearing them here would
+    // swallow the app's RELEASE and hand the mouse drag to the Flickable.
+    // The interactive restore stays unconditional (the drag holds its own
+    // keepMouseGrab).
+    if (!m_mouseButtonPressed) {
+        m_mouseTrackingActive = false;
+        setKeepMouseGrab(false);
+        setKeepTouchGrab(false);
+    }
     m_tuiScrollAccumulator = 0;
     Q_EMIT requestParentInteractive(true);
-    setKeepMouseGrab(false);
-    setKeepTouchGrab(false);
     event->accept();
+
+    // Must stay last: the commit handler can disconnect this view's signals.
+    if (swipeDir != 0)
+        Q_EMIT sessionSwipeCommitted(swipeDir);
+    else if (swipeCancelled)
+        Q_EMIT sessionSwipeCancelled();
 }
 
 void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &points)

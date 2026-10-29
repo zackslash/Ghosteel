@@ -78,6 +78,7 @@ void Settings::load()
     m_sessionSortMode = qBound(0, v, 3);
     m_cursorTrails = m_settings.value(QStringLiteral("terminal/cursorTrails"), true).toBool();
     m_pinchToZoom = m_settings.value(QStringLiteral("terminal/pinchToZoom"), false).toBool();
+    m_tuiSessionSwipe = m_settings.value(QStringLiteral("terminal/tuiSessionSwipe"), true).toBool();
     m_autoHideKeyboardLandscape = m_settings.value(QStringLiteral("terminal/autoHideKeyboardLandscape"), false).toBool();
     m_urlAutoDetect = m_settings.value(QStringLiteral("terminal/urlAutoDetect"), true).toBool();
     m_kittyGraphics = m_settings.value(QStringLiteral("terminal/kittyGraphics"), true).toBool();
@@ -352,6 +353,16 @@ void Settings::setPinchToZoom(bool enabled)
     m_settings.setValue(QStringLiteral("terminal/pinchToZoom"), enabled);
     scheduleSave();
     Q_EMIT pinchToZoomChanged();
+}
+
+void Settings::setTuiSessionSwipe(bool enabled)
+{
+    if (m_tuiSessionSwipe == enabled)
+        return;
+    m_tuiSessionSwipe = enabled;
+    m_settings.setValue(QStringLiteral("terminal/tuiSessionSwipe"), enabled);
+    scheduleSave();
+    Q_EMIT tuiSessionSwipeChanged();
 }
 
 void Settings::setAutoHideKeyboardLandscape(bool enabled)

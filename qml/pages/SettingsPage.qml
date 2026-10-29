@@ -37,6 +37,7 @@ Page {
                     Settings.keybarVisible = true
                     pinchToZoomToggle.checked = false
                     autoHideKeyboardLandscapeToggle.checked = false
+                    tuiSwipeToggle.checked = true
                     clipboardReadCombo.currentIndex = 0
                 }
             }
@@ -174,6 +175,15 @@ Page {
                 description: qsTr("Change font size of the session with a two-finger pinch gesture")
                 checked: Settings.pinchToZoom
                 onCheckedChanged: Settings.pinchToZoom = checked
+            }
+
+            TextSwitch {
+                id: tuiSwipeToggle
+                width: parent.width
+                text: qsTr("Swipe to switch session in TUI apps")
+                description: qsTr("Horizontal swipe switches session also in apps that use mouse input (e.g. opencode, vim). Press-hold drags always stay with the app")
+                checked: Settings.tuiSessionSwipe
+                onCheckedChanged: Settings.tuiSessionSwipe = checked
             }
 
             Slider {
