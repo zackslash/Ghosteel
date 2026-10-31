@@ -514,6 +514,14 @@ Mħaddem minn magna terminali libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Swipe biex tbiddel is-sessjoni fl-apps TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Is-swipe orizzontali jibdel is-sessjoni anke f&apos;apps li jużaw il-maws (eż. htop, vim). Id-drag b&apos;pressjoni twila dejjem jibqa&apos; fl-app</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

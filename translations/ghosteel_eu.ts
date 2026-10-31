@@ -512,6 +512,14 @@ libghostty terminal motorrak bultzatuta</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Irristatu saioa aldatzeko TUI aplikazioetan</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Irristada horizontalak saioa aldatzen du sagua erabiltzen duten aplikazioetan ere (adib. htop, vim). Luzaro sakatuta arrastatzeak beti geratzen dira aplikazioan</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

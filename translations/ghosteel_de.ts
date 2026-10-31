@@ -512,6 +512,14 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
         <source>Auto</source>
         <translation>Automatisch</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Wischen zum Wechseln der Sitzung in TUI-Apps</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Horizontales Wischen wechselt die Sitzung auch in Apps, die Mauseingaben verwenden (z. B. htop, vim). Ziehen mit gedrückt gehaltenem Finger bleibt immer in der App</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

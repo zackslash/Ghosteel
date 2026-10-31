@@ -513,6 +513,14 @@ Pokreće libghostty terminalski motor</translation>
         <source>Auto</source>
         <translation>Ауто</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Превлачење за промену сесије у TUI апликацијама</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Хоризонтално превлачење мења сесију и у апликацијама које користе миш (нпр. htop, vim). Превлачење са задржаним притиском увек остаје у апликацији</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

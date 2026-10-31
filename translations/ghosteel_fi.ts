@@ -512,6 +512,14 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <source>Auto</source>
         <translation>Automaattinen</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Pyyhkäise vaihtaaksesi istuntoa TUI-sovelluksissa</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Vaakasuuntainen pyyhkäisy vaihtaa istuntoa myös sovelluksissa, jotka käyttävät hiirtä (esim. htop, vim). Painettuna pitäen raahaus jää aina sovellukselle</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

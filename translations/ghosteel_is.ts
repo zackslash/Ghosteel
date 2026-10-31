@@ -512,6 +512,14 @@ Keyrt af libghostty skjáhermisvél</translation>
         <source>Auto</source>
         <translation>Sjálfvirkt</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Strýkur til að skipta um setu í TUI-forritum</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Láréttur strýkur skiptir einnig um setu í forritum sem nota músarinntak (t.d. htop, vim). Dráttur með viðvarandi þrýstingi fer alltaf til forritsins</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

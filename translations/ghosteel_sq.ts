@@ -512,6 +512,14 @@ Mundësuar nga motori i terminalit libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Rrëshqit për të ndërruar sesionin në aplikacione TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Rrëshqitja horizontale e ndërron sesionin edhe në aplikacione që përdorin miun (p.sh. htop, vim). Zvarritja me prekje të gjatë mbetet gjithmonë te aplikacioni</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

@@ -512,6 +512,14 @@ Impulsat pel motor de terminal libghostty</translation>
         <source>Auto</source>
         <translation>Automàtic</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Llisca per canviar de sessió en aplicacions TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>La lliscada horitzontal canvia de sessió també en aplicacions que utilitzen el ratolí (p. ex. htop, vim). Els arrossegaments mantenint premut sempre queden a l&apos;aplicació</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

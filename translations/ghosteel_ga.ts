@@ -513,6 +513,14 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Swipáil chun seisiún a athrú in aipeanna TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Athraíonn swipáil chothrománach an seisiún freisin in aipeanna a úsáideann ionchur luiche (m.sh. htop, vim). Fanann tarraingt le brú fada i gcónaí leis an aip</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

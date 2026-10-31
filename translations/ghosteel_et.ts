@@ -512,6 +512,14 @@ Toetab libghostty terminalimootorit</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Pühkimine seansi vahetamiseks TUI-rakendustes</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Horisontaalne pühkimine vahetab seanssi ka rakendustes, mis kasutavad hiirt (nt. htop, vim). Pikalt vajutades jääb lohistamine alati rakendusele</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

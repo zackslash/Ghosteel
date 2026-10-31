@@ -512,6 +512,14 @@ Drivs av libghostty terminalmotor</translation>
         <source>Auto</source>
         <translation>Automatisk</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Svep för att växla session i TUI-appar</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Horisontell svepning växlar session även i appar som använder mus (t.ex. htop, vim). Drag med långt tryck går alltid till appen</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

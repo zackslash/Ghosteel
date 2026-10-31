@@ -515,6 +515,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Swipio i newid sesiwn mewn apiau TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Mae swip llorweddol yn newid y sesiwn hefyd mewn apiau sy&apos;n defnyddio mewnbwn llygoden (e.e. htop, vim). Mae llusgo gyda gwasgu hir bob amser yn aros gyda&apos;r ap</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
