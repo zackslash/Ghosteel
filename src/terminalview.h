@@ -140,7 +140,9 @@ public:
     }
 
     // Shared constants for selection handles and magnifier
-    static const int HandleRadius = 14; // px — touch-friendly target size
+    static const int HandleRadius = 22;     // px — visual handle circle radius
+    static const int HandleHitRadius = 48;  // px — grab tolerance around each handle
+    static const int HandleDragSlopPx = 12; // px — movement from grab needed to engage the drag
     static const int MagnifierZoom = 2;
     static const int MagnifierWidth = 180;  // px
     static const int MagnifierHeight = 100; // px
@@ -352,9 +354,10 @@ private:
     // Selection handles (SailfishOS-style draggable endpoints)
     bool m_handlesVisible = false;
     int m_draggingHandle = 0; // 0=none, 1=start, 2=end
+    bool m_handleDragMoved = false; // drag engaged (finger left the grab point by > slop)
+    QPointF m_handleGrabPos; // press position of the current handle grab
 
     // Selection magnifier (SailfishOS-style zoom bubble)
-    // Constants are public — see HandleRadius, MagnifierZoom, etc. above
 
     // --- Mouse tracking for TUI apps (tmux, neovim, htop) ---
     bool m_mouseTrackingActive = false;

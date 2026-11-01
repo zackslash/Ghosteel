@@ -35,6 +35,7 @@ void TerminalView::resetTouchInteractionState()
         clearSelection();
     m_pendingLinkTap = false;
     m_draggingHandle = 0;
+    m_handleDragMoved = false;
     // No release follows a cancel — clear grabs held by the press (link tap,
     // handle drag) so the Flickable can steal again.
     setKeepMouseGrab(false);
@@ -115,11 +116,14 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         int handle = handleHitTest(event->pos());
         if (handle != 0) {
             m_draggingHandle = handle;
+            m_handleDragMoved = false;
+            m_handleGrabPos = event->pos();
             m_handlesVisible = false;
             m_magnifierVisible = true;
             holdBlinkSolid();
             m_tapCount = 0; // Prevent phantom triple-tap after handle drag
             setKeepMouseGrab(true);
+            update();
             event->accept();
             return;
         }
@@ -181,10 +185,17 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
 void TerminalView::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_draggingHandle != 0) {
-        if (m_draggingHandle == 1)
-            m_selStart = event->pos();
-        else
-            m_selEnd = event->pos();
+        // Touch jitter must not engage the drag: the endpoint holds until the
+        // finger leaves the grab point by more than slop.
+        if (!m_handleDragMoved
+            && QLineF(m_handleGrabPos, event->pos()).length() > HandleDragSlopPx)
+            m_handleDragMoved = true;
+        if (m_handleDragMoved) {
+            if (m_draggingHandle == 1)
+                m_selStart = event->pos();
+            else
+                m_selEnd = event->pos();
+        }
 
         // Magnifier stays visible during handle drags — no velocity-based hiding.
         // It was set visible on mousePress and should remain so until release.
@@ -329,15 +340,21 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
     }
 
     if (m_draggingHandle != 0) {
-        if (m_draggingHandle == 1)
-            m_selStart = event->pos();
-        else
-            m_selEnd = event->pos();
+        // A stationary release inside the fat hit zone must not move the endpoint.
+        const bool moved = m_handleDragMoved;
+        if (moved) {
+            if (m_draggingHandle == 1)
+                m_selStart = event->pos();
+            else
+                m_selEnd = event->pos();
+        }
         m_draggingHandle = 0;
+        m_handleDragMoved = false;
         m_magnifierVisible = false;
         m_handlesVisible = true;
         setKeepMouseGrab(false);
-        copySelection();
+        if (moved)
+            copySelection();
         update();
         event->accept();
         return;
@@ -810,6 +827,7 @@ void TerminalView::handleMultiTouchBegin(const QList<QTouchEvent::TouchPoint> &p
     m_tuiGesture = TuiGesture::None;
     if (m_draggingHandle != 0) {
         m_draggingHandle = 0;
+        m_handleDragMoved = false;
         m_magnifierVisible = false;
         m_handlesVisible = true;
         setKeepMouseGrab(false);
