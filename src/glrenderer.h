@@ -147,6 +147,10 @@ private:
         void createBlitShader();
         void blitPipelineToFbo(QOpenGLFramebufferObject *fbo);
         void buildMagnifierVertices(int fboW, int fboH);
+        // Size clamps to the FBO so the qBound bounds stay valid; use the
+        // returned rect's width/height, not MagnifierWidth/Height.
+        QRect magnifierDestRect(int fboW, int fboH, bool *flippedBelow = nullptr) const;
+        QRect magnifierSrcRect(const QRect &dest, int fboW, int fboH) const;
 
         bool renderPostProcessPipeline(QOpenGLFramebufferObject *fbo);
         void renderDirectToFbo(QOpenGLFramebufferObject *fbo);

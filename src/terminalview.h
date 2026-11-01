@@ -143,10 +143,10 @@ public:
     static const int HandleRadius = 22;     // px — visual handle circle radius
     static const int HandleHitRadius = 48;  // px — grab tolerance around each handle
     static const int HandleDragSlopPx = 12; // px — movement from grab needed to engage the drag
-    static const int MagnifierZoom = 2;
-    static const int MagnifierWidth = 180;  // px
-    static const int MagnifierHeight = 100; // px
-    static const int MagnifierOffset = 20;  // px above finger
+    static constexpr qreal MagnifierZoom = 2.5; // by-value use only
+    static const int MagnifierWidth = 440;  // px
+    static const int MagnifierHeight = 250; // px
+    static const int MagnifierOffset = 190; // px above finger
 
     // Overlay state getters for GLRenderer
     bool isSelecting() const { return m_selecting; }

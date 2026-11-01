@@ -22,6 +22,16 @@ namespace {
 constexpr size_t kMaxEncodedPasteBytes = 1024 * 1024;
 }   // namespace
 
+// Out-of-class definitions: qMin/qBound bind these members by const T&,
+// an odr-use that fails to link in -O0 builds without them.
+const int TerminalView::HandleRadius;
+const int TerminalView::HandleHitRadius;
+const int TerminalView::HandleDragSlopPx;
+const qreal TerminalView::MagnifierZoom;
+const int TerminalView::MagnifierWidth;
+const int TerminalView::MagnifierHeight;
+const int TerminalView::MagnifierOffset;
+
 TerminalView::TerminalView(QQuickItem *parent)
     : QQuickItem(parent)
 {

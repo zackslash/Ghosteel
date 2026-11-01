@@ -7,8 +7,8 @@
 namespace {
 constexpr int kFloatsPerFlatVertex = 6;     // pos(2) + color(4) — matches flat-vertex layout
 constexpr uint32_t kMaxGraphemeLen = 128;   // buffer must hold >= 1 + ghostty's grapheme_max_len (64); BUF is fetched unconditionally and ghostty truncates clusters at 64
-constexpr float kArrowLen = 8.0f;
-constexpr float kArrowHalfWidth = 6.0f;
+constexpr float kArrowLen = 36.0f;
+constexpr float kArrowHalfWidth = 26.0f;
 constexpr int kLinkR = 100, kLinkG = 180, kLinkB = 255, kLinkA = 200;
 }
 
@@ -99,6 +99,40 @@ void GLRenderer::Renderer::appendCircle(float cx, float cy, float radius,
     }
 }
 
+QRect GLRenderer::Renderer::magnifierDestRect(int fboW, int fboH, bool *flippedBelow) const
+{
+    const int w = qMin(TerminalView::MagnifierWidth, fboW);
+    const int h = qMin(TerminalView::MagnifierHeight, fboH);
+
+    int destX = static_cast<int>(m_magnifierFingerPos.x()) - w / 2;
+    const int unclampedDestY = static_cast<int>(m_magnifierFingerPos.y())
+                               - h - TerminalView::MagnifierOffset;
+    int destY = unclampedDestY;
+    if (destY < 0) // would clip the top edge -> flip below the finger
+        destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
+    destX = qBound(0, destX, fboW - w);
+    destY = qBound(0, destY, fboH - h);
+    if (flippedBelow)
+        *flippedBelow = unclampedDestY < 0;
+    return QRect(destX, destY, w, h);
+}
+
+QRect GLRenderer::Renderer::magnifierSrcRect(const QRect &dest, int fboW, int fboH) const
+{
+    const int srcW = qRound(dest.width() / TerminalView::MagnifierZoom);
+    const int srcH = qRound(dest.height() / TerminalView::MagnifierZoom);
+    int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
+    int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
+    if (fboW > srcW && fboH > srcH) {
+        srcX = qBound(0, srcX, fboW - srcW);
+        srcY = qBound(0, srcY, fboH - srcH);
+    } else {
+        srcX = qMax(0, srcX);
+        srcY = qMax(0, srcY);
+    }
+    return QRect(srcX, srcY, srcW, srcH);
+}
+
 void GLRenderer::Renderer::buildMagnifierVertices(int fboW, int fboH)
 {
     m_magVertices.clear();
@@ -107,34 +141,12 @@ void GLRenderer::Renderer::buildMagnifierVertices(int fboW, int fboH)
     if (!m_magnifierVisible || !m_selecting || m_selStart == m_selEnd)
         return;
 
-    QPointF fingerPos = m_magnifierFingerPos;
+    const QRect dest = magnifierDestRect(fboW, fboH);
 
-    int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;  // 90
-    int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom; // 50
-    int srcX = static_cast<int>(fingerPos.x()) - srcW / 2;
-    int srcY = static_cast<int>(fingerPos.y()) - srcH / 2;
-
-    if (fboW > srcW && fboH > srcH) {
-        srcX = qBound(0, srcX, fboW - srcW);
-        srcY = qBound(0, srcY, fboH - srcH);
-    } else {
-        srcX = qMax(0, srcX);
-        srcY = qMax(0, srcY);
-    }
-
-    int destX = static_cast<int>(fingerPos.x()) - TerminalView::MagnifierWidth / 2;
-    int destY = static_cast<int>(fingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-
-    // destY < 0: magnifier would clip top -> flip below finger
-    if (destY < 0)
-        destY = static_cast<int>(fingerPos.y()) + TerminalView::MagnifierOffset;
-    destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);
-    destY = qBound(0, destY, fboH - TerminalView::MagnifierHeight);
-
-    float dx0 = static_cast<float>(destX);
-    float dy0 = static_cast<float>(destY);
-    float dx1 = static_cast<float>(destX + TerminalView::MagnifierWidth);
-    float dy1 = static_cast<float>(destY + TerminalView::MagnifierHeight);
+    float dx0 = static_cast<float>(dest.x());
+    float dy0 = static_cast<float>(dest.y());
+    float dx1 = static_cast<float>(dest.x() + dest.width());
+    float dy1 = static_cast<float>(dest.y() + dest.height());
 
     // UV coords: [0,1] maps the full magnifier quad; the shader maps this to
     // the source rectangle within m_pipelineTex via u_srcRect / u_srcTexSize.
@@ -318,26 +330,26 @@ void GLRenderer::Renderer::buildOverlayVertices(int fboW, int fboH)
 
     // Magnifier arrow (drawn after magnifier quad via separate draw call)
     if (m_magnifierVisible && m_selecting && m_selStart != m_selEnd) {
-        // Compute dest rect to find arrow position (same logic as buildMagnifierVertices)
-        QPointF fingerPos = m_magnifierFingerPos;
-        int destX = static_cast<int>(fingerPos.x()) - TerminalView::MagnifierWidth / 2;
-        int unclampedDestY = static_cast<int>(fingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-        int destY = unclampedDestY;
-        if (destY < 0)
-            destY = static_cast<int>(fingerPos.y()) + TerminalView::MagnifierOffset;
-        destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);
-        destY = qBound(0, destY, fboH - TerminalView::MagnifierHeight);
+        bool flippedBelow = false;
+        const QRect dest = magnifierDestRect(fboW, fboH, &flippedBelow);
+        const QRect src = magnifierSrcRect(dest, fboW, fboH);
 
-        float arrowCenterX = destX + TerminalView::MagnifierWidth / 2.0f;
+        // Arrow at the finger's magnified column: where the finger's content
+        // sits in the loupe (raw finger X diverges from it near screen edges).
+        const int halfSpan = qMin<int>(static_cast<int>(kArrowHalfWidth), dest.width() / 2);
+        const qreal caretX = dest.x()
+            + (m_magnifierFingerPos.x() - src.x()) * TerminalView::MagnifierZoom;
+        const float arrowCenterX = static_cast<float>(
+            qBound(dest.x() + halfSpan, qRound(caretX), dest.x() + dest.width() - halfSpan));
         // Arrow at bottom edge of magnifier on screen, pointing DOWN toward finger.
         // Ortho is Y-up; Qt scene graph flips the FBO so low Y = top on screen.
-        // Bottom of magnifier on screen = high FBO Y = destY + MagnifierHeight.
-        float arrowBase = static_cast<float>(destY + TerminalView::MagnifierHeight);
+        // Bottom of magnifier on screen = high FBO Y = dest.y() + dest.height().
+        float arrowBase = static_cast<float>(dest.y() + dest.height());
         float arrowTip = arrowBase + kArrowLen;
 
         // If magnifier was flipped below finger, arrow at top edge pointing UP
-        if (unclampedDestY < 0) {
-            arrowBase = static_cast<float>(destY);
+        if (flippedBelow) {
+            arrowBase = static_cast<float>(dest.y());
             arrowTip = arrowBase - kArrowLen;
         }
 
