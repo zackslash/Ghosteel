@@ -708,17 +708,8 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
         || !m_magProgram || !m_magProgram->isLinked() || !m_pipelineTex)
         return;
 
-    int srcW = TerminalView::MagnifierWidth / TerminalView::MagnifierZoom;
-    int srcH = TerminalView::MagnifierHeight / TerminalView::MagnifierZoom;
-    int srcX = static_cast<int>(m_magnifierFingerPos.x()) - srcW / 2;
-    int srcY = static_cast<int>(m_magnifierFingerPos.y()) - srcH / 2;
-    if (fboW > srcW && fboH > srcH) {
-        srcX = qBound(0, srcX, fboW - srcW);
-        srcY = qBound(0, srcY, fboH - srcH);
-    } else {
-        srcX = qMax(0, srcX);
-        srcY = qMax(0, srcY);
-    }
+    const QRect dest = magnifierDestRect(fboW, fboH);
+    const QRect src = magnifierSrcRect(dest, fboW, fboH);
 
     // Sample directly from m_pipelineTex to avoid a TBDR pipeline stall (glCopyTexSubImage2D would flush the tiled renderer).
 
@@ -732,23 +723,15 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
         m_magProgram->setUniformValue(m_magMatrixUniform, proj);
         m_magProgram->setUniformValue(m_magTexUniform, 0);
 
-        int destX = static_cast<int>(m_magnifierFingerPos.x()) - TerminalView::MagnifierWidth / 2;
-        int destY = static_cast<int>(m_magnifierFingerPos.y()) - TerminalView::MagnifierHeight - TerminalView::MagnifierOffset;
-        if (destY < 0)
-            destY = static_cast<int>(m_magnifierFingerPos.y()) + TerminalView::MagnifierOffset;
-        destX = qBound(0, destX, fboW - TerminalView::MagnifierWidth);
-        destY = qBound(0, destY, fboH - TerminalView::MagnifierHeight);
-
         m_magProgram->setUniformValue(m_magDestRectUniform,
-            static_cast<float>(destX), static_cast<float>(destY),
-            static_cast<float>(TerminalView::MagnifierWidth),
-            static_cast<float>(TerminalView::MagnifierHeight));
-        m_magProgram->setUniformValue(m_magCornerRadiusUniform, 8.0f);
+            static_cast<float>(dest.x()), static_cast<float>(dest.y()),
+            static_cast<float>(dest.width()), static_cast<float>(dest.height()));
+        m_magProgram->setUniformValue(m_magCornerRadiusUniform, 16.0f);
 
         // Source rectangle in m_pipelineTex and its dimensions (for UV normalization)
         m_magProgram->setUniformValue(m_magSrcRectUniform,
-            static_cast<float>(srcX), static_cast<float>(srcY),
-            static_cast<float>(srcW), static_cast<float>(srcH));
+            static_cast<float>(src.x()), static_cast<float>(src.y()),
+            static_cast<float>(src.width()), static_cast<float>(src.height()));
         m_magProgram->setUniformValue(m_magSrcTexSizeUniform,
             static_cast<float>(m_pipelineTexW), static_cast<float>(m_pipelineTexH));
 
@@ -757,7 +740,7 @@ void GLRenderer::Renderer::renderMagnifier(const QMatrix4x4 &proj, int fboW, int
         float bg = m_magnifierBorderColor.greenF() * ba;
         float bb = m_magnifierBorderColor.blueF() * ba;
         m_magProgram->setUniformValue(m_magBorderColorUniform, br, bg, bb, ba);
-        m_magProgram->setUniformValue(m_magBorderWidthUniform, 2.0f);
+        m_magProgram->setUniformValue(m_magBorderWidthUniform, 3.0f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_pipelineTex);

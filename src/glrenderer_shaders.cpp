@@ -153,7 +153,13 @@ static const char *magVertexShaderSource =
     "}\n";
 
 static const char *magFragmentShaderSource =
+    // mediump breaks the SDF math at FBO magnitudes; same guard rationale
+    // as fragmentShaderSource above.
+    "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+    "precision highp float;\n"
+    "#else\n"
     "precision mediump float;\n"
+    "#endif\n"
     "varying vec2 v_texcoord;\n"
     "varying vec2 v_pos;\n"
     "uniform sampler2D u_sceneTex;\n"

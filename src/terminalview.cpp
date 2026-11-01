@@ -22,6 +22,16 @@ namespace {
 constexpr size_t kMaxEncodedPasteBytes = 1024 * 1024;
 }   // namespace
 
+// Out-of-class definitions: qMin/qBound bind these members by const T&,
+// an odr-use that fails to link in -O0 builds without them.
+const int TerminalView::HandleRadius;
+const int TerminalView::HandleHitRadius;
+const int TerminalView::HandleDragSlopPx;
+const qreal TerminalView::MagnifierZoom;
+const int TerminalView::MagnifierWidth;
+const int TerminalView::MagnifierHeight;
+const int TerminalView::MagnifierOffset;
+
 TerminalView::TerminalView(QQuickItem *parent)
     : QQuickItem(parent)
 {
@@ -924,6 +934,7 @@ void TerminalView::clearSelection()
         m_magnifierVisible = false;
         m_handlesVisible = false;
         m_draggingHandle = 0;
+        m_handleDragMoved = false;
         setKeepMouseGrab(false);
         if (m_longPressTimerId) {
             killTimer(m_longPressTimerId);
@@ -1098,12 +1109,13 @@ int TerminalView::handleHitTest(const QPointF &pos) const
     QPointF startPos(sc * m_cellWidth, (sr + 1) * m_cellHeight + m_topPadding);
     QPointF endPos((ec + 1) * m_cellWidth, (er + 1) * m_cellHeight + m_topPadding);
 
-    // Use a generous hit area (HandleRadius + some padding for finger imprecision)
-    qreal hitRadius = HandleRadius * 1.5;
+    // When both handles are in range (short selection), the nearer one wins.
+    qreal startDist = QLineF(pos, startPos).length();
+    qreal endDist = QLineF(pos, endPos).length();
 
-    if (QLineF(pos, startPos).length() <= hitRadius)
+    if (startDist <= HandleHitRadius && startDist <= endDist)
         return 1; // Start handle (m_selStart)
-    if (QLineF(pos, endPos).length() <= hitRadius)
+    if (endDist <= HandleHitRadius)
         return 2; // End handle (m_selEnd)
 
     return 0; // No hit
