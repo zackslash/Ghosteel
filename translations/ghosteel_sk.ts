@@ -513,6 +513,14 @@ Poháňané terminálovým enginom libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Prejdenie pre prepnutie relácie v aplikáciách TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Vodorovné prejdenie prepína reláciu aj v aplikáciách, ktoré používajú myš (napr. htop, vim). Ťahanie s dlhým podržaním vždy zostáva v aplikácii</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

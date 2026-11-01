@@ -511,6 +511,14 @@ A libghostty terminálmotor hajtja</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Pöccintés a munkamenet váltásához TUI-alkalmazásokban</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>A vízszintes pöccintés munkamenetet vált az egérbevitelt használó alkalmazásokban is (pl. htop, vim). A hosszan nyomva tartott húzás mindig az alkalmazásnál marad</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

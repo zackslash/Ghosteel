@@ -513,6 +513,14 @@ Propulsat de motorul de terminal libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Glisează pentru a comuta sesiunea în aplicații TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Glisarea orizontală comută sesiunea și în aplicațiile care folosesc mausul (de ex. htop, vim). Tragerea cu apăsare lungă rămâne mereu în aplicație</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

@@ -513,6 +513,14 @@ Darbina libghostty termināla dzinējs</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Pārvelšana sesijas pārslēgšanai TUI lietotnēs</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Horizontālā pārvelšana pārslēdz sesiju arī lietotnēs, kas izmanto peli (piem., htop, vim). Vilkšana ar ilgu piespiešanu vienmēr paliek lietotnē</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

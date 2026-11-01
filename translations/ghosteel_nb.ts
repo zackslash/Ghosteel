@@ -512,6 +512,14 @@ Drevet av libghostty terminalmotor</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Sveip for å bytte økt i TUI-apper</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Horisontal sveiping bytter økt også i apper som bruker mus (f.eks. htop, vim). Drag med langt trykk forblir alltid i appen</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

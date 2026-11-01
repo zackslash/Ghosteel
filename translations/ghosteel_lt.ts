@@ -513,6 +513,14 @@ Varomas libghostty terminalo variklio</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Perbraukimas sesijai perjungti TUI programose</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Horizontalus perbraukimas perjungia sesiją ir programose, naudojančiose pelę (pvz., htop, vim). Tempimas ilgiau paspaudus visada lieka programoje</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

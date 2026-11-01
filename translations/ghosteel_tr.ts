@@ -511,6 +511,14 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <source>Auto</source>
         <translation>Otomatik</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>TUI uygulamalarında oturum değiştirmek için kaydır</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Yatay kaydırma, fare girdisi kullanan uygulamalarda da oturumu değiştirir (ör. htop, vim). Basılı tutarak sürükleme her zaman uygulamada kalır</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

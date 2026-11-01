@@ -513,6 +513,14 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <source>Auto</source>
         <translation>Automatycznie</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Przesuwanie przełącza sesję w aplikacjach TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Poziome przesunięcie przełącza sesję także w aplikacjach korzystających z myszy (np. htop, vim). Przeciąganie z długim przytrzymaniem zawsze należy do aplikacji</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

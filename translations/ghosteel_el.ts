@@ -512,6 +512,14 @@ Powered by libghostty terminal engine</source>
         <source>Auto</source>
         <translation>Αυτόματο</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Σάρωση για εναλλαγή συνεδρίας σε εφαρμογές TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Η οριζόντια σάρωση εναλλάσσει τη συνεδρία και σε εφαρμογές που χρησιμοποιούν ποντίκι (π.χ. htop, vim). Τα συρσίματα με παρατεταμένη πίεση παραμένουν πάντα στην εφαρμογή</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

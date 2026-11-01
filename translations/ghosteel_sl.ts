@@ -514,6 +514,14 @@ Poganja terminalski pogon libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Povlek za preklop seje v aplikacijah TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Vodoravni povlek preklopi sejo tudi v aplikacijah, ki uporabljajo miško (npr. htop, vim). Vlečenje z dolgim pritiskom vedno ostane v aplikaciji</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>

@@ -512,6 +512,14 @@ Propulsé par le moteur de terminal libghostty</translation>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
+    <message>
+        <source>Swipe to switch session in TUI apps</source>
+        <translation>Balayer pour changer de session dans les applis TUI</translation>
+    </message>
+    <message>
+        <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
+        <translation>Le balayage horizontal change de session aussi dans les applications utilisant la souris (p. ex. htop, vim). Les glissements avec appui maintenu restent toujours dans l&apos;application</translation>
+    </message>
 </context>
 <context>
     <name>TerminalPage</name>
