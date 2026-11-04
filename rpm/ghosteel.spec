@@ -217,6 +217,16 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
     cd %{_builddir}/%{name}-%{version}
 fi
 
+# The Zig toolchain, deps cache and Zig caches are dead weight once
+# libghostty-vt.a is in lib/; remove them so OBS packaging has room.
+# The ghostty symlink check keeps IDE builds off host caches.
+if [ -d "%{_builddir}/zig-x86_64-linux-%{zig_version}" ] && [ ! -L ghostty ]; then
+    rm -rf "%{_builddir}/zig-x86_64-linux-%{zig_version}" \
+           "%{_builddir}/zig-cache" \
+           ghostty/.zig-cache ghostty/zig-out ghostty/zig-pkg
+    [ -n "$HOME" ] && rm -rf "$HOME/.cache/zig"
+fi
+
 # Inject version info (no .git/ in OBS tarballs, so git describe fails)
 # GIT_VERSION: use RPM version set by tar_git from git tag
 sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"%{version}\"/" ghosteel.pro
