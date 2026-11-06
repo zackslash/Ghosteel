@@ -458,12 +458,7 @@ void TerminalView::wheelEvent(QWheelEvent *event)
         // Wheel-up yields positive angleDelta, so newDelta is negative and
         // `lines` is negative — pass it through directly, matching the
         // two-finger reference path (delta = lines).
-        GhosttyTerminalScrollViewport scroll = {};
-        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-        scroll.value.delta = lines;
-        ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-        m_linkScanDirty = true;
-        update();
+        scrollViewportByLines(lines);
     }
 
     event->accept();
@@ -981,12 +976,7 @@ void TerminalView::handleMultiTouchUpdate(const QList<QTouchEvent::TouchPoint> &
                     sendMouseEvent(GHOSTTY_MOUSE_ACTION_RELEASE, btn, centroid, mods);
                 }
             } else {
-                GhosttyTerminalScrollViewport scroll = {};
-                scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
-                scroll.value.delta = lines;
-                ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-                m_linkScanDirty = true;
-                update();
+                scrollViewportByLines(lines);
             }
         }
         return;

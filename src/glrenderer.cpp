@@ -440,24 +440,27 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
         else
             m_magnifierFingerPos = m_selEnd;
 
-        // Link underlines — trigger scan if dirty, then extract viewport-relative spans
-        if (m_terminalView->isLinkScanDirty())
-            m_terminalView->refreshLinks();
+        // While a scroll settles, spans are stale viewport-relative coords; skip scan
+        // and copy. Empty-vs-refilled spans flip linkSig via m_sceneExternalChanged.
         m_linkSpans.clear();
-        const auto &links = m_terminalView->currentLinks();
         quint64 linkSig = 0xcbf29ce484222325ULL;
-        for (const auto &link : links) {
-            LinkSpan span;
-            span.startRow = link.startRow;
-            span.endRow = link.endRow;
-            span.startCol = link.startCol;
-            span.endCol = link.endCol;
-            m_linkSpans.append(span);
-            // Links scroll into view without a grid change; fold span geometry into the signature.
-            linkSig = (linkSig ^ (quint64)link.startRow) * 0x100000001b3ULL;
-            linkSig = (linkSig ^ (quint64)link.endRow) * 0x100000001b3ULL;
-            linkSig = (linkSig ^ (quint64)link.startCol) * 0x100000001b3ULL;
-            linkSig = (linkSig ^ (quint64)link.endCol) * 0x100000001b3ULL;
+        if (!m_terminalView->linkUnderlinesHidden()) {
+            if (m_terminalView->isLinkScanDirty())
+                m_terminalView->refreshLinks();
+            const auto &links = m_terminalView->currentLinks();
+            for (const auto &link : links) {
+                LinkSpan span;
+                span.startRow = link.startRow;
+                span.endRow = link.endRow;
+                span.startCol = link.startCol;
+                span.endCol = link.endCol;
+                m_linkSpans.append(span);
+                // Links scroll into view without a grid change; fold span geometry into the signature.
+                linkSig = (linkSig ^ (quint64)link.startRow) * 0x100000001b3ULL;
+                linkSig = (linkSig ^ (quint64)link.endRow) * 0x100000001b3ULL;
+                linkSig = (linkSig ^ (quint64)link.startCol) * 0x100000001b3ULL;
+                linkSig = (linkSig ^ (quint64)link.endCol) * 0x100000001b3ULL;
+            }
         }
         if (linkSig != m_prevLinkSig)
             m_sceneExternalChanged = true;

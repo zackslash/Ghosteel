@@ -182,7 +182,7 @@ void TerminalView::scrollToMatch(int index)
         scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
         scroll.value.delta = delta;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
-        update();
+        armLinkUnderlineHide();
     }
 }
 
