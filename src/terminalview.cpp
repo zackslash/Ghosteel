@@ -103,11 +103,9 @@ TerminalView::TerminalView(QQuickItem *parent)
         update();
     });
 
-    // Trailing edge of the search-cache refresh throttle: armed when PTY
-    // output arrives inside the throttle window so the final refresh still
-    // runs once output pauses (otherwise stale highlights until the next user
-    // action). The guard re-checks search state so a timeout after
-    // closeSearch()/restartShell() is a no-op.
+    // Trailing edge of the search-cache refresh throttle: runs the final
+    // refresh once output pauses; the guard makes a timeout after
+    // closeSearch() a no-op.
     m_searchRefreshTimer = new QTimer(this);
     m_searchRefreshTimer->setSingleShot(true);
     connect(m_searchRefreshTimer, &QTimer::timeout, this, [this]() {
@@ -115,6 +113,14 @@ TerminalView::TerminalView(QQuickItem *parent)
             && m_vt && m_vt->isSearchTextDirty()) {
             refreshSearchCachePreservingMatch();
         }
+    });
+
+    m_linkSettleTimer = new QTimer(this);
+    m_linkSettleTimer->setSingleShot(true);
+    connect(m_linkSettleTimer, &QTimer::timeout, this, [this]() {
+        m_linkScanDirty = true;
+        m_lastLinkScanTime.invalidate(); // bypass the 4Hz throttle once
+        update();
     });
 
     m_blinkEpoch.start();
@@ -1299,6 +1305,7 @@ void TerminalView::scrollViewportToBottom()
         GhosttyTerminalScrollViewport scroll = {};
         scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+        armLinkUnderlineHide();
     }
 }
 

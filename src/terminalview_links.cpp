@@ -2,10 +2,47 @@
 #include "settings.h"
 #include "textutil.h"
 
+#include <QTimer>
+
 #include <algorithm>
 
 namespace {
 constexpr uint32_t kMaxGraphemesPerCell = 128;  // matches ghostty Cell.grapheme cap
+}
+
+void TerminalView::armLinkUnderlineHide()
+{
+    // Spans go stale the moment the viewport moves; update() guarantees a
+    // frame runs so synchronize() drops the quads.
+    m_linkScanDirty = true;
+    m_linkSettleTimer->start(LinkSettleMs);
+    update();
+}
+
+bool TerminalView::linkUnderlinesHidden() const
+{
+    return m_linkSettleTimer->isActive();
+}
+
+// Scrolls by whole lines and arms the underline hide only when the scrollbar
+// offset moved; ghostty clamps at the scrollback edges and a clamped tick
+// must not blink the underlines off.
+void TerminalView::scrollViewportByLines(int lines)
+{
+    GhosttyTerminalScrollbar before = {};
+    ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR,
+                         &before);
+
+    GhosttyTerminalScrollViewport scroll = {};
+    scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+    scroll.value.delta = lines;
+    ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
+
+    GhosttyTerminalScrollbar after = {};
+    if (ghostty_terminal_get(m_vt->terminal(), GHOSTTY_TERMINAL_DATA_SCROLLBAR,
+                             &after) != GHOSTTY_SUCCESS
+        || after.offset != before.offset)
+        armLinkUnderlineHide();
 }
 
 void TerminalView::refreshLinks()
@@ -190,6 +227,11 @@ QString TerminalView::findLinkAt(int col, int row)
                                             static_cast<uint32_t>(row));
         if (!uri.isEmpty())
             return uri;
+    }
+    // A tap inside the settle window would resolve against pre-scroll spans.
+    if (linkUnderlinesHidden()) {
+        m_lastLinkScanTime.invalidate();
+        refreshLinks();
     }
     return findRegexLinkAt(col, row);
 }

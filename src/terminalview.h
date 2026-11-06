@@ -126,6 +126,9 @@ public:
     // Link detection — exposed for GLRenderer to trigger scans in synchronize()
     void refreshLinks();               // Run regex scan on visible viewport
     bool isLinkScanDirty() const { return m_linkScanDirty; }
+    // True while a viewport scroll settles: cached spans are stale
+    // viewport-relative coords.
+    bool linkUnderlinesHidden() const;
 
     // Expose GhosttyVt for GL renderer access
     GhosttyVt *vt() const { return m_vt; }
@@ -474,13 +477,18 @@ private:
 
     // --- Link detection (OSC 8 hyperlinks + regex URL scanning) ---
     QVector<TextUtil::LinkSpan> m_currentLinks;  // Cached regex-detected links for viewport
-    bool m_linkScanDirty = true;       // Set when PTY data arrives, cleared after scan
+    bool m_linkScanDirty = true;       // Set when PTY data arrives or the viewport scrolls; cleared after scan
     QElapsedTimer m_lastLinkScanTime; // Throttle: limit link scans to ~4Hz
+    static const int LinkSettleMs = 250; // after last scroll before underlines return
+    // Post-scroll settle window; timeout forces one unthrottled rescan.
+    QTimer *m_linkSettleTimer = nullptr;
+    void armLinkUnderlineHide();
+    void scrollViewportByLines(int lines);
     bool m_pendingLinkTap = false;     // True between press and release on a link
     QString m_tappedLinkUri;           // URI of the tapped link
     QPointF m_linkTapStartPos;         // Position where link tap started
-    QString findRegexLinkAt(int col, int row) const; // Returns URI string
-    QString findLinkAt(int col, int row); // Check OSC 8 first, then regex
+    QString findRegexLinkAt(int col, int row) const;
+    QString findLinkAt(int col, int row);
 
     // --- Theme-bindable UI colors ---
     QColor m_selectionHighlightColor = QColor(255, 255, 255, 76);
