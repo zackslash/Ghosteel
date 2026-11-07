@@ -110,8 +110,11 @@ GHOSTTY_API GhosttyResult ghostty_terminal_get_multi(
 GHOSTTY_API void ghostty_terminal_vt_write(
     GhosttyTerminal, const uint8_t*, size_t) {}
 
-GHOSTTY_API void ghostty_terminal_scroll_viewport(
-    GhosttyTerminal, GhosttyTerminalScrollViewport) {}
+GHOSTTY_API GhosttyResult ghostty_terminal_scroll_viewport(
+    GhosttyTerminal, GhosttyTerminalScrollViewport)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyResult ghostty_terminal_resize(
     GhosttyTerminal, uint16_t, uint16_t, uint32_t, uint32_t)
@@ -208,7 +211,6 @@ GHOSTTY_API GhosttyResult ghostty_terminal_grid_ref(
         uint32_t y = point.value.coordinate.y;
         if (x >= g_stubs_gridCols || y >= g_stubs_gridRows)
             return GHOSTTY_INVALID_VALUE;
-        ref->size = sizeof(GhosttyGridRef);
         ref->node = nullptr;
         ref->x = x;
         ref->y = static_cast<uint16_t>(y);
@@ -443,18 +445,24 @@ GHOSTTY_API GhosttyResult ghostty_key_encoder_new(
 
 GHOSTTY_API void ghostty_key_encoder_free(GhosttyKeyEncoder) {}
 
-GHOSTTY_API void ghostty_key_encoder_setopt_from_terminal(
-    GhosttyKeyEncoder, GhosttyTerminal) {}
+GHOSTTY_API GhosttyResult ghostty_key_encoder_set_from_terminal(
+    GhosttyKeyEncoder, GhosttyTerminal)
+{
+    return GHOSTTY_SUCCESS;
+}
 
-GHOSTTY_API void ghostty_key_encoder_setopt(
-    GhosttyKeyEncoder, GhosttyKeyEncoderOption, const void*) {}
+GHOSTTY_API GhosttyResult ghostty_key_encoder_set(
+    GhosttyKeyEncoder, GhosttyKeyEncoderOption, const void*)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 static GhosttyStubKeyEvent g_stubs_lastKeyEvent = {};
 static bool g_stubs_keyEventEncoded = false;
 
 GHOSTTY_API GhosttyResult ghostty_key_encoder_encode(
     GhosttyKeyEncoder, GhosttyKeyEvent,
-    char* out, size_t cap, size_t* written)
+    uint8_t* out, size_t cap, size_t* written)
 {
     g_stubs_keyEventEncoded = true;
     if (written) *written = 0;
@@ -489,16 +497,20 @@ GHOSTTY_API GhosttyResult ghostty_key_event_new(
 
 GHOSTTY_API void ghostty_key_event_free(GhosttyKeyEvent) {}
 
-GHOSTTY_API void ghostty_key_event_set_action(GhosttyKeyEvent, GhosttyKeyAction) {}
+GHOSTTY_API GhosttyResult ghostty_key_event_set_action(GhosttyKeyEvent, GhosttyKeyAction)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyKeyAction ghostty_key_event_get_action(GhosttyKeyEvent)
 {
     return GHOSTTY_KEY_ACTION_PRESS;
 }
 
-GHOSTTY_API void ghostty_key_event_set_key(GhosttyKeyEvent, GhosttyKey key)
+GHOSTTY_API GhosttyResult ghostty_key_event_set_key(GhosttyKeyEvent, GhosttyKey key)
 {
     g_stubs_lastKeyEvent.key = key;
+    return GHOSTTY_SUCCESS;
 }
 
 GHOSTTY_API GhosttyKey ghostty_key_event_get_key(GhosttyKeyEvent)
@@ -506,28 +518,36 @@ GHOSTTY_API GhosttyKey ghostty_key_event_get_key(GhosttyKeyEvent)
     return GHOSTTY_KEY_UNIDENTIFIED;
 }
 
-GHOSTTY_API void ghostty_key_event_set_mods(GhosttyKeyEvent, GhosttyMods mods)
+GHOSTTY_API GhosttyResult ghostty_key_event_set_mods(GhosttyKeyEvent, GhosttyMods mods)
 {
     g_stubs_lastKeyEvent.mods = mods;
+    return GHOSTTY_SUCCESS;
 }
 
 GHOSTTY_API GhosttyMods ghostty_key_event_get_mods(GhosttyKeyEvent) { return 0; }
 
-GHOSTTY_API void ghostty_key_event_set_consumed_mods(GhosttyKeyEvent, GhosttyMods) {}
+GHOSTTY_API GhosttyResult ghostty_key_event_set_consumed_mods(GhosttyKeyEvent, GhosttyMods)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyMods ghostty_key_event_get_consumed_mods(GhosttyKeyEvent) { return 0; }
 
-GHOSTTY_API void ghostty_key_event_set_composing(GhosttyKeyEvent, bool) {}
+GHOSTTY_API GhosttyResult ghostty_key_event_set_composing(GhosttyKeyEvent, bool)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API bool ghostty_key_event_get_composing(GhosttyKeyEvent) { return false; }
 
-GHOSTTY_API void ghostty_key_event_set_utf8(GhosttyKeyEvent, const char* utf8, size_t len)
+GHOSTTY_API GhosttyResult ghostty_key_event_set_utf8(GhosttyKeyEvent, GhosttyString utf8)
 {
-    if (len >= sizeof(g_stubs_lastKeyEvent.utf8))
-        len = sizeof(g_stubs_lastKeyEvent.utf8) - 1;
-    if (utf8 && len) memcpy(g_stubs_lastKeyEvent.utf8, utf8, len);
-    g_stubs_lastKeyEvent.utf8_len = len;
-    g_stubs_lastKeyEvent.utf8[len] = '\0';
+    if (utf8.len >= sizeof(g_stubs_lastKeyEvent.utf8))
+        utf8.len = sizeof(g_stubs_lastKeyEvent.utf8) - 1;
+    if (utf8.ptr && utf8.len) memcpy(g_stubs_lastKeyEvent.utf8, utf8.ptr, utf8.len);
+    g_stubs_lastKeyEvent.utf8_len = utf8.len;
+    g_stubs_lastKeyEvent.utf8[utf8.len] = '\0';
+    return GHOSTTY_SUCCESS;
 }
 
 GHOSTTY_API const char* ghostty_key_event_get_utf8(GhosttyKeyEvent, size_t* len)
@@ -536,9 +556,10 @@ GHOSTTY_API const char* ghostty_key_event_get_utf8(GhosttyKeyEvent, size_t* len)
     return nullptr;
 }
 
-GHOSTTY_API void ghostty_key_event_set_unshifted_codepoint(GhosttyKeyEvent, uint32_t codepoint)
+GHOSTTY_API GhosttyResult ghostty_key_event_set_unshifted_codepoint(GhosttyKeyEvent, uint32_t codepoint)
 {
     g_stubs_lastKeyEvent.unshifted_codepoint = codepoint;
+    return GHOSTTY_SUCCESS;
 }
 
 GHOSTTY_API uint32_t ghostty_key_event_get_unshifted_codepoint(GhosttyKeyEvent) { return 0; }
@@ -554,17 +575,26 @@ GHOSTTY_API GhosttyResult ghostty_mouse_encoder_new(
 
 GHOSTTY_API void ghostty_mouse_encoder_free(GhosttyMouseEncoder) {}
 
-GHOSTTY_API void ghostty_mouse_encoder_setopt_from_terminal(
-    GhosttyMouseEncoder, GhosttyTerminal) {}
+GHOSTTY_API GhosttyResult ghostty_mouse_encoder_set_from_terminal(
+    GhosttyMouseEncoder, GhosttyTerminal)
+{
+    return GHOSTTY_SUCCESS;
+}
 
-GHOSTTY_API void ghostty_mouse_encoder_setopt(
-    GhosttyMouseEncoder, GhosttyMouseEncoderOption, const void*) {}
+GHOSTTY_API GhosttyResult ghostty_mouse_encoder_set(
+    GhosttyMouseEncoder, GhosttyMouseEncoderOption, const void*)
+{
+    return GHOSTTY_SUCCESS;
+}
 
-GHOSTTY_API void ghostty_mouse_encoder_reset(GhosttyMouseEncoder) {}
+GHOSTTY_API GhosttyResult ghostty_mouse_encoder_reset(GhosttyMouseEncoder)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyResult ghostty_mouse_encoder_encode(
     GhosttyMouseEncoder, GhosttyMouseEvent,
-    char* out, size_t cap, size_t* written)
+    uint8_t* out, size_t cap, size_t* written)
 {
     if (written) *written = 0;
     (void)out; (void)cap;
@@ -582,27 +612,42 @@ GHOSTTY_API GhosttyResult ghostty_mouse_event_new(
 
 GHOSTTY_API void ghostty_mouse_event_free(GhosttyMouseEvent) {}
 
-GHOSTTY_API void ghostty_mouse_event_set_action(GhosttyMouseEvent, GhosttyMouseAction) {}
+GHOSTTY_API GhosttyResult ghostty_mouse_event_set_action(GhosttyMouseEvent, GhosttyMouseAction)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyMouseAction ghostty_mouse_event_get_action(GhosttyMouseEvent)
 {
     return GHOSTTY_MOUSE_ACTION_PRESS;
 }
 
-GHOSTTY_API void ghostty_mouse_event_set_button(GhosttyMouseEvent, GhosttyMouseButton) {}
-
-GHOSTTY_API void ghostty_mouse_event_clear_button(GhosttyMouseEvent) {}
-
-GHOSTTY_API bool ghostty_mouse_event_get_button(GhosttyMouseEvent, GhosttyMouseButton*)
+GHOSTTY_API GhosttyResult ghostty_mouse_event_set_button(GhosttyMouseEvent, GhosttyMouseButton)
 {
-    return false;
+    return GHOSTTY_SUCCESS;
 }
 
-GHOSTTY_API void ghostty_mouse_event_set_mods(GhosttyMouseEvent, GhosttyMods) {}
+GHOSTTY_API GhosttyResult ghostty_mouse_event_clear_button(GhosttyMouseEvent)
+{
+    return GHOSTTY_SUCCESS;
+}
+
+GHOSTTY_API GhosttyResult ghostty_mouse_event_get_button(GhosttyMouseEvent, GhosttyMouseButton*)
+{
+    return GHOSTTY_NO_VALUE;
+}
+
+GHOSTTY_API GhosttyResult ghostty_mouse_event_set_mods(GhosttyMouseEvent, GhosttyMods)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyMods ghostty_mouse_event_get_mods(GhosttyMouseEvent) { return 0; }
 
-GHOSTTY_API void ghostty_mouse_event_set_position(GhosttyMouseEvent, GhosttyMousePosition) {}
+GHOSTTY_API GhosttyResult ghostty_mouse_event_set_position(GhosttyMouseEvent, GhosttyMousePosition)
+{
+    return GHOSTTY_SUCCESS;
+}
 
 GHOSTTY_API GhosttyMousePosition ghostty_mouse_event_get_position(GhosttyMouseEvent)
 {
@@ -614,7 +659,7 @@ GHOSTTY_API GhosttyMousePosition ghostty_mouse_event_get_position(GhosttyMouseEv
 GHOSTTY_API bool ghostty_paste_is_safe(const char*, size_t) { return true; }
 
 GHOSTTY_API GhosttyResult ghostty_paste_encode(
-    char*, size_t, bool, char*, size_t, size_t* written)
+    char*, size_t, bool, uint8_t*, size_t, size_t* written)
 {
     if (written) *written = 0;
     return GHOSTTY_SUCCESS;

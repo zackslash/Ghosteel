@@ -73,8 +73,8 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
     if (!graphics)
         return;
 
-    for (GhosttyKittyPlacementLayer layer : {GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT,
-                                              GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT}) {
+    for (GhosttyImageLayer layer : {GHOSTTY_IMAGE_LAYER_BELOW_TEXT,
+                                     GHOSTTY_IMAGE_LAYER_ABOVE_TEXT}) {
         GhosttyKittyGraphicsPlacementIterator iter = nullptr;
         if (ghostty_kitty_graphics_placement_iterator_new(nullptr, &iter) != GHOSTTY_SUCCESS)
             continue;
@@ -83,8 +83,11 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             ghostty_kitty_graphics_placement_iterator_free(iter);
             continue;
         }
+        // vt-1.0.0: the layer filter is a uint32_t mask (one bit per
+        // GhosttyImageLayer), not a single layer value.
+        const uint32_t layerMask = 1u << static_cast<uint32_t>(layer);
         ghostty_kitty_graphics_placement_iterator_set(iter,
-            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_ITERATOR_OPTION_LAYER, &layer);
+            GHOSTTY_KITTY_GRAPHICS_PLACEMENT_ITERATOR_OPT_LAYER, &layerMask);
 
         while (ghostty_kitty_graphics_placement_next(iter)) {
             bool isVirtual = false;
@@ -110,8 +113,8 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             }
             snap.imageExists = true;
 
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_WIDTH, &snap.imgW);
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_HEIGHT, &snap.imgH);
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_GRAPHICS_IMAGE_DATA_WIDTH, &snap.imgW);
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_GRAPHICS_IMAGE_DATA_HEIGHT, &snap.imgH);
             if (snap.imgW == 0 || snap.imgH == 0)
                 continue;
 
@@ -127,12 +130,12 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             ghostty_kitty_graphics_placement_get(iter,
                 GHOSTTY_KITTY_GRAPHICS_PLACEMENT_DATA_Y_OFFSET, &snap.yOffset);
 
-            // Ghostty exposes a per-image generation stamp (GHOSTTY_KITTY_IMAGE_DATA_GENERATION)
+            // Ghostty exposes a per-image generation stamp (GHOSTTY_KITTY_GRAPHICS_IMAGE_DATA_GENERATION)
             // that changes whenever pixel contents change — even when dimensions, format,
             // and data length are identical (e.g. an app re-uploading under the same image
             // ID). Keying staleness on dataLen misses those updates and renders stale pixels.
             uint64_t gen = 0;
-            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_GENERATION, &gen);
+            ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_GRAPHICS_IMAGE_DATA_GENERATION, &gen);
             snap.generation = gen;
 
             if (m_kittyTextures.contains(snap.imageId)) {
@@ -166,15 +169,17 @@ void GLRenderer::Renderer::snapshotKittyGraphics(GhosttyTerminal terminal, Ghost
             }
 
             if (snap.needsUpload) {
-                const uint8_t *pixels = nullptr;
-                size_t pixelsLen = 0;
-                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_PTR, &pixels);
-                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_DATA_LEN, &pixelsLen);
-                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_IMAGE_DATA_FORMAT, &snap.format);
-                if (pixels && pixelsLen > 0) {
-                    snap.pixelData = QByteArray(reinterpret_cast<const char*>(pixels),
-                                                static_cast<int>(pixelsLen));
-                    snap.dataLen = pixelsLen;
+                // vt-1.0.0: pixels come back as a borrowed GhosttyString
+                // (points into terminal memory, valid until the terminal
+                // is next modified), so deep-copy here. The copy and
+                // snap.dataLen both use pixels.len.
+                GhosttyString pixels = {};
+                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_GRAPHICS_IMAGE_DATA_PIXELS, &pixels);
+                ghostty_kitty_graphics_image_get(image, GHOSTTY_KITTY_GRAPHICS_IMAGE_DATA_FORMAT, &snap.format);
+                if (pixels.ptr && pixels.len > 0) {
+                    snap.pixelData = QByteArray(reinterpret_cast<const char*>(pixels.ptr),
+                                                static_cast<int>(pixels.len));
+                    snap.dataLen = pixels.len;
                 } else {
                     continue;
                 }
@@ -218,7 +223,7 @@ void GLRenderer::Renderer::forgetKittyFailedUpload(uint32_t imageId)
     }
 }
 
-void GLRenderer::Renderer::drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
+void GLRenderer::Renderer::drawKittyImageLayer(GhosttyImageLayer layer,
                                                 const QMatrix4x4 &proj, int /* fboW */, int /* fboH */)
 {
     if (!m_kittyProgram || !m_kittyProgram->isLinked())

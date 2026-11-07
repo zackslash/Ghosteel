@@ -34,7 +34,7 @@ void TerminalView::scrollViewportByLines(int lines)
                          &before);
 
     GhosttyTerminalScrollViewport scroll = {};
-    scroll.tag = GHOSTTY_SCROLL_VIEWPORT_DELTA;
+    scroll.tag = GHOSTTY_TERMINAL_SCROLL_VIEWPORT_DELTA;
     scroll.value.delta = lines;
     ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
 

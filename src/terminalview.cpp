@@ -607,7 +607,7 @@ void TerminalView::encodeAndWritePaste(const QByteArray &utf8)
         QByteArray encodeCopy = utf8;
         QByteArray buf(written, '\0');
         res = ghostty_paste_encode(encodeCopy.data(), encodeCopy.size(), bracketed,
-                                   buf.data(), buf.size(), &written);
+                                   reinterpret_cast<uint8_t *>(buf.data()), buf.size(), &written);
         if (res == GHOSTTY_SUCCESS && written > 0) {
             m_pty->writeData(buf.constData(), written);
             return;
@@ -1303,7 +1303,7 @@ void TerminalView::scrollViewportToBottom()
                          GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE, &viewportActive);
     if (!viewportActive) {
         GhosttyTerminalScrollViewport scroll = {};
-        scroll.tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM;
+        scroll.tag = GHOSTTY_TERMINAL_SCROLL_VIEWPORT_BOTTOM;
         ghostty_terminal_scroll_viewport(m_vt->terminal(), scroll);
         armLinkUnderlineHide();
     }

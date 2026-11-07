@@ -86,7 +86,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
         return false;
     }
 
-    ghostty_key_encoder_setopt_from_terminal(m_keyEncoder, m_terminal);
+    ghostty_key_encoder_set_from_terminal(m_keyEncoder, m_terminal);
 
     res = ghostty_mouse_encoder_new(nullptr, &m_mouseEncoder);
     if (res != GHOSTTY_SUCCESS) {
@@ -95,7 +95,7 @@ bool GhosttyVt::create(uint16_t cols, uint16_t rows, PtyWriteFn writeFn)
         return false;
     }
 
-    ghostty_mouse_encoder_setopt_from_terminal(m_mouseEncoder, m_terminal);
+    ghostty_mouse_encoder_set_from_terminal(m_mouseEncoder, m_terminal);
 
     return true;
 }
@@ -321,8 +321,8 @@ void GhosttyVt::updateRenderState()
         // (e.g., mouse tracking toggled, keypad mode changed).
         // This avoids redundant syscalls every frame.
         if (m_needsEncoderSync) {
-            ghostty_key_encoder_setopt_from_terminal(m_keyEncoder, m_terminal);
-            ghostty_mouse_encoder_setopt_from_terminal(m_mouseEncoder, m_terminal);
+            ghostty_key_encoder_set_from_terminal(m_keyEncoder, m_terminal);
+            ghostty_mouse_encoder_set_from_terminal(m_mouseEncoder, m_terminal);
             m_needsEncoderSync = false;
         }
     }
@@ -370,10 +370,12 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     if (utf8 && utf8Len > 0) {
         unsigned char first = static_cast<unsigned char>(utf8[0]);
         if (first >= 0x20 && first != 0x7F) {
-            ghostty_key_event_set_utf8(event, utf8, utf8Len);
+            ghostty_key_event_set_utf8(event, GhosttyString{
+                reinterpret_cast<const uint8_t *>(utf8), utf8Len});
         } else if ((mods & GHOSTTY_MODS_CTRL) && codepoint > 0) {
             base = static_cast<char>(codepoint);
-            ghostty_key_event_set_utf8(event, &base, 1);
+            ghostty_key_event_set_utf8(event, GhosttyString{
+                reinterpret_cast<const uint8_t *>(&base), 1});
         }
     }
 
@@ -384,7 +386,8 @@ QByteArray GhosttyVt::encodeKeyEvent(GhosttyKey key, GhosttyKeyAction action,
     if (required > 0) {
         result.resize(required);
         size_t written = 0;
-        ghostty_key_encoder_encode(m_keyEncoder, event, result.data(),
+        ghostty_key_encoder_encode(m_keyEncoder, event,
+                                   reinterpret_cast<uint8_t *>(result.data()),
                                    result.size(), &written);
         result.resize(written);
     }
@@ -510,7 +513,7 @@ QString GhosttyVt::getHyperlinkAt(uint16_t col, uint32_t row) const
     point.value.coordinate.x = col;
     point.value.coordinate.y = row;
 
-    GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+    GhosttyGridRef ref = {};
     if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS)
         return {};
 
@@ -590,7 +593,8 @@ QByteArray GhosttyVt::encodeMouseEvent(GhosttyMouseAction action,
     if (required > 0) {
         result.resize(required);
         size_t written = 0;
-        ghostty_mouse_encoder_encode(m_mouseEncoder, event, result.data(),
+        ghostty_mouse_encoder_encode(m_mouseEncoder, event,
+                                     reinterpret_cast<uint8_t *>(result.data()),
                                      result.size(), &written);
         result.resize(written);
     }
@@ -615,7 +619,7 @@ void GhosttyVt::updateMouseEncoderSize(uint32_t screenW, uint32_t screenH,
     size.padding_bottom = 0;
     size.padding_left = 0;
     size.padding_right = 0;
-    ghostty_mouse_encoder_setopt(m_mouseEncoder,
+    ghostty_mouse_encoder_set(m_mouseEncoder,
                                  GHOSTTY_MOUSE_ENCODER_OPT_SIZE, &size);
 }
 
@@ -623,7 +627,7 @@ void GhosttyVt::setMouseButtonPressed(bool pressed)
 {
     if (!m_mouseEncoder)
         return;
-    ghostty_mouse_encoder_setopt(m_mouseEncoder,
+    ghostty_mouse_encoder_set(m_mouseEncoder,
                                  GHOSTTY_MOUSE_ENCODER_OPT_ANY_BUTTON_PRESSED,
                                  &pressed);
 }
@@ -692,7 +696,7 @@ VtSearchText GhosttyVt::extractSearchText()
             point.value.coordinate.x = col;
             point.value.coordinate.y = static_cast<uint32_t>(row);
 
-            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            GhosttyGridRef ref = {};
             if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
                 line += QLatin1Char(' ');
                 if (charIdx < line.size())
@@ -744,7 +748,7 @@ VtSearchText GhosttyVt::extractSearchText()
             firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
             firstCol.value.coordinate.x = 0;
             firstCol.value.coordinate.y = static_cast<uint32_t>(row);
-            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            GhosttyGridRef rowRef = {};
             if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
                 GhosttyRow rowHandle = 0;
                 if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {
@@ -815,7 +819,7 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             point.value.coordinate.x = col;
             point.value.coordinate.y = static_cast<uint32_t>(row);
 
-            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            GhosttyGridRef ref = {};
             if (ghostty_terminal_grid_ref(m_terminal, point, &ref) != GHOSTTY_SUCCESS) {
                 line.append(' ');
                 continue;
@@ -841,7 +845,7 @@ QByteArray GhosttyVt::exportScrollback(uint16_t &outCols, uint16_t &outRows) con
             firstCol.tag = GHOSTTY_POINT_TAG_SCREEN;
             firstCol.value.coordinate.x = 0;
             firstCol.value.coordinate.y = static_cast<uint32_t>(row);
-            GhosttyGridRef rowRef = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            GhosttyGridRef rowRef = {};
             if (ghostty_terminal_grid_ref(m_terminal, firstCol, &rowRef) == GHOSTTY_SUCCESS) {
                 GhosttyRow rowHandle = 0;
                 if (ghostty_grid_ref_row(&rowRef, &rowHandle) == GHOSTTY_SUCCESS && rowHandle != 0) {

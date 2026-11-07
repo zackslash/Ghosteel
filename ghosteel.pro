@@ -38,11 +38,6 @@ GIT_VERSION = $$system(git describe --tags --always 2>/dev/null)
 isEmpty(GIT_VERSION): GIT_VERSION = "dev"
 DEFINES += GIT_VERSION=\\\"$$GIT_VERSION\\\"
 
-# Ghostty submodule version (short commit hash)
-GHOSTTY_VERSION = $$system(cd ghostty && git rev-parse --short=9 HEAD 2>/dev/null)
-isEmpty(GHOSTTY_VERSION): GHOSTTY_VERSION = "unknown"
-DEFINES += GHOSTTY_VERSION=\\\"$$GHOSTTY_VERSION\\\"
-
 # libghostty integration
 DEFINES += GHOSTTY_STATIC
 INCLUDEPATH += ghostty/include

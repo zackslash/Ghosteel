@@ -336,7 +336,7 @@ Page {
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.Wrap
-                text: appName + " " + appVersion + "\nlibghostty " + ghosttyVersion
+                text: appName + " " + appVersion + "\nlibghostty version " + libghosttyVersion
             }
 
             BackgroundItem {

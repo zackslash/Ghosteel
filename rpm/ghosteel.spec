@@ -24,7 +24,6 @@ Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default
 Requires:   libngf-qt5
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
-BuildRequires:  patch
 # sailfishapp_i18n chains lupdate/lrelease with || :, so a missing tool
 # would silently ship an RPM with no .qm files; require the provider.
 BuildRequires:  qt5-qttools
@@ -96,24 +95,6 @@ if [ -f "%{_sourcedir}/zig-deps-cache.tar.gz" ]; then
     mkdir -p "${ZIG_CACHE}"
     tar -xzf "%{_sourcedir}/zig-deps-cache.tar.gz" -C "${ZIG_CACHE}"
 fi
-
-# Apply carried patches to the ghostty submodule (local fixes not yet
-# upstream). Strict validation: a patch must apply cleanly, or already be
-# applied (skipped); anything else fails the build so the patch gets
-# refreshed against the new pin. Remove the file once its fix lands
-# upstream.
-for p in patches/*.patch; do
-    [ -f "$p" ] || continue
-    if patch --forward --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
-        patch --forward -d ghostty -p1 < "$p" || { echo "ERROR: failed to apply carried patch: $p" >&2; exit 1; }
-        echo "Applied carried patch: $p"
-    elif patch --reverse --dry-run -d ghostty -p1 < "$p" >/dev/null 2>&1; then
-        echo "Skipping carried patch (already applied): $p"
-    else
-        echo "ERROR: carried patch neither applies nor is already applied: $p" >&2
-        exit 1
-    fi
-done
 
 %build
 
@@ -208,9 +189,18 @@ if [ ! -f lib/${LIB_ARCH}/libghostty-vt.a ]; then
     fi
 
     cd ghostty
+    # No .git in OBS tarballs, so the vt tag can't be detected there; pass
+    # the version from the committed version.h so ghostty_version() reports
+    # the release instead of a -dev build.
+    LIB_VERSION=$(sed -n 's/^#define GHOSTTY_VT_VERSION "\(.*\)"/\1/p' include/ghostty/vt/version.h)
+    if [ -z "$LIB_VERSION" ]; then
+        echo "ERROR: GHOSTTY_VT_VERSION not found in ghostty headers" >&2
+        exit 1
+    fi
     "$ZIG" build -Demit-lib-vt \
         -Dtarget="${ZIG_TARGET}" \
         -Doptimize=ReleaseSafe \
+        -Dlib-version-string="${LIB_VERSION}" \
         ${CACHE_FLAG} 2>&1 || exit 1
     mkdir -p %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}
     cp zig-out/lib/libghostty-vt.a %{_builddir}/%{name}-%{version}/lib/${LIB_ARCH}/
@@ -223,19 +213,13 @@ fi
 if [ -d "%{_builddir}/zig-x86_64-linux-%{zig_version}" ] && [ ! -L ghostty ]; then
     rm -rf "%{_builddir}/zig-x86_64-linux-%{zig_version}" \
            "%{_builddir}/zig-cache" \
-           ghostty/.zig-cache ghostty/zig-out ghostty/zig-pkg
+           ghostty/.zig-cache ghostty/zig-out
     [ -n "$HOME" ] && rm -rf "$HOME/.cache/zig"
 fi
 
 # Inject version info (no .git/ in OBS tarballs, so git describe fails)
 # GIT_VERSION: use RPM version set by tar_git from git tag
 sed -i "s/isEmpty(GIT_VERSION): GIT_VERSION = \"[^\"]*\"/isEmpty(GIT_VERSION): GIT_VERSION = \"%{version}\"/" ghosteel.pro
-# GHOSTTY_VERSION: read from ghostty.version (updated by scripts/update-ghostty-version.sh)
-GHOSTTY_SHA=$(cat ghostty.version 2>/dev/null || true)
-if [ -n "$GHOSTTY_SHA" ]; then
-    sed -i "s|^GHOSTTY_VERSION = .*|GHOSTTY_VERSION = \"$GHOSTTY_SHA\"|" ghosteel.pro
-fi
-
 # Build Qt application
 %qmake5
 

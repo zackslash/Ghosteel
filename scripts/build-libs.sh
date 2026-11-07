@@ -36,29 +36,21 @@ build_arch() {
     echo "Building libghostty-vt for $arch ($target)..."
     mkdir -p "$out_dir"
 
+    # Report the version the pinned headers carry, regardless of git state
+    # (CI shallow clones can't see the vt- tag). Same source as rpm/ghosteel.spec.
+    local lib_version
+    lib_version=$(sed -n 's/^#define GHOSTTY_VT_VERSION "\(.*\)"/\1/p' "$GHOSTTY_DIR/include/ghostty/vt/version.h")
+    if [ -z "$lib_version" ]; then
+        echo "Error: GHOSTTY_VT_VERSION not found in ghostty headers" >&2
+        exit 1
+    fi
+
     cd "$GHOSTTY_DIR"
-    "$ZIG" build -Demit-lib-vt -Dtarget="$target" -Doptimize=ReleaseSafe 2>&1
+    "$ZIG" build -Demit-lib-vt -Dtarget="$target" -Doptimize=ReleaseSafe \
+        -Dlib-version-string="$lib_version" 2>&1
 
     cp "$GHOSTTY_DIR/zig-out/lib/libghostty-vt.a" "$out_dir/"
     echo "  -> $out_dir/libghostty-vt.a"
-}
-
-# Local runs leave the submodule tree dirty (patch applied); run
-# `git -C ghostty checkout -- .` before the next submodule bump.
-apply_carried_patches() {
-    local p
-    for p in "$PROJECT_ROOT"/patches/*.patch; do
-        [ -f "$p" ] || continue
-        if git -C "$GHOSTTY_DIR" apply --check "$p" 2>/dev/null; then
-            git -C "$GHOSTTY_DIR" apply "$p"
-            echo "Applied carried patch: $p"
-        elif git -C "$GHOSTTY_DIR" apply --check --reverse "$p" 2>/dev/null; then
-            echo "Skipping carried patch (already applied): $p"
-        else
-            echo "ERROR: carried patch neither applies nor is already applied: $p" >&2
-            exit 1
-        fi
-    done
 }
 
 main() {
@@ -69,7 +61,6 @@ main() {
     local arch="${1:-all}"
 
     check_zig
-    apply_carried_patches
 
     echo "=== Building libghostty-vt for Sailfish OS ==="
     echo "Zig: $("$ZIG" version)"

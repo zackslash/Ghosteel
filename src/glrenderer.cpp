@@ -297,7 +297,7 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     bool cursorInViewport = cursor.viewport_has_value;
     bool cursorWideTail = false;
     uint16_t cursorX = 0, cursorY = 0;
-    GhosttyRenderStateCursorVisualStyle cursorStyle = GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK;
+    GhosttyCursorStyle cursorStyle = GHOSTTY_CURSOR_STYLE_BLOCK;
     if (cursorVisible && cursorInViewport) {
         // Cursor X sits on the spacer-tail of a wide char (head at X-1).
         // See ghostty src/renderer/generic.zig:2521-2534.
@@ -388,10 +388,10 @@ void GLRenderer::Renderer::synchronize(QQuickFramebufferObject *item)
     if (!cursorEffective) {
         m_cursorStyle = 0;
     } else switch (cursorStyle) {
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK:        m_cursorStyle = 1; break;
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BAR:          m_cursorStyle = 2; break;
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_UNDERLINE:    m_cursorStyle = 3; break;
-        case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW: m_cursorStyle = 4; break;
+        case GHOSTTY_CURSOR_STYLE_BLOCK:        m_cursorStyle = 1; break;
+        case GHOSTTY_CURSOR_STYLE_BAR:          m_cursorStyle = 2; break;
+        case GHOSTTY_CURSOR_STYLE_UNDERLINE:    m_cursorStyle = 3; break;
+        case GHOSTTY_CURSOR_STYLE_BLOCK_HOLLOW: m_cursorStyle = 4; break;
         default: m_cursorStyle = 1; break;
     }
     // A style flip that changes no cells (block<->hollow, vi modes) still needs a scene redraw.
@@ -867,7 +867,7 @@ void GLRenderer::Renderer::drawScene(int width, int height)
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
 
     // Kitty below-text layer: over the backgrounds, under the glyphs.
-    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_BELOW_TEXT, proj,
+    drawKittyImageLayer(GHOSTTY_IMAGE_LAYER_BELOW_TEXT, proj,
                         width, height);
 
     if (splitCellPass) {
@@ -928,7 +928,7 @@ void GLRenderer::Renderer::drawScene(int width, int height)
         m_flatProgram->release();
     }
 
-    drawKittyImageLayer(GHOSTTY_KITTY_PLACEMENT_LAYER_ABOVE_TEXT, proj,
+    drawKittyImageLayer(GHOSTTY_IMAGE_LAYER_ABOVE_TEXT, proj,
                         width, height);
 }
 

@@ -383,7 +383,7 @@ void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRend
     int x = 0;
     while (ghostty_render_state_row_cells_next(cells)) {
         GhosttyCell rawCell = 0;
-        GhosttyStyle cellStyle = GHOSTTY_INIT_SIZED(GhosttyStyle);
+        GhosttyStyle cellStyle = {};
         uint32_t graphemesLen = 0;
         uint32_t graphemesBuf[kMaxGraphemeLen];
         GhosttyColorRgb cellFg, cellBg;
@@ -434,8 +434,8 @@ void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRend
         }
 
         float deco = 0.0f;
-        if (cellStyle.underline > 0) deco = 1.0f;
-        else if (cellStyle.strikethrough) deco = 2.0f;
+        if (GHOSTTY_STYLE_UNDERLINE(cellStyle) > 0) deco = 1.0f;
+        else if (cellStyle.flags & GHOSTTY_STYLE_FLAG_STRIKETHROUGH) deco = 2.0f;
 
         float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
         float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
@@ -443,8 +443,12 @@ void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRend
         float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
         if (graphemesLen > 0 && graphemesLen <= kMaxGraphemeLen) {
             const GlyphInfo &gi = (graphemesLen == 1)
-                ? m_atlas.glyph(graphemesBuf[0], cellStyle.bold, cellStyle.italic)
-                : m_atlas.glyphCluster(graphemesBuf, graphemesLen, cellStyle.bold, cellStyle.italic);
+                ? m_atlas.glyph(graphemesBuf[0],
+                                (cellStyle.flags & GHOSTTY_STYLE_FLAG_BOLD) != 0,
+                                (cellStyle.flags & GHOSTTY_STYLE_FLAG_ITALIC) != 0)
+                : m_atlas.glyphCluster(graphemesBuf, graphemesLen,
+                                       (cellStyle.flags & GHOSTTY_STYLE_FLAG_BOLD) != 0,
+                                       (cellStyle.flags & GHOSTTY_STYLE_FLAG_ITALIC) != 0);
             u0 = gi.u0; v0 = gi.v0; u1 = gi.u1; v1 = gi.v1;
         }
 
@@ -511,7 +515,7 @@ void GLRenderer::Renderer::buildBandVertices(GhosttyTerminal terminal)
             point.value.coordinate.x = col;
             point.value.coordinate.y = static_cast<uint32_t>(r);
 
-            GhosttyGridRef ref = GHOSTTY_INIT_SIZED(GhosttyGridRef);
+            GhosttyGridRef ref = {};
             if (ghostty_terminal_grid_ref(terminal, point, &ref) != GHOSTTY_SUCCESS) {
                 // Defensive: out-of-bounds cell renders as an empty bg quad so
                 // the row stays aligned.
@@ -561,13 +565,13 @@ void GLRenderer::Renderer::emitBandRowVertices(QVector<CellVertex> &out, Ghostty
     if (wide == GHOSTTY_CELL_WIDE_SPACER_TAIL)
         return;
 
-    GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+    GhosttyStyle style = {};
     ghostty_grid_ref_style(&ref, &style);
 
     uint32_t graphemesBuf[kMaxGraphemeLen];
     size_t graphemesLen = 0;
     // Invisible: emit the bg quad only, no glyph.
-    if (!style.invisible)
+    if (!(style.flags & GHOSTTY_STYLE_FLAG_INVISIBLE))
         ghostty_grid_ref_graphemes(&ref, graphemesBuf, kMaxGraphemeLen, &graphemesLen);
 
     // grid_ref styles are raw tagged palette-index-or-RGB unions; resolve
@@ -596,15 +600,15 @@ void GLRenderer::Renderer::emitBandRowVertices(QVector<CellVertex> &out, Ghostty
         cFgB = style.fg_color.value.rgb.b / 255.0f;
     }
 
-    if (style.inverse) {
+    if (style.flags & GHOSTTY_STYLE_FLAG_INVERSE) {
         qSwap(cFgR, cBgR);
         qSwap(cFgG, cBgG);
         qSwap(cFgB, cBgB);
     }
 
     float deco = 0.0f;
-    if (style.underline > 0) deco = 1.0f;
-    else if (style.strikethrough) deco = 2.0f;
+    if (GHOSTTY_STYLE_UNDERLINE(style) > 0) deco = 1.0f;
+    else if (style.flags & GHOSTTY_STYLE_FLAG_STRIKETHROUGH) deco = 2.0f;
 
     float pFgR = cFgR, pFgG = cFgG, pFgB = cFgB, pFgA = 1.0f;
     float pBgR = cBgR * bgAlpha, pBgG = cBgG * bgAlpha, pBgB = cBgB * bgAlpha, pBgA = bgAlpha;
@@ -612,8 +616,12 @@ void GLRenderer::Renderer::emitBandRowVertices(QVector<CellVertex> &out, Ghostty
     float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
     if (graphemesLen > 0 && graphemesLen <= kMaxGraphemeLen) {
         const GlyphInfo &gi = (graphemesLen == 1)
-            ? m_atlas.glyph(graphemesBuf[0], style.bold, style.italic)
-            : m_atlas.glyphCluster(graphemesBuf, graphemesLen, style.bold, style.italic);
+            ? m_atlas.glyph(graphemesBuf[0],
+                            (style.flags & GHOSTTY_STYLE_FLAG_BOLD) != 0,
+                            (style.flags & GHOSTTY_STYLE_FLAG_ITALIC) != 0)
+            : m_atlas.glyphCluster(graphemesBuf, graphemesLen,
+                                   (style.flags & GHOSTTY_STYLE_FLAG_BOLD) != 0,
+                                   (style.flags & GHOSTTY_STYLE_FLAG_ITALIC) != 0);
         u0 = gi.u0; v0 = gi.v0; u1 = gi.u1; v1 = gi.v1;
     }
 
