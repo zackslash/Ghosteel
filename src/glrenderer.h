@@ -172,7 +172,7 @@ private:
 
         // Kitty Graphics Protocol — rendering helpers
         void createKittyShaders();
-        void drawKittyImageLayer(GhosttyKittyPlacementLayer layer,
+        void drawKittyImageLayer(GhosttyImageLayer layer,
                                  const QMatrix4x4 &proj, int fboW, int fboH);
         void snapshotKittyGraphics(GhosttyTerminal terminal, GhosttyVt *vt);
         void cleanupKittyCache();
@@ -430,7 +430,7 @@ private:
         // consumed in render on render thread — avoids ghostty_terminal_get
         // data race with vtWrite on the GUI thread).
         struct KittyPlacementSnapshot {
-            GhosttyKittyPlacementLayer layer;
+            GhosttyImageLayer layer;
             uint32_t imageId = 0;
             uint32_t imgW = 0, imgH = 0;
             uint32_t xOffset = 0, yOffset = 0;

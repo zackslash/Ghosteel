@@ -190,9 +190,11 @@ int main(int argc, char *argv[])
     // setSource is intended — no UI was shown.
     if (!sessionManager->startSingleInstanceServer()) return 0;
 
-    // Expose version strings to QML (always defined via -D flags from ghosteel.pro)
+    // Expose version strings to QML. The libghostty version is reported by
+    // the linked library itself (baked into libghostty-vt.a at build time),
+    // so it always matches the binary actually shipped.
     view->rootContext()->setContextProperty(QStringLiteral("appVersion"), QStringLiteral(GIT_VERSION));
-    view->rootContext()->setContextProperty(QStringLiteral("ghosttyVersion"), QStringLiteral(GHOSTTY_VERSION));
+    view->rootContext()->setContextProperty(QStringLiteral("libghosttyVersion"), QString::fromUtf8(ghostty_version()));
     view->rootContext()->setContextProperty(QStringLiteral("appName"), QStringLiteral(APP_NAME));
 
     view->setSource(SailfishApp::pathToMainQml());
