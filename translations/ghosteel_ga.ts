@@ -196,6 +196,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Leagan sandbox</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Tuigim</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Is é seo leagan sandbox Ghosteel do Jolla Store. Ritheann sé i dtimpeallacht shrianta: níl ach na huirlisí busybox ionsuite ar fáil, níl aipeanna suiteáilte infheicthe dó, ní fheiceann sé ach cúpla de do chuid fillteán (cosúil le Downloads), agus níl rochtain root ná bainisteoir pacáistí aige.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Coinnítear na comhaid agus na socruithe a chruthaíonn tú ann ina fhillteán féin agus mhaireann siad tar éis atosú. Tabhair do chuid uirlisí aon-chomhaid leat: cuir i ~/bin istigh sa teirminéal iad agus éireoidh siad ina n-orduithe gnáth.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Chun an taithí iomlán a fháil — blaosc an chórais, aipeanna suiteáilte, aicearraí deisce — suiteáil Ghosteel iomlán ó Chum nó OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -520,6 +543,14 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Athraíonn swipáil chothrománach an seisiún freisin in aipeanna a úsáideann ionchur luiche (m.sh. htop, vim). Fanann tarraingt le brú fada i gcónaí leis an aip</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Leagan sandbox (Jolla Store) — timpeallacht shrianta. Tá an leagan iomlán ar fáil ó Chum nó OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandbox)</translation>
     </message>
 </context>
 <context>

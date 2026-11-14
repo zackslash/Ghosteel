@@ -95,13 +95,24 @@ jobs:
           ctest --output-on-failure
 
   build:
-    name: Build (${{ matrix.arch }})
+    name: Build (${{ matrix.variant }}/${{ matrix.arch }})
     needs: [validate, test]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [armv7hl, aarch64, i486]
+        include:
+          - variant: full
+            arch: armv7hl
+          - variant: full
+            arch: aarch64
+          - variant: full
+            arch: i486
+          # Store (Jolla Harbour) variant: sandboxed build, real devices only
+          - variant: store
+            arch: armv7hl
+          - variant: store
+            arch: aarch64
     env:
       ZIG_VERSION: 0.17.0
 
@@ -113,18 +124,30 @@ jobs:
 
       - uses: actions/checkout@v6
 
+      - name: Select spec (mb2 autodiscovers rpm/*.spec — keep exactly one)
+        run: |
+          if [ "${{ matrix.variant }}" = "store" ]; then
+            mv rpm/ghosteel.spec /tmp/full-spec.spec
+            echo "SPEC=rpm/harbour-ghosteel.spec" >> "$GITHUB_ENV"
+            echo "CHANGES=rpm/harbour-ghosteel.changes" >> "$GITHUB_ENV"
+          else
+            mv rpm/harbour-ghosteel.spec /tmp/store-spec.spec
+            echo "SPEC=rpm/ghosteel.spec" >> "$GITHUB_ENV"
+            echo "CHANGES=rpm/ghosteel.changes" >> "$GITHUB_ENV"
+          fi
+
       - name: Get Ghostty submodule commit
         id: ghostty-commit
         run: |
           SHA=$(git ls-tree HEAD ghostty | awk '{print $3}')
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Cache libghostty-vt
+      - name: Cache libghostty-vt (+ store busybox)
         id: cache-lib
         uses: actions/cache@v4
         with:
           path: lib/${{ matrix.arch }}
-          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}-zig-${{ env.ZIG_VERSION }}
+          key: libghostty-vt-${{ matrix.arch }}-${{ steps.ghostty-commit.outputs.sha }}-zig-${{ env.ZIG_VERSION }}-buildlibs-${{ hashFiles('scripts/build-libs.sh') }}-busybox-${{ hashFiles('rpm/busybox-*.tar.bz2') }}
 
       - name: Cache Ghostty submodule
         id: cache-submodule
@@ -145,7 +168,7 @@ jobs:
           RPM_VER=$(echo "$VER" | sed 's/-/~/g')
           echo "Setting version to $VER (RPM: $RPM_VER)"
 
-          sed -i "s/^Version:.*/Version:    $RPM_VER/" rpm/ghosteel.spec
+          sed -i "s/^Version:.*/Version:    $RPM_VER/" "$SPEC"
 
           # .pro fallback for GIT_VERSION — safe to only replace fallback because
           # the main repo's git describe works inside Docker (not cached like submodule)
@@ -178,7 +201,7 @@ jobs:
         run: |
           DATE=$(date "+%a %b %d %Y")
           VER="${{ needs.validate.outputs.version }}"
-          printf '* %s - %s\n%s\n' "$DATE" "$VER" "$CHANGELOG" > rpm/ghosteel.changes
+          printf '* %s - %s\n%s\n' "$DATE" "$VER" "$CHANGELOG" > "$CHANGES"
 
       - name: Cache Docker image
         id: cache-docker
@@ -199,6 +222,30 @@ jobs:
           release: 5.0.0.43
           arch: ${{ matrix.arch }}
 
+      - name: Harbour validator gate (store build)
+        if: matrix.variant == 'store'
+        run: |
+          # Run Jolla's store RPM validator against the store RPM inside the
+          # same SDK image. Exit codes: 0 pass, 1 fail, 2 pass with warnings.
+          RPM_PATH=$(ls RPMS/*.rpm | head -1)
+          if [ -z "$RPM_PATH" ]; then
+            echo "::error::no RPM found to validate"
+            exit 1
+          fi
+          git clone --quiet --depth 1 \
+            https://github.com/sailfishos/sdk-harbour-rpmvalidator.git /tmp/validator
+          set +e
+          docker run --rm -v "$PWD":/build -v /tmp/validator:/validator:ro \
+            coderus/sailfishos-platform-sdk:5.0.0.43 \
+            bash /validator/rpmvalidation.sh -c "/build/$RPM_PATH"
+          RC=$?
+          set -e
+          echo "validator exit code: $RC"
+          if [ "$RC" -ne 0 ] && [ "$RC" -ne 2 ]; then
+            echo "::error::Harbour validation failed (exit $RC)"
+            exit 1
+          fi
+
       - name: Save Docker image
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: docker save coderus/sailfishos-platform-sdk:5.0.0.43 -o /tmp/sfos-sdk.tar
@@ -206,7 +253,7 @@ jobs:
       - name: Upload RPM
         uses: actions/upload-artifact@v6
         with:
-          name: ghosteel-${{ matrix.arch }}
+          name: ${{ matrix.variant }}-ghosteel-${{ matrix.arch }}
           path: RPMS/*.rpm
           retention-days: 30
 
@@ -223,9 +270,24 @@ jobs:
         with:
           path: release-rpms
 
+      - name: Compose release body
+        id: body
+        env:
+          NOTES: ${{ needs.validate.outputs.release_notes }}
+        run: |
+          {
+            echo "body<<DELIM"
+            echo "$NOTES"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Packages:** \`ghosteel-<version>-<arch>.rpm\` is the full version — system shell, installed apps, desktop shortcuts. \`harbour-ghosteel-<version>-<arch>.rpm\` is the sandboxed Jolla Store build — it runs in its own restricted environment with bundled busybox tools and cannot see system apps, your home folder, or use root. Install it from the Jolla Store, or directly only if you specifically want the sandboxed variant."
+            echo "DELIM"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           name: Ghosteel v${{ needs.validate.outputs.version }}
-          body: ${{ needs.validate.outputs.release_notes }}
+          body: ${{ steps.body.outputs.body }}
           files: release-rpms/**/*.rpm

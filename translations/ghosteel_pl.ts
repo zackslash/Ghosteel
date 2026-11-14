@@ -196,6 +196,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Wersja w piaskownicy</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Rozumiem</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>To jest wersja Ghosteel z Jolla Store uruchamiana w piaskownicy. Działa w ograniczonym środowisku: dostępne są tylko wbudowane narzędzia busybox, zainstalowane aplikacje nie są dla niej widoczne, widzi tylko kilka Twoich folderów (np. Downloads) i nie ma dostępu do konta root ani menedżera pakietów.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Pliki i ustawienia, które w niej utworzysz, są przechowywane w jej własnym folderze i przetrwają ponowne uruchomienia. Możesz dodać własne narzędzia jednoplikowe: umieść je w ~/bin w terminalu, a staną się zwykłymi poleceniami.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Aby korzystać ze wszystkich funkcji — powłoki systemowej, zainstalowanych aplikacji, skrótów na pulpicie — zainstaluj pełną wersję Ghosteel z Chum lub OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -520,6 +543,14 @@ Obsługiwany przez silnik terminala libghostty</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Poziome przesunięcie przełącza sesję także w aplikacjach korzystających z myszy (np. htop, vim). Przeciąganie z długim przytrzymaniem zawsze należy do aplikacji</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Wersja w piaskownicy (Jolla Store) — ograniczone środowisko. Pełna wersja jest dostępna w Chum lub OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (piaskownica)</translation>
     </message>
 </context>
 <context>

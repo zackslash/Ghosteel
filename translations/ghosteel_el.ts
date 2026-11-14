@@ -195,6 +195,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Έκδοση sandbox</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Κατάλαβα</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Αυτή είναι η έκδοση sandbox του Ghosteel για το Jolla Store. Λειτουργεί σε περιορισμένο περιβάλλον: διαθέσιμα είναι μόνο τα ενσωματωμένα εργαλεία busybox, οι εγκατεστημένες εφαρμογές δεν είναι ορατές σε αυτήν, βλέπει μόνο μερικά από τους φακέλους σας (όπως το Downloads) και δεν έχει πρόσβαση root ή διαχειριστή πακέτων.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Τα αρχεία και οι ρυθμίσεις που δημιουργείτε μέσα σε αυτήν φυλάσσονται στον δικό της φάκελο και διατηρούνται μετά από επανεκκινήσεις. Φέρτε τα δικά σας εργαλεία σε ένα μόνο αρχείο: τοποθετήστε τα στο ~/bin μέσα στο τερματικό και γίνονται κανονικές εντολές.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Για την πλήρη εμπειρία — κέλυφος συστήματος, εγκατεστημένες εφαρμογές, συντομεύσεις επιφάνειας εργασίας — εγκαταστήστε το πλήρες Ghosteel από το Chum ή το OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -519,6 +542,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Η οριζόντια σάρωση εναλλάσσει τη συνεδρία και σε εφαρμογές που χρησιμοποιούν ποντίκι (π.χ. htop, vim). Τα συρσίματα με παρατεταμένη πίεση παραμένουν πάντα στην εφαρμογή</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Έκδοση sandbox (Jolla Store) — περιορισμένο περιβάλλον. Η πλήρης έκδοση είναι διαθέσιμη στο Chum ή το OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandbox)</translation>
     </message>
 </context>
 <context>

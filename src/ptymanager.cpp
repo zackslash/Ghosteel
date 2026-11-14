@@ -100,6 +100,53 @@ PtyManager::PtyManager(QObject *parent)
 {
 }
 
+#ifdef GHOSTEEL_STORE
+// Sandbox child environment. Sailjail masks the system PATH dirs (the child
+// can see no system binaries at all) and the real $HOME is an empty overlay
+// whose writes are discarded. Point the child at the bundled busybox
+// userland first on PATH, the persistent home inside the app data dir, and
+// TMPDIR/XDG dirs under that home so dotfiles and tool state survive.
+// Called pre-fork on the GUI thread (same constraint as the TERM env below).
+// The previous values are snapshotted into m_sandboxEnvBackup; the parent
+// restores them right after forkpty (children keep the fork-time copy), so
+// this process's own QStandardPaths resolution stays stable across sessions.
+void PtyManager::applySandboxChildEnv()
+{
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                         + QStringLiteral("/home");
+    const QString libexec = QStringLiteral("/usr/share/" APP_NAME "/libexec");
+    struct {
+        const char *name;
+        QString value;
+    } vars[] = {
+        { "HOME", home },
+        { "PATH", libexec + QStringLiteral(":") + home + QStringLiteral("/bin")
+                      + QStringLiteral(":/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin") },
+        { "SHELL", libexec + QStringLiteral("/sh") },
+        { "TMPDIR", home + QStringLiteral("/.tmp") },
+        { "XDG_CONFIG_HOME", home + QStringLiteral("/.config") },
+        { "XDG_DATA_HOME", home + QStringLiteral("/.local/share") },
+        { "XDG_CACHE_HOME", home + QStringLiteral("/.cache") },
+    };
+    m_sandboxEnvBackup.clear();
+    for (const auto &v : vars) {
+        m_sandboxEnvBackup.append(qMakePair(QByteArray(v.name), qgetenv(v.name)));
+        setenv(v.name, v.value.toUtf8().constData(), 1);
+    }
+}
+
+void PtyManager::restoreSandboxParentEnv()
+{
+    for (const auto &saved : m_sandboxEnvBackup) {
+        if (saved.second.isNull())
+            unsetenv(saved.first.constData());
+        else
+            setenv(saved.first.constData(), saved.second.constData(), 1);
+    }
+    m_sandboxEnvBackup.clear();
+}
+#endif
+
 PtyManager::~PtyManager()
 {
     stop();
@@ -119,6 +166,10 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     // If exec fails, the child writes errno to the pipe before _exit.
     if (pipe(execPipe) < 0) {
         qWarning() << "pipe() failed:" << strerror(errno);
+#ifdef GHOSTEEL_STORE
+        // No child exists yet; put the parent's environment back.
+        restoreSandboxParentEnv();
+#endif
         // No child exists; clear any stale pid left by the previous session so
         // it can't be signaled/parsed later (the kernel may recycle it). The
         // generation bump above would otherwise make the stop(false) reap
@@ -154,6 +205,13 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     pid = forkpty(&m_ptyFd, nullptr, nullptr, &ws);
     if (pid != 0)
         pthread_sigmask(SIG_SETMASK, &savedMask, nullptr);
+#ifdef GHOSTEEL_STORE
+    // Parent only (pid > 0 and the pid < 0 failure path): the child keeps
+    // its fork-time copy of the sandbox env; the parent puts its own
+    // environment back so path resolution stays stable for later sessions.
+    if (pid != 0)
+        restoreSandboxParentEnv();
+#endif
     if (pid < 0) {
         qWarning() << "forkpty failed:" << strerror(errno);
         ::close(execPipe[0]);
@@ -182,19 +240,21 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
 
 bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 {
+#ifdef GHOSTEEL_STORE
+    applySandboxChildEnv();
+#endif
+
     // Pre-fork precompute: between forkpty() and exec() the child may only use
     // async-signal-safe calls. The QSG render thread and an exiting previous
     // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs
     // (including setenv) here can deadlock. Build all child inputs on this stack.
 
-    // Build the hop chain: user-configured shell, then $SHELL, then sh. Each
-    // failed hop is reported via execPipe so the parent can notify, and an
-    // in-terminal notice is written to the pty before the fallback exec.
-    // $SHELL is copied into a QByteArray because forkPtyProcess() calls
-    // setenv(), which can realloc environ and invalidate the getenv() pointer.
+    // Build the hop chain: the configured shell (user setting first, then
+    // the platform fallbacks). Each failed hop is reported via execPipe so
+    // the parent can notify, and an in-terminal notice is written to the
+    // pty before the fallback exec.
     QVector<QString> hopNames;
     QByteArray shellCmdBytes;
-    QByteArray shellEnvBytes;
     const char *hops[3];
     int hopCount = 0;
 
@@ -203,6 +263,18 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         hops[hopCount++] = shellCmdBytes.constData();
         hopNames.append(m_shellCommand);
     }
+#ifdef GHOSTEEL_STORE
+    // Sandbox: the system PATH dirs are masked (private-bin leaves only the
+    // app binary) and busybox is blacklisted, so every PATH-lookup hop would
+    // fail. The bundled shell is exec'd by absolute path instead — execlp
+    // skips the PATH search for names containing a slash.
+    QByteArray storeShellBytes = QStringLiteral("/usr/share/" APP_NAME "/libexec/sh").toUtf8();
+    hops[hopCount++] = storeShellBytes.constData();
+    hopNames.append(QString::fromUtf8(storeShellBytes));
+#else
+    QByteArray shellEnvBytes;
+    // $SHELL is copied into a QByteArray because forkPtyProcess() calls
+    // setenv(), which can realloc environ and invalidate the getenv() pointer.
     const char *shellEnv = getenv("SHELL");
     if (shellEnv && shellEnv[0]) {
         bool duplicate = false;
@@ -229,6 +301,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
         hops[hopCount++] = "sh";
         hopNames.append(QStringLiteral("sh"));
     }
+#endif
 
     // Shells exec with -l: SailfishOS's busybox sh reads /etc/profile and
     // ~/.profile only for login shells (fingerterm uses --login likewise).
@@ -359,6 +432,10 @@ void PtyManager::setupChildProcess(const char *workingDir, const char *homeDir)
 
 bool PtyManager::startCommand(const QString &command, const QStringList &args, uint16_t cols, uint16_t rows)
 {
+#ifdef GHOSTEEL_STORE
+    applySandboxChildEnv();
+#endif
+
     // Pre-fork precompute: between forkpty() and exec() the child may only use
     // async-signal-safe calls. The QSG render thread and an exiting previous
     // PtyReaderThread can both be live across the fork, so Qt/glibc mallocs

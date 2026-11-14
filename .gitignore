@@ -47,6 +47,7 @@ deploy/
 *.rpm
 _service
 ghosteel.changes
+harbour-ghosteel.changes
 .sfdk/
 
 # IDE
@@ -94,3 +95,4 @@ tests/tst_*
 tests/*_autogen/
 moc_predefs.h
 .build-libs.lock
+.build/

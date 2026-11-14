@@ -7,6 +7,11 @@
 #include <QVector>
 #include <QAtomicInt>
 
+#ifdef GHOSTEEL_STORE
+#include <QStandardPaths>
+#include <QPair>
+#endif
+
 class QTimer;
 class QSocketNotifier;
 
@@ -66,6 +71,10 @@ private:
     bool forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], pid_t &pid, const char *workingDir, const char *homeDir);
     bool startParentProcess(pid_t pid, int execPipe[2],
                             const QVector<QString> &hopNames = QVector<QString>());
+#ifdef GHOSTEEL_STORE
+    void applySandboxChildEnv();
+    void restoreSandboxParentEnv();
+#endif
 
     void reapPidBounded(pid_t pid);
 
@@ -88,6 +97,12 @@ private:
     QByteArray m_writeBuffer;
     int m_writeOffset = 0;
     QSocketNotifier *m_writeNotifier = nullptr;
+
+#ifdef GHOSTEEL_STORE
+    // Pre-fork snapshot of the env vars applySandboxChildEnv() overwrites,
+    // restored in the parent right after forkpty.
+    QVector<QPair<QByteArray, QByteArray>> m_sandboxEnvBackup;
+#endif
 };
 
 #endif // PTYMANAGER_H

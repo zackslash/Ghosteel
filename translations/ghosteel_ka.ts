@@ -195,6 +195,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>სენდბოქს-ვერსია</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>გაგებულია</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>ეს არის Ghosteel-ის სენდბოქს-ვერსია Jolla Store-სთვის. ის მუშაობს შეზღუდულ გარემოში: ხელმისაწვდომია მხოლოდ ჩაშენებული busybox ხელსაწყოები, დაინსტალირებული აპები მას არ ჩანს, ის ხედავს თქვენი საქაღალდეებიდან მხოლოდ რამდენიმეს (მაგალითად, Downloads) და არ აქვს root წვდომა ან პაკეტების მმართველი.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>მასში შექმნილი ფაილები და პარამეტრები ინახება მის საკუთარ საქაღალდეში და გადარჩება გადატვირთვებს. შეიტანეთ თქვენი საკუთარი ერთფაილიანი ხელსაწყოები: ჩადეთ ისი ~/bin-ში ტერმინალში და ისი ჩვეულებრივ ბრძანებებად იქცევიან.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>სრული გამოცდილებისთვის — სისტემური shell, დაინსტალირებული აპები, სამუშაო მაგიდის მალსახმობები — დააინსტალირეთ სრული Ghosteel Chum-დან ან OpenRepos-დან (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -519,6 +542,14 @@ Powered by libghostty terminal engine</source>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>ჰორიზონტალური სვაიპი სესიას ცვლის ასევე იმ აპლიკაციებშიც, რომლებიც მაუსის შეყვანას იყენებენ (მაგ. htop, vim). გრძელი დაჭერით გადათრევა ყოველთვის აპლიკაციაში რჩება</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>სენდბოქს-ვერსია (Jolla Store) — შეზღუდული გარემო. სრული ვერსია ხელმისაწვდომია Chum-ში ან OpenRepos-ში.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (სენდბოქსი)</translation>
     </message>
 </context>
 <context>

@@ -15,6 +15,12 @@ public:
 
 public slots:
     Q_SCRIPTABLE void activateSession(int sessionId);
+#ifdef GHOSTEEL_STORE
+    // Cross-sandbox single-instance entry point (store build): a duplicate
+    // process that lost the D-Bus name race forwards its CLI args here.
+    Q_SCRIPTABLE void launch(const QString &command, const QStringList &args,
+                             const QString &sessionName, bool restart);
+#endif
 
 private:
     SessionManager *m_manager;

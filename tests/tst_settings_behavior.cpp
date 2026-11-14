@@ -78,6 +78,7 @@ private slots:
             "autoHideKeyboardLandscape", "urlAutoDetect", "kittyGraphics",
             "clipboardReadPolicy",
             "customShaderPath", "shaderPipelineAvailable",
+            "sandboxNoticeShown",
         };
         const QMetaObject *mo = &Settings::staticMetaObject;
         for (const char *name : names) {
@@ -360,6 +361,7 @@ private slots:
             s.setBellMode(2);
             s.setCursorTrails(false);
             s.setCustomShaderPath(QStringLiteral("/test/path.glsl"));
+            s.setSandboxNoticeShown(true);
         }
         // Wait for debounce
         QTest::qWait(DEBOUNCE_WAIT_MS);
@@ -372,6 +374,7 @@ private slots:
             QCOMPARE(s.bellMode(), 2);
             QCOMPARE(s.cursorTrails(), false);
             QCOMPARE(s.customShaderPath(), QStringLiteral("/test/path.glsl"));
+            QCOMPARE(s.sandboxNoticeShown(), true);
         }
     }
 

@@ -1,8 +1,10 @@
 #include "settings.h"
 
 #include <QStandardPaths>
+#include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
 #include <QDebug>
 
 #include <cerrno>
@@ -12,15 +14,58 @@
 #include <unistd.h>
 
 Settings::Settings(QObject *parent)
-    : Settings(
-          QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
-          + QStringLiteral("/" APP_ORG "/" APP_NAME ".conf"),
-          parent)
+    : Settings(defaultSettingsPath(), parent)
 {}
+
+// Config lives at AppConfigLocation/<APP_XDG_NAME>.conf, i.e.
+// ~/.config/<org>/<app>/<app>.conf — inside the directory Sailjail
+// whitelists for the app. The pre-sandboxing location
+// (~/.config/<org>/<app>.conf) sits outside that whitelist and would be
+// unwritable in the sandbox, so both builds use the nested path now.
+QString Settings::defaultSettingsPath()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+           + QStringLiteral("/" APP_XDG_NAME ".conf");
+}
+
+// One-time migration from the legacy flat path (~/.config/<org>/<app>.conf)
+// to the AppConfigLocation path, which sits inside the directory Sailjail
+// whitelists. QFile::copy (not a QSettings re-write) so unknown keys
+// survive. Copies when the new file is absent, or when it is older than the
+// legacy file — the mtime check covers the downgrade round-trip (new
+// version wrote the new path, user downgraded and changed settings at the
+// old path, re-upgraded). The legacy file is never deleted: downgraders
+// keep working. Returns the path unchanged (runs as the side effect of the
+// QSettings member initializer; only the default path migrates, injected
+// test paths are untouched).
+QString Settings::migrateLegacySettings(const QString &newPath)
+{
+    if (newPath != defaultSettingsPath())
+        return newPath;
+    const QString legacyPath =
+        QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+        + QStringLiteral("/" APP_ORG "/" APP_XDG_NAME ".conf");
+    if (!QFile::exists(legacyPath))
+        return newPath;
+
+    const QFileInfo legacyInfo(legacyPath);
+    const QFileInfo newInfo(newPath);
+    if (newInfo.exists() && newInfo.lastModified() >= legacyInfo.lastModified())
+        return newPath;
+
+    QDir().mkpath(QFileInfo(newPath).absolutePath());
+    if (newInfo.exists())
+        QFile::remove(newPath);
+    if (QFile::copy(legacyPath, newPath))
+        qDebug() << "Settings: migrated legacy settings from" << legacyPath;
+    else
+        qWarning() << "Settings: legacy settings migration failed";
+    return newPath;
+}
 
 Settings::Settings(const QString &settingsPath, QObject *parent)
     : QObject(parent)
-    , m_settings(settingsPath, QSettings::IniFormat)
+    , m_settings(migrateLegacySettings(settingsPath), QSettings::IniFormat)
 {
     // Clean up stale temp file from a previous crash during atomic save
     QFile::remove(settingsPath + QStringLiteral(".tmp"));
@@ -87,6 +132,7 @@ void Settings::load()
     if (!ok) v = 0;
     m_clipboardReadPolicy = qBound(0, v, 2);
     m_customShaderPath = m_settings.value(QStringLiteral("terminal/customShaderPath")).toString();
+    m_sandboxNoticeShown = m_settings.value(QStringLiteral("sandbox/noticeShown"), false).toBool();
 }
 
 void Settings::save()
@@ -381,5 +427,15 @@ void Settings::setShaderPipelineAvailable(bool available)
         return;
     m_shaderPipelineAvailable = available;
     Q_EMIT shaderPipelineAvailableChanged();
+}
+
+void Settings::setSandboxNoticeShown(bool shown)
+{
+    if (m_sandboxNoticeShown == shown)
+        return;
+    m_sandboxNoticeShown = shown;
+    m_settings.setValue(QStringLiteral("sandbox/noticeShown"), shown);
+    scheduleSave();
+    Q_EMIT sandboxNoticeShownChanged();
 }
 

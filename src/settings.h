@@ -7,7 +7,7 @@
 #include <QTimer>
 
 // Singleton settings manager backed by QSettings (INI format).
-// Config file: ~/.config/<APP_ORG>/<APP_NAME>.conf
+// Config file: ~/.config/<APP_ORG>/<APP_XDG_NAME>/<APP_XDG_NAME>.conf
 // Thread safety: Must only be accessed from the main GUI thread.
 // QSettings is not thread-safe for concurrent reads/writes.
 class Settings : public QObject
@@ -34,6 +34,7 @@ class Settings : public QObject
     Q_PROPERTY(int clipboardReadPolicy READ clipboardReadPolicy WRITE setClipboardReadPolicy NOTIFY clipboardReadPolicyChanged)
     Q_PROPERTY(QString customShaderPath READ customShaderPath WRITE setCustomShaderPath NOTIFY customShaderPathChanged)
     Q_PROPERTY(bool shaderPipelineAvailable READ shaderPipelineAvailable NOTIFY shaderPipelineAvailableChanged)
+    Q_PROPERTY(bool sandboxNoticeShown READ sandboxNoticeShown WRITE setSandboxNoticeShown NOTIFY sandboxNoticeShownChanged)
     Q_PROPERTY(int minFontSize READ minFontSize CONSTANT)
     Q_PROPERTY(int maxFontSize READ maxFontSize CONSTANT)
 
@@ -131,6 +132,8 @@ public:
     // Q_INVOKABLE — needed for cross-thread invokeMethod from the render thread
     Q_INVOKABLE void setShaderPipelineAvailable(bool available);
 
+    bool sandboxNoticeShown() const { return m_sandboxNoticeShown; }
+    void setSandboxNoticeShown(bool shown);
 
 Q_SIGNALS:
     void fontSizeChanged();
@@ -155,11 +158,14 @@ Q_SIGNALS:
     void clipboardReadPolicyChanged();
     void customShaderPathChanged();
     void shaderPipelineAvailableChanged();
+    void sandboxNoticeShownChanged();
 
 private:
     explicit Settings(QObject *parent = nullptr);
     void load();
     QVariantList sanitizeRowBreaks(const QVariantList &breaks) const;
+    static QString defaultSettingsPath();
+    static QString migrateLegacySettings(const QString &newPath);
 
     QSettings m_settings;
     QTimer *m_saveTimer;
@@ -185,6 +191,7 @@ private:
     int m_clipboardReadPolicy = 0; // 0=ask, 1=allow, 2=deny
     QString m_customShaderPath;
     bool m_shaderPipelineAvailable = false; // set by GLRenderer after ES 3.0 probe
+    bool m_sandboxNoticeShown = false; // one-time first-run sandbox notice (store build)
 };
 
 #endif // SETTINGS_H

@@ -196,6 +196,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Sandbox versija</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Sapratu</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Šī ir Ghosteel sandbox versija no Jolla Store veikala. Tā darbojas ierobežotā vidē: pieejami tikai iebūvētie busybox rīki, uzstādītās lietotnes tai nav redzamas, tā redz tikai dažas no jūsu mapēm (piemēram, Downloads), un tai nav root piekļuves vai pakotņu pārvaldnieka.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Faili un iestatījumi, ko tajā izveidojat, tiek glabāti savā mapē un izdzīvo restartus. Paņemiet līdzi savus viena faila rīkus: ielieciet tos termināla ~/bin mapē, un tie kļūs par parastām komandām.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Pilnai pieredzei — sistēmas čaula, uzstādītās lietotnes, darbvirsmas saīsnes — uzstādiet pilno Ghosteel no Chum vai OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -520,6 +543,14 @@ Darbina libghostty termināla dzinējs</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Horizontālā pārvelšana pārslēdz sesiju arī lietotnēs, kas izmanto peli (piem., htop, vim). Vilkšana ar ilgu piespiešanu vienmēr paliek lietotnē</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox būvējums (Jolla Store) — ierobežota vide. Pilnā versija pieejama no Chum vai OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandbox)</translation>
     </message>
 </context>
 <context>

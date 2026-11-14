@@ -3251,7 +3251,7 @@ private slots:
 
         // A stale socket file with no listener behind it must not prevent
         // startSingleInstanceServer() from taking over the socket.
-        const QString path = runtimeDir.path() + QStringLiteral("/ghosteel-singleton");
+        const QString path = runtimeDir.path() + QStringLiteral("/" APP_NAME "-singleton");
         {
             QFile f(path);
             QVERIFY(f.open(QIODevice::WriteOnly));

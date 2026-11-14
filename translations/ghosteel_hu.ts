@@ -194,6 +194,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Sandboxos verzió</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Értettem</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Ez a Ghosteel Jolla Store-os, sandboxos verziója. Korlátozott környezetben fut: csak a beépített busybox eszközök érhetők el, a telepített alkalmazások nem látszanak neki, a mappái közül csak néhányat lát (például a Downloads mappát), és nincs sem root-jogosultsága, sem csomagkezelője.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>A benne létrehozott fájlok és beállítások a saját mappájában maradnak, és túlélik az újraindításokat. Hozza magával saját, egyetlen fájlból álló eszközeit: tegye őket a terminálban a ~/bin mappába, és normál parancsokká válnak.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>A teljes élményért — rendszershell, telepített alkalmazások, asztali parancsikonok — telepítse a teljes Ghosteelt a Chumról vagy az OpenReposról (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -518,6 +541,14 @@ A libghostty terminálmotor hajtja</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>A vízszintes pöccintés munkamenetet vált az egérbevitelt használó alkalmazásokban is (pl. htop, vim). A hosszan nyomva tartott húzás mindig az alkalmazásnál marad</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandboxos build (Jolla Store) — korlátozott környezet. A teljes verzió elérhető a Chumon vagy az OpenReposon.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandboxos)</translation>
     </message>
 </context>
 <context>

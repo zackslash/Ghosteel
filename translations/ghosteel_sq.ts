@@ -195,6 +195,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Version me sandbox</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>E kuptova</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Ky është versioni me sandbox i Ghosteel-it për Jolla Store. Xhiron në një mjedis të kufizuar: të passhëm janë vetëm mjetet e integruara busybox, aplikacionet e instaluara nuk i shihen atij, ai sheh vetëm disa nga dosjet tuaja (si Downloads) dhe nuk ka as qasje root, as përgjegjës paketash.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Kartelat dhe cilësimet që krijoni brenda tij ruhen në dosjen e vet dhe i mbijetojnë rindezjeve. Sillni mjetet tuaja me një kartelë të vetme: hidhini në ~/bin brenda terminalit dhe bëhen komanda normale.</translation>
+    </message>
+    <message>
+        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Për përvojën e plotë — shell-i i sistemit, aplikacionet e instaluara, shkurtoret e desktopit — instaloni Ghosteel-in e plotë nga Chum ose OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -519,6 +542,14 @@ Mundësuar nga motori i terminalit libghostty</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Rrëshqitja horizontale e ndërron sesionin edhe në aplikacione që përdorin miun (p.sh. htop, vim). Zvarritja me prekje të gjatë mbetet gjithmonë te aplikacioni</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Ndërtim me sandbox (Jolla Store) — mjedis i kufizuar. Versioni i plotë gjendet në Chum ose OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandbox)</translation>
     </message>
 </context>
 <context>

@@ -14,6 +14,7 @@ add_definitions(
     -DAPP_NAME=\"test-app\"
     -DAPP_ORG=\"test-org\"
     -DAPP_QML_MODULE=\"test.qml.module\"
+    -DAPP_XDG_NAME=\"test-app\"
     -DGHOSTTY_STATIC
 )
 
@@ -54,6 +55,16 @@ add_executable(tst_settings_behavior
 )
 target_link_libraries(tst_settings_behavior PRIVATE Qt5::Core Qt5::Test)
 add_test(NAME SettingsBehavior COMMAND tst_settings_behavior)
+
+# --- Settings legacy-path migration tests ---
+# Own binary: it mutates XDG_CONFIG_HOME and the QCoreApplication org/app
+# names process-globally, which must not leak into the other settings tests.
+add_executable(tst_settings_migration
+    tst_settings_migration.cpp
+    ${CMAKE_SOURCE_DIR}/../src/settings.cpp
+)
+target_link_libraries(tst_settings_migration PRIVATE Qt5::Core Qt5::Test)
+add_test(NAME SettingsMigration COMMAND tst_settings_migration)
 
 # --- Font catalog (assembleFamilyList) tests ---
 add_executable(tst_fontcatalog
@@ -257,6 +268,25 @@ if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
         GHOSTTY_STATIC
     )
     target_link_libraries(compile_smoke PRIVATE
+        Qt5::Core Qt5::Gui Qt5::Quick Qt5::OpenGL Qt5::DBus
+    )
+
+    # Store (GHOSTEEL_STORE) variant of the same compile check. The store
+    # ifdef branches are compiled by nothing else on PRs — the release
+    # workflow builds them only at tag time. bellfeedback.cpp is store-only
+    # here: its store branch needs QtDBus instead of the Sailfish-only
+    # ngf-qt5 headers, so it finally gets compile coverage too.
+    add_library(compile_smoke_store OBJECT
+        ${CMAKE_SOURCE_DIR}/../src/ptymanager.cpp
+        ${CMAKE_SOURCE_DIR}/../src/bellfeedback.cpp
+        ${CMAKE_SOURCE_DIR}/../src/settings.cpp
+        ${CMAKE_SOURCE_DIR}/../src/singleinstance.cpp
+        ${CMAKE_SOURCE_DIR}/../src/ghosteeladapter.cpp
+    )
+    target_compile_definitions(compile_smoke_store PRIVATE
+        GHOSTTY_STATIC GHOSTEEL_STORE
+    )
+    target_link_libraries(compile_smoke_store PRIVATE
         Qt5::Core Qt5::Gui Qt5::Quick Qt5::OpenGL Qt5::DBus
     )
 else()
