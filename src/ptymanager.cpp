@@ -167,7 +167,6 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     if (pipe(execPipe) < 0) {
         qWarning() << "pipe() failed:" << strerror(errno);
 #ifdef GHOSTEEL_STORE
-        // No child exists yet; put the parent's environment back.
         restoreSandboxParentEnv();
 #endif
         // No child exists; clear any stale pid left by the previous session so
@@ -206,9 +205,8 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     if (pid != 0)
         pthread_sigmask(SIG_SETMASK, &savedMask, nullptr);
 #ifdef GHOSTEEL_STORE
-    // Parent only (pid > 0 and the pid < 0 failure path): the child keeps
-    // its fork-time copy of the sandbox env; the parent puts its own
-    // environment back so path resolution stays stable for later sessions.
+    // Parent (and the pid<0 failure path) only — the child keeps its
+    // fork-time copy of the sandbox env.
     if (pid != 0)
         restoreSandboxParentEnv();
 #endif
@@ -268,9 +266,10 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
     // app binary) and busybox is blacklisted, so every PATH-lookup hop would
     // fail. The bundled shell is exec'd by absolute path instead — execlp
     // skips the PATH search for names containing a slash.
-    QByteArray storeShellBytes = QStringLiteral("/usr/share/" APP_NAME "/libexec/sh").toUtf8();
+    const QString storeShell = QStringLiteral("/usr/share/" APP_NAME "/libexec/sh");
+    QByteArray storeShellBytes = storeShell.toUtf8();
     hops[hopCount++] = storeShellBytes.constData();
-    hopNames.append(QString::fromUtf8(storeShellBytes));
+    hopNames.append(storeShell);
 #else
     QByteArray shellEnvBytes;
     // $SHELL is copied into a QByteArray because forkPtyProcess() calls

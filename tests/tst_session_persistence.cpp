@@ -3262,6 +3262,17 @@ private slots:
         QVERIFY(mgr.startSingleInstanceServer());
     }
 
+    void testSocketPathDerivedFromAppName()
+    {
+        // Co-installed full/store builds must never share a singleton
+        // socket: the name is derived from APP_NAME, not a literal.
+        QTemporaryDir runtimeDir;
+        QVERIFY(runtimeDir.isValid());
+        RuntimeDirGuard envGuard(runtimeDir.path());
+        QCOMPARE(SessionManager::socketPath(),
+                 runtimeDir.path() + QStringLiteral("/" APP_NAME "-singleton"));
+    }
+
     void testSingleInstanceChopRoundTrip()
     {
         // The single-'\n' chop lives in onNewInstanceConnection, NOT in

@@ -43,7 +43,9 @@ APP_NAME = $$TARGET
 APP_ORG = com.zackslash
 APP_QML_MODULE = com.zackslash.ghosteel
 # APP_XDG_NAME: drives QStandardPaths app dirs and the D-Bus service name.
-# The store build MUST use a name without dashes (D-Bus name validity) and
+# The store build MUST use a name without dashes (dashes are legal but
+# discouraged in bus names, and the mirrored interface and object path
+# cannot contain them) and
 # different from the full build so both variants coexist on one device;
 # it must also match the desktop file's ApplicationName, which is what
 # Sailjail whitelists as the sandbox data dirs.

@@ -52,7 +52,6 @@ Page {
                 title: qsTr("Settings")
             }
 
-            // Variant badge (sandboxed store build; hidden in the full build)
             Label {
                 visible: sandboxedBuild
                 x: Theme.paddingLarge

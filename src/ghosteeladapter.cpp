@@ -2,8 +2,10 @@
 #include "sessionmanager.h"
 
 #include <QDebug>
-#include <QGuiApplication>
+#ifdef GHOSTEEL_STORE
 #include <QTimer>
+#endif
+#include <QGuiApplication>
 #include <QWindow>
 
 GhosteelAdapter::GhosteelAdapter(SessionManager *parent)

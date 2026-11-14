@@ -76,8 +76,6 @@ static void ensureSandboxHome()
 }
 #endif
 
-// Q_DECL_EXPORT: exposes main() for the mapplauncherd Silica booster and
-// the Harbour RPM validator's symbol check.
 #ifndef GHOSTEEL_STORE
 // One-time scrollback migration: the explicit org/app names move
 // AppDataLocation from ~/.local/share/ghosteel to
@@ -100,6 +98,8 @@ static void migrateLegacyScrollback()
 }
 #endif
 
+// Q_DECL_EXPORT: exposes main() for the mapplauncherd Silica booster and
+// the Harbour RPM validator's symbol check.
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
     // App identity for QStandardPaths: the sandbox whitelist is derived from
@@ -228,12 +228,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     if (!execCommand.isEmpty() || !sessionName.isEmpty())
         sessionManager->setCliArgs(execCommand, execArgs, sessionName, restart);
 
-    // Register D-Bus adaptor for notification action callbacks.
-    // The store build relies on service-name ownership as its single-instance
-    // mechanism: the session bus is shared across Sailjail sandboxes through
-    // the D-Bus proxy (local sockets are not), so a fresh process from an
-    // icon re-tap or an unsandboxed CLI launch finds the name taken, forwards
-    // its CLI args to the primary and exits.
+    // Register D-Bus adaptor for notification action callbacks. Owning the
+    // name elects this process as the primary instance.
     QDBusConnection bus = QDBusConnection::sessionBus();
     if (bus.isConnected()) {
         if (bus.registerService(QStringLiteral(APP_DBUS_NAME))) {
@@ -248,9 +244,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
             }
         } else {
 #ifdef GHOSTEEL_STORE
-            // A primary instance owns the name. Forward the CLI request and
-            // exit; if the method call fails (e.g. talk rule not granted),
-            // continue as a duplicate rather than swallow the launch.
+            // The session bus is shared across Sailjail sandboxes through the
+            // D-Bus proxy (local sockets are not), so a fresh process from an
+            // icon re-tap or an unsandboxed CLI launch finds the name taken:
+            // forward the CLI request and exit. If the method call fails
+            // (e.g. talk rule not granted), continue as a duplicate rather
+            // than swallow the launch.
             QDBusInterface primary(QStringLiteral(APP_DBUS_NAME),
                                    QStringLiteral("/com/zackslash/ghosteel"),
                                    QStringLiteral("com.zackslash.ghosteel"));

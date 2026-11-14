@@ -279,6 +279,7 @@ if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
     add_library(compile_smoke_store OBJECT
         ${CMAKE_SOURCE_DIR}/../src/ptymanager.cpp
         ${CMAKE_SOURCE_DIR}/../src/bellfeedback.cpp
+        ${CMAKE_SOURCE_DIR}/../src/scrollencryptor.cpp
         ${CMAKE_SOURCE_DIR}/../src/settings.cpp
         ${CMAKE_SOURCE_DIR}/../src/singleinstance.cpp
         ${CMAKE_SOURCE_DIR}/../src/ghosteeladapter.cpp

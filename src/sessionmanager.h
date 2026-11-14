@@ -98,6 +98,10 @@ public:
                                     const QString &sessionName = QString(),
                                     bool restart = false);
 
+    // Socket path derived from APP_NAME — public for the regression test
+    // pinning that co-installed full/store builds use distinct sockets.
+    static QString socketPath();
+
     // Start the single-instance socket server. Call after D-Bus registration
     // so that future instances can detect this one.
     // Returns false when another running instance was detected (caller must
@@ -140,8 +144,6 @@ private:
         WorkingDirectoryRole,
         IsActiveRole
     };
-
-    static QString socketPath();
 
     void scheduleSave();           // metadata changed — arms timer + marks sessions dirty
     void scheduleScrollbackSave(); // scrollback-only change — arms timer without settings rewrite
