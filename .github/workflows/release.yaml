@@ -115,6 +115,11 @@ jobs:
             arch: aarch64
     env:
       ZIG_VERSION: 0.17.0
+      # Store builds use the 5.1 toolchain: its glibc (>= 2.34) folds
+      # libutil into libc, so forkpty does not add a libutil.so.1 NEEDED
+      # entry the Harbour validator rejects. Full (Chum) builds stay on
+      # 5.0 for wider device compatibility.
+      SDK_IMAGE: ${{ matrix.variant == 'store' && '5.1.0.11' || '5.0.0.43' }}
 
     steps:
       - name: Free disk space
@@ -208,7 +213,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/sfos-sdk.tar
-          key: sfos-sdk-5.0.0.43
+          key: sfos-sdk-${{ env.SDK_IMAGE }}
 
       - name: Load Docker image
         if: steps.cache-docker.outputs.cache-hit == 'true'
@@ -219,7 +224,7 @@ jobs:
       - name: Build RPM
         uses: coderus/github-sfos-build@sfos5
         with:
-          release: 5.0.0.43
+          release: ${{ env.SDK_IMAGE }}
           arch: ${{ matrix.arch }}
 
       - name: Harbour validator gate (store build)
@@ -236,7 +241,7 @@ jobs:
             https://github.com/sailfishos/sdk-harbour-rpmvalidator.git /tmp/validator
           set +e
           docker run --rm -v "$PWD":/build -v /tmp/validator:/validator:ro \
-            coderus/sailfishos-platform-sdk:5.0.0.43 \
+            coderus/sailfishos-platform-sdk:${{ env.SDK_IMAGE }} \
             bash /validator/rpmvalidation.sh -c "/build/$RPM_PATH"
           RC=$?
           set -e
@@ -248,7 +253,7 @@ jobs:
 
       - name: Save Docker image
         if: steps.cache-docker.outputs.cache-hit != 'true'
-        run: docker save coderus/sailfishos-platform-sdk:5.0.0.43 -o /tmp/sfos-sdk.tar
+        run: docker save coderus/sailfishos-platform-sdk:${{ env.SDK_IMAGE }} -o /tmp/sfos-sdk.tar
 
       - name: Upload RPM
         uses: actions/upload-artifact@v6

@@ -140,3 +140,119 @@ jobs:
       - name: Save Docker image
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: docker save coderus/sailfishos-platform-sdk:5.0.0.43 -o /tmp/sfos-sdk.tar
+
+  store-check:
+    name: Store RPM check (armv7hl)
+    needs: [test]
+    runs-on: ubuntu-latest
+    env:
+      ZIG_VERSION: 0.17.0
+      # Must mirror the release store build: 5.1's glibc (>= 2.34) folds
+      # libutil into libc, so forkpty adds no libutil.so.1 require the
+      # Harbour validator rejects.
+      SDK_IMAGE: 5.1.0.11
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/hostedtoolcache /usr/share/dotnet
+          sudo docker image prune -af 2>/dev/null || true
+
+      - uses: actions/checkout@v6
+
+      - name: Select store spec (mb2 autodiscovers rpm/*.spec)
+        run: mv rpm/ghosteel.spec /tmp/full-spec.spec
+
+      - name: Get Ghostty submodule commit
+        id: ghostty-commit
+        run: |
+          SHA=$(git ls-tree HEAD ghostty | awk '{print $3}')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Cache libghostty-vt (+ store busybox)
+        id: cache-lib
+        uses: actions/cache@v4
+        with:
+          path: lib/armv7hl
+          key: libghostty-vt-armv7hl-${{ steps.ghostty-commit.outputs.sha }}-zig-${{ env.ZIG_VERSION }}-buildlibs-${{ hashFiles('scripts/build-libs.sh') }}-busybox-${{ hashFiles('rpm/busybox-*.tar.bz2') }}
+
+      - name: Cache Ghostty submodule
+        id: cache-submodule
+        uses: actions/cache@v4
+        with:
+          path: .git/modules/ghostty
+          key: submodule-ghostty-${{ steps.ghostty-commit.outputs.sha }}
+          restore-keys: |
+            submodule-ghostty-
+
+      - name: Initialize Ghostty submodule
+        run: git submodule update --init --recursive
+
+      - name: Cache Zig
+        if: steps.cache-lib.outputs.cache-hit != 'true'
+        id: cache-zig
+        uses: actions/cache@v4
+        with:
+          path: /opt/zig-x86_64-linux-${{ env.ZIG_VERSION }}
+          key: zig-${{ env.ZIG_VERSION }}-linux-x86_64
+
+      - name: Install Zig
+        if: steps.cache-lib.outputs.cache-hit != 'true' && steps.cache-zig.outputs.cache-hit != 'true'
+        run: |
+          curl -L "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" | tar -xJ -C /opt
+
+      - name: Add Zig to PATH
+        if: steps.cache-lib.outputs.cache-hit != 'true'
+        run: echo "/opt/zig-x86_64-linux-$ZIG_VERSION" >> "$GITHUB_PATH"
+
+      - name: Build libghostty-vt + busybox
+        if: steps.cache-lib.outputs.cache-hit != 'true'
+        run: bash scripts/build-libs.sh armv7hl
+
+      - name: Cache Docker image
+        id: cache-docker
+        uses: actions/cache@v4
+        with:
+          path: /tmp/sfos-sdk.tar
+          key: sfos-sdk-${{ env.SDK_IMAGE }}
+
+      - name: Load Docker image
+        if: steps.cache-docker.outputs.cache-hit == 'true'
+        run: |
+          docker load -i /tmp/sfos-sdk.tar
+          rm -f /tmp/sfos-sdk.tar
+
+      - name: Build store RPM
+        uses: coderus/github-sfos-build@sfos5
+        with:
+          release: ${{ env.SDK_IMAGE }}
+          arch: armv7hl
+
+      - name: Save Docker image
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: docker save coderus/sailfishos-platform-sdk:${{ env.SDK_IMAGE }} -o /tmp/sfos-sdk.tar
+
+      - name: Harbour validator gate
+        run: |
+          # Same gate as the release store build: Jolla's validator (master)
+          # against the store RPM. armv7hl is the strictest arch: aarch64's
+          # (64bit) require suffixes can mask allowlist exclusions.
+          # Exit codes: 0 pass, 1 fail, 2 pass with warnings.
+          RPM_PATH=$(ls RPMS/*.rpm | head -1)
+          if [ -z "$RPM_PATH" ]; then
+            echo "::error::no RPM found to validate"
+            exit 1
+          fi
+          git clone --quiet --depth 1 \
+            https://github.com/sailfishos/sdk-harbour-rpmvalidator.git /tmp/validator
+          set +e
+          docker run --rm -v "$PWD":/build -v /tmp/validator:/validator:ro \
+            coderus/sailfishos-platform-sdk:${{ env.SDK_IMAGE }} \
+            bash /validator/rpmvalidation.sh -c "/build/$RPM_PATH"
+          RC=$?
+          set -e
+          echo "validator exit code: $RC"
+          if [ "$RC" -ne 0 ] && [ "$RC" -ne 2 ]; then
+            echo "::error::Harbour validation failed (exit $RC)"
+            exit 1
+          fi
