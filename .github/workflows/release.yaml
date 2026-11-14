@@ -74,7 +74,7 @@ jobs:
       - name: Install Qt5 dev packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y qtbase5-dev qt5-qmake cmake build-essential
+          sudo apt-get install -y qtbase5-dev qtdeclarative5-dev qt5-qmake cmake build-essential
 
       - name: Fix apt cache permissions
         run: |
@@ -281,7 +281,7 @@ jobs:
             echo ""
             echo "---"
             echo ""
-            echo "**Packages:** \`ghosteel-<version>-<arch>.rpm\` is the full version (system shell, installed apps, desktop shortcuts). \`harbour-ghosteel-<version>-<arch>.rpm\` is the sandboxed Jolla Store build; it runs in its own restricted environment with bundled busybox tools and cannot see system apps, your home folder, or use root. Install it from the Jolla Store, or directly only if you specifically want the sandboxed variant."
+            echo "**Packages:** \`ghosteel-<version>-<arch>.rpm\` is the full version (system shell, installed apps, desktop shortcuts). \`harbour-ghosteel-<version>-<arch>.rpm\` is the sandboxed Jolla Store build; it runs in its own restricted environment with bundled busybox tools, cannot see system apps or most of your folders, and has no root access. Install it from the Jolla Store, or directly only if you specifically want the sandboxed variant."
             echo "DELIM"
           } >> "$GITHUB_OUTPUT"
 
