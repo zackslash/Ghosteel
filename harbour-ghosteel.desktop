@@ -4,7 +4,7 @@ X-Nemo-Application-Type=silica-qt5
 X-Nemo-Single-Instance=no
 Icon=harbour-ghosteel
 Exec=harbour-ghosteel
-Name=Ghosteel (Sandboxed)
+Name=Ghosteel
 Comment=Sandboxed terminal emulator for SailfishOS
 
 [X-Sailjail]
