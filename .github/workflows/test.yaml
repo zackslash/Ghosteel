@@ -30,7 +30,7 @@ jobs:
       - name: Install Qt5 dev packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y qtbase5-dev qt5-qmake cmake build-essential
+          sudo apt-get install -y qtbase5-dev qtdeclarative5-dev qt5-qmake cmake build-essential
 
       - name: Fix apt cache permissions
         run: |
@@ -68,6 +68,9 @@ jobs:
           sudo docker image prune -af 2>/dev/null || true
 
       - uses: actions/checkout@v6
+
+      - name: Keep one spec (mb2 autodiscovers rpm/*.spec)
+        run: mv rpm/harbour-ghosteel.spec /tmp/
 
       - name: Get Ghostty submodule commit
         id: ghostty-commit

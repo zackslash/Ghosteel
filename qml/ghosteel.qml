@@ -26,6 +26,8 @@ ApplicationWindow {
         }
         // Process CLI args (-e/--exec, -s/--session) after sessions are restored
         SessionManager.processCliArgs()
+        if (sandboxedBuild && !Settings.sandboxNoticeShown)
+            pageStack.push(Qt.resolvedUrl("pages/SandboxNoticeDialog.qml"))
     }
 
     function resolveAmbience() {

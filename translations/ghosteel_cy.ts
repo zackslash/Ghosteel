@@ -198,6 +198,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Fersiwn sandbox</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Wedi deall</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Dyma fersiwn sandbox Ghosteel ar gyfer Jolla Store. Mae&apos;n rhedeg mewn amgylchedd cyfyngedig: dim ond yr offer busybox mewnol sydd ar gael, nid yw apiau sydd wedi&apos;u gosod yn weladwy iddo, mae&apos;n gweld dim ond ychydig o&apos;ch ffolderau (fel Downloads), ac nid oes ganddo fynediad gwraidd na rheolwr pecyn.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Mae&apos;r ffeiliau a&apos;r gosodiadau rydych chi&apos;n eu creu yno yn cael eu cadw yn ei ffolder ei hun ac yn para trwy ailgychwyn. Dewch gyda&apos;ch offer un-ffeil eich hun: gosodwch nhw yn ~/bin yn y terfynell a byddant yn dod yn orchmynion arferol.</translation>
+    </message>
+    <message>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Ar gyfer y profiad llawn (plisgyn y system, apiau sydd wedi&apos;u gosod, llwybrau byr y bwrdd gwaith) gosodwch Ghosteel llawn o Chum neu OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -522,6 +545,14 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Mae swip llorweddol yn newid y sesiwn hefyd mewn apiau sy&apos;n defnyddio mewnbwn llygoden (e.e. htop, vim). Mae llusgo gyda gwasgu hir bob amser yn aros gyda&apos;r ap</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Adeiladwaith sandbox (Jolla Store): amgylchedd cyfyngedig. Mae&apos;r fersiwn llawn ar gael o Chum neu OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandbox)</translation>
     </message>
 </context>
 <context>

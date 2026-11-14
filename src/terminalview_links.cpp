@@ -7,7 +7,7 @@
 #include <algorithm>
 
 namespace {
-constexpr uint32_t kMaxGraphemesPerCell = 128;  // matches ghostty Cell.grapheme cap
+constexpr uint32_t kMaxGraphemesPerCell = 128;  // must hold >= 1 + ghostty's grapheme_max_len (64)
 }
 
 void TerminalView::armLinkUnderlineHide()
@@ -134,9 +134,12 @@ void TerminalView::refreshLinks()
                     &graphemeLen) == GHOSTTY_SUCCESS && graphemeLen > 0
                     && graphemeLen <= kMaxGraphemesPerCell) {
                 uint32_t graphemes[kMaxGraphemesPerCell] = {};
+                GhosttyCodepointBuffer graphemesOut = {
+                    graphemes, kMaxGraphemesPerCell, 0
+                };
                 if (ghostty_render_state_row_cells_get(
                         cells, GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF,
-                        graphemes) == GHOSTTY_SUCCESS) {
+                        &graphemesOut) == GHOSTTY_SUCCESS) {
                     for (uint32_t g = 0; g < graphemeLen; ++g) {
                         uint32_t cp = graphemes[g];
                         if (cp > 0xFFFF) {

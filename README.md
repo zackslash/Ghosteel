@@ -110,12 +110,14 @@ Requires Sailfish OS SDK and Zig 0.17.0.
 curl -L https://ziglang.org/download/0.17.0/zig-x86_64-linux-0.17.0.tar.xz | tar -xJ -C ~/.local/
 ln -sf ~/.local/zig-x86_64-linux-0.17.0/zig ~/.local/bin/zig
 
-# Build libghostty-vt for your target architecture
+# Build libghostty-vt (and the store build's bundled busybox) for your
+# target architecture
 ./scripts/build-libs.sh          # all architectures
 ./scripts/build-libs.sh aarch64  # single architecture
 
-# Build RPM
-mb2 build
+# Build RPM: the repo carries two specs, so name the one you want:
+mb2 -s rpm/ghosteel.spec build          # full version
+mb2 -s rpm/harbour-ghosteel.spec build  # sandboxed Jolla Store version
 ```
 
 ## Architecture

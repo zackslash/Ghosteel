@@ -20,6 +20,13 @@
 #include <QLocale>
 #include <QDBusConnection>
 #include <QDBusError>
+#include <QDir>
+#include <QFile>
+#include <QStandardPaths>
+#ifdef GHOSTEEL_STORE
+#include <QDBusInterface>
+#include <QDBusMessage>
+#endif
 
 // Re-undefine emit — the Qt headers above re-define it.
 #ifdef emit
@@ -34,7 +41,14 @@ static void loadTranslations(QCoreApplication *app)
 {
     QLocale locale = QLocale::system();
     auto *translator = new QTranslator(app);
+#ifdef GHOSTEEL_STORE
+    // SailfishApp::pathTo() derives its base from the QCoreApplication app
+    // name (ghosteelstore), which does not match the install dir
+    // (/usr/share/harbour-ghosteel); resolve explicitly.
+    QString transDir = QStringLiteral("/usr/share/" APP_NAME "/translations");
+#else
     QString transDir = SailfishApp::pathTo("translations").toLocalFile();
+#endif
     // QLocale overload: builds ghosteel_<locale>.qm and falls back through
     // shorter locale names (de_DE -> de) on its own.
     if (translator->load(locale, "ghosteel", "_", transDir)) {
@@ -44,8 +58,59 @@ static void loadTranslations(QCoreApplication *app)
     }
 }
 
-int main(int argc, char *argv[])
+#ifdef GHOSTEEL_STORE
+// Seed the persistent child-shell home. Sailjail only persists the app's
+// XDG dirs; the real $HOME the child would see is an empty read-only
+// overlay whose writes are discarded. HOME for the shell points here, so
+// dotfiles, .ssh and tool state survive across launches.
+static void ensureSandboxHome()
 {
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                         + QStringLiteral("/home");
+    const QString skeleton = QStringLiteral("/usr/share/" APP_NAME "/skeleton/.profile");
+    QDir().mkpath(home + QStringLiteral("/bin"));
+    QDir().mkpath(home + QStringLiteral("/.tmp"));
+    const QString profile = home + QStringLiteral("/.profile");
+    if (!QFile::exists(profile) && QFile::exists(skeleton))
+        QFile::copy(skeleton, profile);
+}
+#endif
+
+#ifndef GHOSTEEL_STORE
+// One-time scrollback migration: the explicit org/app names move
+// AppDataLocation from ~/.local/share/ghosteel to
+// ~/.local/share/com.zackslash/ghosteel. Settings migrate on their own;
+// scrollback files do not; copy them across once so existing users keep
+// their session history.
+static void migrateLegacyScrollback()
+{
+    const QString legacy = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
+                           + QStringLiteral("/ghosteel/scrollback");
+    const QString target = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/scrollback");
+    if (QDir(target).exists() || !QDir(legacy).exists())
+        return;
+    if (!QDir(target).mkpath(QStringLiteral(".")))
+        return;
+    const auto files = QDir(legacy).entryInfoList({QStringLiteral("session_*.vt")}, QDir::Files);
+    for (const QFileInfo &f : files)
+        QFile::copy(f.absoluteFilePath(), target + QStringLiteral("/") + f.fileName());
+}
+#endif
+
+// Q_DECL_EXPORT: exposes main() for the mapplauncherd Silica booster and
+// the Harbour RPM validator's symbol check.
+Q_DECL_EXPORT int main(int argc, char *argv[])
+{
+    // App identity for QStandardPaths: the sandbox whitelist is derived from
+    // the desktop file's OrganizationName/ApplicationName, and QStandardPaths
+    // otherwise falls back to the binary name (harbour-ghosteel in the store
+    // build), which does not match the whitelisted ApplicationName, so the
+    // derived dirs would land outside the sandbox whitelist. Set explicitly
+    // before anything touches Settings or AppDataLocation.
+    QCoreApplication::setOrganizationName(QStringLiteral(APP_ORG));
+    QCoreApplication::setApplicationName(QStringLiteral(APP_XDG_NAME));
+
     qmlRegisterType<TerminalView>(APP_QML_MODULE, 1, 0, "TerminalView");
     qmlRegisterType<GLRenderer>(APP_QML_MODULE, 1, 0, "GLRenderer");
 
@@ -142,6 +207,11 @@ int main(int argc, char *argv[])
 
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
     loadTranslations(app.data());
+#ifdef GHOSTEEL_STORE
+    ensureSandboxHome();
+#else
+    migrateLegacyScrollback();
+#endif
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 
     view->rootContext()->setContextProperty(QStringLiteral("Settings"), Settings::instance());
@@ -158,14 +228,11 @@ int main(int argc, char *argv[])
     if (!execCommand.isEmpty() || !sessionName.isEmpty())
         sessionManager->setCliArgs(execCommand, execArgs, sessionName, restart);
 
-    // Register D-Bus adaptor for notification action callbacks.
-    // Under Sailjail, D-Bus name ownership is restricted, so registration
-    // may fail silently — this is expected and notification actions will
-    // simply not work when sandboxed.  When launched via D-Bus activation
-    // (the .service file), registration succeeds and actions work.
+    // Register D-Bus adaptor for notification action callbacks. Owning the
+    // name elects this process as the primary instance.
     QDBusConnection bus = QDBusConnection::sessionBus();
     if (bus.isConnected()) {
-        if (bus.registerService(QStringLiteral("com.zackslash.ghosteel"))) {
+        if (bus.registerService(QStringLiteral(APP_DBUS_NAME))) {
             // Create adaptor as child of sessionManager — must exist before registerObject
             new GhosteelAdapter(sessionManager);
             if (bus.registerObject(QStringLiteral("/com/zackslash/ghosteel"), sessionManager)) {
@@ -173,18 +240,43 @@ int main(int argc, char *argv[])
                 sessionManager->setDbusRegistered(true);
             } else {
                 qWarning() << "Ghosteel: D-Bus object registration failed:" << bus.lastError().message();
-                bus.unregisterService(QStringLiteral("com.zackslash.ghosteel"));
+                bus.unregisterService(QStringLiteral(APP_DBUS_NAME));
             }
         } else {
-            // Expected under Sailjail — dbus-user.own is restricted
-            qDebug() << "Ghosteel: D-Bus service not registered (expected under Sailjail):" << bus.lastError().message();
+#ifdef GHOSTEEL_STORE
+            // The session bus is shared across Sailjail sandboxes through the
+            // D-Bus proxy (local sockets are not), so a fresh process from an
+            // icon re-tap or an unsandboxed CLI launch finds the name taken:
+            // forward the CLI request and exit. If the method call fails
+            // (e.g. talk rule not granted), continue as a duplicate rather
+            // than swallow the launch.
+            QDBusInterface primary(QStringLiteral(APP_DBUS_NAME),
+                                   QStringLiteral("/com/zackslash/ghosteel"),
+                                   QStringLiteral("com.zackslash.ghosteel"));
+            // Fail fast: a wedged primary must not freeze this launch on the
+            // 25 s default D-Bus timeout; the duplicate fallback covers it.
+            primary.setTimeout(2500);
+            QDBusMessage reply = primary.call(QStringLiteral("launch"),
+                                              execCommand, execArgs,
+                                              sessionName, restart);
+            if (reply.type() == QDBusMessage::ReplyMessage) {
+                qDebug() << "Ghosteel: forwarded launch to primary; duplicate exiting";
+                return 0;
+            }
+            qWarning() << "Ghosteel: primary forward failed; continuing as duplicate:"
+                       << reply.errorMessage();
+#else
+            qDebug() << "Ghosteel: D-Bus service not registered:" << bus.lastError().message();
+#endif
         }
     } else {
         qDebug() << "Ghosteel: D-Bus session bus not available";
     }
 
-    // Start single-instance socket server so future D-Bus activations
-    // can detect this instance instead of spawning a duplicate.
+    // Start single-instance socket server so later launches (D-Bus
+    // activations in the full build, failed-forward duplicates in the store
+    // build, same-sandbox CLI calls) can detect this instance instead of
+    // spawning a duplicate.
     // Returns false when a duplicate was detected during the startup race
     // window; its CLI args were already forwarded. Returning before
     // setSource is intended — no UI was shown.
@@ -196,8 +288,14 @@ int main(int argc, char *argv[])
     view->rootContext()->setContextProperty(QStringLiteral("appVersion"), QStringLiteral(GIT_VERSION));
     view->rootContext()->setContextProperty(QStringLiteral("libghosttyVersion"), QString::fromUtf8(ghostty_version()));
     view->rootContext()->setContextProperty(QStringLiteral("appName"), QStringLiteral(APP_NAME));
-
+#ifdef GHOSTEEL_STORE
+    view->rootContext()->setContextProperty(QStringLiteral("sandboxedBuild"), true);
+    view->setSource(QUrl::fromLocalFile(
+        QStringLiteral("/usr/share/" APP_NAME "/qml/ghosteel.qml")));
+#else
+    view->rootContext()->setContextProperty(QStringLiteral("sandboxedBuild"), false);
     view->setSource(SailfishApp::pathToMainQml());
+#endif
     view->show();
 
     return app->exec();

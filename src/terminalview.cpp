@@ -713,8 +713,9 @@ void TerminalView::copySelection()
 
             if (graphemesLen > 0 && graphemesLen <= 128) {
                 uint32_t buf[128];
+                GhosttyCodepointBuffer graphemes = { buf, 128, 0 };
                 ghostty_render_state_row_cells_get(cells,
-                    GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, buf);
+                    GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, &graphemes);
                 text += QString::fromUcs4(buf, graphemesLen);
             } else if (graphemesLen == 0) {
                 text += QLatin1Char(' ');
@@ -1023,8 +1024,9 @@ void TerminalView::selectWordAt(const QPointF &pos)
             return 0;
         uint32_t buf[128];
         if (len > 128) return 0;
+        GhosttyCodepointBuffer graphemes = { buf, 128, 0 };
         ghostty_render_state_row_cells_get(cells,
-            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, buf);
+            GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_GRAPHEMES_BUF, &graphemes);
         return buf[0]; // base codepoint
     };
 

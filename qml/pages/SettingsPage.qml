@@ -52,6 +52,16 @@ Page {
                 title: qsTr("Settings")
             }
 
+            Label {
+                visible: sandboxedBuild
+                x: Theme.paddingLarge
+                width: parent.width - 2 * Theme.paddingLarge
+                wrapMode: Text.WordWrap
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                text: qsTr("Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.")
+            }
+
             // Terminal section
             SectionHeader {
                 text: qsTr("Terminal")
@@ -59,6 +69,7 @@ Page {
 
             TextField {
                 id: shellField
+                visible: !sandboxedBuild
                 width: parent.width
                 label: qsTr("Shell command")
                 placeholderText: qsTr("Default: /bin/sh")
@@ -336,7 +347,9 @@ Page {
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.Wrap
-                text: appName + " " + appVersion + "\nlibghostty version " + libghosttyVersion
+                text: appName + " " + appVersion
+                      + (sandboxedBuild ? " - " + qsTr("Jolla Store (Sandboxed)") : "")
+                      + "\nlibghostty version " + libghosttyVersion
             }
 
             BackgroundItem {

@@ -195,6 +195,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Sandkassaútgáfa</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Skilið</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Þetta er sandkassaútgáfa Ghosteel fyrir Jolla Store. Hún keyrir í takmörkuðu umhverfi: aðeins innbyggðu busybox-verkfærin eru tiltæk, uppsett forrit sjást ekki fyrir henni, hún sér aðeins fáeinar möppurnar þínar (eins og Downloads), og hún hefur hvorki root-aðgang né pakkastjóra.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Skrár og stillingar sem þú býrð til í henni eru geymdar í eigin möppu hennar og lifa af endurræsingar. Komdu með eigin verkfæri í stakri skrá: settu þau í ~/bin inni í skjáherminum og þau verða venjulegar skipanir.</translation>
+    </message>
+    <message>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Fyrir fulla upplifun (kerfisskel, uppsett forrit, flýtileiðir á skjáborði) settu upp fulla útgáfu Ghosteel frá Chum eða OpenRepos (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -519,6 +542,14 @@ Keyrt af libghostty skjáhermisvél</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Láréttur strýkur skiptir einnig um setu í forritum sem nota músarinntak (t.d. htop, vim). Dráttur með viðvarandi þrýstingi fer alltaf til forritsins</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandkassaútgáfa (Jolla Store): takmarkað umhverfi. Fulla útgáfan er fáanleg á Chum eða OpenRepos.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandkassi)</translation>
     </message>
 </context>
 <context>

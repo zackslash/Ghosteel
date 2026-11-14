@@ -53,6 +53,45 @@ build_arch() {
     echo "  -> $out_dir/libghostty-vt.a"
 }
 
+# Build the static musl busybox for the store (Jolla Harbour) variant.
+# The sandbox blacklists the system busybox, so the store build ships its
+# own; static musl avoids disallowed shared-library dependencies and runs
+# on any SFOS release. Built here because the sfdk build engine is 32-bit
+# and cannot run the x86_64 Zig toolchain (same reason as libghostty-vt).
+build_busybox() {
+    local arch="$1"
+    local musl_target="$2"
+    local out_dir="$LIB_DIR/$arch"
+    local bb_dir="$PROJECT_ROOT/.build/busybox-1.38.0"
+
+    echo "Building busybox for $arch ($musl_target)..."
+    mkdir -p "$out_dir"
+
+    if [ ! -d "$bb_dir" ]; then
+        mkdir -p "$PROJECT_ROOT/.build"
+        tar -xjf "$PROJECT_ROOT/rpm/busybox-1.38.0.tar.bz2" -C "$PROJECT_ROOT/.build"
+    fi
+
+    # Fresh config per arch (defconfig + static) in a copy of the tree:
+    # the build dir is shared across arches. SKIP_STRIP: busybox would run
+    # the host strip, which cannot parse cross-arch binaries; tc is off
+    # because musl's kernel headers lack the CBQ defines it needs.
+    local work="$PROJECT_ROOT/.build/busybox-$arch"
+    rm -rf "$work"
+    cp -a "$bb_dir" "$work"
+    cd "$work"
+    make defconfig
+    sed -i 's/^# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
+    sed -i 's/^CONFIG_TC=y/# CONFIG_TC is not set/' .config
+    make -j"$(nproc)" SKIP_STRIP=y CC="$ZIG cc -target $musl_target" busybox
+    if command -v llvm-strip >/dev/null 2>&1; then
+        llvm-strip --strip-all busybox
+    fi
+
+    cp "$work/busybox" "$out_dir/busybox"
+    echo "  -> $out_dir/busybox"
+}
+
 main() {
     # Shared zig-out path is not covered by zig's cache locking.
     exec 9>"$PROJECT_ROOT/.build-libs.lock"
@@ -69,17 +108,23 @@ main() {
     case "$arch" in
         aarch64)
             build_arch "aarch64" "aarch64-linux-gnu.2.28"
+            build_busybox "aarch64" "aarch64-linux-musl"
             ;;
         armv7hl)
             build_arch "armv7hl" "arm-linux-gnueabihf.2.28"
+            build_busybox "armv7hl" "arm-linux-musleabihf"
             ;;
         i486)
             build_arch "i486" "x86-linux-gnu.2.28"
+            build_busybox "i486" "x86-linux-musl"
             ;;
         all)
             build_arch "aarch64" "aarch64-linux-gnu.2.28"
+            build_busybox "aarch64" "aarch64-linux-musl"
             build_arch "armv7hl" "arm-linux-gnueabihf.2.28"
+            build_busybox "armv7hl" "arm-linux-musleabihf"
             build_arch "i486" "x86-linux-gnu.2.28"
+            build_busybox "i486" "x86-linux-musl"
             ;;
         *)
             echo "Unknown architecture: $arch"

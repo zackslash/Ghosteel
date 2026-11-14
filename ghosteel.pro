@@ -11,6 +11,15 @@
 # The name of your application
 TARGET = ghosteel
 
+# Store (Jolla Harbour) variant: CONFIG += store_build. Builds the
+# sandboxed harbour-ghosteel package: harbour- prefixed binary/desktop/
+# icon/share dir, bundled-busybox shell, D-Bus single-instance, no
+# D-Bus activation service file.
+CONFIG(store_build) {
+    TARGET = harbour-ghosteel
+    DEFINES += GHOSTEEL_STORE
+}
+
 CONFIG += sailfishapp
 CONFIG += sailfishapp_i18n
 
@@ -21,17 +30,35 @@ DEFINES += SAILFISH_SECRETS
 INCLUDEPATH += /usr/include/Sailfish
 LIBS += -lsailfishsecrets -lsailfishcrypto
 
-# Non-graphical feedback daemon (ngfd) client for the terminal bell
-INCLUDEPATH += /usr/include/ngf-qt5
-LIBS += -lngf-qt5
+# Non-graphical feedback daemon (ngfd) client for the terminal bell.
+# The store build talks to the ngfd backend over raw D-Bus instead
+# (libngf-qt5 is not an allowed Harbour dependency).
+!CONFIG(store_build) {
+    INCLUDEPATH += /usr/include/ngf-qt5
+    LIBS += -lngf-qt5
+}
 
 # Centralized app identity — change these to rename the app
 APP_NAME = $$TARGET
 APP_ORG = com.zackslash
 APP_QML_MODULE = com.zackslash.ghosteel
+# APP_XDG_NAME: drives QStandardPaths app dirs and the D-Bus service name.
+# No dashes (the mirrored interface and object path cannot contain them);
+# must differ from the full build so both variants coexist on one device;
+# must match the desktop file's ApplicationName, which is what Sailjail
+# whitelists as the sandbox data dirs.
+CONFIG(store_build) {
+    APP_XDG_NAME = ghosteelstore
+    APP_DBUS_NAME = com.zackslash.ghosteelstore
+} else {
+    APP_XDG_NAME = ghosteel
+    APP_DBUS_NAME = com.zackslash.ghosteel
+}
 DEFINES += APP_NAME=\\\"$$APP_NAME\\\"
 DEFINES += APP_ORG=\\\"$$APP_ORG\\\"
 DEFINES += APP_QML_MODULE=\\\"$$APP_QML_MODULE\\\"
+DEFINES += APP_XDG_NAME=\\\"$$APP_XDG_NAME\\\"
+DEFINES += APP_DBUS_NAME=\\\"$$APP_DBUS_NAME\\\"
 
 # Version from git tag (CI builds use sed-replaced fallback)
 GIT_VERSION = $$system(git describe --tags --always 2>/dev/null)
@@ -105,13 +132,18 @@ DISTFILES += qml/ghosteel.qml \
     qml/pages/TerminalPage.qml \
     qml/pages/SessionPage.qml \
     qml/pages/SettingsPage.qml \
+    qml/pages/SandboxNoticeDialog.qml \
     qml/pages/FontPickerPage.qml \
     qml/pages/KeybarSettings.qml \
     qml/pages/KeyCatalog.js \
     qml/pages/LicensesPage.qml \
     rpm/ghosteel.changes.in \
     rpm/ghosteel.spec \
-    ghosteel.desktop
+    rpm/harbour-ghosteel.spec \
+    rpm/store-skeleton/.profile \
+    rpm/busybox-GPLv2 \
+    ghosteel.desktop \
+    harbour-ghosteel.desktop
 
 # Tell lupdate to scan QML files for qsTr() calls
 lupdate_only {
@@ -120,6 +152,7 @@ lupdate_only {
         qml/pages/TerminalPage.qml \
         qml/pages/SessionPage.qml \
         qml/pages/SettingsPage.qml \
+        qml/pages/SandboxNoticeDialog.qml \
         qml/pages/FontPickerPage.qml \
         qml/pages/KeybarSettings.qml \
         qml/pages/LicensesPage.qml
@@ -175,7 +208,11 @@ shell_integration.files = $$PWD/ghostty/src/shell-integration/bash \
 shell_integration.path = /usr/share/$${APP_NAME}/shell-integration
 INSTALLS += shell_integration
 
-# D-Bus service file for notification action activation
-dbus_service.path = /usr/share/dbus-1/services
-dbus_service.files = dbus-1/com.zackslash.ghosteel.service
-INSTALLS += dbus_service
+# D-Bus service file for notification action activation (full build only:
+# the store build has no activation file: an unwrapped Exec would escape the
+# sandbox, so single-instancing goes through service-name ownership instead).
+!CONFIG(store_build) {
+    dbus_service.path = /usr/share/dbus-1/services
+    dbus_service.files = dbus-1/com.zackslash.ghosteel.service
+    INSTALLS += dbus_service
+}

@@ -3251,7 +3251,7 @@ private slots:
 
         // A stale socket file with no listener behind it must not prevent
         // startSingleInstanceServer() from taking over the socket.
-        const QString path = runtimeDir.path() + QStringLiteral("/ghosteel-singleton");
+        const QString path = runtimeDir.path() + QStringLiteral("/" APP_NAME "-singleton");
         {
             QFile f(path);
             QVERIFY(f.open(QIODevice::WriteOnly));
@@ -3260,6 +3260,17 @@ private slots:
 
         SessionManager mgr(m_settingsPath);
         QVERIFY(mgr.startSingleInstanceServer());
+    }
+
+    void testSocketPathDerivedFromAppName()
+    {
+        // Co-installed full/store builds must never share a singleton
+        // socket: the name is derived from APP_NAME, not a literal.
+        QTemporaryDir runtimeDir;
+        QVERIFY(runtimeDir.isValid());
+        RuntimeDirGuard envGuard(runtimeDir.path());
+        QCOMPARE(SessionManager::socketPath(),
+                 runtimeDir.path() + QStringLiteral("/" APP_NAME "-singleton"));
     }
 
     void testSingleInstanceChopRoundTrip()

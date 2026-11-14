@@ -196,6 +196,29 @@
     </message>
 </context>
 <context>
+    <name>SandboxNoticeDialog</name>
+    <message>
+        <source>Sandboxed version</source>
+        <translation>Верзија у sandbox-у</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Разумем</translation>
+    </message>
+    <message>
+        <source>This is the sandboxed Jolla Store build of Ghosteel. It runs in a restricted environment: only the built-in busybox tools are available, installed apps are not visible to it, it sees just a few of your folders (such as Downloads), and it has no root access or package manager.</source>
+        <translation>Ово је Ghosteel-ова верзија у sandbox-у за Jolla Store. Ради у ограниченом окружењу: доступни су само уграђени busybox алати, инсталиране апликације нису јој видљиве, види само неколико ваших фасцикли (као што је Downloads) и нема root приступ ни менаџер пакета.</translation>
+    </message>
+    <message>
+        <source>Files and settings you create inside it are kept in its own folder and survive restarts. Bring your own single-file tools: drop them in ~/bin inside the terminal and they become normal commands.</source>
+        <translation>Датотеке и подешавања која у њој направите чувају се у њеној сопственој фасцикли и преживљавају поновна покретања. Донесите сопствене алате у једној датотеци: ставите их у ~/bin у терминалу и постаће обичне наредбе.</translation>
+    </message>
+    <message>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>За потпуно искуство (системски shell, инсталиране апликације, пречице на радној површини) инсталирајте потпуни Ghosteel са Chum-а или OpenRepos-а (Storeman).</translation>
+    </message>
+</context>
+<context>
     <name>SessionManager</name>
     <message>
         <source>Session %1</source>
@@ -520,6 +543,14 @@ Pokreće libghostty terminalski motor</translation>
     <message>
         <source>Horizontal swipe switches session also in apps that use mouse input (e.g. htop, vim). Press-hold drags always stay with the app</source>
         <translation>Хоризонтално превлачење мења сесију и у апликацијама које користе миш (нпр. htop, vim). Превлачење са задржаним притиском увек остаје у апликацији</translation>
+    </message>
+    <message>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Изградња у sandbox-у (Jolla Store): ограничено окружење. Потпуна верзија је доступна на Chum-у или OpenRepos-у.</translation>
+    </message>
+    <message>
+        <source>Jolla Store (Sandboxed)</source>
+        <translation>Jolla Store (sandbox)</translation>
     </message>
 </context>
 <context>

@@ -64,7 +64,15 @@ using Sailfish::Crypto::GenerateStoredKeyRequest;
 using Sailfish::Crypto::EncryptRequest;
 using Sailfish::Crypto::DecryptRequest;
 
+// Per-variant collection: the sandboxed store build must not depend on a
+// collection created by the full build (the secrets daemon may apply
+// per-app access control), and the full build must keep its existing name
+// for compatibility with every install out there.
+#ifdef GHOSTEEL_STORE
+static const QString COLLECTION_NAME = QStringLiteral(APP_XDG_NAME);
+#else
 static const QString COLLECTION_NAME = QStringLiteral("ghosteel");
+#endif
 static const QString KEY_NAME = QStringLiteral("ScrollbackKey");
 
 // Minimal encrypt/decrypt round-trip probe validating a key reference before
