@@ -214,8 +214,8 @@
         <translation>Pliki i ustawienia, które w niej utworzysz, są przechowywane w jej własnym folderze i przetrwają ponowne uruchomienia. Możesz dodać własne narzędzia jednoplikowe: umieść je w ~/bin w terminalu, a staną się zwykłymi poleceniami.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Aby korzystać ze wszystkich funkcji — powłoki systemowej, zainstalowanych aplikacji, skrótów na pulpicie — zainstaluj pełną wersję Ghosteel z Chum lub OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Aby korzystać ze wszystkich funkcji (powłoki systemowej, zainstalowanych aplikacji, skrótów na pulpicie) zainstaluj pełną wersję Ghosteel z Chum lub OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Obsługiwany przez silnik terminala libghostty</translation>
         <translation>Poziome przesunięcie przełącza sesję także w aplikacjach korzystających z myszy (np. htop, vim). Przeciąganie z długim przytrzymaniem zawsze należy do aplikacji</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Wersja w piaskownicy (Jolla Store) — ograniczone środowisko. Pełna wersja jest dostępna w Chum lub OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Wersja w piaskownicy (Jolla Store): ograniczone środowisko. Pełna wersja jest dostępna w Chum lub OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

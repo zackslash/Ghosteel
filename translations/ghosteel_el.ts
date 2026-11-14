@@ -213,8 +213,8 @@
         <translation>Τα αρχεία και οι ρυθμίσεις που δημιουργείτε μέσα σε αυτήν φυλάσσονται στον δικό της φάκελο και διατηρούνται μετά από επανεκκινήσεις. Φέρτε τα δικά σας εργαλεία σε ένα μόνο αρχείο: τοποθετήστε τα στο ~/bin μέσα στο τερματικό και γίνονται κανονικές εντολές.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Για την πλήρη εμπειρία — κέλυφος συστήματος, εγκατεστημένες εφαρμογές, συντομεύσεις επιφάνειας εργασίας — εγκαταστήστε το πλήρες Ghosteel από το Chum ή το OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Για την πλήρη εμπειρία (κέλυφος συστήματος, εγκατεστημένες εφαρμογές, συντομεύσεις επιφάνειας εργασίας) εγκαταστήστε το πλήρες Ghosteel από το Chum ή το OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Powered by libghostty terminal engine</source>
         <translation>Η οριζόντια σάρωση εναλλάσσει τη συνεδρία και σε εφαρμογές που χρησιμοποιούν ποντίκι (π.χ. htop, vim). Τα συρσίματα με παρατεταμένη πίεση παραμένουν πάντα στην εφαρμογή</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Έκδοση sandbox (Jolla Store) — περιορισμένο περιβάλλον. Η πλήρης έκδοση είναι διαθέσιμη στο Chum ή το OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Έκδοση sandbox (Jolla Store): περιορισμένο περιβάλλον. Η πλήρης έκδοση είναι διαθέσιμη στο Chum ή το OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

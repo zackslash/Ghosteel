@@ -213,8 +213,8 @@
         <translation>Les fichiers et réglages que vous créez dedans sont conservés dans son propre dossier et survivent aux redémarrages. Apportez vos propres outils autonomes : déposez-les dans ~/bin dans le terminal et ils deviennent des commandes normales.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Pour l&apos;expérience complète — shell système, applications installées, raccourcis bureau — installez le Ghosteel complet depuis Chum ou OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Pour l&apos;expérience complète (shell système, applications installées, raccourcis bureau) installez le Ghosteel complet depuis Chum ou OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Propulsé par le moteur de terminal libghostty</translation>
         <translation>Le balayage horizontal change de session aussi dans les applications utilisant la souris (p. ex. htop, vim). Les glissements avec appui maintenu restent toujours dans l&apos;application</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Version sandbox (Jolla Store) — environnement limité. La version complète est disponible sur Chum ou OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Version sandbox (Jolla Store): environnement limité. La version complète est disponible sur Chum ou OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

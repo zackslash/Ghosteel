@@ -214,8 +214,8 @@
         <translation>Faili un iestatījumi, ko tajā izveidojat, tiek glabāti savā mapē un izdzīvo restartus. Paņemiet līdzi savus viena faila rīkus: ielieciet tos termināla ~/bin mapē, un tie kļūs par parastām komandām.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Pilnai pieredzei — sistēmas čaula, uzstādītās lietotnes, darbvirsmas saīsnes — uzstādiet pilno Ghosteel no Chum vai OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Pilnai pieredzei (sistēmas čaula, uzstādītās lietotnes, darbvirsmas saīsnes) uzstādiet pilno Ghosteel no Chum vai OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Darbina libghostty termināla dzinējs</translation>
         <translation>Horizontālā pārvelšana pārslēdz sesiju arī lietotnēs, kas izmanto peli (piem., htop, vim). Vilkšana ar ilgu piespiešanu vienmēr paliek lietotnē</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox būvējums (Jolla Store) — ierobežota vide. Pilnā versija pieejama no Chum vai OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox būvējums (Jolla Store): ierobežota vide. Pilnā versija pieejama no Chum vai OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

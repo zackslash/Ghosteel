@@ -272,7 +272,7 @@ if(Qt5Quick_FOUND AND Qt5OpenGL_FOUND AND Qt5DBus_FOUND)
     )
 
     # Store (GHOSTEEL_STORE) variant of the same compile check. The store
-    # ifdef branches are compiled by nothing else on PRs — the release
+    # ifdef branches are compiled by nothing else on PRs; the release
     # workflow builds them only at tag time. bellfeedback.cpp is store-only
     # here: its store branch needs QtDBus instead of the Sailfish-only
     # ngf-qt5 headers, so it finally gets compile coverage too.

@@ -13,7 +13,7 @@
 
 // Settings::migrateLegacySettings() one-time copy from the legacy flat
 // config path to the AppConfigLocation path. Runs as a side effect of the
-// QSettings member initializer, and only for the default path — the four
+// QSettings member initializer, and only for the default path; the four
 // cases below pin exactly that contract.
 class TestSettingsMigration : public QObject
 {
@@ -25,10 +25,10 @@ private slots:
     void cleanup();
     void cleanupTestCase();
 
-    void copiesLegacyWhenNewAbsent();
-    void keepsNewerNewFile();
-    void overwritesWhenLegacyNewer();
-    void injectedPathNeverMigrates();
+    void testCopiesLegacyWhenNewAbsent();
+    void testKeepsNewerNewFile();
+    void testOverwritesWhenLegacyNewer();
+    void testInjectedPathNeverMigrates();
 
 private:
     QString defaultPath() const;
@@ -95,7 +95,7 @@ void TestSettingsMigration::setMtime(const QString &path, const QDateTime &when)
     QVERIFY(f.setFileTime(when, QFileDevice::FileModificationTime));
 }
 
-void TestSettingsMigration::copiesLegacyWhenNewAbsent()
+void TestSettingsMigration::testCopiesLegacyWhenNewAbsent()
 {
     writeLegacy("[font]\nsize=24\n[custom]\nunknownKey=42\n");
     setMtime(legacyPath(), QDateTime::currentDateTime());
@@ -114,7 +114,7 @@ void TestSettingsMigration::copiesLegacyWhenNewAbsent()
     QCOMPARE(migrated.value("custom/unknownKey").toInt(), 42);
 }
 
-void TestSettingsMigration::keepsNewerNewFile()
+void TestSettingsMigration::testKeepsNewerNewFile()
 {
     writeLegacy("[font]\nsize=24\n");
 
@@ -137,7 +137,7 @@ void TestSettingsMigration::keepsNewerNewFile()
     QCOMPARE(kept.value("font/size").toInt(), 11);
 }
 
-void TestSettingsMigration::overwritesWhenLegacyNewer()
+void TestSettingsMigration::testOverwritesWhenLegacyNewer()
 {
     writeLegacy("[font]\nsize=24\n");
 
@@ -162,7 +162,7 @@ void TestSettingsMigration::overwritesWhenLegacyNewer()
     QCOMPARE(migrated.value("font/size").toInt(), 24);
 }
 
-void TestSettingsMigration::injectedPathNeverMigrates()
+void TestSettingsMigration::testInjectedPathNeverMigrates()
 {
     writeLegacy("[font]\nsize=24\n");
 

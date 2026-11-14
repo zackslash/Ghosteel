@@ -213,8 +213,8 @@
         <translation>Bestanden en instellingen die u erin aanmaakt, blijven in zijn eigen map bewaard en overleven herstarts. Neem uw eigen losse tools mee: zet ze in ~/bin in de terminal en ze worden gewone opdrachten.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Voor de volledige ervaring — systeemshell, geïnstalleerde apps, bureaubladsnelkoppelingen — installeer de volledige Ghosteel vanaf Chum of OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Voor de volledige ervaring (systeemshell, geïnstalleerde apps, bureaubladsnelkoppelingen) installeer de volledige Ghosteel vanaf Chum of OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Aangedreven door de libghostty terminal-engine</translation>
         <translation>Horizontaal vegen wisselt ook van sessie in apps die muisinvoer gebruiken (bijv. htop, vim). Slepen met ingedrukt gehouden vinger gaat altijd naar de app zelf</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox-build (Jolla Store) — beperkte omgeving. De volledige versie is beschikbaar via Chum of OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox-build (Jolla Store): beperkte omgeving. De volledige versie is beschikbaar via Chum of OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

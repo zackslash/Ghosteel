@@ -14,7 +14,7 @@ TARGET = ghosteel
 # Store (Jolla Harbour) variant: CONFIG += store_build. Builds the
 # sandboxed harbour-ghosteel package: harbour- prefixed binary/desktop/
 # icon/share dir, bundled-busybox shell, D-Bus single-instance, no
-# D-Bus activation service file. The default (full) build is unchanged.
+# D-Bus activation service file.
 CONFIG(store_build) {
     TARGET = harbour-ghosteel
     DEFINES += GHOSTEEL_STORE
@@ -43,12 +43,10 @@ APP_NAME = $$TARGET
 APP_ORG = com.zackslash
 APP_QML_MODULE = com.zackslash.ghosteel
 # APP_XDG_NAME: drives QStandardPaths app dirs and the D-Bus service name.
-# The store build MUST use a name without dashes (dashes are legal but
-# discouraged in bus names, and the mirrored interface and object path
-# cannot contain them) and
-# different from the full build so both variants coexist on one device;
-# it must also match the desktop file's ApplicationName, which is what
-# Sailjail whitelists as the sandbox data dirs.
+# No dashes (the mirrored interface and object path cannot contain them);
+# must differ from the full build so both variants coexist on one device;
+# must match the desktop file's ApplicationName, which is what Sailjail
+# whitelists as the sandbox data dirs.
 CONFIG(store_build) {
     APP_XDG_NAME = ghosteelstore
     APP_DBUS_NAME = com.zackslash.ghosteelstore
@@ -210,7 +208,7 @@ shell_integration.files = $$PWD/ghostty/src/shell-integration/bash \
 shell_integration.path = /usr/share/$${APP_NAME}/shell-integration
 INSTALLS += shell_integration
 
-# D-Bus service file for notification action activation (full build only —
+# D-Bus service file for notification action activation (full build only:
 # the store build has no activation file: an unwrapped Exec would escape the
 # sandbox, so single-instancing goes through service-name ownership instead).
 !CONFIG(store_build) {

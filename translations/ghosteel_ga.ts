@@ -214,8 +214,8 @@
         <translation>Coinnítear na comhaid agus na socruithe a chruthaíonn tú ann ina fhillteán féin agus mhaireann siad tar éis atosú. Tabhair do chuid uirlisí aon-chomhaid leat: cuir i ~/bin istigh sa teirminéal iad agus éireoidh siad ina n-orduithe gnáth.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Chun an taithí iomlán a fháil — blaosc an chórais, aipeanna suiteáilte, aicearraí deisce — suiteáil Ghosteel iomlán ó Chum nó OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Chun an taithí iomlán a fháil (blaosc an chórais, aipeanna suiteáilte, aicearraí deisce) suiteáil Ghosteel iomlán ó Chum nó OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Cumhachtaithe ag inneall teirminéal libghostty</translation>
         <translation>Athraíonn swipáil chothrománach an seisiún freisin in aipeanna a úsáideann ionchur luiche (m.sh. htop, vim). Fanann tarraingt le brú fada i gcónaí leis an aip</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Leagan sandbox (Jolla Store) — timpeallacht shrianta. Tá an leagan iomlán ar fáil ó Chum nó OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Leagan sandbox (Jolla Store): timpeallacht shrianta. Tá an leagan iomlán ar fáil ó Chum nó OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

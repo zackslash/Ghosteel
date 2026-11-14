@@ -213,8 +213,8 @@
         <translation>Skrár og stillingar sem þú býrð til í henni eru geymdar í eigin möppu hennar og lifa af endurræsingar. Komdu með eigin verkfæri í stakri skrá: settu þau í ~/bin inni í skjáherminum og þau verða venjulegar skipanir.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Fyrir fulla upplifun — kerfisskel, uppsett forrit, flýtileiðir á skjáborði — settu upp fulla útgáfu Ghosteel frá Chum eða OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Fyrir fulla upplifun (kerfisskel, uppsett forrit, flýtileiðir á skjáborði) settu upp fulla útgáfu Ghosteel frá Chum eða OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Keyrt af libghostty skjáhermisvél</translation>
         <translation>Láréttur strýkur skiptir einnig um setu í forritum sem nota músarinntak (t.d. htop, vim). Dráttur með viðvarandi þrýstingi fer alltaf til forritsins</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandkassaútgáfa (Jolla Store) — takmarkað umhverfi. Fulla útgáfan er fáanleg á Chum eða OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandkassaútgáfa (Jolla Store): takmarkað umhverfi. Fulla útgáfan er fáanleg á Chum eða OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

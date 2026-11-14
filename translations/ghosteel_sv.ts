@@ -213,8 +213,8 @@
         <translation>Filer och inställningar du skapar inuti den sparas i dess egen mapp och överlever omstarter. Ta med dina egna verktyg i en enda fil: lägg dem i ~/bin i terminalen, så blir de vanliga kommandon.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>För den fullständiga upplevelsen — systemshell, installerade appar, skrivbordsgenvägar — installera den fullständiga Ghosteel från Chum eller OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>För den fullständiga upplevelsen (systemshell, installerade appar, skrivbordsgenvägar) installera den fullständiga Ghosteel från Chum eller OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Drivs av libghostty terminalmotor</translation>
         <translation>Horisontell svepning växlar session även i appar som använder mus (t.ex. htop, vim). Drag med långt tryck går alltid till appen</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox-bygge (Jolla Store) — begränsad miljö. Den fullständiga versionen finns på Chum eller OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox-bygge (Jolla Store): begränsad miljö. Den fullständiga versionen finns på Chum eller OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

@@ -98,7 +98,7 @@ public:
                                     const QString &sessionName = QString(),
                                     bool restart = false);
 
-    // Socket path derived from APP_NAME — public for the regression test
+    // Socket path derived from APP_NAME; public for the regression test
     // pinning that co-installed full/store builds use distinct sockets.
     static QString socketPath();
 

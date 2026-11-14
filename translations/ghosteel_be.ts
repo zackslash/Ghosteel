@@ -214,8 +214,8 @@
         <translation>Файлы і налады, створаныя ў ёй, захоўваюцца ў яе ўласнай тэчцы і перажываюць перазапускі. Прыносьце свае аднафайлавыя інструменты: пакладзіце іх у ~/bin у тэрмінале, і яны стануць звычайнымі камандамі.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Для поўнага досведу — сістэмная абалонка, усталяваныя праграмы, ярлыкі працоўнага стала — усталюйце поўны Ghosteel з Chum або OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Для поўнага досведу (сістэмная абалонка, усталяваныя праграмы, ярлыкі працоўнага стала) усталюйце поўны Ghosteel з Chum або OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Powered by libghostty terminal engine</source>
         <translation>Гарызантальны свайп пераключае сеанс таксама ў праграмах, якія выкарыстоўваюць мыш (напрыклад, htop, vim). Перацягванне з доўгім націсканнем заўсёды застаецца ў праграме</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Зборка з пясочніцай (Jolla Store) — абмежаванае асяроддзе. Поўная версія даступная ў Chum або OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Зборка з пясочніцай (Jolla Store): абмежаванае асяроддзе. Поўная версія даступная ў Chum або OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

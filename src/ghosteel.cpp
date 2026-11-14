@@ -44,7 +44,7 @@ static void loadTranslations(QCoreApplication *app)
 #ifdef GHOSTEEL_STORE
     // SailfishApp::pathTo() derives its base from the QCoreApplication app
     // name (ghosteelstore), which does not match the install dir
-    // (/usr/share/harbour-ghosteel) — resolve explicitly.
+    // (/usr/share/harbour-ghosteel); resolve explicitly.
     QString transDir = QStringLiteral("/usr/share/" APP_NAME "/translations");
 #else
     QString transDir = SailfishApp::pathTo("translations").toLocalFile();
@@ -80,7 +80,7 @@ static void ensureSandboxHome()
 // One-time scrollback migration: the explicit org/app names move
 // AppDataLocation from ~/.local/share/ghosteel to
 // ~/.local/share/com.zackslash/ghosteel. Settings migrate on their own;
-// scrollback files do not — copy them across once so existing users keep
+// scrollback files do not; copy them across once so existing users keep
 // their session history.
 static void migrateLegacyScrollback()
 {
@@ -254,7 +254,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
                                    QStringLiteral("/com/zackslash/ghosteel"),
                                    QStringLiteral("com.zackslash.ghosteel"));
             // Fail fast: a wedged primary must not freeze this launch on the
-            // 25 s default D-Bus timeout — the duplicate fallback covers it.
+            // 25 s default D-Bus timeout; the duplicate fallback covers it.
             primary.setTimeout(2500);
             QDBusMessage reply = primary.call(QStringLiteral("launch"),
                                               execCommand, execArgs,

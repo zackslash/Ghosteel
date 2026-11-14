@@ -213,8 +213,8 @@
         <translation>Նրա մեջ ստեղծած ֆայլերն ու կարգավորումները պահվում են իր սեփական պանակում և չեն կորչում վերագործարկումներից հետո: Բերեք ձեր սեփական մեկ ֆայլանոց գործիքները. դրեք դրանք տերմինալի ~/bin պանակում, և դրանք կդառնան սովորական հրամաններ:</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Լիարժեք փորձի համար՝ համակարգային shell, տեղադրված հավելվածներ, աշխատասեղանի դյուրանցումներ — տեղադրեք ամբողջական Ghosteel-ը Chum-ից կամ OpenRepos-ից (Storeman):</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Լիարժեք փորձի համար (համակարգային shell, տեղադրված հավելվածներ, աշխատասեղանի դյուրանցումներ) տեղադրեք ամբողջական Ghosteel-ը Chum-ից կամ OpenRepos-ից (Storeman):</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Powered by libghostty terminal engine</source>
         <translation>Հորիզոնական սվայպը փոխում է սեսիան նաև մկնիկ օգտագործող հավելվածներում (օրինակ՝ htop, vim)։ Երկար սեղմված վիճակում քաշելը միշտ մնում է հավելվածում</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox տարբերակ (Jolla Store) — սահմանափակ միջավայր: Ամբողջական տարբերակը հասանելի է Chum-ում կամ OpenRepos-ում:</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox տարբերակ (Jolla Store): սահմանափակ միջավայր: Ամբողջական տարբերակը հասանելի է Chum-ում կամ OpenRepos-ում:</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

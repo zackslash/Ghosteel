@@ -213,8 +213,8 @@
         <translation>Els fitxers i la configuració que hi creeu es guarden a la seva pròpia carpeta i sobreviuen als reinicis. Porteu les vostres pròpies eines d&apos;un sol fitxer: deixeu-les a ~/bin dins del terminal i es converteixen en ordres normals.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Per a l&apos;experiència completa — shell del sistema, aplicacions instal·lades, dreceres de l&apos;escriptori — instal·leu el Ghosteel complet des del Chum o l&apos;OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Per a l&apos;experiència completa (shell del sistema, aplicacions instal·lades, dreceres de l&apos;escriptori) instal·leu el Ghosteel complet des del Chum o l&apos;OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Impulsat pel motor de terminal libghostty</translation>
         <translation>La lliscada horitzontal canvia de sessió també en aplicacions que utilitzen el ratolí (p. ex. htop, vim). Els arrossegaments mantenint premut sempre queden a l&apos;aplicació</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Versió amb sandbox (Jolla Store) — entorn limitat. La versió completa està disponible al Chum o a l&apos;OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Versió amb sandbox (Jolla Store): entorn limitat. La versió completa està disponible al Chum o a l&apos;OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

@@ -213,8 +213,8 @@
         <translation>I file e le impostazioni che crei al suo interno vengono conservati nella sua cartella e sopravvivono ai riavvii. Porta i tuoi strumenti a file singolo: mettili in ~/bin dentro il terminale e diventano comandi normali.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Per l&apos;esperienza completa — shell di sistema, app installate, scorciatoie da scrivania — installa il Ghosteel completo da Chum o OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Per l&apos;esperienza completa (shell di sistema, app installate, scorciatoie da scrivania) installa il Ghosteel completo da Chum o OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Alimentato dal motore di terminale libghostty</translation>
         <translation>Lo scorrimento orizzontale cambia sessione anche nelle app che usano il mouse (ad es. htop, vim). I trascinamenti con pressione prolungata restano sempre nell&apos;app</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Build con sandbox (Jolla Store) — ambiente limitato. La versione completa è disponibile su Chum o OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Build con sandbox (Jolla Store): ambiente limitato. La versione completa è disponibile su Chum o OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

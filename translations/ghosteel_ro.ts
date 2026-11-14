@@ -214,8 +214,8 @@
         <translation>Fișierele și setările pe care le creezi în ea sunt păstrate în propriul ei dosar și supraviețuiesc repornirilor. Adu-ți propriile instrumente cu un singur fișier: pune-le în ~/bin în terminal și devin comenzi normale.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Pentru experiența completă — shell de sistem, aplicații instalate, comenzi rapide de pe desktop — instalează Ghosteel complet de la Chum sau OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Pentru experiența completă (shell de sistem, aplicații instalate, comenzi rapide de pe desktop) instalează Ghosteel complet de la Chum sau OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Propulsat de motorul de terminal libghostty</translation>
         <translation>Glisarea orizontală comută sesiunea și în aplicațiile care folosesc mausul (de ex. htop, vim). Tragerea cu apăsare lungă rămâne mereu în aplicație</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Versiune cu sandbox (Jolla Store) — mediu limitat. Versiunea completă este disponibilă de la Chum sau OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Versiune cu sandbox (Jolla Store): mediu limitat. Versiunea completă este disponibilă de la Chum sau OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

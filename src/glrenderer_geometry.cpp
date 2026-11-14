@@ -386,7 +386,7 @@ void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRend
         GhosttyStyle cellStyle = {};
         uint32_t graphemesLen = 0;
         uint32_t graphemesBuf[kMaxGraphemeLen];
-        // values[] is untyped (void**) — passing graphemesBuf directly compiles
+        // values[] is untyped (void**); passing graphemesBuf directly compiles
         // and reinterprets its first bytes as {ptr, cap, len} from uninitialized stack.
         GhosttyCodepointBuffer graphemesOut = { graphemesBuf, kMaxGraphemeLen, 0 };
         GhosttyColorRgb cellFg, cellBg;
@@ -395,7 +395,7 @@ void GLRenderer::Renderer::emitRowVertices(QVector<CellVertex> &out, GhosttyRend
         // OUT_OF_SPACE, excluded by the kMaxGraphemeLen bound above. FG/BG
         // are fetched separately because each returns GHOSTTY_NO_VALUE when
         // the cell has no explicit color of that type, and get_multi stops
-        // at the first failing key — batching them would drop the other
+        // at the first failing key; batching them would drop the other
         // color entirely.
         GhosttyRenderStateRowCellsData keys[] = {
             GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,

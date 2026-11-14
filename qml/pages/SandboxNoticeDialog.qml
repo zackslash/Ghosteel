@@ -45,7 +45,7 @@ Dialog {
                 x: Theme.paddingLarge
                 width: parent.width - 2 * Theme.paddingLarge
                 wrapMode: Text.WordWrap
-                text: qsTr("For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).")
+                text: qsTr("For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.primaryColor
             }

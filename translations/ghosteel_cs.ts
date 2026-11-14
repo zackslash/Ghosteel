@@ -214,8 +214,8 @@
         <translation>Soubory a nastavení, které v ní vytvoříte, zůstávají v její vlastní složce a přežijí restarty. Přineste si vlastní jednosouborové nástroje: vložte je do ~/bin v terminálu a stanou se běžnými příkazy.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Pro plný zážitek — systémový shell, nainstalované aplikace, zástupce na ploše — nainstalujte plnou verzi Ghosteel z Chum nebo OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Pro plný zážitek (systémový shell, nainstalované aplikace, zástupce na ploše) nainstalujte plnou verzi Ghosteel z Chum nebo OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Poháněno terminálovým enginem libghostty</translation>
         <translation>Vodorovné přejetí přepíná relaci také v aplikacích, které používají myš (např. htop, vim). Tažení s podrženým prstem vždy zůstává v aplikaci</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sestavení se sandboxem (Jolla Store) — omezené prostředí. Plná verze je k dispozici v Chum nebo OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sestavení se sandboxem (Jolla Store): omezené prostředí. Plná verze je k dispozici v Chum nebo OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

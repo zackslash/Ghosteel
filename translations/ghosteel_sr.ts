@@ -214,8 +214,8 @@
         <translation>Датотеке и подешавања која у њој направите чувају се у њеној сопственој фасцикли и преживљавају поновна покретања. Донесите сопствене алате у једној датотеци: ставите их у ~/bin у терминалу и постаће обичне наредбе.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>За потпуно искуство — системски shell, инсталиране апликације, пречице на радној површини — инсталирајте потпуни Ghosteel са Chum-а или OpenRepos-а (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>За потпуно искуство (системски shell, инсталиране апликације, пречице на радној површини) инсталирајте потпуни Ghosteel са Chum-а или OpenRepos-а (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Pokreće libghostty terminalski motor</translation>
         <translation>Хоризонтално превлачење мења сесију и у апликацијама које користе миш (нпр. htop, vim). Превлачење са задржаним притиском увек остаје у апликацији</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Изградња у sandbox-у (Jolla Store) — ограничено окружење. Потпуна верзија је доступна на Chum-у или OpenRepos-у.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Изградња у sandbox-у (Jolla Store): ограничено окружење. Потпуна верзија је доступна на Chum-у или OpenRepos-у.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

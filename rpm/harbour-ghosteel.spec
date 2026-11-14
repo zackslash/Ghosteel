@@ -206,7 +206,7 @@ if [ -z "$BUSYBOX_BIN" ]; then
         ZIG_BB="zig"
     fi
     if [ -z "$ZIG_BB" ]; then
-        # Zig not extracted (prep skipped or cleaned up) — extract the
+        # Zig not extracted (prep skipped or cleaned up): extract the
         # vendored toolchain tarball (CI docker builds)
         ZIG_TARBALL=""
         if [ -f "%{SOURCE1}" ]; then
@@ -237,7 +237,7 @@ if [ -z "$BUSYBOX_BIN" ]; then
     BUSYBOX_BIN="%{_builddir}/busybox-1.38.0/busybox"
 fi
 
-# Build Qt application — store_build selects the sandboxed variant
+# Build Qt application; store_build selects the sandboxed variant
 %qmake5 CONFIG+=store_build
 
 %make_build

@@ -213,8 +213,8 @@
         <translation>Bertan sortzen dituzun fitxategiak eta ezarpenak bere karpeta propioan gordetzen dira eta berrabiarazteetan irauten dute. Ekarri zure fitxategi bakarreko tresnak: utzi itzazu terminaleko ~/bin karpetan eta komando arrunt bihurtuko dira.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Esperientzia osorako — sistemaren shell-a, instalatutako aplikazioak, mahaigaineko lasterbideak — instalatu Ghosteel osoa Chum edo OpenRepos-etik (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Esperientzia osorako (sistemaren shell-a, instalatutako aplikazioak, mahaigaineko lasterbideak) instalatu Ghosteel osoa Chum edo OpenRepos-etik (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ libghostty terminal motorrak bultzatuta</translation>
         <translation>Irristada horizontalak saioa aldatzen du sagua erabiltzen duten aplikazioetan ere (adib. htop, vim). Luzaro sakatuta arrastatzeak beti geratzen dira aplikazioan</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox bertsioa (Jolla Store) — ingurune mugatua. Bertsio osoa Chum edo OpenRepos-etik eskura daiteke.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox bertsioa (Jolla Store): ingurune mugatua. Bertsio osoa Chum edo OpenRepos-etik eskura daiteke.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

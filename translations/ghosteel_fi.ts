@@ -213,8 +213,8 @@
         <translation>Sinne luomasi tiedostot ja asetukset säilyvät sen omassa kansiossaan ja kestävät uudelleenkäynnistykset. Tuo omat yksittäistiedostotyökalusi: pudota ne päätteessä kansioon ~/bin, niin niistä tulee tavallisia komentoja.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Täyttä kokemusta varten — järjestelmäkuori, asennetut sovellukset, työpöydän pikakuvakkeet — asenna täysi Ghosteel Chumista tai OpenReposista (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Täyttä kokemusta varten (järjestelmäkuori, asennetut sovellukset, työpöydän pikakuvakkeet) asenna täysi Ghosteel Chumista tai OpenReposista (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Käyttää libghostty-pääteohjelmaa</translation>
         <translation>Vaakasuuntainen pyyhkäisy vaihtaa istuntoa myös sovelluksissa, jotka käyttävät hiirtä (esim. htop, vim). Painettuna pitäen raahaus jää aina sovellukselle</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox-versio (Jolla Store) — rajoitettu ympäristö. Täysi versio on saatavilla Chumista tai OpenReposista.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox-versio (Jolla Store): rajoitettu ympäristö. Täysi versio on saatavilla Chumista tai OpenReposista.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

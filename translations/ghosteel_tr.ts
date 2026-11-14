@@ -212,8 +212,8 @@
         <translation>İçinde oluşturduğunuz dosya ve ayarlar kendi klasöründe saklanır ve yeniden başlatmalardan sonra da kalır. Kendi tek dosyalı araçlarınızı getirin: bunları terminalde ~/bin içine bırakın, normal komutlara dönüşürler.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Eksiksiz deneyim için — sistem kabuğu, kurulu uygulamalar, masaüstü kısayolları — tam Ghosteel&apos;i Chum veya OpenRepos&apos;tan (Storeman) kurun.</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Eksiksiz deneyim için (sistem kabuğu, kurulu uygulamalar, masaüstü kısayolları) tam Ghosteel&apos;i Chum veya OpenRepos&apos;tan (Storeman) kurun.</translation>
     </message>
 </context>
 <context>
@@ -543,8 +543,8 @@ libghostty terminal motoru tarafından desteklenmektedir</translation>
         <translation>Yatay kaydırma, fare girdisi kullanan uygulamalarda da oturumu değiştirir (ör. htop, vim). Basılı tutarak sürükleme her zaman uygulamada kalır</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox sürümü (Jolla Store) — kısıtlı ortam. Tam sürüm Chum veya OpenRepos üzerinden edinilebilir.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox sürümü (Jolla Store): kısıtlı ortam. Tam sürüm Chum veya OpenRepos üzerinden edinilebilir.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

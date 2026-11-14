@@ -213,8 +213,8 @@
         <translation>მასში შექმნილი ფაილები და პარამეტრები ინახება მის საკუთარ საქაღალდეში და გადარჩება გადატვირთვებს. შეიტანეთ თქვენი საკუთარი ერთფაილიანი ხელსაწყოები: ჩადეთ ისი ~/bin-ში ტერმინალში და ისი ჩვეულებრივ ბრძანებებად იქცევიან.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>სრული გამოცდილებისთვის — სისტემური shell, დაინსტალირებული აპები, სამუშაო მაგიდის მალსახმობები — დააინსტალირეთ სრული Ghosteel Chum-დან ან OpenRepos-დან (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>სრული გამოცდილებისთვის (სისტემური shell, დაინსტალირებული აპები, სამუშაო მაგიდის მალსახმობები) დააინსტალირეთ სრული Ghosteel Chum-დან ან OpenRepos-დან (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Powered by libghostty terminal engine</source>
         <translation>ჰორიზონტალური სვაიპი სესიას ცვლის ასევე იმ აპლიკაციებშიც, რომლებიც მაუსის შეყვანას იყენებენ (მაგ. htop, vim). გრძელი დაჭერით გადათრევა ყოველთვის აპლიკაციაში რჩება</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>სენდბოქს-ვერსია (Jolla Store) — შეზღუდული გარემო. სრული ვერსია ხელმისაწვდომია Chum-ში ან OpenRepos-ში.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>სენდბოქს-ვერსია (Jolla Store): შეზღუდული გარემო. სრული ვერსია ხელმისაწვდომია Chum-ში ან OpenRepos-ში.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

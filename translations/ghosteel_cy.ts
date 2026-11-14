@@ -216,8 +216,8 @@
         <translation>Mae&apos;r ffeiliau a&apos;r gosodiadau rydych chi&apos;n eu creu yno yn cael eu cadw yn ei ffolder ei hun ac yn para trwy ailgychwyn. Dewch gyda&apos;ch offer un-ffeil eich hun: gosodwch nhw yn ~/bin yn y terfynell a byddant yn dod yn orchmynion arferol.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Ar gyfer y profiad llawn — plisgyn y system, apiau sydd wedi&apos;u gosod, llwybrau byr y bwrdd gwaith — gosodwch Ghosteel llawn o Chum neu OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Ar gyfer y profiad llawn (plisgyn y system, apiau sydd wedi&apos;u gosod, llwybrau byr y bwrdd gwaith) gosodwch Ghosteel llawn o Chum neu OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -547,8 +547,8 @@ Wedi&apos;i bweru gan injan derfynell libghostty</translation>
         <translation>Mae swip llorweddol yn newid y sesiwn hefyd mewn apiau sy&apos;n defnyddio mewnbwn llygoden (e.e. htop, vim). Mae llusgo gyda gwasgu hir bob amser yn aros gyda&apos;r ap</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Adeiladwaith sandbox (Jolla Store) — amgylchedd cyfyngedig. Mae&apos;r fersiwn llawn ar gael o Chum neu OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Adeiladwaith sandbox (Jolla Store): amgylchedd cyfyngedig. Mae&apos;r fersiwn llawn ar gael o Chum neu OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

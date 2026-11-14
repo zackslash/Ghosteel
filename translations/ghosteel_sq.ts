@@ -213,8 +213,8 @@
         <translation>Kartelat dhe cilësimet që krijoni brenda tij ruhen në dosjen e vet dhe i mbijetojnë rindezjeve. Sillni mjetet tuaja me një kartelë të vetme: hidhini në ~/bin brenda terminalit dhe bëhen komanda normale.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Për përvojën e plotë — shell-i i sistemit, aplikacionet e instaluara, shkurtoret e desktopit — instaloni Ghosteel-in e plotë nga Chum ose OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Për përvojën e plotë (shell-i i sistemit, aplikacionet e instaluara, shkurtoret e desktopit) instaloni Ghosteel-in e plotë nga Chum ose OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Mundësuar nga motori i terminalit libghostty</translation>
         <translation>Rrëshqitja horizontale e ndërron sesionin edhe në aplikacione që përdorin miun (p.sh. htop, vim). Zvarritja me prekje të gjatë mbetet gjithmonë te aplikacioni</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Ndërtim me sandbox (Jolla Store) — mjedis i kufizuar. Versioni i plotë gjendet në Chum ose OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Ndërtim me sandbox (Jolla Store): mjedis i kufizuar. Versioni i plotë gjendet në Chum ose OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

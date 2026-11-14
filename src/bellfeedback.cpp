@@ -41,7 +41,7 @@ void BellFeedback::ensureClient()
 
 #else
 
-// Direct call to the ngfd backend interface — the one feedback interface the
+// Direct call to the ngfd backend interface, the one feedback interface the
 // Sailjail sandbox filter allows. The store build ships no custom events.d
 // definitions, so only the stock system events are available.
 void BellFeedback::ngfPlay(const QString &event)

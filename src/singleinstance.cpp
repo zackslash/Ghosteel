@@ -10,7 +10,7 @@
 
 QString SessionManager::socketPath()
 {
-    // Use XDG_RUNTIME_DIR directly — safe to call before QGuiApplication exists.
+    // Use XDG_RUNTIME_DIR directly, safe to call before QGuiApplication exists.
     // Named after APP_NAME so the full and store builds never see each
     // other's socket when both are installed.
     const QString runtime = QString::fromLocal8Bit(qgetenv("XDG_RUNTIME_DIR"));

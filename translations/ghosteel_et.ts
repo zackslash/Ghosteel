@@ -213,8 +213,8 @@
         <translation>Teie loodud failid ja seaded säilitatakse tema enda kaustas ja jäävad alles ka taaskäivituste järel. Too kaasa oma ühest failist koosnevad tööriistad: pane need terminalis kausta ~/bin ja neist saavad tavalised käsud.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Täieliku kogemuse jaoks — süsteemi kest, paigaldatud rakendused, töölaua otseteed — paigalda täielik Ghosteel Chumist või OpenReposist (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Täieliku kogemuse jaoks (süsteemi kest, paigaldatud rakendused, töölaua otseteed) paigalda täielik Ghosteel Chumist või OpenReposist (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Toetab libghostty terminalimootorit</translation>
         <translation>Horisontaalne pühkimine vahetab seanssi ka rakendustes, mis kasutavad hiirt (nt. htop, vim). Pikalt vajutades jääb lohistamine alati rakendusele</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox-versioon (Jolla Store) — piiratud keskkond. Täielik versioon on saadaval Chumist või OpenReposist.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox-versioon (Jolla Store): piiratud keskkond. Täielik versioon on saadaval Chumist või OpenReposist.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

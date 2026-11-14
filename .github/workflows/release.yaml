@@ -124,7 +124,7 @@ jobs:
 
       - uses: actions/checkout@v6
 
-      - name: Select spec (mb2 autodiscovers rpm/*.spec — keep exactly one)
+      - name: Select spec (mb2 autodiscovers rpm/*.spec; keep exactly one)
         run: |
           if [ "${{ matrix.variant }}" = "store" ]; then
             mv rpm/ghosteel.spec /tmp/full-spec.spec
@@ -281,7 +281,7 @@ jobs:
             echo ""
             echo "---"
             echo ""
-            echo "**Packages:** \`ghosteel-<version>-<arch>.rpm\` is the full version — system shell, installed apps, desktop shortcuts. \`harbour-ghosteel-<version>-<arch>.rpm\` is the sandboxed Jolla Store build — it runs in its own restricted environment with bundled busybox tools and cannot see system apps, your home folder, or use root. Install it from the Jolla Store, or directly only if you specifically want the sandboxed variant."
+            echo "**Packages:** \`ghosteel-<version>-<arch>.rpm\` is the full version (system shell, installed apps, desktop shortcuts). \`harbour-ghosteel-<version>-<arch>.rpm\` is the sandboxed Jolla Store build; it runs in its own restricted environment with bundled busybox tools and cannot see system apps, your home folder, or use root. Install it from the Jolla Store, or directly only if you specifically want the sandboxed variant."
             echo "DELIM"
           } >> "$GITHUB_OUTPUT"
 

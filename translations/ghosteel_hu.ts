@@ -212,8 +212,8 @@
         <translation>A benne létrehozott fájlok és beállítások a saját mappájában maradnak, és túlélik az újraindításokat. Hozza magával saját, egyetlen fájlból álló eszközeit: tegye őket a terminálban a ~/bin mappába, és normál parancsokká válnak.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>A teljes élményért — rendszershell, telepített alkalmazások, asztali parancsikonok — telepítse a teljes Ghosteelt a Chumról vagy az OpenReposról (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>A teljes élményért (rendszershell, telepített alkalmazások, asztali parancsikonok) telepítse a teljes Ghosteelt a Chumról vagy az OpenReposról (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -543,8 +543,8 @@ A libghostty terminálmotor hajtja</translation>
         <translation>A vízszintes pöccintés munkamenetet vált az egérbevitelt használó alkalmazásokban is (pl. htop, vim). A hosszan nyomva tartott húzás mindig az alkalmazásnál marad</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandboxos build (Jolla Store) — korlátozott környezet. A teljes verzió elérhető a Chumon vagy az OpenReposon.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandboxos build (Jolla Store): korlátozott környezet. A teljes verzió elérhető a Chumon vagy az OpenReposon.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

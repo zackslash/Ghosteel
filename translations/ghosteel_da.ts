@@ -213,8 +213,8 @@
         <translation>Filer og indstillinger, du opretter i den, gemmes i dens egen mappe og overlever genstarter. Medbring dine egne enkeltfilværktøjer: læg dem i ~/bin i terminalen, så bliver de almindelige kommandoer.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>For den fulde oplevelse — systemshell, installerede apps, skrivebordsgenveje — installér den fulde Ghosteel fra Chum eller OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>For den fulde oplevelse (systemshell, installerede apps, skrivebordsgenveje) installér den fulde Ghosteel fra Chum eller OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Drevet af libghostty terminalmotor</translation>
         <translation>Vandret stryg skifter session også i apps, der bruger museinput (f.eks. htop, vim). Træk med langvarigt tryk forbliver altid i appen</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox-build (Jolla Store) — begrænset miljø. Den fulde version er tilgængelig fra Chum eller OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox-build (Jolla Store): begrænset miljø. Den fulde version er tilgængelig fra Chum eller OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

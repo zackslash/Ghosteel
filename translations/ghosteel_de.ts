@@ -213,8 +213,8 @@
         <translation>Dateien und Einstellungen, die Sie darin anlegen, bleiben in ihrem eigenen Ordner erhalten und überstehen Neustarts. Bringen Sie Ihre eigenen Einzeldatei-Tools mit: Legen Sie sie im Terminal in ~/bin ab, und sie werden zu normalen Befehlen.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Für das vollständige Erlebnis — System-Shell, installierte Apps, Desktop-Verknüpfungen — installieren Sie das vollständige Ghosteel von Chum oder OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Für das vollständige Erlebnis (System-Shell, installierte Apps, Desktop-Verknüpfungen) installieren Sie das vollständige Ghosteel von Chum oder OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Angetrieben von der libghostty-Terminal-Engine</translation>
         <translation>Horizontales Wischen wechselt die Sitzung auch in Apps, die Mauseingaben verwenden (z. B. htop, vim). Ziehen mit gedrückt gehaltenem Finger bleibt immer in der App</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox-Build (Jolla Store) — eingeschränkte Umgebung. Die vollständige Version ist über Chum oder OpenRepos verfügbar.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox-Build (Jolla Store): eingeschränkte Umgebung. Die vollständige Version ist über Chum oder OpenRepos verfügbar.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

@@ -213,8 +213,8 @@
         <translation>Os ficheiros e os axustes que cree dentro dela gárdanse no seu propio cartafol e sobreviven aos reinicios. Traia as súas propias ferramentas dun só ficheiro: déixeas en ~/bin dentro do terminal e converteranse en comandos normais.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Para a experiencia completa — shell do sistema, aplicacións instaladas, atallos de escritorio — instale o Ghosteel completo desde Chum ou OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Para a experiencia completa (shell do sistema, aplicacións instaladas, atallos de escritorio) instale o Ghosteel completo desde Chum ou OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Impulsado polo motor de terminal libghostty</translation>
         <translation>O deslizamento horizontal cambia de sesión tamén en aplicativos que usan o rato (p. ex. htop, vim). Os arrastres con pulsación longa van sempre ao aplicativo</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Versión con sandbox (Jolla Store) — contorno limitado. A versión completa está dispoñible en Chum ou OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Versión con sandbox (Jolla Store): contorno limitado. A versión completa está dispoñible en Chum ou OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

@@ -214,8 +214,8 @@
         <translation>Joje sukurti failai ir nustatymai saugomi jos aplanke ir išlieka po paleidimų iš naujo. Atsineškite savo vieno failo įrankius: padėkite juos į ~/bin aplanką terminale, ir jie taps įprastomis komandomis.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Visapusiškai patirčiai — sistemos apvalkalas, įdiegtos programos, darbalaukio nuorodos — įdiekite pilną Ghosteel iš Chum arba OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Visapusiškai patirčiai (sistemos apvalkalas, įdiegtos programos, darbalaukio nuorodos) įdiekite pilną Ghosteel iš Chum arba OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Varomas libghostty terminalo variklio</translation>
         <translation>Horizontalus perbraukimas perjungia sesiją ir programose, naudojančiose pelę (pvz., htop, vim). Tempimas ilgiau paspaudus visada lieka programoje</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Sandbox versija (Jolla Store) — apribota aplinka. Pilna versija prieinama iš Chum arba OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Sandbox versija (Jolla Store): apribota aplinka. Pilna versija prieinama iš Chum arba OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

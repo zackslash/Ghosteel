@@ -59,7 +59,7 @@ Page {
                 wrapMode: Text.WordWrap
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryHighlightColor
-                text: qsTr("Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.")
+                text: qsTr("Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.")
             }
 
             // Terminal section

@@ -215,8 +215,8 @@
         <translation>Datoteke in nastavitve, ki jih ustvarite v njej, se hranijo v njeni lastni mapi in ostanejo ohranjene tudi po ponovnih zagonih. Prinesite svoja orodja v eni datoteki: odložite jih v ~/bin v terminalu in postala bodo navadni ukazi.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Za popolno izkušnjo — sistemska lupina, nameščene aplikacije, bližnjice na namizju — namestite popoln Ghosteel iz Chum ali OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Za popolno izkušnjo (sistemska lupina, nameščene aplikacije, bližnjice na namizju) namestite popoln Ghosteel iz Chum ali OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -546,8 +546,8 @@ Poganja terminalski pogon libghostty</translation>
         <translation>Vodoravni povlek preklopi sejo tudi v aplikacijah, ki uporabljajo miško (npr. htop, vim). Vlečenje z dolgim pritiskom vedno ostane v aplikaciji</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Različica s peskovnikom (Jolla Store) — omejeno okolje. Popolna različica je na voljo v Chum ali OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Različica s peskovnikom (Jolla Store): omejeno okolje. Popolna različica je na voljo v Chum ali OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

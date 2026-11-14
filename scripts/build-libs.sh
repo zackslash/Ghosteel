@@ -72,7 +72,7 @@ build_busybox() {
         tar -xjf "$PROJECT_ROOT/rpm/busybox-1.38.0.tar.bz2" -C "$PROJECT_ROOT/.build"
     fi
 
-    # Fresh config per arch (defconfig + static) in a copy of the tree —
+    # Fresh config per arch (defconfig + static) in a copy of the tree:
     # the build dir is shared across arches. SKIP_STRIP: busybox would run
     # the host strip, which cannot parse cross-arch binaries; tc is off
     # because musl's kernel headers lack the CBQ defines it needs.

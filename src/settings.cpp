@@ -18,7 +18,7 @@ Settings::Settings(QObject *parent)
 {}
 
 // Config lives at AppConfigLocation/<APP_XDG_NAME>.conf, i.e.
-// ~/.config/<org>/<app>/<app>.conf — inside the directory Sailjail
+// ~/.config/<org>/<app>/<app>.conf, inside the directory Sailjail
 // whitelists for the app. The pre-sandboxing location
 // (~/.config/<org>/<app>.conf) sits outside that whitelist and would be
 // unwritable in the sandbox, so both builds use the nested path now.
@@ -32,9 +32,8 @@ QString Settings::defaultSettingsPath()
 // to the AppConfigLocation path, which sits inside the directory Sailjail
 // whitelists. QFile::copy (not a QSettings re-write) so unknown keys
 // survive. Copies when the new file is absent, or when it is older than the
-// legacy file — the mtime check covers the downgrade round-trip (new
-// version wrote the new path, user downgraded and changed settings at the
-// old path, re-upgraded). The legacy file is never deleted: downgraders
+// legacy file; the mtime check covers the downgrade round-trip. The
+// legacy file is never deleted: downgraders
 // keep working. Returns the path unchanged (runs as the side effect of the
 // QSettings member initializer; only the default path migrates, injected
 // test paths are untouched).

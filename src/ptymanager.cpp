@@ -205,8 +205,7 @@ bool PtyManager::forkPtyProcess(uint16_t cols, uint16_t rows, int execPipe[2], p
     if (pid != 0)
         pthread_sigmask(SIG_SETMASK, &savedMask, nullptr);
 #ifdef GHOSTEEL_STORE
-    // Parent (and the pid<0 failure path) only — the child keeps its
-    // fork-time copy of the sandbox env.
+    // Parent (and the pid<0 failure path) only.
     if (pid != 0)
         restoreSandboxParentEnv();
 #endif
@@ -264,7 +263,7 @@ bool PtyManager::startShell(uint16_t cols, uint16_t rows)
 #ifdef GHOSTEEL_STORE
     // Sandbox: the system PATH dirs are masked (private-bin leaves only the
     // app binary) and busybox is blacklisted, so every PATH-lookup hop would
-    // fail. The bundled shell is exec'd by absolute path instead — execlp
+    // fail. The bundled shell is exec'd by absolute path instead; execlp
     // skips the PATH search for names containing a slash.
     const QString storeShell = QStringLiteral("/usr/share/" APP_NAME "/libexec/sh");
     QByteArray storeShellBytes = storeShell.toUtf8();

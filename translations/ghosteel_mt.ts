@@ -215,8 +215,8 @@
         <translation>Il-fajls u l-settings li toħloq ġewwaha jinżammu f&apos;folder tagħha stess u jibqgħu wara restarts. Ħu miegħek l-għodod tiegħek ta&apos; fajl wieħed: poġġihom f&apos;~/bin ġewwa t-terminal u jsiru kmandi normali.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Għall-esperjenza sħiħa — shell tas-sistema, apps installati, shortcuts tad-desktop — installa l-verżjoni sħiħa ta&apos; Ghosteel minn Chum jew OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Għall-esperjenza sħiħa (shell tas-sistema, apps installati, shortcuts tad-desktop) installa l-verżjoni sħiħa ta&apos; Ghosteel minn Chum jew OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -546,8 +546,8 @@ Mħaddem minn magna terminali libghostty</translation>
         <translation>Is-swipe orizzontali jibdel is-sessjoni anke f&apos;apps li jużaw il-maws (eż. htop, vim). Id-drag b&apos;pressjoni twila dejjem jibqa&apos; fl-app</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Verżjoni sandbox (Jolla Store) — ambjent limitat. Il-verżjoni sħiħa disponibbli minn Chum jew OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Verżjoni sandbox (Jolla Store): ambjent limitat. Il-verżjoni sħiħa disponibbli minn Chum jew OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

@@ -214,8 +214,8 @@
         <translation>Файли та налаштування, які ви створюєте всередині неї, зберігаються у її власній теці та переживають перезапуски. Приносьте власні однофайлові інструменти: покладіть їх у ~/bin у терміналі, і вони стануть звичайними командами.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>Щоб отримати повний досвід — системну оболонку, встановлені програми, ярлики робочого столу — встановіть повний Ghosteel із Chum або OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>Щоб отримати повний досвід (системну оболонку, встановлені програми, ярлики робочого столу) встановіть повний Ghosteel із Chum або OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -545,8 +545,8 @@ Powered by libghostty terminal engine</source>
         <translation>Горизонтальний свайп перемикає сеанс і у застосунках, які використовують мишу (наприклад, htop, vim). Перетягування з довгим натисканням завжди залишається у застосунку</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Збірка з пісочницею (Jolla Store) — обмежене середовище. Повна версія доступна у Chum або OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Збірка з пісочницею (Jolla Store): обмежене середовище. Повна версія доступна у Chum або OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>

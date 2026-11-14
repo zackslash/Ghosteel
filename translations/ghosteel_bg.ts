@@ -213,8 +213,8 @@
         <translation>Файловете и настройките, които създадете в нея, се съхраняват в собствена папка и оцеляват при рестартиране. Донесете си собствените еднофайлови инструменти: сложете ги в ~/bin в терминала и те стават обикновени команди.</translation>
     </message>
     <message>
-        <source>For the full experience — system shell, installed apps, desktop shortcuts — install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
-        <translation>За пълното изживяване — системна обвивка, инсталирани приложения, преки пътища на работния плот — инсталирайте пълния Ghosteel от Chum или OpenRepos (Storeman).</translation>
+        <source>For the full experience (system shell, installed apps, desktop shortcuts) install the full Ghosteel from Chum or OpenRepos (Storeman).</source>
+        <translation>За пълното изживяване (системна обвивка, инсталирани приложения, преки пътища на работния плот) инсталирайте пълния Ghosteel от Chum или OpenRepos (Storeman).</translation>
     </message>
 </context>
 <context>
@@ -544,8 +544,8 @@ Powered by libghostty terminal engine</source>
         <translation>Хоризонталният свайп превключва сесията и в приложения, които използват мишка (напр. htop, vim). Плъзгането с продължително натискане винаги остава в приложението</translation>
     </message>
     <message>
-        <source>Sandboxed (Jolla Store) build — limited environment. The full version is available from Chum or OpenRepos.</source>
-        <translation>Версия със sandbox (Jolla Store) — ограничена среда. Пълната версия е налична в Chum или OpenRepos.</translation>
+        <source>Sandboxed (Jolla Store) build: limited environment. The full version is available from Chum or OpenRepos.</source>
+        <translation>Версия със sandbox (Jolla Store): ограничена среда. Пълната версия е налична в Chum или OpenRepos.</translation>
     </message>
     <message>
         <source>Jolla Store (Sandboxed)</source>
