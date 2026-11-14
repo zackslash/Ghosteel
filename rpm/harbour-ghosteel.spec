@@ -19,6 +19,11 @@ Requires:   qt5-qtgraphicaleffects
 Requires:   sailfishsecretsdaemon
 Requires:   sailfishsecretsdaemon-cryptoplugins-default
 Requires:   sailfishsecretsdaemon-secretsplugins-default
+# Qt leaks versioned private-API requires (Qt_5_PRIVATE_API) that the
+# Harbour dependency allowlist rejects; filter them from Requires per
+# Harbour FAQ 2.7.0. Doubled backslashes: rpm macro expansion consumes
+# one level.
+%define __requires_exclude ^libQt5.*\\.so\\.5\\(Qt_5_PRIVATE_API\\)
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 # sailfishapp_i18n chains lupdate/lrelease with || :, so a missing tool
 # would silently ship an RPM with no .qm files; require the provider.
