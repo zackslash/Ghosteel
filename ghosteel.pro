@@ -139,7 +139,7 @@ DISTFILES += qml/ghosteel.qml \
     qml/pages/LicensesPage.qml \
     rpm/ghosteel.changes.in \
     rpm/ghosteel.spec \
-    rpm/harbour-ghosteel.spec \
+    rpm/store/harbour-ghosteel.spec \
     rpm/store-skeleton/.profile \
     rpm/busybox-GPLv2 \
     ghosteel.desktop \
