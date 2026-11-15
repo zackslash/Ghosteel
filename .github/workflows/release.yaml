@@ -133,10 +133,10 @@ jobs:
         run: |
           if [ "${{ matrix.variant }}" = "store" ]; then
             mv rpm/ghosteel.spec /tmp/full-spec.spec
+            mv rpm/store/harbour-ghosteel.spec rpm/harbour-ghosteel.spec
             echo "SPEC=rpm/harbour-ghosteel.spec" >> "$GITHUB_ENV"
             echo "CHANGES=rpm/harbour-ghosteel.changes" >> "$GITHUB_ENV"
           else
-            mv rpm/harbour-ghosteel.spec /tmp/store-spec.spec
             echo "SPEC=rpm/ghosteel.spec" >> "$GITHUB_ENV"
             echo "CHANGES=rpm/ghosteel.changes" >> "$GITHUB_ENV"
           fi

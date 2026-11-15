@@ -116,8 +116,8 @@ ln -sf ~/.local/zig-x86_64-linux-0.17.0/zig ~/.local/bin/zig
 ./scripts/build-libs.sh aarch64  # single architecture
 
 # Build RPM: the repo carries two specs, so name the one you want:
-mb2 -s rpm/ghosteel.spec build          # full version
-mb2 -s rpm/harbour-ghosteel.spec build  # sandboxed Jolla Store version
+mb2 -s rpm/ghosteel.spec build                  # full version
+mb2 -s rpm/store/harbour-ghosteel.spec build    # sandboxed Jolla Store version
 ```
 
 ## Architecture
